@@ -83,9 +83,9 @@
 
 /* ─── Tailwind v4 @theme block ───────────────────────────────── */
 @theme inline {
-  --font-sans:    var(--font-hanken);
-  --font-mono:    var(--font-jetbrains);
-  --font-display: var(--font-bricolage);
+  --font-sans:    "Hanken Grotesk Variable", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
 
   --color-ink:   var(--ink);
   --color-paper: var(--paper);

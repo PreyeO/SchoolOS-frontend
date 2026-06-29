@@ -1,10 +1,14 @@
-// Landing page — the homepage at "/".
-// Navbar is imported directly here because this file sits outside the
-// (marketing) route group, so (marketing)/layout.tsx does not apply.
-// Sub-pages like /pricing and /about live inside (marketing)/ and
-// receive Navbar + Footer automatically from (marketing)/layout.tsx.
-import { Hero } from "@/components/landing/sections/Hero";
 import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { Hero } from "@/components/landing/sections/Hero";
+import { PainRelief } from "@/components/landing/sections/PainRelief";
+import { Capabilities } from "@/components/landing/sections/Capabilities";
+import { BuiltForNigeria } from "@/components/landing/sections/BuiltForNigeria";
+import { ByRole } from "@/components/landing/sections/ByRole";
+import { PricingTeaser } from "@/components/landing/sections/PricingTeaser";
+import { Onboarding } from "@/components/landing/sections/Onboarding";
+import { FAQ } from "@/components/landing/sections/FAQ";
+import { FinalCTA } from "@/components/landing/sections/FinalCTA";
 
 export default function LandingPage() {
   return (
@@ -12,9 +16,16 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        {/* TODO (Phase 2 full): PainRelief, Capabilities, BuiltForNigeria,
-            ByRole, PricingTeaser, Onboarding, FAQ, FinalCTA, Footer */}
+        <PainRelief />
+        <Capabilities />
+        <BuiltForNigeria />
+        <ByRole />
+        <PricingTeaser />
+        <Onboarding />
+        <FAQ />
+        <FinalCTA />
       </main>
+      <Footer />
     </>
   );
 }

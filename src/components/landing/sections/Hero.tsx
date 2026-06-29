@@ -10,7 +10,7 @@ import { HeroSurface } from "./HeroSurface";
 export function Hero() {
   return (
     <section
-      className="relative pt-28 pb-20 lg:pt-36 lg:pb-28 bg-paper overflow-hidden"
+      className="relative pt-20 pb-12 lg:pt-36 lg:pb-28 bg-paper overflow-hidden"
       aria-label="Hero"
     >
       {/* Subtle background texture */}
@@ -23,20 +23,20 @@ export function Hero() {
         <div className="grid lg:grid-cols-[1fr_440px] gap-12 xl:gap-20 items-center">
           {/* Left: copy */}
           <div className="max-w-2xl">
-            <p className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.1em] uppercase text-brand mb-7">
+            <p className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.1em] uppercase text-brand mb-5 md:mb-7">
               <span className="w-2 h-2 rounded-full bg-grass animate-pulse" aria-hidden />
               {HERO.eyebrow}
             </p>
 
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-[4.25rem] xl:text-7xl font-bold text-ink leading-[0.93] tracking-tight mb-6">
+            <h1 className="font-display text-4xl sm:text-6xl lg:text-[4.25rem] xl:text-7xl font-bold text-ink leading-[0.93] tracking-tight mb-5 md:mb-6">
               {HERO.headline}
             </h1>
 
-            <p className="text-lg leading-relaxed text-n-500 mb-9 max-w-xl">
+            <p className="text-lg leading-relaxed text-n-500 mb-7 md:mb-9 max-w-xl">
               {HERO.subheadline}
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 mb-10">
+            <div className="flex flex-wrap items-center gap-3 mb-7 md:mb-10">
               <Button
                 asChild
                 size="lg"
@@ -74,7 +74,7 @@ export function Hero() {
         </div>
 
         {/* Mobile: surface below copy */}
-        <div className="lg:hidden mt-12 flex justify-center">
+        <div className="lg:hidden mt-8 flex justify-center">
           <HeroSurface />
         </div>
       </Container>
