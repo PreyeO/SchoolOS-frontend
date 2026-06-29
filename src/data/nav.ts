@@ -7,5 +7,5 @@ export const NAV_LINKS = [
   { label: "About", href: "#about" },
 ] as const;
 
-export const NAV_CTA_PRIMARY = { label: "Book a demo", href: "#demo" } as const;
+export const NAV_CTA_PRIMARY = { label: "Start free", href: "#start" } as const;
 export const NAV_CTA_SECONDARY = { label: "Log in", href: "/login" } as const;

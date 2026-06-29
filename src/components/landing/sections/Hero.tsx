@@ -65,6 +65,10 @@ export function Hero() {
                 </li>
               ))}
             </ul>
+
+            <p className="mt-5 text-sm text-n-500 font-medium">
+              {HERO.trustLine}
+            </p>
           </div>
 
           {/* Right: live product surface (desktop) */}

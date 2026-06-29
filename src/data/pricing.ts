@@ -15,6 +15,7 @@ export const PRICING_TIERS = [
       "Up to 200 active students",
     ],
     cta: { label: "Start free", href: "#start" },
+    demoLink: { label: "Book a demo instead", href: "#demo" },
     featured: false,
   },
   {
@@ -32,7 +33,8 @@ export const PRICING_TIERS = [
       "Unlimited active students",
       "Priority support",
     ],
-    cta: { label: "Book a demo", href: "#demo" },
+    cta: { label: "Start free", href: "#start" },
+    demoLink: { label: "Book a demo instead", href: "#demo" },
     featured: true,
   },
   {
@@ -49,6 +51,7 @@ export const PRICING_TIERS = [
       "SLA & phone support",
     ],
     cta: { label: "Talk to us", href: "#contact" },
+    demoLink: null,
     featured: false,
   },
 ] as const;
@@ -56,4 +59,4 @@ export const PRICING_TIERS = [
 export type PricingTier = (typeof PRICING_TIERS)[number];
 
 export const PRICING_NOTE =
-  "Prices in NGN. Billed per active student per term. No setup fees. Cancel any time.";
+  "Prices in NGN. Billed per active student per term. Active = enrolled and attending this term. No setup fees. Cancel any time.";

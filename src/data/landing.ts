@@ -4,7 +4,7 @@ export const HERO = {
   eyebrow: "School management — built for Nigeria",
   headline: "Run your whole school from one place.",
   subheadline:
-    "Compile a term's results in an afternoon. Collect fees online. Track attendance with one tap. Built for three terms, NERDC subjects, and the Nigerian school year — not adapted from abroad.",
+    "Results, fees, attendance, and parent updates — all in one place. Compile a whole term's results in an afternoon, collect fees online, and keep parents updated automatically. Online or off.",
   trustItems: [
     "Three-term calendar",
     "Paystack & Flutterwave",
@@ -12,8 +12,9 @@ export const HERO = {
     "SMS & WhatsApp-native",
     "NDPA-compliant",
   ],
-  ctaPrimary: { label: "Book a demo", href: "#demo" },
-  ctaSecondary: { label: "Start free", href: "#start" },
+  trustLine: "Built with Nigerian school owners — and we answer the phone.",
+  ctaPrimary: { label: "Start free", href: "#start" },
+  ctaSecondary: { label: "Book a demo", href: "#demo" },
 } as const;
 
 export const PAIN_RELIEF = {
@@ -25,16 +26,16 @@ export const PAIN_RELIEF = {
 } as const;
 
 export const BUILT_FOR_NIGERIA = {
-  eyebrow: "Built for Nigeria",
-  heading: "Not adapted. Not translated. Built here.",
-  body: "Most school software in Nigeria is a foreign product with a Naira sign bolted on. SchoolOS started from a blank page — for three terms, NERDC subjects, and Nigerian parents who check WhatsApp, not email.",
+  eyebrow: "FITS HOW YOUR SCHOOL RUNS",
+  heading: "Set up the way your school already works.",
+  body: "No workarounds, no bending your school to fit the software. Three terms, NERDC subjects, CA-plus-exam grading, WAEC and NECO scales — ready on day one. You set your weighting and add your logo; the rest is already in place.",
   proofPoints: [
-    { label: "Three-term academic calendar", description: "First, second, and third terms — the way Nigerian schools actually work." },
-    { label: "NERDC subject catalogue", description: "All JSS and SSS subjects by name, including vocational and elective combinations." },
-    { label: "WAEC & NECO grading scales", description: "A1–F9 grades, credit pass thresholds, and subject-level remarks, out of the box." },
-    { label: "Naira payments everywhere", description: "Paystack, Flutterwave, bank transfer, and cash all reconcile to the same ledger." },
-    { label: "Offline-first design", description: "All core workflows work without internet and sync when connectivity returns." },
-    { label: "NDPA data compliance", description: "Student data stays in Africa, encrypted at rest, with full export rights for your school." },
+    { label: "Three-term calendar", description: "Sessions, holidays, and resumption dates the way your school runs them." },
+    { label: "NERDC subjects", description: "Every JSS and SSS subject ready to assign, including vocational and elective combinations." },
+    { label: "WAEC & NECO scales", description: "A1–F9 grades, credit thresholds, and subject remarks, calculated for you." },
+    { label: "Naira payments", description: "Paystack, Flutterwave, bank transfer, and cash — all reconciling to one ledger." },
+    { label: "Offline-first", description: "Mark attendance and enter scores with no network; it all syncs when you're back online." },
+    { label: "NDPA compliance", description: "Your students' data encrypted and handled to Nigeria's data-protection standard. You own it and can export it anytime." },
   ],
 } as const;
 
@@ -55,7 +56,7 @@ export const ONBOARDING = {
     {
       number: "03",
       heading: "Train your team in an afternoon",
-      body: "Admin, teachers, and bursar each get a focused walkthrough — usually under two hours per role. Then you're on your own and we're a call away.",
+      body: "Admin, teachers, and bursar each get a focused walkthrough — usually under two hours per role. From there it runs itself — and we're a call away whenever you need us.",
     },
   ],
 } as const;
@@ -64,7 +65,10 @@ export const FINAL_CTA = {
   eyebrow: "Get started",
   heading: "Your school. Running smoothly. Starting now.",
   body: "Book a 30-minute demo and we'll show you SchoolOS running on a live school's data — not a toy demo. We'll answer every question. No commitment required.",
-  ctaPrimary: { label: "Book a demo", href: "#demo" },
-  ctaSecondary: { label: "Start free today", href: "#start" },
-  footnote: "From ₦400 per student per term. No setup fees. Cancel any time.",
+  ctaPrimary: { label: "Start free", href: "#start" },
+  ctaSecondary: { label: "Book a demo", href: "#demo" },
+  footnote: "Start free this term — no card, no setup fee, cancel anytime.",
 } as const;
+
+export const PRICING_TRUST =
+  "Try it free this term. If it doesn't save you time, walk away — and your data leaves with you.";

@@ -3,7 +3,7 @@
 export const FAQ_ITEMS = [
   {
     q: "Is our school's data safe and private?",
-    a: "Yes. Your data is encrypted in transit and at rest, stored on servers within Africa, and handled under Nigeria's Data Protection Act (NDPA). You own your data and can export everything at any time. We never sell or share your school's information with third parties.",
+    a: "Yes. Your data is encrypted in transit and at rest, and handled under Nigeria's Data Protection Act (NDPA). You own your data and can export everything at any time. We never sell or share your school's information with third parties.",
   },
   {
     q: "Does it work offline or on a poor network?",

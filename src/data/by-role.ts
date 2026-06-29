@@ -5,7 +5,7 @@ export const ROLES_DATA = [
     id: "admin",
     label: "Admin",
     heading: "Run the whole school from your dashboard.",
-    body: "One place to see every student, every result, every naira — and to make things happen.",
+    body: "One place to see every student, every result, and every naira — and to act on them.",
     features: [
       "Term planner and academic calendar",
       "All students, staff, and results in one view",

@@ -1,6 +1,7 @@
 import { Container } from "@/components/layout/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { PRICING_TIERS, PRICING_NOTE } from "@/data/pricing";
+import { PRICING_TRUST } from "@/data/landing";
 import { PricingCard } from "./PricingCard";
 
 export function PricingTeaser() {
@@ -23,7 +24,8 @@ export function PricingTeaser() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-xs text-n-400">{PRICING_NOTE}</p>
+        <p className="mt-6 text-center text-sm font-medium text-n-600">{PRICING_TRUST}</p>
+        <p className="mt-3 text-center text-xs text-n-400">{PRICING_NOTE}</p>
       </Container>
     </section>
   );

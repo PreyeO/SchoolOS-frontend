@@ -50,7 +50,7 @@ export type CapabilityWedge = (typeof CAPABILITY_WEDGES)[number];
 export const CAPABILITY_GRID = [
   { label: "Admissions", description: "Online applications and enrollment pipeline" },
   { label: "Timetable", description: "Auto-generated weekly class schedules" },
-  { label: "CBT & Exam Prep", description: "Mock exams with WAEC past question banks" },
+  { label: "CBT & Exam Prep", description: "Computer-based mock exams and practice tests" },
   { label: "Transport", description: "Bus routes and student tracking" },
   { label: "HR & Payroll", description: "Staff records, leave, and salary processing" },
   { label: "Analytics", description: "Term-over-term performance dashboards" },

@@ -109,6 +109,20 @@ export function PricingCard({ tier }: Props) {
       >
         {tier.cta.label}
       </a>
+
+      {tier.demoLink && (
+        <a
+          href={tier.demoLink.href}
+          className={cn(
+            "mt-3 block text-center text-xs transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-2",
+            tier.featured
+              ? "text-paper/50 focus-visible:outline-paper"
+              : "text-n-400 focus-visible:outline-n-400",
+          )}
+        >
+          {tier.demoLink.label}
+        </a>
+      )}
     </div>
   );
 }

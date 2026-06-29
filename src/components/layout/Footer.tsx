@@ -65,9 +65,8 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-paper/10 py-6 flex flex-col sm:flex-row justify-between gap-3 text-xs text-paper/40">
+        <div className="border-t border-paper/10 py-6 text-xs text-paper/40">
           <p>&copy; {new Date().getFullYear()} SchoolOS. All rights reserved.</p>
-          <p>Built in Nigeria for Nigerian schools.</p>
         </div>
       </Container>
     </footer>
