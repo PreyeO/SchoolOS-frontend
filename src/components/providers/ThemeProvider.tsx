@@ -1,5 +1,11 @@
 "use client";
-// Theme provider placeholder. TODO (Phase 2): wire up next-themes or equivalent.
+
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <NextThemesProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      {children}
+    </NextThemesProvider>
+  );
 }

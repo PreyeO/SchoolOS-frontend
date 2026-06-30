@@ -1,9 +1,14 @@
-// Placeholder layout for authentication routes (login, register, forgot-password).
-// TODO (Phase 2): center content, add brand mark.
+import { AuthAside } from "@/features/auth/components/auth-aside";
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen lg:grid lg:grid-cols-[480px_1fr]">
+      <AuthAside />
+      <main className="flex flex-col">{children}</main>
+    </div>
+  );
 }
