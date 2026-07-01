@@ -1,26 +1,29 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-export const metadata: Metadata = { title: "Welcome to SchoolOS" };
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { OnboardingWizard } from "@/features/onboarding/components/onboarding-wizard";
+
+export const metadata: Metadata = { title: "Set up your school — SchoolOS" };
 
 export default function OnboardingPage() {
   return (
-    <div className="flex flex-col justify-center min-h-screen lg:min-h-0 py-12 px-6 sm:px-10">
-      <div className="w-full max-w-md mx-auto">
-        <Link
-          href="/"
-          className="lg:hidden inline-block font-display text-xl font-bold text-ink tracking-tight mb-8"
-        >
-          School<span className="text-brand">OS</span>
-        </Link>
-        <h1 className="font-display text-3xl font-bold text-ink">
-          Welcome to SchoolOS
-        </h1>
-        <p className="mt-3 text-n-500 leading-relaxed">
-          Your school is set up and ready to go. The dashboard is coming in the
-          next phase.
-        </p>
+    <AuthGuard>
+      <div className="py-12 px-6 sm:px-10">
+        <div className="w-full max-w-2xl mx-auto">
+          <div className="mb-10">
+            <p className="font-mono text-[11px] tracking-[0.15em] uppercase text-n-400 mb-2">
+              Getting started
+            </p>
+            <h1 className="font-display text-3xl font-bold text-ink">
+              Let&rsquo;s finish setting up your school
+            </h1>
+            <p className="mt-2 text-n-500">
+              These steps take about 5 minutes. You can skip any step and come back later.
+            </p>
+          </div>
+          <OnboardingWizard />
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

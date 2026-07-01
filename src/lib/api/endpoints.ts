@@ -3,4 +3,12 @@ export const ENDPOINTS = {
   VERIFY_EMAIL: "/api/auth/verify-email/",
   RESEND_OTP: "/api/auth/resend-verification/",
   SCHOOL: "/api/auth/school/",
+  PATCH_SCHOOL: "/api/auth/school/",
+  SCHOOL_LOGO: "/api/auth/school/logo/",
+  SESSIONS: "/api/sessions/",
+  CLASSES: "/api/classes/",
+  CLASSES_BULK: "/api/classes/bulk/",
+  SUBJECTS_BULK: "/api/subjects/bulk/",
+  COMPLETE_ONBOARDING: "/api/onboarding/complete/",
+  SETUP_STATUS: "/api/onboarding/status/",
 } as const;
