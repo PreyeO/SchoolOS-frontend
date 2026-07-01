@@ -3,34 +3,38 @@
 import { forwardRef } from "react";
 
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 
 interface SlugFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  slug: string;
   hasError?: boolean;
 }
 
 export const SlugField = forwardRef<HTMLInputElement, SlugFieldProps>(
-  function SlugField({ slug, hasError, className, ...props }, ref) {
+  function SlugField({ hasError, className, ...props }, ref) {
     const domain = process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "schoolos.com";
-    const preview = slug.trim().length > 0 ? `${slug}.${domain}` : null;
 
     return (
-      <div className="space-y-1">
-        <Input
+      <div
+        className={cn(
+          "flex h-8 items-center rounded-lg border border-input transition-colors",
+          "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+          hasError &&
+            "border-destructive focus-within:ring-destructive/20",
+        )}
+      >
+        <input
           ref={ref}
           className={cn(
-            hasError && "border-red-500 focus-visible:ring-red-500",
-            className
+            "h-full min-w-0 flex-1 bg-transparent px-2.5 text-base outline-none",
+            "placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+            "md:text-sm",
+            className,
           )}
           aria-invalid={hasError}
           {...props}
         />
-        {preview && (
-          <p className="font-mono text-[11px] text-n-400 tracking-wide">
-            {preview}
-          </p>
-        )}
+        <span className="flex h-full shrink-0 select-none items-center whitespace-nowrap border-l border-input bg-muted/40 px-2.5 text-xs text-n-400">
+          .{domain}
+        </span>
       </div>
     );
   }

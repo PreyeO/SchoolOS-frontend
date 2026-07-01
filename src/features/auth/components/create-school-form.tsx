@@ -16,7 +16,11 @@ import { createSchoolSchema, type CreateSchoolFormValues } from "../schemas/crea
 import { useCreateSchool } from "../hooks/use-create-school";
 import type { SchoolLevel } from "../types";
 
-function toSlug(name: string) {
+function toSlug(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 2) {
+    return words.map((w) => w[0].toLowerCase()).join("").replace(/[^a-z0-9]/g, "");
+  }
   return name
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -54,7 +58,6 @@ export function CreateSchoolForm() {
   });
 
   const nameValue = useWatch({ control, name: "name" });
-  const slugValue = useWatch({ control, name: "slug" });
 
   useEffect(() => {
     if (!getValues("slug") && nameValue) setValue("slug", toSlug(nameValue));
@@ -64,19 +67,26 @@ export function CreateSchoolForm() {
     <form onSubmit={handleSubmit((v) => mutate(v))} noValidate className="space-y-8">
       <Section>
         <SectionLabel>School details</SectionLabel>
-        <FieldWrapper id="name" label="School name" error={errors.name?.message} required>
-          <Input id="name" autoComplete="organization" {...register("name")} />
-        </FieldWrapper>
-        <FieldWrapper id="slug" label="School URL" error={errors.slug?.message} required>
-          <SlugField
-            id="slug"
-            slug={slugValue ?? ""}
-            hasError={!!errors.slug}
-            placeholder="e.g. gov-college-umuahia"
-            {...register("slug")}
-          />
-        </FieldWrapper>
-        <FieldWrapper id="email" label="School email" error={errors.email?.message} required>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FieldWrapper id="name" label="School name" error={errors.name?.message} required>
+            <Input id="name" autoComplete="organization" {...register("name")} />
+          </FieldWrapper>
+          <FieldWrapper id="slug" label="School URL" error={errors.slug?.message} required>
+            <SlugField
+              id="slug"
+              hasError={!!errors.slug}
+              placeholder="e.g. gcu"
+              {...register("slug")}
+            />
+          </FieldWrapper>
+        </div>
+        <FieldWrapper
+          id="email"
+          label="School email"
+          error={errors.email?.message}
+          hint="This can be your personal email — you can update it later."
+          required
+        >
           <Input id="email" type="email" autoComplete="email" {...register("email")} />
         </FieldWrapper>
       </Section>
@@ -98,17 +108,17 @@ export function CreateSchoolForm() {
 
       <Section>
         <SectionLabel>Location</SectionLabel>
-        <FieldWrapper id="state" label="State" error={errors.state?.message} required>
-          <StateSelect hasError={!!errors.state} {...register("state")} />
-        </FieldWrapper>
         <div className="grid sm:grid-cols-2 gap-4">
+          <FieldWrapper id="state" label="State" error={errors.state?.message} required>
+            <StateSelect hasError={!!errors.state} {...register("state")} />
+          </FieldWrapper>
           <FieldWrapper id="city" label="City" error={errors.city?.message} required>
             <Input id="city" {...register("city")} />
           </FieldWrapper>
-          <FieldWrapper id="address" label="Street address" error={errors.address?.message} required>
-            <Input id="address" {...register("address")} />
-          </FieldWrapper>
         </div>
+        <FieldWrapper id="address" label="Street address" error={errors.address?.message} required>
+          <Input id="address" {...register("address")} />
+        </FieldWrapper>
       </Section>
 
       <Section>

@@ -5,6 +5,7 @@ interface FieldWrapperProps {
   id: string;
   label: string;
   error?: string;
+  hint?: string;
   required?: boolean;
   children: React.ReactNode;
   className?: string;
@@ -14,6 +15,7 @@ export function FieldWrapper({
   id,
   label,
   error,
+  hint,
   required,
   children,
   className,
@@ -29,6 +31,9 @@ export function FieldWrapper({
         )}
       </Label>
       {children}
+      {hint && !error && (
+        <p className="text-xs text-n-400">{hint}</p>
+      )}
       {error && (
         <p id={`${id}-error`} role="alert" className="text-xs text-red-600">
           {error}

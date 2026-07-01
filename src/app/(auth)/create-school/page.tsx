@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Set up your school" };
 export default function CreateSchoolPage() {
   return (
     <div className="py-12 px-6 sm:px-10">
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <div className="mb-8">
           <Link
             href="/"
