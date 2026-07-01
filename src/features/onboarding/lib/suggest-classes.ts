@@ -13,8 +13,8 @@ export function suggestClasses(levels: SchoolLevelValue[]): ClassRow[] {
   return levels.flatMap((level) =>
     LEVEL_CLASS_NAMES[level].map((name) => ({
       name,
-      section: "A",
-      max_students: 40,
+      arm: "A",
+      max_students: 30,
     })),
   );
 }

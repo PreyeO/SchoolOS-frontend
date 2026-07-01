@@ -1,11 +1,17 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getCurrentAcademicYear, TERM_COUNT_OPTIONS } from "@/data/term-defaults";
+import {
+  getCurrentAcademicYear,
+  getDefaultTerms,
+  getSessionStartYear,
+  TERM_LABELS,
+} from "@/data/term-defaults";
 
 import { academicYearSchema, type AcademicYearFormValues } from "../schemas/academic-year-schema";
 import { useCreateSession } from "../hooks/use-create-session";
@@ -22,54 +28,107 @@ interface Props {
 export function StepAcademicYear({ onNext, onBack }: Props) {
   const { mutate, isPending } = useCreateSession();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<AcademicYearFormValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<AcademicYearFormValues>({
     resolver: zodResolver(academicYearSchema),
     defaultValues: {
       name: getCurrentAcademicYear(),
-      start_date: "",
-      end_date: "",
-      term_count: 3,
+      is_current: true,
+      terms: getDefaultTerms(getSessionStartYear()),
     },
   });
 
+  // Watch the terms so the "current term" radio reflects live form state.
+  const terms = useWatch({ control, name: "terms" });
+
+  function setCurrentTerm(index: number) {
+    terms.forEach((_, i) => setValue(`terms.${i}.is_current`, i === index));
+  }
+
+  function onInvalid() {
+    const termsErr = errors.terms;
+    const msg =
+      (termsErr && "message" in termsErr && (termsErr.message as string)) ||
+      errors.name?.message ||
+      "Please check the term dates and try again.";
+    toast.error(msg);
+  }
+
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }))} noValidate className="space-y-6">
+    <form
+      onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }), onInvalid)}
+      noValidate
+      className="space-y-6"
+    >
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-ink" htmlFor="session-name">
-          Academic year / session name
+          Academic session
         </label>
-        <Input id="session-name" placeholder="e.g. 2024/2025" {...register("name")} />
+        <Input id="session-name" placeholder="e.g. 2025/2026" {...register("name")} />
+        <p className="text-xs text-n-400">One academic year, split into three terms below.</p>
         <FieldErr msg={errors.name?.message} />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-ink" htmlFor="start-date">Start date</label>
-          <Input id="start-date" type="date" {...register("start_date")} />
-          <FieldErr msg={errors.start_date?.message} />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-ink" htmlFor="end-date">End date</label>
-          <Input id="end-date" type="date" {...register("end_date")} />
-          <FieldErr msg={errors.end_date?.message} />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-ink">Term structure</p>
-        <div className="flex gap-3">
-          {TERM_COUNT_OPTIONS.map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value={opt.value}
-                {...register("term_count", { valueAsNumber: true })}
-                className="accent-brand"
-              />
-              <span className="text-sm text-ink">{opt.label}</span>
-            </label>
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-ink">Terms</p>
+        <div className="space-y-3">
+          {terms.map((term, i) => (
+            <div
+              key={term.name}
+              className="rounded-xl border border-n-200 p-3.5 space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-sm text-ink">{TERM_LABELS[term.name]}</span>
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                  <input
+                    type="radio"
+                    name="current-term"
+                    checked={term.is_current}
+                    onChange={() => setCurrentTerm(i)}
+                    className="accent-brand"
+                  />
+                  <span className={term.is_current ? "text-brand font-medium" : "text-n-400"}>
+                    Current term
+                  </span>
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-n-500" htmlFor={`term-${i}-start`}>
+                    Start date
+                  </label>
+                  <Input
+                    id={`term-${i}-start`}
+                    type="date"
+                    className="h-9"
+                    {...register(`terms.${i}.start_date`)}
+                  />
+                  <FieldErr msg={errors.terms?.[i]?.start_date?.message} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-n-500" htmlFor={`term-${i}-end`}>
+                    End date
+                  </label>
+                  <Input
+                    id={`term-${i}-end`}
+                    type="date"
+                    className="h-9"
+                    {...register(`terms.${i}.end_date`)}
+                  />
+                  <FieldErr msg={errors.terms?.[i]?.end_date?.message} />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
+        {errors.terms && "message" in errors.terms && (
+          <p className="text-xs text-red-600">{errors.terms.message as string}</p>
+        )}
       </div>
 
       <div className="flex gap-3">

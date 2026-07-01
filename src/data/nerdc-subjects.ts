@@ -67,15 +67,19 @@ export const LEVEL_SUBJECTS: Partial<Record<SchoolLevelValue, string[]>> = {
   ],
 };
 
-export function getSubjectsForLevels(levels: SchoolLevelValue[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
+export interface SuggestedSubject {
+  name: string;
+  level: SchoolLevelValue;
+  is_core: boolean;
+}
+
+// One entry per (level, subject) — subjects are tracked per level, so a subject
+// taught at several levels yields several entries. NERDC suggestions default to core.
+export function getSuggestedSubjects(levels: SchoolLevelValue[]): SuggestedSubject[] {
+  const result: SuggestedSubject[] = [];
   for (const level of levels) {
-    for (const subject of LEVEL_SUBJECTS[level] ?? []) {
-      if (!seen.has(subject)) {
-        seen.add(subject);
-        result.push(subject);
-      }
+    for (const name of LEVEL_SUBJECTS[level] ?? []) {
+      result.push({ name, level, is_core: true });
     }
   }
   return result;

@@ -1,16 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useSchoolStore } from "@/stores/school-store";
-import type { SchoolLevelValue } from "@/data/school-levels";
-import { getSubjectsForLevels } from "@/data/nerdc-subjects";
+import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
+import { getSuggestedSubjects } from "@/data/nerdc-subjects";
 
-import { subjectsSchema, type SubjectsFormValues } from "../schemas/subjects-schema";
+import { subjectsSchema } from "../schemas/subjects-schema";
 import { useCreateSubjects } from "../hooks/use-create-subjects";
+import { SubjectRow } from "./subject-row";
+import { AddSubjectControl } from "./add-subject-control";
+
+interface SubjectEntry {
+  id: string;
+  name: string;
+  level: SchoolLevelValue;
+  is_core: boolean;
+  selected: boolean;
+}
+
+let idCounter = 0;
+const nextId = () => `subj_${idCounter++}`;
 
 interface Props {
   onNext: () => void;
@@ -18,77 +30,105 @@ interface Props {
 }
 
 export function StepSubjects({ onNext, onBack }: Props) {
-  const levels = useSchoolStore((s) => s.currentSchool?.levels ?? []);
+  const levels = useSchoolStore((s) => s.currentSchool?.levels);
   const { mutate, isPending } = useCreateSubjects();
-  const allSubjects = getSubjectsForLevels(levels as SchoolLevelValue[]);
+  const schoolLevels = (levels ?? []) as SchoolLevelValue[];
 
-  const { handleSubmit, setValue, formState: { errors } } = useForm<SubjectsFormValues>({
-    resolver: zodResolver(subjectsSchema),
-    defaultValues: { subjects: allSubjects },
-  });
+  const [entries, setEntries] = useState<SubjectEntry[]>(() =>
+    getSuggestedSubjects(schoolLevels).map((s) => ({ ...s, id: nextId(), selected: true })),
+  );
 
-  const [selected, setSelected] = useState<Set<string>>(new Set(allSubjects));
+  const selectedCount = entries.filter((e) => e.selected).length;
 
-  useEffect(() => {
-    setValue("subjects", Array.from(selected));
-  }, [selected, setValue]);
+  const patch = (id: string, changes: Partial<SubjectEntry>) =>
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...changes } : e)));
 
-  function toggle(subject: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(subject)) next.delete(subject);
-      else next.add(subject);
-      return next;
-    });
+  function addSubject(name: string, addLevels: SchoolLevelValue[]): number {
+    if (!name) {
+      toast.error("Enter a subject name.");
+      return 0;
+    }
+    if (addLevels.length === 0) {
+      toast.error("Pick at least one level.");
+      return 0;
+    }
+    const fresh = addLevels
+      .filter(
+        (level) =>
+          !entries.some(
+            (e) => e.level === level && e.name.trim().toLowerCase() === name.toLowerCase(),
+          ),
+      )
+      .map((level) => ({ id: nextId(), name, level, is_core: false, selected: true }));
+    if (fresh.length === 0) {
+      toast.error(`"${name}" already exists for the selected level(s).`);
+      return 0;
+    }
+    setEntries((prev) => [...prev, ...fresh]);
+    return fresh.length;
   }
 
-  function toggleAll() {
-    if (selected.size === allSubjects.length) setSelected(new Set());
-    else setSelected(new Set(allSubjects));
+  function submit() {
+    const subjects = entries
+      .filter((e) => e.selected)
+      .map((e) => ({ name: e.name.trim(), level: e.level, is_core: e.is_core }));
+    const parsed = subjectsSchema.safeParse({ subjects });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please review your subjects.");
+      return;
+    }
+    mutate({ subjects: parsed.data.subjects }, { onSuccess: onNext });
   }
+
+  const groups = SCHOOL_LEVELS.filter((l) => schoolLevels.includes(l.value)).map((l) => ({
+    level: l,
+    items: entries.filter((e) => e.level === l.value),
+  }));
 
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }))} noValidate className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-n-500">
-          {selected.size} of {allSubjects.length} selected
-        </p>
-        <button type="button" className="text-sm text-brand underline-offset-2 hover:underline" onClick={toggleAll}>
-          {selected.size === allSubjects.length ? "Deselect all" : "Select all"}
-        </button>
-      </div>
+    <div className="space-y-5">
+      <p className="text-sm text-n-500">
+        Pre-selected NERDC subjects per level. Uncheck to skip, rename inline, or add your own.
+        <span className="ml-1 text-ink font-medium">{selectedCount} selected.</span>
+      </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
-        {allSubjects.map((subject) => (
-          <label
-            key={subject}
-            className="flex items-center gap-2.5 rounded-lg border border-n-200 px-3 py-2 cursor-pointer hover:bg-n-50 transition-colors"
-          >
-            <input
-              type="checkbox"
-              className="accent-brand"
-              checked={selected.has(subject)}
-              onChange={() => toggle(subject)}
-            />
-            <span className="text-sm text-ink leading-tight">{subject}</span>
-          </label>
+      <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
+        {groups.map(({ level, items }) => (
+          <div key={level.value} className="space-y-2">
+            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-n-400">
+              {level.label}
+            </p>
+            {items.length === 0 ? (
+              <p className="text-xs text-n-400 italic">No subjects yet — add one below.</p>
+            ) : (
+              items.map((entry) => (
+                <SubjectRow
+                  key={entry.id}
+                  entry={entry}
+                  onToggle={() => patch(entry.id, { selected: !entry.selected })}
+                  onRename={(name) => patch(entry.id, { name })}
+                  onToggleCore={() => patch(entry.id, { is_core: !entry.is_core })}
+                  onRemove={() => setEntries((prev) => prev.filter((e) => e.id !== entry.id))}
+                />
+              ))
+            )}
+          </div>
         ))}
       </div>
 
-      {errors.subjects && (
-        <p className="text-xs text-red-600">{errors.subjects.message}</p>
-      )}
+      <AddSubjectControl schoolLevels={schoolLevels} onAdd={addSubject} />
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-1">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
         <Button
-          type="submit"
+          type="button"
+          onClick={submit}
           disabled={isPending}
           className="flex-1 bg-amber hover:bg-amber/90 text-ink font-semibold"
         >
-          {isPending ? "Saving…" : `Save ${selected.size} subject${selected.size !== 1 ? "s" : ""}`}
+          {isPending ? "Saving…" : `Save ${selectedCount} subject${selectedCount !== 1 ? "s" : ""}`}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

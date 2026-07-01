@@ -7,15 +7,14 @@ import { useSchoolStore } from "@/stores/school-store";
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
 import { createSubjects } from "../api/onboarding-api";
-import type { SubjectsFormValues } from "../schemas/subjects-schema";
+import type { CreateSubjectsPayload } from "../types";
 
 export function useCreateSubjects() {
   const updateSubjectCount = useSchoolStore((s) => s.updateSubjectCount);
   const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   return useMutation({
-    mutationFn: (values: SubjectsFormValues) =>
-      createSubjects({ subjects: values.subjects }),
+    mutationFn: (payload: CreateSubjectsPayload) => createSubjects(payload),
     onSuccess: (data) => {
       updateSubjectCount(data.count);
       markSetupStep("subjects");

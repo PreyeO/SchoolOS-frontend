@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth-store";
+import { useSchoolStore } from "@/stores/school-store";
 
 import { signupSchema, type SignupFormValues } from "../schemas/signup-schema";
 import { useSignup } from "../hooks/use-signup";
@@ -13,6 +16,15 @@ import { PasswordInput } from "./password-input";
 
 export function SignupForm() {
   const { mutate, isPending } = useSignup();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const clearSchool = useSchoolStore((s) => s.clearSchool);
+
+  // Wipe any leftover session/school state so a previous account can't
+  // interfere with creating a new one (and no stale token lingers).
+  useEffect(() => {
+    clearAuth();
+    clearSchool();
+  }, [clearAuth, clearSchool]);
 
   const {
     register,
@@ -21,6 +33,8 @@ export function SignupForm() {
   } = useForm<SignupFormValues>({ resolver: zodResolver(signupSchema) });
 
   function onSubmit(values: SignupFormValues) {
+    clearAuth();
+    clearSchool();
     mutate(values);
   }
 

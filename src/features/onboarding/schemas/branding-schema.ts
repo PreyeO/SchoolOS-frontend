@@ -2,7 +2,11 @@ import { z } from "zod";
 
 export const brandingSchema = z.object({
   primary_color: z.string().min(1, "Pick a colour"),
-  logo: z.instanceof(File).nullable().optional(),
+  // logo validated by the uploader component; z.any avoids z.instanceof(File) SSR issues
+  logo: z.any().optional(),
 });
 
-export type BrandingFormValues = z.infer<typeof brandingSchema>;
+export interface BrandingFormValues {
+  primary_color: string;
+  logo?: File | null;
+}

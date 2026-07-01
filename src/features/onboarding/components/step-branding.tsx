@@ -2,6 +2,7 @@
 
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
@@ -29,8 +30,21 @@ export function StepBranding({ onNext, onSkip }: Props) {
     },
   });
 
+  function onInvalid() {
+    const first = Object.values(errors)[0];
+    const msg =
+      first && typeof first === "object" && "message" in first
+        ? String(first.message)
+        : "Please fill in all required fields.";
+    toast.error(msg);
+  }
+
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }))} noValidate className="space-y-8">
+    <form
+      onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }), onInvalid)}
+      noValidate
+      className="space-y-8"
+    >
       <div className="space-y-2">
         <p className="font-medium text-ink">School logo</p>
         <p className="text-sm text-n-500">A square image works best (PNG or JPG, at least 200×200 px).</p>
@@ -38,7 +52,7 @@ export function StepBranding({ onNext, onSkip }: Props) {
           name="logo"
           control={control}
           render={({ field }) => (
-            <LogoUploader value={field.value} onChange={field.onChange} />
+            <LogoUploader value={field.value as File | null} onChange={field.onChange} />
           )}
         />
       </div>
@@ -50,7 +64,7 @@ export function StepBranding({ onNext, onSkip }: Props) {
           name="primary_color"
           control={control}
           render={({ field }) => (
-            <ColorPicker value={field.value} onChange={field.onChange} />
+            <ColorPicker value={field.value as string} onChange={field.onChange} />
           )}
         />
         {errors.primary_color && (

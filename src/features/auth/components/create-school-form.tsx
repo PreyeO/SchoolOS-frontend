@@ -2,7 +2,7 @@
 
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,18 +50,21 @@ export function CreateSchoolForm() {
     handleSubmit,
     control,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm<CreateSchoolFormValues>({
     resolver: zodResolver(createSchoolSchema),
     defaultValues: { levels: [], email: email ?? "", phone_number: "+234" },
   });
 
+  // Auto-derive the slug from the name until the user edits the slug themselves.
+  const slugEdited = useRef(false);
   const nameValue = useWatch({ control, name: "name" });
 
   useEffect(() => {
-    if (!getValues("slug") && nameValue) setValue("slug", toSlug(nameValue));
-  }, [nameValue, getValues, setValue]);
+    if (!slugEdited.current) setValue("slug", toSlug(nameValue ?? ""));
+  }, [nameValue, setValue]);
+
+  const slugField = register("slug");
 
   return (
     <form onSubmit={handleSubmit((v) => mutate(v))} noValidate className="space-y-8">
@@ -76,7 +79,11 @@ export function CreateSchoolForm() {
               id="slug"
               hasError={!!errors.slug}
               placeholder="e.g. gcu"
-              {...register("slug")}
+              {...slugField}
+              onChange={(e) => {
+                slugEdited.current = true;
+                slugField.onChange(e);
+              }}
             />
           </FieldWrapper>
         </div>

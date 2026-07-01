@@ -17,9 +17,8 @@ export function useCreateSession() {
     mutationFn: (values: AcademicYearFormValues) =>
       createSession({
         name: values.name,
-        start_date: values.start_date,
-        end_date: values.end_date,
-        term_count: values.term_count,
+        is_current: values.is_current,
+        terms: values.terms,
       }),
     onSuccess: (data) => {
       updateSession(data.name);

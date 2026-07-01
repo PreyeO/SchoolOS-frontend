@@ -1,30 +1,37 @@
-export const TERM_COUNT_OPTIONS = [
-  { value: 3, label: "3 Terms (recommended)" },
-  { value: 2, label: "2 Semesters" },
-] as const;
+export const TERM_CODES = ["FIRST", "SECOND", "THIRD"] as const;
+export type TermCode = (typeof TERM_CODES)[number];
 
-export type TermCount = 2 | 3;
+export const TERM_LABELS: Record<TermCode, string> = {
+  FIRST: "First Term",
+  SECOND: "Second Term",
+  THIRD: "Third Term",
+};
 
-export function getDefaultTermDates(
-  startYear: number,
-  count: TermCount,
-): { name: string; start: string; end: string }[] {
+export interface DefaultTerm {
+  name: TermCode;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+}
+
+// Sensible Nigerian academic-calendar defaults. The user can edit every date.
+export function getDefaultTerms(startYear: number): DefaultTerm[] {
   const y = startYear;
-  if (count === 3) {
-    return [
-      { name: "First Term", start: `${y}-09-01`, end: `${y}-12-15` },
-      { name: "Second Term", start: `${y + 1}-01-09`, end: `${y + 1}-03-28` },
-      { name: "Third Term", start: `${y + 1}-04-14`, end: `${y + 1}-07-18` },
-    ];
-  }
   return [
-    { name: "First Semester", start: `${y}-09-01`, end: `${y + 1}-01-31` },
-    { name: "Second Semester", start: `${y + 1}-02-01`, end: `${y + 1}-06-30` },
+    { name: "FIRST", start_date: `${y}-09-16`, end_date: `${y}-12-13`, is_current: true },
+    { name: "SECOND", start_date: `${y + 1}-01-06`, end_date: `${y + 1}-04-04`, is_current: false },
+    { name: "THIRD", start_date: `${y + 1}-04-28`, end_date: `${y + 1}-07-25`, is_current: false },
   ];
 }
 
-export function getCurrentAcademicYear(): string {
+// The calendar year an academic session begins in (Sept–Dec → this year, else last year).
+export function getSessionStartYear(): number {
   const now = new Date();
   const yr = now.getFullYear();
-  return now.getMonth() >= 8 ? `${yr}/${yr + 1}` : `${yr - 1}/${yr}`;
+  return now.getMonth() >= 8 ? yr : yr - 1;
+}
+
+export function getCurrentAcademicYear(): string {
+  const startYear = getSessionStartYear();
+  return `${startYear}/${startYear + 1}`;
 }

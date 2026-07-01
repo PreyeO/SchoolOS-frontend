@@ -9,8 +9,24 @@ export const apiClient = axios.create({
   timeout: 15000,
 });
 
+// Public endpoints must never receive an Authorization header. A stale token in
+// the store would otherwise be attached to signup/login and reject with 401.
+const PUBLIC_PATHS = [
+  "/api/users/", // signup
+  "/api/auth/verify-email/",
+  "/api/auth/resend-verification/",
+  "/api/auth/login/", // reserved for when login is wired up
+];
+
+function isPublicPath(url?: string): boolean {
+  if (!url) return false;
+  return PUBLIC_PATHS.some((path) => url.includes(path));
+}
+
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().tokens?.access;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token && !isPublicPath(config.url)) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });

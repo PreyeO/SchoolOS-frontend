@@ -1,86 +1,89 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useSchoolStore } from "@/stores/school-store";
 import type { SchoolLevelValue } from "@/data/school-levels";
 
-import { classesSchema, type ClassesFormValues } from "../schemas/classes-schema";
+import { classesSchema, type ClassesFormValues, type ClassRowValues } from "../schemas/classes-schema";
 import { useCreateClasses } from "../hooks/use-create-classes";
 import { suggestClasses } from "../lib/suggest-classes";
+import { nextArm } from "../lib/arm-utils";
+import { ClassGroup, type ClassGroupData } from "./class-group";
 
 interface Props {
   onNext: () => void;
   onBack: () => void;
 }
 
+// Contiguous runs of rows that share a class name read as one block.
+function buildGroups(rows: Pick<ClassRowValues, "name">[]): ClassGroupData[] {
+  const groups: ClassGroupData[] = [];
+  rows.forEach((row, i) => {
+    const last = groups[groups.length - 1];
+    if (last && last.name === row.name) last.indices.push(i);
+    else groups.push({ name: row.name, indices: [i] });
+  });
+  return groups;
+}
+
 export function StepClasses({ onNext, onBack }: Props) {
-  const levels = useSchoolStore((s) => s.currentSchool?.levels ?? []);
+  // Read the stored levels reference directly (no `?? []` — that would create a
+  // new array every render). Suggested classes are seeded once via defaultValues.
+  const levels = useSchoolStore((s) => s.currentSchool?.levels);
   const { mutate, isPending } = useCreateClasses();
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<ClassesFormValues>({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<ClassesFormValues>({
     resolver: zodResolver(classesSchema),
-    defaultValues: { classes: [] },
+    defaultValues: { classes: suggestClasses((levels ?? []) as SchoolLevelValue[]) },
   });
 
-  const { fields, append, remove, replace } = useFieldArray({ control, name: "classes" });
-
-  useEffect(() => {
-    const suggested = suggestClasses(levels as SchoolLevelValue[]);
-    if (suggested.length > 0) replace(suggested);
-  }, [levels, replace]);
+  const { fields, append, insert, remove } = useFieldArray({ control, name: "classes" });
+  const watched = useWatch({ control, name: "classes" });
+  const rows = (watched ?? fields) as ClassRowValues[];
+  const groups = buildGroups(rows);
 
   const rootError = errors.classes?.root?.message ?? (errors.classes?.message as string | undefined);
 
+  function addArm(group: ClassGroupData) {
+    const lastIdx = group.indices[group.indices.length - 1];
+    const arms = group.indices.map((i) => rows[i]?.arm ?? "");
+    const capacity = rows[group.indices[0]]?.max_students ?? 30;
+    insert(lastIdx + 1, { name: group.name, arm: nextArm(arms), max_students: capacity });
+  }
+
+  function onInvalid() {
+    toast.error(rootError ?? "Check that each class has a name and no arm is duplicated.");
+  }
+
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }))} noValidate className="space-y-4">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-n-200 text-n-400">
-              <th className="pb-2 text-left font-medium">Class name</th>
-              <th className="pb-2 pl-3 text-left font-medium w-20">Section</th>
-              <th className="pb-2 pl-3 text-left font-medium w-28">Max students</th>
-              <th className="w-10" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-n-100">
-            {fields.map((field, i) => (
-              <tr key={field.id}>
-                <td className="py-2 pr-3">
-                  <Input className="h-8 text-sm" {...register(`classes.${i}.name`)} />
-                </td>
-                <td className="py-2 px-3">
-                  <Input className="h-8 text-sm w-16" maxLength={3} {...register(`classes.${i}.section`)} />
-                </td>
-                <td className="py-2 px-3">
-                  <Input
-                    className="h-8 text-sm w-24"
-                    type="number"
-                    min={1}
-                    {...register(`classes.${i}.max_students`, { valueAsNumber: true })}
-                  />
-                </td>
-                <td className="py-2 pl-2">
-                  <button
-                    type="button"
-                    onClick={() => remove(i)}
-                    className="text-n-400 hover:text-clay transition-colors"
-                    aria-label="Remove row"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <form onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }), onInvalid)} noValidate className="space-y-4">
+      <p className="text-sm text-n-500">
+        Each row is one class and arm, e.g. <span className="text-ink font-medium">Primary 1 · Arm A · 30</span>.
+        Add more arms only where you need parallel classes.
+      </p>
+
+      <div className="space-y-3">
+        {groups.map((group) => (
+          <ClassGroup
+            key={fields[group.indices[0]]?.id ?? group.name}
+            group={group}
+            register={register}
+            setValue={setValue}
+            errors={errors}
+            onAddArm={() => addArm(group)}
+            onRemoveArm={remove}
+          />
+        ))}
       </div>
+
+      <p className="text-xs text-n-400">
+        <span className="font-medium text-n-500">Arm:</span> parallel classes, e.g. A, B, C. Most schools start with just A.
+      </p>
 
       {rootError && <p className="text-xs text-red-600">{rootError}</p>}
 
@@ -89,7 +92,7 @@ export function StepClasses({ onNext, onBack }: Props) {
         variant="ghost"
         size="sm"
         className="text-brand"
-        onClick={() => append({ name: "", section: "A", max_students: 40 })}
+        onClick={() => append({ name: "", arm: "A", max_students: 30 })}
       >
         <Plus className="size-4 mr-1" /> Add class
       </Button>
@@ -101,7 +104,7 @@ export function StepClasses({ onNext, onBack }: Props) {
           disabled={isPending}
           className="flex-1 bg-amber hover:bg-amber/90 text-ink font-semibold"
         >
-          {isPending ? "Saving…" : `Save ${fields.length} class${fields.length !== 1 ? "es" : ""}`}
+          {isPending ? "Saving…" : `Save ${rows.length} class${rows.length !== 1 ? "es" : ""}`}
         </Button>
       </div>
     </form>

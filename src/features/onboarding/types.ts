@@ -8,22 +8,31 @@ export interface BrandingResponse {
   logo_url: string | null;
 }
 
-export interface AcademicSessionPayload {
-  name: string;
+export type TermCode = "FIRST" | "SECOND" | "THIRD";
+
+export interface SessionTermPayload {
+  name: TermCode;
   start_date: string;
   end_date: string;
-  term_count: 2 | 3;
+  is_current: boolean;
+}
+
+export interface AcademicSessionPayload {
+  name: string;
+  is_current: boolean;
+  terms: SessionTermPayload[];
 }
 
 export interface AcademicSessionResponse {
   id: string;
   name: string;
-  term_count: 2 | 3;
+  is_current: boolean;
+  terms: (SessionTermPayload & { id: string })[];
 }
 
 export interface ClassRow {
   name: string;
-  section: string;
+  arm: string;
   max_students: number;
 }
 
@@ -35,8 +44,14 @@ export interface CreateClassesResponse {
   count: number;
 }
 
+export interface SubjectPayload {
+  name: string;
+  level: string;
+  is_core: boolean;
+}
+
 export interface CreateSubjectsPayload {
-  subjects: string[];
+  subjects: SubjectPayload[];
 }
 
 export interface CreateSubjectsResponse {

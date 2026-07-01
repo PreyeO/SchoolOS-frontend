@@ -31,7 +31,8 @@ export async function createSession(
   return {
     id: `sess_${Date.now()}`,
     name: payload.name,
-    term_count: payload.term_count,
+    is_current: payload.is_current,
+    terms: payload.terms.map((t, i) => ({ ...t, id: `term_${i + 1}` })),
   };
 }
 
