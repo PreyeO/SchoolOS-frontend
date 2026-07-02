@@ -6,6 +6,7 @@ const ALL_PERSONAS: Persona[] = ["admin", "teacher", "parent", "student", "bursa
 
 export const overviewGroup: NavGroup = {
   label: "Overview",
+  icon: LayoutDashboard,
   items: [
     {
       label: "Dashboard",

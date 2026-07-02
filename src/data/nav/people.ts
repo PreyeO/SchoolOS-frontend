@@ -1,9 +1,10 @@
-import { Users, Briefcase, Users2, UserPlus } from "lucide-react";
+import { UsersRound, Users, Briefcase, Users2, UserPlus } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
 
 export const peopleGroup: NavGroup = {
   label: "People",
+  icon: UsersRound,
   items: [
     adminItem({
       label: "Students",

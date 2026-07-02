@@ -1,4 +1,5 @@
 import {
+  Wrench,
   Library,
   Bus,
   BedDouble,
@@ -13,6 +14,7 @@ import { adminItem, type NavGroup } from "./types";
 
 export const operationsGroup: NavGroup = {
   label: "Operations",
+  icon: Wrench,
   items: [
     adminItem({
       label: "Library",

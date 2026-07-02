@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { getNavItemByHref } from "@/data/navigation";
 import { useSchoolStore } from "@/stores/school-store";
 import { useNavGroups } from "../hooks/use-nav-groups";
+import { useSidebarAccordion } from "../hooks/use-sidebar-accordion";
 import { SidebarNavGroup } from "./sidebar-nav-group";
 import { SchoolLogo } from "./school-logo";
 import { TopbarSearch } from "./topbar-search";
@@ -22,6 +23,7 @@ export function AppTopbar() {
   const pathname = usePathname();
   const school = useSchoolStore((s) => s.currentSchool);
   const navGroups = useNavGroups();
+  const { openGroup, toggleGroup } = useSidebarAccordion(navGroups, pathname);
 
   const pageTitle = getNavItemByHref(pathname)?.label ?? "Dashboard";
 
@@ -52,6 +54,8 @@ export function AppTopbar() {
                 group={group}
                 pathname={pathname}
                 collapsed={false}
+                isOpen={openGroup === group.label}
+                onToggle={() => toggleGroup(group.label)}
                 onNavigate={() => setOpen(false)}
               />
             ))}

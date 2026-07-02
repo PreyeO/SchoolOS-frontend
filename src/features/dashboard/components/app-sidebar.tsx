@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSchoolStore } from "@/stores/school-store";
 import { useTrialStatus } from "../hooks/use-overview-stats";
 import { useNavGroups } from "../hooks/use-nav-groups";
+import { useSidebarAccordion } from "../hooks/use-sidebar-accordion";
 import { SidebarNavGroup } from "./sidebar-nav-group";
 import { SchoolLogo } from "./school-logo";
 
@@ -20,6 +21,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
   const pathname = usePathname();
   const school = useSchoolStore((s) => s.currentSchool);
   const navGroups = useNavGroups();
+  const { openGroup, toggleGroup } = useSidebarAccordion(navGroups, pathname);
   const { data: trial } = useTrialStatus();
 
   return (
@@ -41,7 +43,14 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
 
       <nav className="flex-1 overflow-y-auto px-2 py-2">
         {navGroups.map((group) => (
-          <SidebarNavGroup key={group.label} group={group} pathname={pathname} collapsed={collapsed} />
+          <SidebarNavGroup
+            key={group.label}
+            group={group}
+            pathname={pathname}
+            collapsed={collapsed}
+            isOpen={openGroup === group.label}
+            onToggle={() => toggleGroup(group.label)}
+          />
         ))}
       </nav>
 

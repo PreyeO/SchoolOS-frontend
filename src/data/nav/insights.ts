@@ -1,9 +1,10 @@
-import { BarChart3, Landmark } from "lucide-react";
+import { LineChart, BarChart3, Landmark } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
 
 export const insightsGroup: NavGroup = {
   label: "Insights",
+  icon: LineChart,
   items: [
     adminItem({
       label: "Analytics",

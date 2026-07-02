@@ -1,36 +1,68 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import type { NavGroup } from "@/data/navigation";
+import { isNavActive } from "../lib/is-nav-active";
 import { SidebarNavItem } from "./sidebar-nav-item";
+import { SidebarGroupHeader } from "./sidebar-group-header";
+import { SidebarGroupFlyout } from "./sidebar-group-flyout";
 
 interface Props {
   group: NavGroup;
   pathname: string;
   collapsed: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
   onNavigate?: () => void;
 }
 
-function isActive(href: string, pathname: string): boolean {
-  return href === "/dashboard" ? pathname === href : pathname.startsWith(href);
-}
+export function SidebarNavGroup({ group, pathname, collapsed, isOpen, onToggle, onNavigate }: Props) {
+  const hasActiveChild = group.items.some((item) => isNavActive(item.href, pathname));
 
-export function SidebarNavGroup({ group, pathname, collapsed, onNavigate }: Props) {
+  // Single-item groups (Overview) are just a link — no accordion needed.
+  if (group.items.length <= 1) {
+    return (
+      <div className="space-y-0.5">
+        {group.items.map((item) => (
+          <SidebarNavItem
+            key={item.href}
+            item={item}
+            active={isNavActive(item.href, pathname)}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (collapsed) {
+    return <SidebarGroupFlyout group={group} pathname={pathname} hasActiveChild={hasActiveChild} onNavigate={onNavigate} />;
+  }
+
   return (
     <div className="space-y-0.5">
-      {!collapsed && (
-        <p className="px-2.5 pb-1.5 pt-3 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-foreground/35">
-          {group.label}
-        </p>
-      )}
-      {group.items.map((item) => (
-        <SidebarNavItem
-          key={item.href}
-          item={item}
-          active={isActive(item.href, pathname)}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-      ))}
+      <SidebarGroupHeader group={group} isOpen={isOpen} hasActiveChild={hasActiveChild} onToggle={onToggle} />
+      <div
+        className={cn(
+          "grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out",
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="space-y-0.5 pb-1">
+            {group.items.map((item) => (
+              <SidebarNavItem
+                key={item.href}
+                item={item}
+                active={isNavActive(item.href, pathname)}
+                collapsed={false}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

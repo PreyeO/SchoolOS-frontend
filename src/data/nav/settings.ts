@@ -1,4 +1,5 @@
 import {
+  Settings,
   Building2,
   CalendarRange,
   SlidersHorizontal,
@@ -14,6 +15,7 @@ import { adminItem, type NavGroup } from "./types";
 
 export const settingsGroup: NavGroup = {
   label: "Settings",
+  icon: Settings,
   items: [
     adminItem({
       label: "School Profile & Branding",

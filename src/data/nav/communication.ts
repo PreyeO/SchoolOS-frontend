@@ -1,9 +1,10 @@
-import { Megaphone, MessageSquare, MessageCircle, CalendarDays } from "lucide-react";
+import { Radio, Megaphone, MessageSquare, MessageCircle, CalendarDays } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
 
 export const communicationGroup: NavGroup = {
   label: "Communication",
+  icon: Radio,
   items: [
     adminItem({
       label: "Announcements",

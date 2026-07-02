@@ -1,9 +1,10 @@
-import { Receipt, CreditCard, Wallet, Banknote, PieChart } from "lucide-react";
+import { CircleDollarSign, Receipt, CreditCard, Wallet, Banknote, PieChart } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
 
 export const financeGroup: NavGroup = {
   label: "Finance",
+  icon: CircleDollarSign,
   items: [
     adminItem({
       label: "Fees & Invoices",

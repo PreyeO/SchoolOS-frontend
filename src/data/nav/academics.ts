@@ -1,4 +1,5 @@
 import {
+  BookOpenCheck,
   LayoutGrid,
   BookOpen,
   CalendarClock,
@@ -14,6 +15,7 @@ import { adminItem, type NavGroup } from "./types";
 
 export const academicsGroup: NavGroup = {
   label: "Academics",
+  icon: BookOpenCheck,
   items: [
     adminItem({
       label: "Classes & Arms",

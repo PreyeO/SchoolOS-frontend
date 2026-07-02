@@ -15,6 +15,9 @@ export interface NavItem {
 
 export interface NavGroup {
   label: string;
+  // Used as the accordion header icon (and the collapsed-rail flyout trigger)
+  // for groups with more than one item. Single-item groups render flat.
+  icon: LucideIcon;
   items: NavItem[];
 }
 
