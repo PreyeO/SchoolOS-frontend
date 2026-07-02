@@ -1,0 +1,73 @@
+import {
+  Building2,
+  CalendarRange,
+  SlidersHorizontal,
+  Coins,
+  Plug,
+  ShieldCheck,
+  FileStack,
+  BadgeDollarSign,
+  Lock,
+} from "lucide-react";
+
+import { adminItem, type NavGroup } from "./types";
+
+export const settingsGroup: NavGroup = {
+  label: "Settings",
+  items: [
+    adminItem({
+      label: "School Profile & Branding",
+      href: "/settings/school",
+      icon: Building2,
+      description: "Update your school's details, logo, and brand colors.",
+    }),
+    adminItem({
+      label: "Sessions & Terms",
+      href: "/settings/sessions",
+      icon: CalendarRange,
+      description: "Manage academic sessions, terms, and their start and end dates.",
+    }),
+    adminItem({
+      label: "Grading Configuration",
+      href: "/settings/grading",
+      icon: SlidersHorizontal,
+      description: "Define grade boundaries, remarks, and how scores are computed.",
+    }),
+    adminItem({
+      label: "Fee Structure",
+      href: "/settings/fees",
+      icon: Coins,
+      description: "Configure fee items, amounts, and class-based fee plans.",
+    }),
+    adminItem({
+      label: "Payment Integrations",
+      href: "/settings/payments",
+      icon: Plug,
+      description: "Connect payment gateways to accept fees online.",
+    }),
+    adminItem({
+      label: "Roles & Permissions",
+      href: "/settings/roles",
+      icon: ShieldCheck,
+      description: "Create custom roles and control what each staff member can access.",
+    }),
+    adminItem({
+      label: "Report Card Templates",
+      href: "/settings/report-cards",
+      icon: FileStack,
+      description: "Design and customize the layout of your school's report cards.",
+    }),
+    adminItem({
+      label: "Subscription & Billing",
+      href: "/settings/subscription",
+      icon: BadgeDollarSign,
+      description: "Manage your SchoolOS plan, billing details, and invoices.",
+    }),
+    adminItem({
+      label: "Data & Privacy (NDPA)",
+      href: "/settings/privacy",
+      icon: Lock,
+      description: "Manage data retention, exports, and NDPA compliance settings.",
+    }),
+  ],
+};

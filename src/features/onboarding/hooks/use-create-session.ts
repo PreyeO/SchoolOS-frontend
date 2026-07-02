@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { useSchoolStore } from "@/stores/school-store";
 import { getErrorMessage } from "@/lib/api/get-error-message";
+import { TERM_LABELS } from "@/data/term-defaults";
 
 import { createSession } from "../api/onboarding-api";
 import type { AcademicYearFormValues } from "../schemas/academic-year-schema";
@@ -20,8 +21,9 @@ export function useCreateSession() {
         is_current: values.is_current,
         terms: values.terms,
       }),
-    onSuccess: (data) => {
-      updateSession(data.name);
+    onSuccess: (data, variables) => {
+      const currentTerm = variables.terms.find((t) => t.is_current);
+      updateSession(data.name, currentTerm ? TERM_LABELS[currentTerm.name] : null);
       markSetupStep("academic_year");
     },
     onError: (error) => {

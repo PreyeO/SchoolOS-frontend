@@ -63,10 +63,16 @@
   --muted:                #14342c;
   --muted-foreground:     var(--n-300);
   --border:               rgba(246,247,243,0.12);
-  --primary:              var(--amber);
+  --primary:              var(--shell-accent, var(--amber));
   --primary-foreground:   var(--ink);
   color: var(--paper);
   background-color: var(--ink);
+}
+
+/* Dashboard shell only: lets a school's brand color drive --primary without
+   affecting marketing/auth pages. Set --shell-accent on the shell root. */
+[data-dashboard-shell] {
+  --primary: var(--shell-accent, var(--brand));
 }
 
 [data-surface="brand"] {

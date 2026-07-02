@@ -1,90 +1,74 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Menu,
-  LogOut,
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  CreditCard,
-  Receipt,
-  FileText,
-} from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuthStore } from "@/stores/auth-store";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { getNavItemByHref } from "@/data/navigation";
 import { useSchoolStore } from "@/stores/school-store";
-import { cn } from "@/lib/utils";
-
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/students", label: "Students", icon: Users },
-  { href: "/staff", label: "Staff", icon: Briefcase },
-  { href: "/fees", label: "Fees", icon: CreditCard },
-  { href: "/payments", label: "Payments", icon: Receipt },
-  { href: "/report-card", label: "Report Cards", icon: FileText },
-];
+import { useNavGroups } from "../hooks/use-nav-groups";
+import { SidebarNavGroup } from "./sidebar-nav-group";
+import { SchoolLogo } from "./school-logo";
+import { TopbarSearch } from "./topbar-search";
+import { TermChip } from "./term-chip";
+import { NotificationBell } from "./notification-bell";
+import { SchoolSwitcher } from "./school-switcher";
+import { UserMenu } from "./user-menu";
 
 export function AppTopbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const school = useSchoolStore((s) => s.currentSchool);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const clearSchool = useSchoolStore((s) => s.clearSchool);
+  const navGroups = useNavGroups();
 
-  function handleLogout() {
-    clearAuth();
-    clearSchool();
-    window.location.href = "/login";
-  }
+  const pageTitle = getNavItemByHref(pathname)?.label ?? "Dashboard";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-n-200 bg-white px-4 lg:px-6 sticky top-0 z-20">
-      <div className="flex items-center gap-3">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
-              <Menu className="size-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-56 p-0">
-            <div className="flex h-14 items-center px-4 border-b border-n-200">
-              <span className="font-display font-semibold text-sm text-ink truncate">
-                {school?.name ?? "SchoolOS"}
-              </span>
-            </div>
-            <nav className="px-2 py-4 space-y-0.5">
-              {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      active ? "bg-brand/10 text-brand" : "text-n-500 hover:bg-n-50 hover:text-ink",
-                    )}
-                  >
-                    <Icon className="size-4 shrink-0" />
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <span className="hidden lg:block font-display font-semibold text-sm text-n-400">
-          {school?.name ?? "SchoolOS"}
-        </span>
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 lg:px-6">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          aria-label="Open menu"
+          onClick={() => setOpen(true)}
+        >
+          <Menu className="size-5" />
+        </Button>
+        <SheetContent side="left" data-surface="ink" className="w-72 p-0 border-none">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <div className="flex h-14 items-center gap-2.5 px-4 border-b border-border">
+            <SchoolLogo school={school} className="size-7" />
+            <span className="font-display font-semibold text-sm text-foreground truncate">
+              {school?.name ?? "SchoolOS"}
+            </span>
+          </div>
+          <nav className="flex-1 overflow-y-auto px-2 py-2">
+            {navGroups.map((group) => (
+              <SidebarNavGroup
+                key={group.label}
+                group={group}
+                pathname={pathname}
+                collapsed={false}
+                onNavigate={() => setOpen(false)}
+              />
+            ))}
+          </nav>
+        </SheetContent>
+      </Sheet>
+
+      <h1 className="font-display font-semibold text-base text-ink truncate">{pageTitle}</h1>
+
+      <TopbarSearch />
+
+      <div className="ml-auto flex items-center gap-2">
+        <TermChip />
+        <NotificationBell />
+        <SchoolSwitcher />
+        <UserMenu />
       </div>
-      <Button variant="ghost" size="sm" onClick={handleLogout} className="text-n-500 gap-1.5">
-        <LogOut className="size-4" /> Log out
-      </Button>
     </header>
   );
 }

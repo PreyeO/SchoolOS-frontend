@@ -15,6 +15,7 @@ export interface CurrentSchool {
   primaryColor: string;
   logoUrl: string | null;
   sessionName: string | null;
+  currentTermName: string | null;
   classCount: number;
   subjectCount: number;
 }
@@ -29,9 +30,9 @@ export interface SetupStatus {
 interface SchoolState {
   currentSchool: CurrentSchool | null;
   setupStatus: SetupStatus;
-  setCurrentSchool: (school: Omit<CurrentSchool, "primaryColor" | "logoUrl" | "sessionName" | "classCount" | "subjectCount">) => void;
+  setCurrentSchool: (school: Omit<CurrentSchool, "primaryColor" | "logoUrl" | "sessionName" | "currentTermName" | "classCount" | "subjectCount">) => void;
   updateBranding: (branding: { primaryColor: string; logoUrl: string | null }) => void;
-  updateSession: (sessionName: string) => void;
+  updateSession: (sessionName: string, currentTermName: string | null) => void;
   updateClassCount: (count: number) => void;
   updateSubjectCount: (count: number) => void;
   markSetupStep: (step: keyof SetupStatus) => void;
@@ -65,6 +66,7 @@ export const useSchoolStore = create<SchoolState>()(
             primaryColor: DEFAULT_PRIMARY_COLOR,
             logoUrl: null,
             sessionName: null,
+            currentTermName: null,
             classCount: 0,
             subjectCount: 0,
           },
@@ -74,9 +76,9 @@ export const useSchoolStore = create<SchoolState>()(
         set((s) => ({
           currentSchool: s.currentSchool ? { ...s.currentSchool, ...branding } : null,
         })),
-      updateSession: (sessionName) =>
+      updateSession: (sessionName, currentTermName) =>
         set((s) => ({
-          currentSchool: s.currentSchool ? { ...s.currentSchool, sessionName } : null,
+          currentSchool: s.currentSchool ? { ...s.currentSchool, sessionName, currentTermName } : null,
         })),
       updateClassCount: (classCount) =>
         set((s) => ({

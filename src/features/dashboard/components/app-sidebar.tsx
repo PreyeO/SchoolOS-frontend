@@ -1,77 +1,81 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  CreditCard,
-  Receipt,
-  FileText,
-} from "lucide-react";
+import Link from "next/link";
+import { PanelLeftClose, PanelLeftOpen, Settings, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useSchoolStore } from "@/stores/school-store";
+import { useTrialStatus } from "../hooks/use-overview-stats";
+import { useNavGroups } from "../hooks/use-nav-groups";
+import { SidebarNavGroup } from "./sidebar-nav-group";
+import { SchoolLogo } from "./school-logo";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/students", label: "Students", icon: Users },
-  { href: "/staff", label: "Staff", icon: Briefcase },
-  { href: "/fees", label: "Fees", icon: CreditCard },
-  { href: "/payments", label: "Payments", icon: Receipt },
-  { href: "/report-card", label: "Report Cards", icon: FileText },
-];
+interface Props {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}
 
-export function AppSidebar() {
+export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
   const pathname = usePathname();
   const school = useSchoolStore((s) => s.currentSchool);
-
-  /* Using <img> intentionally — logo is a local blob URL, next/image requires configured remote domains */
-  const logoEl = school?.logoUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={school.logoUrl} alt={school.name ?? "School logo"} className="size-7 rounded object-cover shrink-0" />
-  ) : (
-    <div
-      className="size-7 rounded flex items-center justify-center text-white text-xs font-bold shrink-0"
-      style={{ backgroundColor: school?.primaryColor ?? "#1E5B4F" }}
-    >
-      {school?.name?.[0]?.toUpperCase() ?? "S"}
-    </div>
-  );
+  const navGroups = useNavGroups();
+  const { data: trial } = useTrialStatus();
 
   return (
-    <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-n-200 bg-white min-h-screen sticky top-0">
-      <div
-        className="flex h-14 items-center gap-2.5 px-4 border-b border-n-200"
-        style={{ borderLeftColor: school?.primaryColor ?? "#1E5B4F", borderLeftWidth: 3 }}
-      >
-        {logoEl}
-        <span className="font-display font-semibold text-sm text-ink leading-tight truncate">
-          {school?.name ?? "SchoolOS"}
-        </span>
+    <aside
+      data-surface="ink"
+      className={cn(
+        "hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-border transition-[width] duration-200",
+        collapsed ? "w-[68px]" : "w-64",
+      )}
+    >
+      <div className="flex h-14 items-center gap-2.5 px-3 border-b border-border">
+        <SchoolLogo school={school} className="size-7" />
+        {!collapsed && (
+          <span className="font-display font-semibold text-sm text-foreground truncate">
+            {school?.name ?? "SchoolOS"}
+          </span>
+        )}
       </div>
 
-      <nav className="flex-1 px-2 py-4 space-y-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                active
-                  ? "bg-brand/10 text-brand"
-                  : "text-n-500 hover:bg-n-50 hover:text-ink",
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-2 py-2">
+        {navGroups.map((group) => (
+          <SidebarNavGroup key={group.label} group={group} pathname={pathname} collapsed={collapsed} />
+        ))}
       </nav>
+
+      <div className="border-t border-border p-2 space-y-1">
+        {trial?.isTrialing && !collapsed && (
+          <div className="flex items-center gap-2 rounded-lg bg-muted px-2.5 py-2 text-xs text-foreground/70">
+            <Sparkles className="size-3.5 shrink-0 text-primary" />
+            <span className="flex-1">Trial: {trial.daysLeft} days left</span>
+          </div>
+        )}
+        <Link
+          href="/settings/school"
+          title={collapsed ? "Settings" : undefined}
+          className={cn(
+            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          <Settings className="size-4 shrink-0" />
+          {!collapsed && "Settings"}
+        </Link>
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn(
+            "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors",
+            collapsed && "justify-center px-0",
+          )}
+        >
+          {collapsed ? <PanelLeftOpen className="size-4 shrink-0" /> : <PanelLeftClose className="size-4 shrink-0" />}
+          {!collapsed && "Collapse"}
+        </button>
+      </div>
     </aside>
   );
 }
