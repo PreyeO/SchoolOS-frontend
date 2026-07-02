@@ -15,6 +15,7 @@ import {
 
 import { academicYearSchema, type AcademicYearFormValues } from "../schemas/academic-year-schema";
 import { useCreateSession } from "../hooks/use-create-session";
+import { PrefillNotice } from "./prefill-notice";
 
 function FieldErr({ msg }: { msg?: string }) {
   return msg ? <p className="text-xs text-red-600 mt-1">{msg}</p> : null;
@@ -73,6 +74,11 @@ export function StepAcademicYear({ onNext, onBack }: Props) {
         <p className="text-xs text-n-400">One academic year, split into three terms below.</p>
         <FieldErr msg={errors.name?.message} />
       </div>
+
+      <PrefillNotice>
+        The term dates below are typical defaults — please confirm they match your
+        school&rsquo;s calendar and adjust any that don&rsquo;t.
+      </PrefillNotice>
 
       <div className="space-y-3">
         <p className="text-sm font-medium text-ink">Terms</p>

@@ -6,9 +6,11 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[480px_1fr]">
+    <div className="lg:grid lg:grid-cols-[480px_1fr] lg:h-screen">
       <AuthAside />
-      <main className="flex flex-col">{children}</main>
+      {/* Only this side scrolls when a form/wizard is taller than the viewport —
+          the aside (logo, quote, tagline) stays fixed in place on desktop. */}
+      <main className="flex flex-col lg:h-screen lg:overflow-y-auto">{children}</main>
     </div>
   );
 }

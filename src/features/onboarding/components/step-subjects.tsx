@@ -12,6 +12,7 @@ import { subjectsSchema } from "../schemas/subjects-schema";
 import { useCreateSubjects } from "../hooks/use-create-subjects";
 import { SubjectRow } from "./subject-row";
 import { AddSubjectControl } from "./add-subject-control";
+import { PrefillNotice } from "./prefill-notice";
 
 interface SubjectEntry {
   id: string;
@@ -91,6 +92,11 @@ export function StepSubjects({ onNext, onBack }: Props) {
         Pre-selected NERDC subjects per level. Uncheck to skip, rename inline, or add your own.
         <span className="ml-1 text-ink font-medium">{selectedCount} selected.</span>
       </p>
+
+      <PrefillNotice>
+        These subjects are suggested based on your school&rsquo;s levels — please
+        crosscheck them against what you actually teach. Everything here is editable.
+      </PrefillNotice>
 
       <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
         {groups.map(({ level, items }) => (

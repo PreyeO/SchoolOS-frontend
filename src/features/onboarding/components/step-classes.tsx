@@ -14,6 +14,7 @@ import { useCreateClasses } from "../hooks/use-create-classes";
 import { suggestClasses } from "../lib/suggest-classes";
 import { nextArm } from "../lib/arm-utils";
 import { ClassGroup, type ClassGroupData } from "./class-group";
+import { PrefillNotice } from "./prefill-notice";
 
 interface Props {
   onNext: () => void;
@@ -52,8 +53,7 @@ export function StepClasses({ onNext, onBack }: Props) {
   function addArm(group: ClassGroupData) {
     const lastIdx = group.indices[group.indices.length - 1];
     const arms = group.indices.map((i) => rows[i]?.arm ?? "");
-    const capacity = rows[group.indices[0]]?.max_students ?? 30;
-    insert(lastIdx + 1, { name: group.name, arm: nextArm(arms), max_students: capacity });
+    insert(lastIdx + 1, { name: group.name, arm: nextArm(arms) });
   }
 
   function onInvalid() {
@@ -63,9 +63,14 @@ export function StepClasses({ onNext, onBack }: Props) {
   return (
     <form onSubmit={handleSubmit((v) => mutate(v, { onSuccess: onNext }), onInvalid)} noValidate className="space-y-4">
       <p className="text-sm text-n-500">
-        Each row is one class and arm, e.g. <span className="text-ink font-medium">Primary 1 · Arm A · 30</span>.
+        Each row is one class and arm, e.g. <span className="text-ink font-medium">Primary 1 · Arm A</span>.
         Add more arms only where you need parallel classes.
       </p>
+
+      <PrefillNotice>
+        We&rsquo;ve suggested classes based on the levels you picked earlier. Double-check
+        the names below and edit anything that doesn&rsquo;t match your school.
+      </PrefillNotice>
 
       <div className="space-y-3">
         {groups.map((group) => (
@@ -92,7 +97,7 @@ export function StepClasses({ onNext, onBack }: Props) {
         variant="ghost"
         size="sm"
         className="text-brand"
-        onClick={() => append({ name: "", arm: "A", max_students: 30 })}
+        onClick={() => append({ name: "", arm: "A" })}
       >
         <Plus className="size-4 mr-1" /> Add class
       </Button>

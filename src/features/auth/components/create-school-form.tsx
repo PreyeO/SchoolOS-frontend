@@ -6,7 +6,6 @@ import { useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuthStore } from "@/stores/auth-store";
 
 import { FieldWrapper } from "./field-wrapper";
 import { LevelsSelect } from "./levels-select";
@@ -42,7 +41,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function CreateSchoolForm() {
-  const email = useAuthStore((s) => s.pendingVerificationEmail);
   const { mutate, isPending } = useCreateSchool();
 
   const {
@@ -53,7 +51,9 @@ export function CreateSchoolForm() {
     formState: { errors },
   } = useForm<CreateSchoolFormValues>({
     resolver: zodResolver(createSchoolSchema),
-    defaultValues: { levels: [], email: email ?? "", phone_number: "+234" },
+    // Don't prefill from the owner's personal email — they must enter a school
+    // email by hand (or their own, deliberately, using the hint below).
+    defaultValues: { levels: [], email: "", phone_number: "+234" },
   });
 
   // Auto-derive the slug from the name until the user edits the slug themselves.

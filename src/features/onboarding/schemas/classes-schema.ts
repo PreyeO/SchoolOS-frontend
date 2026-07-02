@@ -7,7 +7,6 @@ const classRowSchema = z.object({
     .min(1, "Required")
     .max(3, "Max 3 chars")
     .regex(/^[A-Za-z0-9]+$/, "Letters/numbers only"),
-  max_students: z.number().int().min(1, "At least 1"),
 });
 
 export const classesSchema = z

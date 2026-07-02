@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function AuthAside() {
   return (
-    <aside className="hidden lg:flex flex-col justify-between bg-ink p-10 xl:p-14 min-h-screen sticky top-0">
+    <aside className="hidden lg:flex flex-col justify-between bg-ink p-10 xl:p-14 lg:h-screen">
       <Link
         href="/"
         className="shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber rounded"

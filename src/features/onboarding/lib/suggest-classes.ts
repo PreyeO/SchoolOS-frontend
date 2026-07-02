@@ -14,7 +14,6 @@ export function suggestClasses(levels: SchoolLevelValue[]): ClassRow[] {
     LEVEL_CLASS_NAMES[level].map((name) => ({
       name,
       arm: "A",
-      max_students: 30,
     })),
   );
 }

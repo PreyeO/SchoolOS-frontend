@@ -53,13 +53,6 @@ export function ClassGroup({ group, register, setValue, errors, onAddArm, onRemo
             <div key={idx} className="flex items-center gap-2">
               <span className="shrink-0 text-xs text-n-400 w-8">Arm</span>
               <Input className="h-8 text-sm w-16" maxLength={3} {...register(`classes.${idx}.arm`)} />
-              <Input
-                className="h-8 text-sm w-24"
-                type="number"
-                min={1}
-                placeholder="Capacity"
-                {...register(`classes.${idx}.max_students`, { valueAsNumber: true })}
-              />
               {armError && <span className="text-xs text-red-600 flex-1">{armError}</span>}
               <button
                 type="button"

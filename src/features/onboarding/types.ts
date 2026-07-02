@@ -33,7 +33,7 @@ export interface AcademicSessionResponse {
 export interface ClassRow {
   name: string;
   arm: string;
-  max_students: number;
+  // Per-arm capacity is set later in dashboard classes management, not onboarding.
 }
 
 export interface CreateClassesPayload {
