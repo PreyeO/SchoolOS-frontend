@@ -66,3 +66,40 @@ export interface CreateSchoolResponse {
   access?: string;
   refresh?: string;
 }
+
+export interface LoginPayload {
+  identifier: string;
+  password: string;
+  school_slug?: string;
+}
+
+export interface SchoolSummary {
+  name: string;
+  slug: string;
+  subdomain: string;
+}
+
+// Scoped: tokens returned, no selection needed.
+export interface LoginScopedResponse {
+  requires_school_selection: false;
+  state: string;
+  access: string;
+  refresh: string;
+}
+
+// Selection needed: no tokens; caller re-logs-in with a chosen school_slug.
+export interface LoginSelectionResponse {
+  requires_school_selection: true;
+  state: string;
+  schools: SchoolSummary[];
+}
+
+export type LoginResponse = LoginScopedResponse | LoginSelectionResponse;
+
+// Shape needed to paint dashboard branding after login.
+export interface CurrentSchoolInfo {
+  name: string;
+  slug: string;
+  school_type: SchoolType;
+  levels: SchoolLevel[];
+}

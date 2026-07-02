@@ -1,5 +1,6 @@
 export const ENDPOINTS = {
   USERS: "/api/users/",
+  LOGIN: "/api/auth/login/",
   VERIFY_EMAIL: "/api/auth/verify-email/",
   RESEND_OTP: "/api/auth/resend-verification/",
   SCHOOL: "/api/auth/school/",

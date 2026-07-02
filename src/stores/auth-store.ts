@@ -3,6 +3,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+import type { AuthClaims } from "@/lib/auth/decode-token";
+
 export interface AuthTokens {
   access: string;
   refresh: string;
@@ -12,9 +14,11 @@ interface AuthState {
   pendingVerificationEmail: string | null;
   // production should move tokens to httpOnly cookies — web storage is XSS-exposed
   tokens: AuthTokens | null;
+  claims: AuthClaims | null;
   setPendingVerificationEmail: (email: string) => void;
   clearPendingVerificationEmail: () => void;
   setTokens: (tokens: AuthTokens) => void;
+  setClaims: (claims: AuthClaims) => void;
   clearAuth: () => void;
 }
 
@@ -36,12 +40,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       pendingVerificationEmail: null,
       tokens: null,
+      claims: null,
       setPendingVerificationEmail: (email) =>
         set({ pendingVerificationEmail: email }),
       clearPendingVerificationEmail: () =>
         set({ pendingVerificationEmail: null }),
       setTokens: (tokens) => set({ tokens }),
-      clearAuth: () => set({ pendingVerificationEmail: null, tokens: null }),
+      setClaims: (claims) => set({ claims }),
+      clearAuth: () =>
+        set({ pendingVerificationEmail: null, tokens: null, claims: null }),
     }),
     {
       name: "schoolos-auth",
