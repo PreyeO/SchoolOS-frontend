@@ -23,6 +23,7 @@ export interface NavGroup {
 
 const ADMIN_ONLY: Persona[] = ["admin"];
 
-export function adminItem(item: Omit<NavItem, "personas" | "soon">): NavItem {
-  return { ...item, personas: ADMIN_ONLY, soon: true };
+// `soon` defaults true (unbuilt module). Pass false for a live, built route.
+export function adminItem(item: Omit<NavItem, "personas" | "soon">, soon = true): NavItem {
+  return { ...item, personas: ADMIN_ONLY, soon };
 }
