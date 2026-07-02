@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { getCurrentSchoolSlug } from "@/lib/tenant/get-current-school-slug";
+import { consumeSessionExpiredFlag } from "@/lib/api/client";
 
 import { useLogin } from "../hooks/use-login";
 import { LoginForm } from "./login-form";
@@ -27,6 +29,14 @@ export function LoginView() {
   useEffect(() => {
     if (tokens) router.replace("/dashboard");
   }, [tokens, router]);
+
+  // A forced logout (expired refresh token) redirects here and sets this flag.
+  useEffect(() => {
+    if (consumeSessionExpiredFlag()) {
+      toast.error("Your session expired — please log in again.");
+    }
+  }, []);
+
   if (tokens) return null;
 
   function handleCredentials(values: LoginFormValues) {
