@@ -1,8 +1,6 @@
 export const ENDPOINTS = {
   USERS: "/api/users/",
   LOGIN: "/api/auth/login/",
-  // TODO confirm: exact refresh path/shape — guessed from this project's
-  // /api/auth/ namespace + standard SimpleJWT convention. Update if it differs.
   REFRESH: "/api/auth/refresh/",
   VERIFY_EMAIL: "/api/auth/verify-email/",
   RESEND_OTP: "/api/auth/resend-verification/",
