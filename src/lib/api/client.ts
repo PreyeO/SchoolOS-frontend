@@ -28,6 +28,10 @@ function isPublicPath(url?: string): boolean {
 }
 
 apiClient.interceptors.request.use((config) => {
+  if (!env.API_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_API_BASE_URL is not set. Add it to .env.local (or your deployment's environment variables).");
+  }
+
   const token = useAuthStore.getState().tokens?.access;
   if (token && !isPublicPath(config.url)) {
     config.headers.Authorization = `Bearer ${token}`;

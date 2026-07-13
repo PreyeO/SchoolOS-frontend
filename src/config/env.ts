@@ -1,8 +1,11 @@
 export const env = {
+  // Never throws here — this getter runs at module-evaluation time (e.g. axios.create()
+  // in lib/api/client.ts), which Next.js also executes while statically prerendering
+  // pages at build time. Throwing there breaks the build even for pages that never
+  // make a request. The real "is this actually configured" check lives in the
+  // request interceptor, which only ever runs client-side when a call is made.
   get API_BASE_URL(): string {
-    const v = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!v) throw new Error("NEXT_PUBLIC_API_BASE_URL is not set. Add it to .env.local.");
-    return v;
+    return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
   },
   get SCHOOL_DOMAIN(): string {
     return process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "schoolos.com";
