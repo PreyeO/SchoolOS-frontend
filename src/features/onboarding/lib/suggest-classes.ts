@@ -1,5 +1,5 @@
 import type { SchoolLevelValue } from "@/data/school-levels";
-import type { ClassRow } from "../types";
+import type { ClassFormValues } from "../schemas/classes-schema";
 
 const LEVEL_CLASS_NAMES: Record<SchoolLevelValue, string[]> = {
   creche: ["Baby Room", "Toddler", "Pre-Nursery"],
@@ -9,11 +9,12 @@ const LEVEL_CLASS_NAMES: Record<SchoolLevelValue, string[]> = {
   senior_secondary: ["SSS 1", "SSS 2", "SSS 3"],
 };
 
-export function suggestClasses(levels: SchoolLevelValue[]): ClassRow[] {
+export function suggestClasses(levels: SchoolLevelValue[]): ClassFormValues[] {
   return levels.flatMap((level) =>
     LEVEL_CLASS_NAMES[level].map((name) => ({
       name,
-      arm: "A",
+      level,
+      arms: [{ name: `${name} A` }],
     })),
   );
 }

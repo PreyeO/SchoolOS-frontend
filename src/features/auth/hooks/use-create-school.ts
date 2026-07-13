@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { getErrorMessage } from "@/lib/api/get-error-message";
+import { applyAuthTokens } from "@/lib/auth/apply-auth-tokens";
+import { resolvePostAuthPath } from "@/lib/auth/resolve-post-auth-path";
 import { deriveSchoolType, sortLevels } from "@/lib/school/derive-school-type";
-import { resolveNextStep } from "@/lib/auth/resolve-next-step";
-import { useAuthStore } from "@/stores/auth-store";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { createSchool } from "../api/auth-api";
@@ -16,27 +16,27 @@ import type { SchoolLevelValue } from "@/data/school-levels";
 
 export function useCreateSchool() {
   const router = useRouter();
-  const setTokens = useAuthStore((s) => s.setTokens);
   const setCurrentSchool = useSchoolStore((s) => s.setCurrentSchool);
 
   return useMutation({
     mutationFn: (values: CreateSchoolFormValues) => createSchool(values),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
+      let schoolId = "";
       if (data.access && data.refresh) {
-        setTokens({ access: data.access, refresh: data.refresh });
+        const claims = applyAuthTokens(data.access, data.refresh);
+        schoolId = claims.school_id ?? "";
       }
+
       const levels = sortLevels(variables.levels as SchoolLevelValue[]);
       setCurrentSchool({
+        id: schoolId,
         name: variables.name,
         slug: variables.slug,
         school_type: deriveSchoolType(levels),
         levels,
       });
-      const { path, external } = resolveNextStep({
-        state: data.state,
-        requiresSchoolSelection: data.requires_school_selection,
-        slug: variables.slug,
-      });
+
+      const { path, external } = await resolvePostAuthPath({ state: data.state, slug: variables.slug });
       if (external) {
         window.location.href = path;
       } else {

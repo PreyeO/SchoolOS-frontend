@@ -1,30 +1,48 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { useSchoolStore } from "@/stores/school-store";
 import { getErrorMessage } from "@/lib/api/get-error-message";
-import { TERM_LABELS } from "@/data/term-defaults";
+import { getSchoolId } from "@/lib/school/get-school-id";
+import type { StepKey } from "@/lib/school/onboarding-steps";
+import { useSchoolStore } from "@/stores/school-store";
 
-import { createSession } from "../api/onboarding-api";
+import { advanceOnboardingStage, createAcademicSession } from "../api/onboarding-api";
+import { handleStageResult } from "../lib/handle-stage-result";
 import type { AcademicYearFormValues } from "../schemas/academic-year-schema";
 
-export function useCreateSession() {
+export function useCreateSession(onAdvanced: (currentStep: StepKey) => void) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const updateSession = useSchoolStore((s) => s.updateSession);
   const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   return useMutation({
-    mutationFn: (values: AcademicYearFormValues) =>
-      createSession({
+    mutationFn: async (values: AcademicYearFormValues) => {
+      const schoolId = getSchoolId();
+      if (!schoolId) throw new Error("Missing school id — please log in again.");
+
+      const session = await createAcademicSession({
         name: values.name,
-        is_current: values.is_current,
-        terms: values.terms,
-      }),
-    onSuccess: (data, variables) => {
-      const currentTerm = variables.terms.find((t) => t.is_current);
-      updateSession(data.name, currentTerm ? TERM_LABELS[currentTerm.name] : null);
+        periods: values.periods.map((p, i) => ({
+          name: p.name,
+          order: i + 1,
+          start_date: p.start_date,
+          end_date: p.end_date,
+          is_current: p.is_current,
+        })),
+      });
+      const stage = await advanceOnboardingStage(schoolId, "academic_year");
+      return { session, stage };
+    },
+    onSuccess: ({ session, stage }) => {
+      const currentPeriod = session.periods.find((p) => p.is_current);
+      updateSession(session.name, currentPeriod?.name ?? null);
       markSetupStep("academic_year");
+      queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
+      handleStageResult(stage, router, onAdvanced);
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

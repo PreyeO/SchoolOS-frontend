@@ -1,84 +1,43 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useSchoolStore } from "@/stores/school-store";
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
-import { getSuggestedSubjects } from "@/data/nerdc-subjects";
+import type { StepKey } from "@/lib/school/onboarding-steps";
 
 import { subjectsSchema } from "../schemas/subjects-schema";
 import { useCreateSubjects } from "../hooks/use-create-subjects";
+import { useSubjectTemplates } from "../hooks/use-subject-templates";
+import { useSubjectEntries } from "../hooks/use-subject-entries";
 import { SubjectRow } from "./subject-row";
 import { AddSubjectControl } from "./add-subject-control";
 import { PrefillNotice } from "./prefill-notice";
 
-interface SubjectEntry {
-  id: string;
-  name: string;
-  level: SchoolLevelValue;
-  is_core: boolean;
-  selected: boolean;
-}
-
-let idCounter = 0;
-const nextId = () => `subj_${idCounter++}`;
-
 interface Props {
-  onNext: () => void;
+  onAdvanced: (step: StepKey) => void;
   onBack: () => void;
 }
 
-export function StepSubjects({ onNext, onBack }: Props) {
+export function StepSubjects({ onAdvanced, onBack }: Props) {
   const levels = useSchoolStore((s) => s.currentSchool?.levels);
-  const { mutate, isPending } = useCreateSubjects();
   const schoolLevels = (levels ?? []) as SchoolLevelValue[];
-
-  const [entries, setEntries] = useState<SubjectEntry[]>(() =>
-    getSuggestedSubjects(schoolLevels).map((s) => ({ ...s, id: nextId(), selected: true })),
-  );
+  const { data: templates, isPending: templatesLoading } = useSubjectTemplates();
+  const { save, isSaving, skip, isSkipping } = useCreateSubjects(onAdvanced);
+  const { entries, patch, removeEntry, addSubject } = useSubjectEntries(schoolLevels, templates);
 
   const selectedCount = entries.filter((e) => e.selected).length;
-
-  const patch = (id: string, changes: Partial<SubjectEntry>) =>
-    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...changes } : e)));
-
-  function addSubject(name: string, addLevels: SchoolLevelValue[]): number {
-    if (!name) {
-      toast.error("Enter a subject name.");
-      return 0;
-    }
-    if (addLevels.length === 0) {
-      toast.error("Pick at least one level.");
-      return 0;
-    }
-    const fresh = addLevels
-      .filter(
-        (level) =>
-          !entries.some(
-            (e) => e.level === level && e.name.trim().toLowerCase() === name.toLowerCase(),
-          ),
-      )
-      .map((level) => ({ id: nextId(), name, level, is_core: false, selected: true }));
-    if (fresh.length === 0) {
-      toast.error(`"${name}" already exists for the selected level(s).`);
-      return 0;
-    }
-    setEntries((prev) => [...prev, ...fresh]);
-    return fresh.length;
-  }
+  const pending = isSaving || isSkipping;
 
   function submit() {
-    const subjects = entries
-      .filter((e) => e.selected)
-      .map((e) => ({ name: e.name.trim(), level: e.level, is_core: e.is_core }));
+    const subjects = entries.filter((e) => e.selected).map((e) => ({ name: e.name.trim(), level: e.level, is_core: e.is_core }));
     const parsed = subjectsSchema.safeParse({ subjects });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please review your subjects.");
       return;
     }
-    mutate({ subjects: parsed.data.subjects }, { onSuccess: onNext });
+    save({ subjects: parsed.data.subjects });
   }
 
   const groups = SCHOOL_LEVELS.filter((l) => schoolLevels.includes(l.value)).map((l) => ({
@@ -89,8 +48,10 @@ export function StepSubjects({ onNext, onBack }: Props) {
   return (
     <div className="space-y-5">
       <p className="text-sm text-n-500">
-        Pre-selected NERDC subjects per level. Uncheck to skip, rename inline, or add your own.
-        <span className="ml-1 text-ink font-medium">{selectedCount} selected.</span>
+        {templatesLoading
+          ? "Loading subject suggestions…"
+          : "Pre-selected subjects per level. Uncheck to skip, rename inline, or add your own."}
+        {!templatesLoading && <span className="ml-1 text-ink font-medium">{selectedCount} selected.</span>}
       </p>
 
       <PrefillNotice>
@@ -98,12 +59,12 @@ export function StepSubjects({ onNext, onBack }: Props) {
         crosscheck them against what you actually teach. Everything here is editable.
       </PrefillNotice>
 
+      <p aria-live="polite" className="sr-only">{selectedCount} subjects selected</p>
+
       <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
         {groups.map(({ level, items }) => (
           <div key={level.value} className="space-y-2">
-            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-n-400">
-              {level.label}
-            </p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-n-400">{level.label}</p>
             {items.length === 0 ? (
               <p className="text-xs text-n-400 italic">No subjects yet — add one below.</p>
             ) : (
@@ -114,7 +75,7 @@ export function StepSubjects({ onNext, onBack }: Props) {
                   onToggle={() => patch(entry.id, { selected: !entry.selected })}
                   onRename={(name) => patch(entry.id, { name })}
                   onToggleCore={() => patch(entry.id, { is_core: !entry.is_core })}
-                  onRemove={() => setEntries((prev) => prev.filter((e) => e.id !== entry.id))}
+                  onRemove={() => removeEntry(entry.id)}
                 />
               ))
             )}
@@ -126,13 +87,16 @@ export function StepSubjects({ onNext, onBack }: Props) {
 
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
+        <Button type="button" variant="ghost" onClick={() => skip()} disabled={pending}>
+          {isSkipping ? "Skipping…" : "Skip"}
+        </Button>
         <Button
           type="button"
           onClick={submit}
-          disabled={isPending}
+          disabled={pending}
           className="flex-1 bg-amber hover:bg-amber/90 text-ink font-semibold"
         >
-          {isPending ? "Saving…" : `Save ${selectedCount} subject${selectedCount !== 1 ? "s" : ""}`}
+          {isSaving ? "Saving…" : `Save ${selectedCount} subject${selectedCount !== 1 ? "s" : ""}`}
         </Button>
       </div>
     </div>

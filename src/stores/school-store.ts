@@ -5,19 +5,29 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 import type { SchoolLevelValue } from "@/data/school-levels";
 import type { SchoolType } from "@/lib/school/derive-school-type";
-import { DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
+import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
 
 export interface CurrentSchool {
+  id: string;
   name: string;
   slug: string;
   school_type: SchoolType;
   levels: SchoolLevelValue[];
   primaryColor: string;
+  accentColor: string;
   logoUrl: string | null;
+  motto: string | null;
   sessionName: string | null;
   currentTermName: string | null;
   classCount: number;
   subjectCount: number;
+}
+
+export interface BrandingUpdate {
+  primaryColor?: string;
+  accentColor?: string;
+  logoUrl?: string | null;
+  motto?: string | null;
 }
 
 export interface SetupStatus {
@@ -30,8 +40,13 @@ export interface SetupStatus {
 interface SchoolState {
   currentSchool: CurrentSchool | null;
   setupStatus: SetupStatus;
-  setCurrentSchool: (school: Omit<CurrentSchool, "primaryColor" | "logoUrl" | "sessionName" | "currentTermName" | "classCount" | "subjectCount">) => void;
-  updateBranding: (branding: { primaryColor: string; logoUrl: string | null }) => void;
+  setCurrentSchool: (
+    school: Omit<
+      CurrentSchool,
+      "primaryColor" | "accentColor" | "logoUrl" | "motto" | "sessionName" | "currentTermName" | "classCount" | "subjectCount"
+    >,
+  ) => void;
+  updateBranding: (branding: BrandingUpdate) => void;
   updateSession: (sessionName: string, currentTermName: string | null) => void;
   updateClassCount: (count: number) => void;
   updateSubjectCount: (count: number) => void;
@@ -64,7 +79,9 @@ export const useSchoolStore = create<SchoolState>()(
           currentSchool: {
             ...school,
             primaryColor: DEFAULT_PRIMARY_COLOR,
+            accentColor: DEFAULT_ACCENT_COLOR,
             logoUrl: null,
+            motto: null,
             sessionName: null,
             currentTermName: null,
             classCount: 0,

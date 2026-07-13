@@ -1,12 +1,6 @@
 export const TERM_CODES = ["FIRST", "SECOND", "THIRD"] as const;
 export type TermCode = (typeof TERM_CODES)[number];
 
-export const TERM_LABELS: Record<TermCode, string> = {
-  FIRST: "First Term",
-  SECOND: "Second Term",
-  THIRD: "Third Term",
-};
-
 export interface DefaultTerm {
   name: TermCode;
   start_date: string;

@@ -1,47 +1,95 @@
+import type { StepKey } from "@/lib/school/onboarding-steps";
+import type { OnboardingStageResponse } from "@/lib/school/get-onboarding-stage";
+
+export type { StepKey, OnboardingStageResponse };
+
+// --- Branding (PATCH /api/schools/:id/) ------------------------------------
+// Only these four fields are editable in onboarding; the rest of the school
+// profile was set at create-school and is edited later in dashboard Settings.
 export interface BrandingPayload {
+  logo?: string;
   primary_color: string;
-  logo?: File | null;
+  accent_color: string;
+  motto?: string;
 }
 
-export interface BrandingResponse {
+// The PATCH response is the full school object; we only read these fields.
+export interface SchoolResponse {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
   primary_color: string;
-  logo_url: string | null;
+  accent_color: string;
+  motto: string | null;
 }
 
-export type TermCode = "FIRST" | "SECOND" | "THIRD";
-
-export interface SessionTermPayload {
-  name: TermCode;
+// --- Academic session (POST /api/academic-sessions/with-periods/) ---------
+export interface PeriodPayload {
+  name: string;
+  order: number;
   start_date: string;
   end_date: string;
   is_current: boolean;
 }
 
+export interface PeriodResponse extends PeriodPayload {
+  id: string;
+}
+
 export interface AcademicSessionPayload {
   name: string;
-  is_current: boolean;
-  terms: SessionTermPayload[];
+  periods: PeriodPayload[];
 }
 
 export interface AcademicSessionResponse {
   id: string;
   name: string;
-  is_current: boolean;
-  terms: (SessionTermPayload & { id: string })[];
+  periods: PeriodResponse[];
 }
 
-export interface ClassRow {
+// --- Classes (POST /api/classes/bulk/) -------------------------------------
+export interface ArmPayload {
   name: string;
-  arm: string;
-  // Per-arm capacity is set later in dashboard classes management, not onboarding.
+}
+
+export interface ArmResponse extends ArmPayload {
+  id: string;
+}
+
+export interface ClassPayload {
+  name: string;
+  level: string;
+  arms: ArmPayload[];
+}
+
+export interface ClassResponse {
+  id: string;
+  name: string;
+  level: string;
+  arms: ArmResponse[];
 }
 
 export interface CreateClassesPayload {
-  classes: ClassRow[];
+  classes: ClassPayload[];
 }
 
+// ⚠️ Envelope assumed to mirror the request shape — the prompt only specifies
+// "created classes (ids, order, arm ids)", not the exact wrapper key.
 export interface CreateClassesResponse {
-  count: number;
+  classes: ClassResponse[];
+}
+
+// --- Subjects (GET /api/subjects/templates, POST /api/subjects/bulk/) -----
+export interface SubjectTemplateItem {
+  name: string;
+  is_core: boolean;
+}
+
+export interface SubjectTemplatesResponse {
+  primary?: SubjectTemplateItem[];
+  junior_secondary?: SubjectTemplateItem[];
+  senior_secondary?: SubjectTemplateItem[];
 }
 
 export interface SubjectPayload {
@@ -50,18 +98,36 @@ export interface SubjectPayload {
   is_core: boolean;
 }
 
+export interface SubjectResponse extends SubjectPayload {
+  id: string;
+}
+
 export interface CreateSubjectsPayload {
   subjects: SubjectPayload[];
 }
 
+// ⚠️ Envelope assumed to mirror the request shape, same caveat as classes.
 export interface CreateSubjectsResponse {
-  count: number;
+  subjects: SubjectResponse[];
 }
 
-export interface CompleteOnboardingResponse {
-  success: boolean;
+// --- Review (GET /api/schools/:id/onboarding/review) -----------------------
+export interface OnboardingReviewResponse {
+  school: SchoolResponse;
+  academic_sessions: AcademicSessionResponse[];
+  classes: ClassResponse[];
+  subjects: SubjectResponse[];
 }
 
+// --- Advance (POST /api/schools/:id/onboarding/advance/) -------------------
+export interface AdvanceStagePayload {
+  step: StepKey;
+  skipped?: boolean;
+}
+
+// Kept for the dashboard's local setup checklist (features/dashboard) — tracks
+// per-session step completion client-side, separate from the real backend
+// onboarding stage which now drives the wizard itself.
 export interface SetupStatusResponse {
   branding: boolean;
   academic_year: boolean;

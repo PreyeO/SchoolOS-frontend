@@ -1,0 +1,118 @@
+"use client";
+
+import { useFieldArray, useWatch } from "react-hook-form";
+import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
+import { Plus, Trash2 } from "lucide-react";
+
+import { Input } from "@/components/ui/input";
+import { SCHOOL_LEVELS } from "@/data/school-levels";
+import type { ClassesFormValues } from "../schemas/classes-schema";
+import { nextArmName } from "../lib/arm-utils";
+
+interface Props {
+  control: Control<ClassesFormValues>;
+  register: UseFormRegister<ClassesFormValues>;
+  errors: FieldErrors<ClassesFormValues>;
+  classIndex: number;
+  onRemoveClass: () => void;
+}
+
+export function ClassRow({ control, register, errors, classIndex: ci, onRemoveClass }: Props) {
+  const { fields, append, remove } = useFieldArray({ control, name: `classes.${ci}.arms` });
+  const className = useWatch({ control, name: `classes.${ci}.name` });
+  const arms = useWatch({ control, name: `classes.${ci}.arms` });
+  const classErrors = errors.classes?.[ci];
+
+  function addArm() {
+    const existingNames = (arms ?? []).map((a) => a?.name ?? "");
+    append({ name: nextArmName(className || "Class", existingNames) });
+  }
+
+  function removeArm(armIndex: number) {
+    const arm = arms?.[armIndex];
+    if (arm?.name && !window.confirm(`Remove arm "${arm.name}"?`)) return;
+    remove(armIndex);
+  }
+
+  return (
+    <div className="rounded-xl border border-n-200 p-3.5 space-y-3">
+      <div className="flex items-center gap-2">
+        <Input
+          id={`classes.${ci}.name`}
+          placeholder="Class name (e.g. Primary 1)"
+          className="flex-1 font-medium"
+          aria-invalid={!!classErrors?.name}
+          aria-describedby={classErrors?.name ? `classes.${ci}.name-error` : undefined}
+          {...register(`classes.${ci}.name`)}
+        />
+        <select
+          id={`classes.${ci}.level`}
+          aria-label="Level"
+          aria-invalid={!!classErrors?.level}
+          className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+          {...register(`classes.${ci}.level`)}
+        >
+          <option value="">Level…</option>
+          {SCHOOL_LEVELS.map((l) => (
+            <option key={l.value} value={l.value}>{l.label}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onRemoveClass}
+          aria-label={`Remove class ${className || ""}`}
+          className="shrink-0 text-n-400 hover:text-clay transition-colors"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      </div>
+      {classErrors?.name && (
+        <p id={`classes.${ci}.name-error`} role="alert" className="text-xs text-red-600">
+          {classErrors.name.message}
+        </p>
+      )}
+      {classErrors?.level && (
+        <p role="alert" className="text-xs text-red-600">{classErrors.level.message}</p>
+      )}
+
+      <div className="space-y-2">
+        {fields.map((field, ai) => {
+          const armError = classErrors?.arms?.[ai]?.name;
+          return (
+            <div key={field.id} className="flex items-center gap-2">
+              <span className="shrink-0 text-xs text-n-400 w-8">Arm</span>
+              <Input
+                id={`classes.${ci}.arms.${ai}.name`}
+                className="h-8 text-sm flex-1"
+                aria-invalid={!!armError}
+                aria-describedby={armError ? `classes.${ci}.arms.${ai}.name-error` : undefined}
+                {...register(`classes.${ci}.arms.${ai}.name`)}
+              />
+              {armError && (
+                <span id={`classes.${ci}.arms.${ai}.name-error`} role="alert" className="text-xs text-red-600">
+                  {armError.message}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => removeArm(ai)}
+                aria-label={`Remove arm ${arms?.[ai]?.name || ai + 1}`}
+                className="ml-auto shrink-0 text-n-400 hover:text-clay transition-colors"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={addArm}
+        className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
+      >
+        <Plus className="size-3.5" /> Add arm
+      </button>
+    </div>
+  );
+}

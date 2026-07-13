@@ -15,3 +15,4 @@ export const COLOR_PRESETS: ColorPreset[] = [
 ];
 
 export const DEFAULT_PRIMARY_COLOR = "#1E5B4F";
+export const DEFAULT_ACCENT_COLOR = "#F2A93B";

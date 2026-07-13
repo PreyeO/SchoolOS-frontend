@@ -1,61 +1,72 @@
-// MOCK — replace all functions with real API calls when endpoints are ready.
-// Each function adds a 600ms delay to simulate network latency.
+import { apiClient } from "@/lib/api/client";
+import { ENDPOINTS, SCHOOL_ENDPOINTS } from "@/lib/api/endpoints";
+import { getOnboardingStage, type OnboardingStageResponse } from "@/lib/school/get-onboarding-stage";
+import type { StepKey } from "@/lib/school/onboarding-steps";
 
 import type {
   AcademicSessionPayload,
   AcademicSessionResponse,
   BrandingPayload,
-  BrandingResponse,
-  CompleteOnboardingResponse,
   CreateClassesPayload,
   CreateClassesResponse,
   CreateSubjectsPayload,
   CreateSubjectsResponse,
-  SetupStatusResponse,
+  OnboardingReviewResponse,
+  SchoolResponse,
+  SubjectTemplatesResponse,
 } from "../types";
 
-function delay(ms = 600): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+// Re-exported so hooks only ever import from this one api file, per the
+// project's schema/types/api/hook/UI separation convention.
+export { getOnboardingStage };
+
+export async function updateBranding(schoolId: string, payload: BrandingPayload): Promise<SchoolResponse> {
+  const { data } = await apiClient.patch<SchoolResponse>(SCHOOL_ENDPOINTS.PATCH(schoolId), payload);
+  return data;
 }
 
-export async function updateBranding(payload: BrandingPayload): Promise<BrandingResponse> {
-  await delay();
-  const logoUrl = payload.logo ? URL.createObjectURL(payload.logo) : null;
-  return { primary_color: payload.primary_color, logo_url: logoUrl };
-}
-
-export async function createSession(
+// Token-scoped — no :id in the path.
+export async function createAcademicSession(
   payload: AcademicSessionPayload,
 ): Promise<AcademicSessionResponse> {
-  await delay();
-  return {
-    id: `sess_${Date.now()}`,
-    name: payload.name,
-    is_current: payload.is_current,
-    terms: payload.terms.map((t, i) => ({ ...t, id: `term_${i + 1}` })),
-  };
+  const { data } = await apiClient.post<AcademicSessionResponse>(
+    ENDPOINTS.ACADEMIC_SESSIONS_WITH_PERIODS,
+    payload,
+  );
+  return data;
 }
 
-export async function createClasses(
-  payload: CreateClassesPayload,
-): Promise<CreateClassesResponse> {
-  await delay();
-  return { count: payload.classes.length };
+// Token-scoped — no :id in the path.
+export async function createClasses(payload: CreateClassesPayload): Promise<CreateClassesResponse> {
+  const { data } = await apiClient.post<CreateClassesResponse>(ENDPOINTS.CLASSES_BULK, payload);
+  return data;
 }
 
-export async function createSubjects(
-  payload: CreateSubjectsPayload,
-): Promise<CreateSubjectsResponse> {
-  await delay();
-  return { count: payload.subjects.length };
+// Token-scoped, no trailing slash.
+export async function getSubjectTemplates(): Promise<SubjectTemplatesResponse> {
+  const { data } = await apiClient.get<SubjectTemplatesResponse>(ENDPOINTS.SUBJECTS_TEMPLATES);
+  return data;
 }
 
-export async function completeOnboarding(): Promise<CompleteOnboardingResponse> {
-  await delay();
-  return { success: true };
+// Token-scoped.
+export async function createSubjects(payload: CreateSubjectsPayload): Promise<CreateSubjectsResponse> {
+  const { data } = await apiClient.post<CreateSubjectsResponse>(ENDPOINTS.SUBJECTS_BULK, payload);
+  return data;
 }
 
-export async function getSetupStatus(): Promise<SetupStatusResponse> {
-  await delay(200);
-  return { branding: false, academic_year: false, classes: false, subjects: false };
+export async function getOnboardingReview(schoolId: string): Promise<OnboardingReviewResponse> {
+  const { data } = await apiClient.get<OnboardingReviewResponse>(SCHOOL_ENDPOINTS.ONBOARDING_REVIEW(schoolId));
+  return data;
+}
+
+export async function advanceOnboardingStage(
+  schoolId: string,
+  step: StepKey,
+  skipped?: boolean,
+): Promise<OnboardingStageResponse> {
+  const { data } = await apiClient.post<OnboardingStageResponse>(
+    SCHOOL_ENDPOINTS.ONBOARDING_ADVANCE(schoolId),
+    { step, ...(skipped !== undefined ? { skipped } : {}) },
+  );
+  return data;
 }

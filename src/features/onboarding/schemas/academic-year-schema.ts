@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-const termSchema = z
+const periodSchema = z
   .object({
-    name: z.enum(["FIRST", "SECOND", "THIRD"]),
+    name: z.string().min(1, "Required"),
     start_date: z.string().min(1, "Required"),
     end_date: z.string().min(1, "Required"),
     is_current: z.boolean(),
   })
-  .refine((t) => t.end_date > t.start_date, {
+  .refine((p) => p.end_date > p.start_date, {
     message: "End date must be after the start date",
     path: ["end_date"],
   });
@@ -15,12 +15,12 @@ const termSchema = z
 export const academicYearSchema = z
   .object({
     name: z.string().min(3, "e.g. 2025/2026"),
-    is_current: z.boolean(),
-    terms: z.array(termSchema).length(3),
+    periods: z.array(periodSchema).min(1, "Add at least one term"),
   })
-  .refine((data) => data.terms.filter((t) => t.is_current).length === 1, {
+  .refine((data) => data.periods.filter((p) => p.is_current).length === 1, {
     message: "Mark exactly one term as the current term",
-    path: ["terms"],
+    path: ["periods"],
   });
 
 export type AcademicYearFormValues = z.infer<typeof academicYearSchema>;
+export type PeriodFormValues = z.infer<typeof periodSchema>;
