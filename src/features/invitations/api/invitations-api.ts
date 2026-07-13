@@ -12,6 +12,7 @@ import type {
   InviteParentPayload,
   InviteTeacherPayload,
   Role,
+  RolesListResponse,
   StudentCreatedResponse,
 } from "../types";
 
@@ -64,15 +65,7 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
   return data;
 }
 
-// TODO confirm: the real roles endpoint isn't provided yet. MOCK until then —
-// these ids are not real role UUIDs, so submitting an admin invite against the
-// live backend will 400. Swap this for a real apiClient.get(ENDPOINTS.ROLES)
-// call once the endpoint is confirmed.
 export async function getRoles(): Promise<Role[]> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return [
-    { id: "mock-owner-role", name: "Owner" },
-    { id: "mock-admin-role", name: "Admin" },
-    { id: "mock-bursar-role", name: "Bursar" },
-  ];
+  const { data } = await apiClient.get<RolesListResponse>(ENDPOINTS.ROLES);
+  return data.results;
 }

@@ -4,6 +4,17 @@ export type TeacherType = "class" | "subject" | "both";
 export interface Role {
   id: string;
   name: string;
+  permissions: string[];
+}
+
+// GET /api/school-admin-roles is paginated (DRF default); we only surface the
+// first page of results in the role picker — schools aren't expected to have
+// enough custom roles for pagination to matter in practice.
+export interface RolesListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Role[];
 }
 
 export interface DetailResponse {

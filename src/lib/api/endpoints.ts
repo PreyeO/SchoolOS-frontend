@@ -17,7 +17,5 @@ export const ENDPOINTS = {
   INVITE_TEACHER: "/api/invites/invite-teacher/",
   INVITE_PARENT: "/api/invites/invite-parent/",
   INVITE_STUDENT: "/api/invites/invite-student/",
-  // TODO confirm: real roles endpoint not provided yet — getRoles() is mocked
-  // until this is confirmed. Update the path here once known.
-  ROLES: "/api/roles/",
+  ROLES: "/api/school-admin-roles",
 } as const;

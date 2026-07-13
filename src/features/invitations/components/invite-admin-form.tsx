@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,14 +37,6 @@ export function InviteAdminForm() {
       noValidate
       className="space-y-4"
     >
-      <div className="flex items-start gap-2 rounded-lg border border-amber/30 bg-amber/10 px-3 py-2.5 text-xs text-ink/80">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber" />
-        <span>
-          Roles are placeholder data until the roles endpoint is confirmed — admin invites
-          won&rsquo;t go through until then.
-        </span>
-      </div>
-
       <div className="grid sm:grid-cols-2 gap-4">
         <FieldWrapper id="admin-first-name" label="First name" error={errors.first_name?.message} required>
           <Input id="admin-first-name" autoComplete="given-name" {...register("first_name")} />
