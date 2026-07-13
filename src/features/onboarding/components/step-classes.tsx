@@ -13,7 +13,8 @@ import type { StepKey } from "@/lib/school/onboarding-steps";
 
 import { classesSchema, type ClassesFormValues } from "../schemas/classes-schema";
 import { useCreateClasses } from "../hooks/use-create-classes";
-import { suggestClasses } from "../lib/suggest-classes";
+import { useClassTemplates } from "../hooks/use-class-templates";
+import { useSeedClassesFromTemplates } from "../hooks/use-seed-classes-from-templates";
 import { focusFirstError } from "../lib/first-error-field-id";
 import { ClassRow } from "./class-row";
 import { PrefillNotice } from "./prefill-notice";
@@ -25,12 +26,16 @@ interface Props {
 
 export function StepClasses({ onAdvanced, onBack }: Props) {
   const levels = useSchoolStore((s) => s.currentSchool?.levels);
+  const schoolLevels = (levels ?? []) as SchoolLevelValue[];
+  const { data: templates, isPending: templatesLoading } = useClassTemplates();
   const { mutate, isPending } = useCreateClasses(onAdvanced);
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<ClassesFormValues>({
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ClassesFormValues>({
     resolver: zodResolver(classesSchema),
-    defaultValues: { classes: suggestClasses((levels ?? []) as SchoolLevelValue[]) },
+    defaultValues: { classes: [] },
   });
+
+  useSeedClassesFromTemplates({ schoolLevels, templates, reset });
 
   const { fields, append, remove } = useFieldArray({ control, name: "classes" });
 
@@ -58,6 +63,10 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
         We&rsquo;ve suggested classes based on the levels you picked earlier. Double-check
         the names below and edit anything that doesn&rsquo;t match your school.
       </PrefillNotice>
+
+      {templatesLoading && (
+        <p className="text-sm text-n-400" role="status">Loading suggested classes…</p>
+      )}
 
       <div className="space-y-3">
         {fields.map((field, i) => (

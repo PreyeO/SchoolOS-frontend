@@ -48,7 +48,18 @@ export interface AcademicSessionResponse {
   periods: PeriodResponse[];
 }
 
-// --- Classes (POST /api/classes/bulk/) -------------------------------------
+// --- Classes (GET /api/classes/templates, POST /api/classes/bulk/) --------
+export interface ClassTemplateItem {
+  name: string;
+  order: number;
+}
+
+export interface ClassTemplatesResponse {
+  primary?: ClassTemplateItem[];
+  junior_secondary?: ClassTemplateItem[];
+  senior_secondary?: ClassTemplateItem[];
+}
+
 export interface ArmPayload {
   name: string;
 }

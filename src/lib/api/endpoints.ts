@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   ACADEMIC_SESSIONS_WITH_PERIODS: "/api/academic-sessions/with-periods/",
   CLASSES_BULK: "/api/classes/bulk/",
   // No trailing slash — per the confirmed backend contract.
+  CLASSES_TEMPLATES: "/api/classes/templates",
   SUBJECTS_TEMPLATES: "/api/subjects/templates",
   SUBJECTS_BULK: "/api/subjects/bulk/",
   INVITE_ADMIN: "/api/invites/invite-admin/",

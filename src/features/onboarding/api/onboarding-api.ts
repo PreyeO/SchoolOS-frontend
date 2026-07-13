@@ -7,6 +7,7 @@ import type {
   AcademicSessionPayload,
   AcademicSessionResponse,
   BrandingPayload,
+  ClassTemplatesResponse,
   CreateClassesPayload,
   CreateClassesResponse,
   CreateSubjectsPayload,
@@ -33,6 +34,12 @@ export async function createAcademicSession(
     ENDPOINTS.ACADEMIC_SESSIONS_WITH_PERIODS,
     payload,
   );
+  return data;
+}
+
+// Token-scoped, no trailing slash.
+export async function getClassTemplates(): Promise<ClassTemplatesResponse> {
+  const { data } = await apiClient.get<ClassTemplatesResponse>(ENDPOINTS.CLASSES_TEMPLATES);
   return data;
 }
 
