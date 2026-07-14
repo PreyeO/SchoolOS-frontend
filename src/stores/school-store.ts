@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 import type { SchoolLevelValue } from "@/data/school-levels";
 import type { SchoolType } from "@/lib/school/derive-school-type";
+import type { ClassRecord } from "@/lib/school/class-record";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
 
 export interface CurrentSchool {
@@ -19,7 +20,10 @@ export interface CurrentSchool {
   motto: string | null;
   sessionName: string | null;
   currentTermName: string | null;
-  classCount: number;
+  // Real created-class records (ids, order, arm ids) from POST /api/classes/bulk/,
+  // kept as-is rather than collapsed to a count so later steps/screens can
+  // reference the actual records instead of re-deriving them.
+  classes: ClassRecord[];
   subjectCount: number;
 }
 
@@ -43,12 +47,12 @@ interface SchoolState {
   setCurrentSchool: (
     school: Omit<
       CurrentSchool,
-      "primaryColor" | "accentColor" | "logoUrl" | "motto" | "sessionName" | "currentTermName" | "classCount" | "subjectCount"
+      "primaryColor" | "accentColor" | "logoUrl" | "motto" | "sessionName" | "currentTermName" | "classes" | "subjectCount"
     >,
   ) => void;
   updateBranding: (branding: BrandingUpdate) => void;
   updateSession: (sessionName: string, currentTermName: string | null) => void;
-  updateClassCount: (count: number) => void;
+  setClasses: (classes: ClassRecord[]) => void;
   updateSubjectCount: (count: number) => void;
   markSetupStep: (step: keyof SetupStatus) => void;
   clearSchool: () => void;
@@ -84,7 +88,7 @@ export const useSchoolStore = create<SchoolState>()(
             motto: null,
             sessionName: null,
             currentTermName: null,
-            classCount: 0,
+            classes: [],
             subjectCount: 0,
           },
           setupStatus: INITIAL_SETUP,
@@ -97,9 +101,9 @@ export const useSchoolStore = create<SchoolState>()(
         set((s) => ({
           currentSchool: s.currentSchool ? { ...s.currentSchool, sessionName, currentTermName } : null,
         })),
-      updateClassCount: (classCount) =>
+      setClasses: (classes) =>
         set((s) => ({
-          currentSchool: s.currentSchool ? { ...s.currentSchool, classCount } : null,
+          currentSchool: s.currentSchool ? { ...s.currentSchool, classes } : null,
         })),
       updateSubjectCount: (subjectCount) =>
         set((s) => ({

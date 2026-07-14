@@ -16,7 +16,7 @@ import type { ClassesFormValues } from "../schemas/classes-schema";
 export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const updateClassCount = useSchoolStore((s) => s.updateClassCount);
+  const setClasses = useSchoolStore((s) => s.setClasses);
   const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   return useMutation({
@@ -24,12 +24,15 @@ export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
       const schoolId = getSchoolId();
       if (!schoolId) throw new Error("Missing school id — please log in again.");
 
-      const result = await createClasses({ classes: values.classes });
+      // Bare array of created classes (id, name, level, order, arms) — kept
+      // in full rather than collapsed to a count, so later steps/screens can
+      // reference the real records.
+      const createdClasses = await createClasses({ classes: values.classes });
       const stage = await advanceOnboardingStage(schoolId, "classes");
-      return { result, stage };
+      return { createdClasses, stage };
     },
-    onSuccess: ({ result, stage }) => {
-      updateClassCount(result.classes.length);
+    onSuccess: ({ createdClasses, stage }) => {
+      setClasses(createdClasses);
       markSetupStep("classes");
       queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
       handleStageResult(stage, router, onAdvanced);

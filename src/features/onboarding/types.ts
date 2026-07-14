@@ -1,5 +1,6 @@
 import type { StepKey } from "@/lib/school/onboarding-steps";
 import type { OnboardingStageResponse } from "@/lib/school/get-onboarding-stage";
+import type { ClassArmRecord, ClassRecord } from "@/lib/school/class-record";
 
 export type { StepKey, OnboardingStageResponse };
 
@@ -60,13 +61,12 @@ export interface ClassTemplatesResponse {
   senior_secondary?: ClassTemplateItem[];
 }
 
+// Request-only shape: just a name, no id/order/capacity — the backend assigns those.
 export interface ArmPayload {
   name: string;
 }
 
-export interface ArmResponse extends ArmPayload {
-  id: string;
-}
+export type ArmResponse = ClassArmRecord;
 
 export interface ClassPayload {
   name: string;
@@ -74,22 +74,15 @@ export interface ClassPayload {
   arms: ArmPayload[];
 }
 
-export interface ClassResponse {
-  id: string;
-  name: string;
-  level: string;
-  arms: ArmResponse[];
-}
+export type ClassResponse = ClassRecord;
 
 export interface CreateClassesPayload {
   classes: ClassPayload[];
 }
 
-// ⚠️ Envelope assumed to mirror the request shape — the prompt only specifies
-// "created classes (ids, order, arm ids)", not the exact wrapper key.
-export interface CreateClassesResponse {
-  classes: ClassResponse[];
-}
+// Confirmed: the backend returns a bare array of created classes (id, name,
+// level, order, arms — each arm with id + name), not a { classes: [...] } envelope.
+export type CreateClassesResponse = ClassResponse[];
 
 // --- Subjects (GET /api/subjects/templates, POST /api/subjects/bulk/) -----
 export interface SubjectTemplateItem {
