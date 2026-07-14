@@ -29,7 +29,7 @@ export function useCreateSubjects(onAdvanced: (currentStep: StepKey) => void) {
       return { result, stage };
     },
     onSuccess: ({ result, stage }) => {
-      updateSubjectCount(result.subjects.length);
+      updateSubjectCount(result.length);
       markSetupStep("subjects");
       queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
       handleStageResult(stage, router, onAdvanced);

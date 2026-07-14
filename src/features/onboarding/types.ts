@@ -115,10 +115,9 @@ export interface CreateSubjectsPayload {
   subjects: SubjectPayload[];
 }
 
-// ⚠️ Envelope assumed to mirror the request shape, same caveat as classes.
-export interface CreateSubjectsResponse {
-  subjects: SubjectResponse[];
-}
+// Confirmed: the backend returns a bare array of created subjects (id, name,
+// level, is_core), not a { subjects: [...] } envelope — same shape as classes.
+export type CreateSubjectsResponse = SubjectResponse[];
 
 // --- Review (GET /api/schools/:id/onboarding/review) -----------------------
 export interface OnboardingReviewResponse {
