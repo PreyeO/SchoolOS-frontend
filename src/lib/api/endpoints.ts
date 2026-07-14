@@ -30,3 +30,27 @@ export const SCHOOL_ENDPOINTS = {
   ONBOARDING_ADVANCE: (id: string) => `/api/schools/${id}/onboarding/advance/`,
   ONBOARDING_REVIEW: (id: string) => `/api/schools/${id}/onboarding/review`,
 } as const;
+
+// Confirmed against academic/urls.py + academic/views.py — all DRF-router
+// generated, so all carry a trailing slash like CLASSES_BULK/SUBJECTS_BULK above.
+export const ACADEMIC_SESSION_ENDPOINTS = {
+  DETAIL: (id: string) => `/api/academic-sessions/${id}/`,
+  ADD_PERIOD: (id: string) => `/api/academic-sessions/${id}/academic-periods/`,
+} as const;
+
+export const ACADEMIC_PERIOD_ENDPOINTS = {
+  DETAIL: (id: string) => `/api/academic-periods/${id}/`,
+} as const;
+
+export const CLASS_ENDPOINTS = {
+  DETAIL: (id: string) => `/api/classes/${id}/`,
+  ADD_ARM: (id: string) => `/api/classes/${id}/arms/`,
+} as const;
+
+export const CLASS_ARM_ENDPOINTS = {
+  DETAIL: (id: string) => `/api/class-arms/${id}/`,
+} as const;
+
+export const SUBJECT_ENDPOINTS = {
+  DETAIL: (id: string) => `/api/subjects/${id}/`,
+} as const;
