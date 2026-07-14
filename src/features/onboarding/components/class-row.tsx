@@ -5,6 +5,8 @@ import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { cn } from "@/lib/utils";
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 import type { ClassesFormValues } from "../schemas/classes-schema";
 import { nextArmName } from "../lib/arm-utils";
@@ -16,6 +18,19 @@ interface Props {
   classIndex: number;
   schoolLevels: SchoolLevelValue[];
   onRemoveClass: () => void;
+}
+
+function RemoveButton({ onClick, ariaLabel, className }: { onClick?: () => void; ariaLabel: string; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={cn("shrink-0 text-n-400 hover:text-clay transition-colors", className)}
+    >
+      <Trash2 className="size-4" />
+    </button>
+  );
 }
 
 export function ClassRow({ control, register, errors, classIndex: ci, schoolLevels, onRemoveClass }: Props) {
@@ -30,11 +45,7 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
     append({ name: nextArmName(className || "Class", existingNames) });
   }
 
-  function removeArm(armIndex: number) {
-    const arm = arms?.[armIndex];
-    if (arm?.name && !window.confirm(`Remove arm "${arm.name}"?`)) return;
-    remove(armIndex);
-  }
+  const hasClassData = !!(className || (arms ?? []).some((a) => a?.name));
 
   return (
     <div className="rounded-xl border border-n-200 p-3.5 space-y-3">
@@ -59,14 +70,17 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
             <option key={l.value} value={l.value}>{l.label}</option>
           ))}
         </select>
-        <button
-          type="button"
-          onClick={onRemoveClass}
-          aria-label={`Remove class ${className || ""}`}
-          className="shrink-0 text-n-400 hover:text-clay transition-colors"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        {hasClassData ? (
+          <ConfirmDeleteDialog
+            trigger={<RemoveButton ariaLabel={`Remove class ${className || ""}`} />}
+            title={`Remove ${className || "this class"}?`}
+            description="This also removes any arms you've added below."
+            confirmLabel="Remove"
+            onConfirm={onRemoveClass}
+          />
+        ) : (
+          <RemoveButton onClick={onRemoveClass} ariaLabel={`Remove class ${className || ""}`} />
+        )}
       </div>
       {classErrors?.name && (
         <p id={`classes.${ci}.name-error`} role="alert" className="text-xs text-red-600">
@@ -86,6 +100,7 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
       <div className="space-y-2">
         {fields.map((field, ai) => {
           const armError = classErrors?.arms?.[ai]?.name;
+          const armName = arms?.[ai]?.name;
           return (
             <div key={field.id} className="flex items-center gap-2">
               <span className="shrink-0 text-xs text-n-400 w-8">Arm</span>
@@ -101,14 +116,16 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
                   {armError.message}
                 </span>
               )}
-              <button
-                type="button"
-                onClick={() => removeArm(ai)}
-                aria-label={`Remove arm ${arms?.[ai]?.name || ai + 1}`}
-                className="ml-auto shrink-0 text-n-400 hover:text-clay transition-colors"
-              >
-                <Trash2 className="size-4" />
-              </button>
+              {armName ? (
+                <ConfirmDeleteDialog
+                  trigger={<RemoveButton ariaLabel={`Remove arm ${armName}`} className="ml-auto" />}
+                  title={`Remove arm "${armName}"?`}
+                  confirmLabel="Remove"
+                  onConfirm={() => remove(ai)}
+                />
+              ) : (
+                <RemoveButton onClick={() => remove(ai)} ariaLabel={`Remove arm ${ai + 1}`} className="ml-auto" />
+              )}
             </div>
           );
         })}

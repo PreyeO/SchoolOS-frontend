@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { cn } from "@/lib/utils";
 
 export interface SubjectRowData {
@@ -49,14 +50,20 @@ export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }
       >
         Core
       </button>
-      <button
-        type="button"
-        onClick={onRemove}
-        className="shrink-0 text-n-400 transition-colors hover:text-clay"
-        aria-label={`Remove ${entry.name}`}
-      >
-        <Trash2 className="size-4" />
-      </button>
+      <ConfirmDeleteDialog
+        trigger={
+          <button
+            type="button"
+            className="shrink-0 text-n-400 transition-colors hover:text-clay"
+            aria-label={`Remove ${entry.name}`}
+          >
+            <Trash2 className="size-4" />
+          </button>
+        }
+        title={`Remove ${entry.name || "this subject"}?`}
+        confirmLabel="Remove"
+        onConfirm={onRemove}
+      />
     </div>
   );
 }

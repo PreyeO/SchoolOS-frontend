@@ -54,13 +54,6 @@ export function StepAcademicYear({ onAdvanced, onBack }: Props) {
     requestAnimationFrame(() => newRowRef.current?.focus());
   }
 
-  function removePeriod(index: number) {
-    const period = periods?.[index];
-    const hasData = !!(period?.name || period?.start_date);
-    if (hasData && !window.confirm("Remove this term? Its dates will be lost.")) return;
-    remove(index);
-  }
-
   function onInvalid(formErrors: FieldErrors<AcademicYearFormValues>) {
     focusFirstError(formErrors);
     const periodsErr = formErrors.periods;
@@ -106,8 +99,9 @@ export function StepAcademicYear({ onAdvanced, onBack }: Props) {
             errors={errors}
             isCurrent={!!periods?.[i]?.is_current}
             name={periods?.[i]?.name ?? ""}
+            hasData={!!(periods?.[i]?.name || periods?.[i]?.start_date)}
             onSetCurrent={() => setCurrentPeriod(i)}
-            onRemove={() => removePeriod(i)}
+            onRemove={() => remove(i)}
           />
         ))}
       </div>

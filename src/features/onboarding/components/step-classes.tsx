@@ -45,11 +45,6 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
     toast.error(rootError ?? "Check that each class has a name and a level.");
   }
 
-  function removeClass(index: number) {
-    if (!window.confirm("Remove this class and any arms?")) return;
-    remove(index);
-  }
-
   return (
     <form onSubmit={handleSubmit((v) => mutate(v), onInvalid)} noValidate className="space-y-4">
       <p className="text-sm text-n-500">
@@ -76,7 +71,7 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
             errors={errors}
             classIndex={i}
             schoolLevels={schoolLevels}
-            onRemoveClass={() => removeClass(i)}
+            onRemoveClass={() => remove(i)}
           />
         ))}
       </div>

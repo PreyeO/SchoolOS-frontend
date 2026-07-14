@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import type { AcademicYearFormValues } from "../schemas/academic-year-schema";
 
 interface Props {
@@ -13,11 +14,22 @@ interface Props {
   errors: FieldErrors<AcademicYearFormValues>;
   isCurrent: boolean;
   name: string;
+  hasData: boolean;
   onSetCurrent: () => void;
   onRemove: () => void;
 }
 
-export function PeriodRow({ index: i, onInputMount, register, errors, isCurrent, name, onSetCurrent, onRemove }: Props) {
+export function PeriodRow({
+  index: i,
+  onInputMount,
+  register,
+  errors,
+  isCurrent,
+  name,
+  hasData,
+  onSetCurrent,
+  onRemove,
+}: Props) {
   const nameField = register(`periods.${i}.name`);
 
   return (
@@ -46,14 +58,32 @@ export function PeriodRow({ index: i, onInputMount, register, errors, isCurrent,
           />
           <span className={isCurrent ? "text-brand font-medium" : "text-n-400"}>Current</span>
         </label>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`Remove ${name || `term ${i + 1}`}`}
-          className="shrink-0 text-n-400 hover:text-clay transition-colors"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        {hasData ? (
+          <ConfirmDeleteDialog
+            trigger={
+              <button
+                type="button"
+                aria-label={`Remove ${name || `term ${i + 1}`}`}
+                className="shrink-0 text-n-400 hover:text-clay transition-colors"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            }
+            title={`Remove ${name || "this term"}?`}
+            description="Its dates will be lost."
+            confirmLabel="Remove"
+            onConfirm={onRemove}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${name || `term ${i + 1}`}`}
+            className="shrink-0 text-n-400 hover:text-clay transition-colors"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        )}
       </div>
       {errors.periods?.[i]?.name && (
         <p id={`periods.${i}.name-error`} role="alert" className="text-xs text-red-600">
