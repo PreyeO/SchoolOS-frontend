@@ -1,6 +1,7 @@
 import type { StepKey } from "@/lib/school/onboarding-steps";
 import type { OnboardingStageResponse } from "@/lib/school/get-onboarding-stage";
 import type { ClassArmRecord, ClassRecord } from "@/lib/school/class-record";
+import type { SchoolLevelValue } from "@/data/school-levels";
 
 export type { StepKey, OnboardingStageResponse };
 
@@ -14,7 +15,9 @@ export interface BrandingPayload {
   motto?: string;
 }
 
-// The PATCH response is the full school object; we only read these fields.
+// The GET/PATCH response is the full school object; we only read these fields.
+// `levels` is the reliable source for filtering onboarding prefills — the
+// school-list endpoint's summary omits it.
 export interface SchoolResponse {
   id: string;
   name: string;
@@ -23,6 +26,7 @@ export interface SchoolResponse {
   primary_color: string;
   accent_color: string;
   motto: string | null;
+  levels: SchoolLevelValue[];
 }
 
 // --- Academic session (POST /api/academic-sessions/with-periods/) ---------
@@ -71,7 +75,8 @@ export type ArmResponse = ClassArmRecord;
 export interface ClassPayload {
   name: string;
   level: string;
-  arms: ArmPayload[];
+  // Optional — omitted entirely (not sent as []) for a class with no arms.
+  arms?: ArmPayload[];
 }
 
 export type ClassResponse = ClassRecord;

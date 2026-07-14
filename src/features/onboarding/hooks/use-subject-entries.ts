@@ -20,13 +20,21 @@ const nextId = () => `subj_${idCounter++}`;
 // Only these levels have NERDC templates — nursery/creche start empty (add-your-own).
 const TEMPLATE_LEVELS = ["primary", "junior_secondary", "senior_secondary"] as const;
 
-export function useSubjectEntries(schoolLevels: SchoolLevelValue[], templates: SubjectTemplatesResponse | undefined) {
+export function useSubjectEntries(
+  schoolLevels: SchoolLevelValue[],
+  templates: SubjectTemplatesResponse | undefined,
+  levelsLoading: boolean,
+) {
   const [entries, setEntries] = useState<SubjectEntry[]>([]);
   const [seeded, setSeeded] = useState(false);
 
-  // Seed once the templates arrive — done during render (not an effect), per
-  // React's "adjust state when data arrives" pattern; avoids a useEffect entirely.
-  if (templates && !seeded) {
+  // Seed once templates AND the school's levels have both arrived — done
+  // during render (not an effect), per React's "adjust state when data
+  // arrives" pattern. Levels may need their own fallback fetch (see
+  // use-school-levels), so we wait on levelsLoading too, else a school
+  // hydrated straight from create-school would seed correctly while
+  // one hydrated from a fresh login would seed with zero entries.
+  if (templates && !levelsLoading && !seeded) {
     const seededEntries: SubjectEntry[] = [];
     schoolLevels.forEach((level) => {
       if (!(TEMPLATE_LEVELS as readonly string[]).includes(level)) return;

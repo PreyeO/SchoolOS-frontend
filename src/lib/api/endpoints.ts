@@ -18,11 +18,14 @@ export const ENDPOINTS = {
   ROLES: "/api/school-admin-roles",
 } as const;
 
-// Id-scoped endpoint builders. ⚠️ CONFIRM with backend: that PATCH here is the
-// branding method, and the onboarding stage/advance/review paths and trailing
-// slashes below are exact.
+// Id-scoped endpoint builders. ⚠️ CONFIRM with backend: that this school-detail
+// path also handles the branding PATCH, and the onboarding stage/advance/review
+// paths and trailing slashes below are exact.
 export const SCHOOL_ENDPOINTS = {
-  PATCH: (id: string) => `/api/schools/${id}/`,
+  // GET (school detail, includes levels) and PATCH (branding update) both hit
+  // this same resource. Do NOT use the school-list endpoint for levels — its
+  // summary omits them and only has school_type.
+  DETAIL: (id: string) => `/api/schools/${id}/`,
   ONBOARDING_STAGE: (id: string) => `/api/schools/${id}/onboarding`,
   ONBOARDING_ADVANCE: (id: string) => `/api/schools/${id}/onboarding/advance/`,
   ONBOARDING_REVIEW: (id: string) => `/api/schools/${id}/onboarding/review`,

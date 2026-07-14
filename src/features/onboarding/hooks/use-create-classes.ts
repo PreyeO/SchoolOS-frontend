@@ -11,6 +11,7 @@ import { useSchoolStore } from "@/stores/school-store";
 
 import { advanceOnboardingStage, createClasses } from "../api/onboarding-api";
 import { handleStageResult } from "../lib/handle-stage-result";
+import { prepareClassesPayload } from "../lib/prepare-classes-payload";
 import type { ClassesFormValues } from "../schemas/classes-schema";
 
 export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
@@ -26,8 +27,9 @@ export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
 
       // Bare array of created classes (id, name, level, order, arms) — kept
       // in full rather than collapsed to a count, so later steps/screens can
-      // reference the real records.
-      const createdClasses = await createClasses({ classes: values.classes });
+      // reference the real records. Blank arm rows are trimmed and a
+      // class with none left omits `arms` entirely, per the backend contract.
+      const createdClasses = await createClasses(prepareClassesPayload(values));
       const stage = await advanceOnboardingStage(schoolId, "classes");
       return { createdClasses, stage };
     },

@@ -52,6 +52,7 @@ interface SchoolState {
   ) => void;
   updateBranding: (branding: BrandingUpdate) => void;
   updateSession: (sessionName: string, currentTermName: string | null) => void;
+  setLevels: (levels: SchoolLevelValue[]) => void;
   setClasses: (classes: ClassRecord[]) => void;
   updateSubjectCount: (count: number) => void;
   markSetupStep: (step: keyof SetupStatus) => void;
@@ -100,6 +101,10 @@ export const useSchoolStore = create<SchoolState>()(
       updateSession: (sessionName, currentTermName) =>
         set((s) => ({
           currentSchool: s.currentSchool ? { ...s.currentSchool, sessionName, currentTermName } : null,
+        })),
+      setLevels: (levels) =>
+        set((s) => ({
+          currentSchool: s.currentSchool ? { ...s.currentSchool, levels } : null,
         })),
       setClasses: (classes) =>
         set((s) => ({

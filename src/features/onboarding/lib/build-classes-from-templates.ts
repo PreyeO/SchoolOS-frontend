@@ -11,13 +11,16 @@ export function buildClassesFromTemplates(
 ): ClassesFormValues["classes"] {
   const classes: ClassesFormValues["classes"] = [];
 
+  // Only the school's own levels, in that order — never a level it didn't select.
   schoolLevels.forEach((level) => {
     if (!(TEMPLATE_LEVELS as readonly string[]).includes(level)) return;
     const items = templates[level as (typeof TEMPLATE_LEVELS)[number]] ?? [];
     [...items]
       .sort((a, b) => a.order - b.order)
       .forEach((item) => {
-        classes.push({ name: item.name, level, arms: [{ name: `${item.name} A` }] });
+        // No arms by default — arms are optional; the user adds one only if
+        // their school actually runs parallel classes.
+        classes.push({ name: item.name, level, arms: [] });
       });
   });
 

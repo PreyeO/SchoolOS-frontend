@@ -5,7 +5,7 @@ import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { SCHOOL_LEVELS } from "@/data/school-levels";
+import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 import type { ClassesFormValues } from "../schemas/classes-schema";
 import { nextArmName } from "../lib/arm-utils";
 
@@ -14,10 +14,12 @@ interface Props {
   register: UseFormRegister<ClassesFormValues>;
   errors: FieldErrors<ClassesFormValues>;
   classIndex: number;
+  schoolLevels: SchoolLevelValue[];
   onRemoveClass: () => void;
 }
 
-export function ClassRow({ control, register, errors, classIndex: ci, onRemoveClass }: Props) {
+export function ClassRow({ control, register, errors, classIndex: ci, schoolLevels, onRemoveClass }: Props) {
+  const levelOptions = SCHOOL_LEVELS.filter((l) => schoolLevels.includes(l.value));
   const { fields, append, remove } = useFieldArray({ control, name: `classes.${ci}.arms` });
   const className = useWatch({ control, name: `classes.${ci}.name` });
   const arms = useWatch({ control, name: `classes.${ci}.arms` });
@@ -53,7 +55,7 @@ export function ClassRow({ control, register, errors, classIndex: ci, onRemoveCl
           {...register(`classes.${ci}.level`)}
         >
           <option value="">Level…</option>
-          {SCHOOL_LEVELS.map((l) => (
+          {levelOptions.map((l) => (
             <option key={l.value} value={l.value}>{l.label}</option>
           ))}
         </select>
@@ -73,6 +75,12 @@ export function ClassRow({ control, register, errors, classIndex: ci, onRemoveCl
       )}
       {classErrors?.level && (
         <p role="alert" className="text-xs text-red-600">{classErrors.level.message}</p>
+      )}
+
+      {fields.length === 0 && (
+        <p className="text-xs text-n-400 italic">
+          No arms yet — add one only if this class runs parallel arms (A, B, C…).
+        </p>
       )}
 
       <div className="space-y-2">

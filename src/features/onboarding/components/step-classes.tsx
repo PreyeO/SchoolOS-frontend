@@ -7,13 +7,12 @@ import { toast } from "sonner";
 import type { FieldErrors } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { useSchoolStore } from "@/stores/school-store";
-import type { SchoolLevelValue } from "@/data/school-levels";
 import type { StepKey } from "@/lib/school/onboarding-steps";
 
 import { classesSchema, type ClassesFormValues } from "../schemas/classes-schema";
 import { useCreateClasses } from "../hooks/use-create-classes";
 import { useClassTemplates } from "../hooks/use-class-templates";
+import { useSchoolLevels } from "../hooks/use-school-levels";
 import { useSeedClassesFromTemplates } from "../hooks/use-seed-classes-from-templates";
 import { focusFirstError } from "../lib/first-error-field-id";
 import { ClassRow } from "./class-row";
@@ -25,8 +24,7 @@ interface Props {
 }
 
 export function StepClasses({ onAdvanced, onBack }: Props) {
-  const levels = useSchoolStore((s) => s.currentSchool?.levels);
-  const schoolLevels = (levels ?? []) as SchoolLevelValue[];
+  const { levels: schoolLevels, isLoading: levelsLoading } = useSchoolLevels();
   const { data: templates, isPending: templatesLoading } = useClassTemplates();
   const { mutate, isPending } = useCreateClasses(onAdvanced);
 
@@ -35,7 +33,7 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
     defaultValues: { classes: [] },
   });
 
-  useSeedClassesFromTemplates({ schoolLevels, templates, reset });
+  useSeedClassesFromTemplates({ schoolLevels, levelsLoading, templates, reset });
 
   const { fields, append, remove } = useFieldArray({ control, name: "classes" });
 
@@ -44,19 +42,20 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
 
   function onInvalid(formErrors: FieldErrors<ClassesFormValues>) {
     focusFirstError(formErrors);
-    toast.error(rootError ?? "Check that each class has a name, level, and at least one arm.");
+    toast.error(rootError ?? "Check that each class has a name and a level.");
   }
 
   function removeClass(index: number) {
-    if (!window.confirm("Remove this class and all its arms?")) return;
+    if (!window.confirm("Remove this class and any arms?")) return;
     remove(index);
   }
 
   return (
     <form onSubmit={handleSubmit((v) => mutate(v), onInvalid)} noValidate className="space-y-4">
       <p className="text-sm text-n-500">
-        Each class has a name, a level, and one or more arms (parallel classes), e.g.{" "}
-        <span className="text-ink font-medium">Primary 1 · Arm A</span>.
+        Each class needs a name and a level, e.g.{" "}
+        <span className="text-ink font-medium">Primary 1</span>. Add arms only if
+        your school runs parallel classes (e.g. Primary 1 A, Primary 1 B).
       </p>
 
       <PrefillNotice>
@@ -64,7 +63,7 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
         the names below and edit anything that doesn&rsquo;t match your school.
       </PrefillNotice>
 
-      {templatesLoading && (
+      {(templatesLoading || levelsLoading) && (
         <p className="text-sm text-n-400" role="status">Loading suggested classes…</p>
       )}
 
@@ -76,6 +75,7 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
             register={register}
             errors={errors}
             classIndex={i}
+            schoolLevels={schoolLevels}
             onRemoveClass={() => removeClass(i)}
           />
         ))}
@@ -88,7 +88,7 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
         variant="ghost"
         size="sm"
         className="text-brand"
-        onClick={() => append({ name: "", level: (levels?.[0] ?? "primary") as string, arms: [{ name: "" }] })}
+        onClick={() => append({ name: "", level: schoolLevels[0] ?? "primary", arms: [] })}
       >
         <Plus className="size-4 mr-1" /> Add class
       </Button>

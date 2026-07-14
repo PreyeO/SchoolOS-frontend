@@ -22,7 +22,15 @@ import type {
 export { getOnboardingStage };
 
 export async function updateBranding(schoolId: string, payload: BrandingPayload): Promise<SchoolResponse> {
-  const { data } = await apiClient.patch<SchoolResponse>(SCHOOL_ENDPOINTS.PATCH(schoolId), payload);
+  const { data } = await apiClient.patch<SchoolResponse>(SCHOOL_ENDPOINTS.DETAIL(schoolId), payload);
+  return data;
+}
+
+// The reliable source of the school's levels (among other fields) — the
+// school-list endpoint's summary omits levels, so this detail endpoint is
+// used instead whenever the store doesn't already have them.
+export async function getSchoolDetail(schoolId: string): Promise<SchoolResponse> {
+  const { data } = await apiClient.get<SchoolResponse>(SCHOOL_ENDPOINTS.DETAIL(schoolId));
   return data;
 }
 

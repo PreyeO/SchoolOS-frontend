@@ -3,14 +3,14 @@
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { useSchoolStore } from "@/stores/school-store";
-import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
+import { SCHOOL_LEVELS } from "@/data/school-levels";
 import type { StepKey } from "@/lib/school/onboarding-steps";
 
 import { subjectsSchema } from "../schemas/subjects-schema";
 import { useCreateSubjects } from "../hooks/use-create-subjects";
 import { useSubjectTemplates } from "../hooks/use-subject-templates";
 import { useSubjectEntries } from "../hooks/use-subject-entries";
+import { useSchoolLevels } from "../hooks/use-school-levels";
 import { SubjectRow } from "./subject-row";
 import { AddSubjectControl } from "./add-subject-control";
 import { PrefillNotice } from "./prefill-notice";
@@ -21,11 +21,10 @@ interface Props {
 }
 
 export function StepSubjects({ onAdvanced, onBack }: Props) {
-  const levels = useSchoolStore((s) => s.currentSchool?.levels);
-  const schoolLevels = (levels ?? []) as SchoolLevelValue[];
+  const { levels: schoolLevels, isLoading: levelsLoading } = useSchoolLevels();
   const { data: templates, isPending: templatesLoading } = useSubjectTemplates();
   const { save, isSaving, skip, isSkipping } = useCreateSubjects(onAdvanced);
-  const { entries, patch, removeEntry, addSubject } = useSubjectEntries(schoolLevels, templates);
+  const { entries, patch, removeEntry, addSubject } = useSubjectEntries(schoolLevels, templates, levelsLoading);
 
   const selectedCount = entries.filter((e) => e.selected).length;
   const pending = isSaving || isSkipping;
@@ -45,13 +44,15 @@ export function StepSubjects({ onAdvanced, onBack }: Props) {
     items: entries.filter((e) => e.level === l.value),
   }));
 
+  const loading = templatesLoading || levelsLoading;
+
   return (
     <div className="space-y-5">
       <p className="text-sm text-n-500">
-        {templatesLoading
+        {loading
           ? "Loading subject suggestions…"
           : "Pre-selected subjects per level. Uncheck to skip, rename inline, or add your own."}
-        {!templatesLoading && <span className="ml-1 text-ink font-medium">{selectedCount} selected.</span>}
+        {!loading && <span className="ml-1 text-ink font-medium">{selectedCount} selected.</span>}
       </p>
 
       <PrefillNotice>
