@@ -9,7 +9,8 @@ import { getSchoolId } from "@/lib/school/get-school-id";
 
 import { advanceOnboardingStage } from "../api/onboarding-api";
 
-// Advancing "review" is what marks onboarding complete (⚠️ confirm with backend).
+// Advancing "review" is what marks onboarding complete — confirmed against
+// UserService.advance_onboarding in accounts/services.py.
 export function useCompleteOnboarding() {
   const router = useRouter();
 
