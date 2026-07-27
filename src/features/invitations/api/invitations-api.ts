@@ -1,20 +1,26 @@
 import { apiClient } from "@/lib/api/client";
-import { ENDPOINTS, ROLE_ENDPOINTS } from "@/lib/api/endpoints";
+import { ENDPOINTS, INVITE_ENDPOINTS, ROLE_ENDPOINTS } from "@/lib/api/endpoints";
+import type { PaginatedResponse } from "@/lib/api/types";
 
 import type { InviteAdminFormValues } from "../schemas/invite-admin-schema";
 import type { InviteTeacherFormValues } from "../schemas/invite-teacher-schema";
 import type { InviteParentFormValues } from "../schemas/invite-parent-schema";
 import type { AddStudentFormValues } from "../schemas/add-student-schema";
 import type {
+  AcceptInvitePayload,
   AddStudentPayload,
   DetailResponse,
   InviteAdminPayload,
+  InviteDetailResponse,
   InviteParentPayload,
   InviteTeacherPayload,
+  PendingInvite,
+  PendingInvitesFilters,
   Role,
   RolesListResponse,
   StudentCreatedResponse,
 } from "../types";
+import type { LoginScopedResponse } from "@/features/auth/types";
 
 export async function inviteAdmin(values: InviteAdminFormValues): Promise<DetailResponse> {
   const payload: InviteAdminPayload = {
@@ -68,4 +74,31 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
 export async function getRoles(): Promise<Role[]> {
   const { data } = await apiClient.get<RolesListResponse>(ROLE_ENDPOINTS.LIST());
   return data.results;
+}
+
+// page_size=100 (backend max) — no pagination UI here; a school actively
+// managing invites is expected to stay well under that in practice.
+export async function getPendingInvites(filters: PendingInvitesFilters): Promise<PendingInvite[]> {
+  const { data } = await apiClient.get<PaginatedResponse<PendingInvite>>(INVITE_ENDPOINTS.LIST(), {
+    params: { page_size: 100, ...filters },
+  });
+  return data.results;
+}
+
+export async function resendInvite(id: string): Promise<PendingInvite> {
+  const { data } = await apiClient.post<PendingInvite>(INVITE_ENDPOINTS.RESEND(id));
+  return data;
+}
+
+// Public — no auth required, called from the accept-invite page before login.
+export async function getInviteDetail(token: string): Promise<InviteDetailResponse> {
+  const { data } = await apiClient.get<InviteDetailResponse>(INVITE_ENDPOINTS.DETAIL(token));
+  return data;
+}
+
+// Public. Response shape matches LoginScopedResponse exactly — the backend
+// builds both from the same _token_pair_dict helper.
+export async function acceptInvite(payload: AcceptInvitePayload): Promise<LoginScopedResponse> {
+  const { data } = await apiClient.post<LoginScopedResponse>(INVITE_ENDPOINTS.ACCEPT(), payload);
+  return data;
 }

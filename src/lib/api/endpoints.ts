@@ -66,3 +66,13 @@ export const ROLE_ENDPOINTS = {
   DETAIL: (id: string) => `/api/school-admin-roles/${id}/`,
   PERMISSIONS: () => `/api/school-admin-roles/permissions/`,
 } as const;
+
+// LIST/RESEND require school membership; DETAIL (by token) and ACCEPT are
+// public (AllowAny on the backend) — used by the accept-invite page before
+// the invitee has any session at all.
+export const INVITE_ENDPOINTS = {
+  LIST: () => `/api/invites/`,
+  DETAIL: (token: string) => `/api/invites/${token}/`,
+  ACCEPT: () => `/api/invites/accept/`,
+  RESEND: (id: string) => `/api/invites/${id}/resend/`,
+} as const;

@@ -66,3 +66,47 @@ export interface StudentCreatedResponse {
   date_of_birth: string | null;
   password: string;
 }
+
+// --- Pending invites (GET /api/invites/, POST /api/invites/:id/resend/) ---
+export type InvitePersona = "admin" | "teacher" | "parent" | "student";
+export type InviteStatus = "pending" | "accepted" | "expired";
+
+export interface InviteRoleSummary {
+  id: string;
+  name: string;
+  permissions: string[];
+}
+
+export interface PendingInvite {
+  id: string;
+  token: string;
+  email: string;
+  persona: InvitePersona;
+  school_admin_role: InviteRoleSummary | null;
+  status: InviteStatus;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface PendingInvitesFilters {
+  persona?: InvitePersona;
+  status?: InviteStatus;
+  search?: string;
+}
+
+// --- Accept invite (GET /api/invites/:token/, POST /api/invites/accept/) ---
+// Public — no auth required. has_password tells the frontend whether to show
+// the password-creation UI (a brand-new invitee) or just an "Accept" button
+// (an existing user, e.g. already staff at another school, invited here too).
+export interface InviteDetailResponse {
+  school: { name: string; slug: string; subdomain: string };
+  persona: InvitePersona;
+  email: string;
+  has_password: boolean;
+}
+
+export interface AcceptInvitePayload {
+  token: string;
+  password?: string;
+  confirm_password?: string;
+}
