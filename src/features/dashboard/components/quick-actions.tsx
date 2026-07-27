@@ -15,10 +15,10 @@ export function QuickActions() {
         <Link
           key={href}
           href={href}
-          className="flex flex-col items-center gap-2 rounded-xl border border-n-200 bg-white px-3 py-4 text-center hover:border-brand/30 hover:bg-brand/5 transition-colors"
+          className="flex flex-col items-center gap-2 rounded-xl border border-n-200 bg-white px-3 py-4 text-center hover:border-accent/30 hover:bg-accent/5 transition-colors"
         >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-brand/10">
-            <Icon className="size-4 text-brand" />
+          <div className="flex size-9 items-center justify-center rounded-lg bg-accent/10">
+            <Icon className="size-4 text-accent" />
           </div>
           <span className="text-xs font-medium text-ink">{label}</span>
         </Link>

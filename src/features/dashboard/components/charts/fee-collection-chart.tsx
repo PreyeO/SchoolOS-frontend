@@ -2,13 +2,12 @@
 
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { useSchoolColors } from "@/lib/school/use-school-colors";
 import type { FeeCollectionPoint } from "../../api/dashboard-charts-api";
 
-// Mirrors --brand / --amber in globals.css.
-const BRAND = "#1E5B4F";
-const AMBER = "#F2A93B";
-
 export function FeeCollectionChart({ data }: { data: FeeCollectionPoint[] }) {
+  const { primary, accent } = useSchoolColors();
+
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -20,8 +19,8 @@ export function FeeCollectionChart({ data }: { data: FeeCollectionPoint[] }) {
           labelStyle={{ color: "var(--ink)", fontWeight: 600 }}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Bar dataKey="collected" name="Collected" fill={BRAND} radius={[4, 4, 0, 0]} />
-        <Bar dataKey="outstanding" name="Outstanding" fill={AMBER} radius={[4, 4, 0, 0]} />
+        <Bar dataKey="collected" name="Collected" fill={primary} radius={[4, 4, 0, 0]} />
+        <Bar dataKey="outstanding" name="Outstanding" fill={accent} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
