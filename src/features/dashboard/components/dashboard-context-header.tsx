@@ -33,11 +33,11 @@ export function DashboardContextHeader() {
       {trial?.isTrialing && (
         <Link
           href="/settings/subscription"
-          className="flex items-center gap-2 rounded-full border border-amber/30 bg-amber/10 px-3.5 py-1.5 text-xs font-medium text-ink hover:bg-amber/20 transition-colors"
+          className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-ink hover:bg-primary/20 transition-colors"
         >
-          <Sparkles className="size-3.5 text-amber" />
+          <Sparkles className="size-3.5 text-primary" />
           Trial: {trial.daysLeft} days left
-          <span className="text-brand underline underline-offset-2">Upgrade</span>
+          <span className="text-primary underline underline-offset-2">Upgrade</span>
         </Link>
       )}
     </div>

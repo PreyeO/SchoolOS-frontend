@@ -2,12 +2,12 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { useSchoolColors } from "@/lib/school/use-school-colors";
 import type { AttendancePoint } from "../../api/dashboard-charts-api";
 
-// Mirrors --grass in globals.css.
-const GRASS = "#3FA66A";
-
 export function AttendanceChart({ data }: { data: AttendancePoint[] }) {
+  const { primary } = useSchoolColors();
+
   return (
     <ResponsiveContainer width="100%" height={200}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -18,7 +18,7 @@ export function AttendanceChart({ data }: { data: AttendancePoint[] }) {
           contentStyle={{ borderRadius: 8, borderColor: "var(--n-200)", fontSize: 12 }}
           labelStyle={{ color: "var(--ink)", fontWeight: 600 }}
         />
-        <Line type="monotone" dataKey="rate" stroke={GRASS} strokeWidth={2} dot={{ r: 3, fill: GRASS }} />
+        <Line type="monotone" dataKey="rate" stroke={primary} strokeWidth={2} dot={{ r: 3, fill: primary }} />
       </LineChart>
     </ResponsiveContainer>
   );
