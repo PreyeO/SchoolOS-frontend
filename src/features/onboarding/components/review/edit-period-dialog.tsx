@@ -91,7 +91,7 @@ export function EditPeriodDialog({ trigger, title, initialValues, isPending, onS
             </FieldWrapper>
           </div>
           <label className="flex items-center gap-2 text-sm text-ink">
-            <input type="checkbox" className="accent-brand" {...register("is_current")} />
+            <input type="checkbox" className="accent-primary" {...register("is_current")} />
             Current term
           </label>
           <DialogFooter>

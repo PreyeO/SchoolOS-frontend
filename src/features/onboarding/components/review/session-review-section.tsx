@@ -75,7 +75,7 @@ export function SessionReviewSection({ session }: { session: AcademicSessionResp
         isPending={addPeriod.isPending}
         onSave={(values) => addPeriod.mutateAsync({ sessionId: session.id, payload: { ...values, order: nextOrder } })}
         trigger={
-          <Button type="button" variant="ghost" size="sm" className="text-brand">
+          <Button type="button" variant="ghost" size="sm" className="text-primary">
             <Plus className="size-4 mr-1" /> Add term
           </Button>
         }

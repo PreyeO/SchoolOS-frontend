@@ -53,10 +53,10 @@ export function PeriodRow({
             name="current-period"
             checked={isCurrent}
             onChange={onSetCurrent}
-            className="accent-brand"
+            className="accent-primary"
             aria-label={`Set ${name || "this term"} as the current term`}
           />
-          <span className={isCurrent ? "text-brand font-medium" : "text-n-400"}>Current</span>
+          <span className={isCurrent ? "text-primary font-medium" : "text-n-400"}>Current</span>
         </label>
         {hasData ? (
           <ConfirmDeleteDialog

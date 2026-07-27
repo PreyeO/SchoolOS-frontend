@@ -67,7 +67,7 @@ export function DeletePeriodDialog({ period, otherPeriods, trigger }: Props) {
               <input
                 type="radio"
                 name="new-current-period"
-                className="accent-brand"
+                className="accent-primary"
                 checked={chosenId === p.id}
                 onChange={() => setChosenId(p.id)}
               />

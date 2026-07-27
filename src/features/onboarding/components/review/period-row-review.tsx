@@ -19,7 +19,7 @@ export function PeriodRowReview({ period, otherPeriods, canDelete }: Props) {
 
   return (
     <li className="flex items-center justify-between gap-3 text-sm">
-      <span className={period.is_current ? "font-medium text-brand" : "text-n-600"}>
+      <span className={period.is_current ? "font-medium text-primary" : "text-n-600"}>
         {period.name}
         {period.is_current && " (current)"}
         <span className="ml-2 text-n-400">

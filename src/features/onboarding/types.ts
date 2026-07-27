@@ -51,6 +51,7 @@ export interface AcademicSessionResponse {
   id: string;
   name: string;
   periods: PeriodResponse[];
+  created_at: string;
 }
 
 // --- Classes (GET /api/classes/templates, POST /api/classes/bulk/) --------

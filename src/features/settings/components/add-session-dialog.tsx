@@ -88,7 +88,7 @@ export function AddSessionDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="text-brand">
+        <Button type="button">
           <Plus className="size-4 mr-1" /> Add session
         </Button>
       </DialogTrigger>
@@ -131,7 +131,7 @@ export function AddSessionDialog() {
             <p className="text-xs text-red-600">{errors.periods.message as string}</p>
           )}
 
-          <Button type="button" variant="ghost" size="sm" className="text-brand" onClick={addPeriod}>
+          <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={addPeriod}>
             <Plus className="size-4 mr-1" /> Add term
           </Button>
 
