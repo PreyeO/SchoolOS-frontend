@@ -16,6 +16,7 @@ import type { SchoolDetailResponse } from "@/lib/school/get-school-detail";
 
 import { schoolProfileSchema, type SchoolProfileFormValues } from "../schemas/school-profile-schema";
 import { useUpdateSchoolProfile } from "../hooks/use-update-school-profile";
+import { BrandingPreview } from "./branding-preview";
 
 export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) {
   const { mutate, isPending } = useUpdateSchoolProfile();
@@ -46,65 +47,80 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
   }
 
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v), onInvalid)} noValidate className="space-y-8 max-w-2xl">
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FieldWrapper id="name" label="School name" error={errors.name?.message} className="sm:col-span-2">
+    <form onSubmit={handleSubmit((v) => mutate(v), onInvalid)} noValidate className="space-y-6 max-w-2xl">
+      <section className="space-y-5 rounded-xl border border-n-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-ink">School details</h2>
+        <FieldWrapper id="name" label="School name" error={errors.name?.message}>
           <Input id="name" {...register("name")} />
         </FieldWrapper>
-        <FieldWrapper id="address" label="Address" error={errors.address?.message} className="sm:col-span-2">
+        <FieldWrapper id="motto" label="School motto" hint="Optional" error={errors.motto?.message}>
+          <Input id="motto" placeholder="For humankind!" {...register("motto")} />
+        </FieldWrapper>
+      </section>
+
+      <section className="space-y-5 rounded-xl border border-n-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-ink">Contact information</h2>
+        <FieldWrapper id="address" label="Address" error={errors.address?.message}>
           <Input id="address" {...register("address")} />
         </FieldWrapper>
-        <FieldWrapper id="city" label="City" error={errors.city?.message}>
-          <Input id="city" {...register("city")} />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FieldWrapper id="city" label="City" error={errors.city?.message}>
+            <Input id="city" {...register("city")} />
+          </FieldWrapper>
+          <FieldWrapper id="phone_number" label="Phone number" error={errors.phone_number?.message}>
+            <Input id="phone_number" {...register("phone_number")} />
+          </FieldWrapper>
+          <FieldWrapper id="email" label="Email" error={errors.email?.message}>
+            <Input id="email" type="email" {...register("email")} />
+          </FieldWrapper>
+          <FieldWrapper id="website" label="Website" hint="Optional" error={errors.website?.message}>
+            <Input id="website" placeholder="https://yourschool.com" {...register("website")} />
+          </FieldWrapper>
+        </div>
+      </section>
+
+      <section className="space-y-5 rounded-xl border border-n-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-ink">Branding</h2>
+        <FieldWrapper id="logo" label="School logo" hint="Paste a link to your logo image." error={errors.logo?.message}>
+          <Controller
+            name="logo"
+            control={control}
+            render={({ field }) => (
+              <LogoUrlField id="logo" value={field.value ?? ""} onChange={field.onChange} hasError={!!errors.logo} />
+            )}
+          />
         </FieldWrapper>
-        <FieldWrapper id="phone_number" label="Phone number" error={errors.phone_number?.message}>
-          <Input id="phone_number" {...register("phone_number")} />
-        </FieldWrapper>
-        <FieldWrapper id="email" label="Email" error={errors.email?.message}>
-          <Input id="email" type="email" {...register("email")} />
-        </FieldWrapper>
-        <FieldWrapper id="website" label="Website" hint="Optional" error={errors.website?.message}>
-          <Input id="website" placeholder="https://yourschool.com" {...register("website")} />
-        </FieldWrapper>
-      </div>
 
-      <FieldWrapper id="logo" label="School logo" hint="Paste a link to your logo image." error={errors.logo?.message}>
-        <Controller
-          name="logo"
-          control={control}
-          render={({ field }) => (
-            <LogoUrlField id="logo" value={field.value ?? ""} onChange={field.onChange} hasError={!!errors.logo} />
-          )}
-        />
-      </FieldWrapper>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-3">
+            <p className="font-medium text-ink">Primary colour</p>
+            <Controller
+              name="primary_color"
+              control={control}
+              render={({ field }) => <ColorPicker value={field.value} onChange={field.onChange} label="Primary colour" />}
+            />
+          </div>
+          <div className="space-y-3">
+            <p className="font-medium text-ink">Accent colour</p>
+            <Controller
+              name="accent_color"
+              control={control}
+              render={({ field }) => <ColorPicker value={field.value} onChange={field.onChange} label="Accent colour" />}
+            />
+          </div>
+        </div>
 
-      <div className="space-y-3">
-        <p className="font-medium text-ink">Primary colour</p>
-        <Controller
-          name="primary_color"
-          control={control}
-          render={({ field }) => <ColorPicker value={field.value} onChange={field.onChange} label="Primary colour" />}
-        />
-      </div>
+        {lowContrast && (
+          <p className="text-xs text-clay" role="status">
+            These two colours look very similar — consider more contrast between them for readability.
+          </p>
+        )}
 
-      <div className="space-y-3">
-        <p className="font-medium text-ink">Accent colour</p>
-        <Controller
-          name="accent_color"
-          control={control}
-          render={({ field }) => <ColorPicker value={field.value} onChange={field.onChange} label="Accent colour" />}
-        />
-      </div>
-
-      {lowContrast && (
-        <p className="text-xs text-clay" role="status">
-          These two colours look very similar — consider more contrast between them for readability.
-        </p>
-      )}
-
-      <FieldWrapper id="motto" label="School motto" hint="Optional" error={errors.motto?.message}>
-        <Input id="motto" placeholder="For humankind!" {...register("motto")} />
-      </FieldWrapper>
+        <div>
+          <p className="mb-2 text-xs font-medium text-n-500">Preview</p>
+          <BrandingPreview primary={primary} accent={accent} />
+        </div>
+      </section>
 
       <Button type="submit" disabled={isPending} className="font-semibold">
         {isPending ? "Saving…" : "Save changes"}
