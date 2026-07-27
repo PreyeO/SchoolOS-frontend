@@ -86,7 +86,7 @@ export function EditSubjectDialog({ trigger, initialValues, schoolLevels, isPend
             </select>
           </div>
           <label className="flex items-center gap-2 text-sm text-ink">
-            <input type="checkbox" className="accent-brand" {...register("is_core")} />
+            <input type="checkbox" className="accent-primary" {...register("is_core")} />
             Core subject
           </label>
           <DialogFooter>
