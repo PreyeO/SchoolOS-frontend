@@ -25,8 +25,8 @@ export function SetupChecklist() {
 
   if (isComplete) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-grass/20 bg-grass/10 px-4 py-3">
-        <PartyPopper className="size-5 shrink-0 text-grass" />
+      <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3">
+        <PartyPopper className="size-5 shrink-0 text-primary" />
         <p className="flex-1 text-sm font-medium text-ink">
           Your school is fully set up — nice work!
         </p>
