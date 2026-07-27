@@ -51,6 +51,13 @@ export function RoleFormDialog({ trigger, title, initialValues, catalog, isPendi
     setValue("permissions", next);
   }
 
+  function toggleGroup(groupPermissions: string[], selectAll: boolean) {
+    const next = selectAll
+      ? [...new Set([...permissions, ...groupPermissions])]
+      : permissions.filter((p) => !groupPermissions.includes(p));
+    setValue("permissions", next);
+  }
+
   async function submit(values: RoleFormValues) {
     try {
       await onSave(values);
@@ -74,7 +81,12 @@ export function RoleFormDialog({ trigger, title, initialValues, catalog, isPendi
 
           <div>
             <p className="mb-2 text-sm font-medium text-ink">Permissions</p>
-            <PermissionChecklist catalog={catalog} selected={permissions} onToggle={togglePermission} />
+            <PermissionChecklist
+              catalog={catalog}
+              selected={permissions}
+              onToggle={togglePermission}
+              onToggleGroup={toggleGroup}
+            />
           </div>
 
           <DialogFooter>

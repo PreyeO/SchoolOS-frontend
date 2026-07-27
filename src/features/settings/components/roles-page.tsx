@@ -25,9 +25,23 @@ export function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-ink">Roles & Permissions</h1>
-        <p className="mt-1 text-sm text-n-500">Create custom roles and control what each staff member can access.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Roles & Permissions</h1>
+          <p className="mt-1 text-sm text-n-500">Create custom roles and control what each staff member can access.</p>
+        </div>
+        <RoleFormDialog
+          title="Add a role"
+          initialValues={{ name: "", permissions: [] }}
+          catalog={catalog}
+          isPending={createRole.isPending}
+          onSave={(values) => createRole.mutateAsync(values)}
+          trigger={
+            <Button type="button">
+              <Plus className="size-4 mr-1" /> Add role
+            </Button>
+          }
+        />
       </div>
 
       <div className="space-y-2">
@@ -35,19 +49,6 @@ export function RolesPage() {
           <RoleCard key={role.id} role={role} catalog={catalog} />
         ))}
       </div>
-
-      <RoleFormDialog
-        title="Add a role"
-        initialValues={{ name: "", permissions: [] }}
-        catalog={catalog}
-        isPending={createRole.isPending}
-        onSave={(values) => createRole.mutateAsync(values)}
-        trigger={
-          <Button type="button" variant="ghost" size="sm" className="text-brand">
-            <Plus className="size-4 mr-1" /> Add role
-          </Button>
-        }
-      />
     </div>
   );
 }

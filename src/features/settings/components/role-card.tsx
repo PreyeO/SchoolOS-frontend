@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import type { Role } from "@/features/invitations/types";
 
+import { groupPermissions } from "../lib/permission-groups";
 import { useDeleteRole, useUpdateRole } from "../hooks/use-role-mutations";
 import { RoleFormDialog } from "./role-form-dialog";
 
@@ -13,8 +14,12 @@ export function RoleCard({ role, catalog }: { role: Role; catalog: string[] }) {
   const updateRole = useUpdateRole();
   const deleteRole = useDeleteRole();
 
+  const coverage = groupPermissions(catalog)
+    .map((g) => ({ label: g.label, count: g.permissions.filter((p) => role.permissions.includes(p)).length, total: g.permissions.length }))
+    .filter((g) => g.count > 0);
+
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-n-200 bg-white px-4 py-3">
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-n-200 bg-white px-4 py-3">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="font-medium text-ink truncate">{role.name}</p>
@@ -24,9 +29,17 @@ export function RoleCard({ role, catalog }: { role: Role; catalog: string[] }) {
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-xs text-n-500">
-          {role.permissions.length} permission{role.permissions.length !== 1 ? "s" : ""}
-        </p>
+        {coverage.length === 0 ? (
+          <p className="mt-1.5 text-xs text-n-400 italic">No permissions assigned.</p>
+        ) : (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {coverage.map((g) => (
+              <span key={g.label} className="rounded-full border border-n-200 px-2 py-0.5 text-[11px] text-n-500">
+                {g.label} {g.count}/{g.total}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* The Owner role's permission set and name are backend-locked (rename and
