@@ -1,19 +1,20 @@
 "use client";
 
+import { useMutationWithToast } from "@/lib/api/use-mutation-with-toast";
+
 import { addArm, deleteArm, updateArm } from "../api/review-api";
-import { useReviewMutation } from "./use-review-mutation";
 
 export function useAddArm() {
-  return useReviewMutation(
+  return useMutationWithToast(
     ({ classId, name }: { classId: string; name: string }) => addArm(classId, { name }),
     "Arm added",
   );
 }
 
 export function useUpdateArm() {
-  return useReviewMutation(({ id, name }: { id: string; name: string }) => updateArm(id, { name }), "Saved");
+  return useMutationWithToast(({ id, name }: { id: string; name: string }) => updateArm(id, { name }), "Saved");
 }
 
 export function useDeleteArm() {
-  return useReviewMutation((id: string) => deleteArm(id), "Removed");
+  return useMutationWithToast((id: string) => deleteArm(id), "Removed");
 }

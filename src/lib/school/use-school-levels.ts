@@ -3,11 +3,10 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { getSchoolId } from "@/lib/school/get-school-id";
+import { getSchoolId } from "./get-school-id";
+import { getSchoolDetail } from "./get-school-detail";
 import { useSchoolStore } from "@/stores/school-store";
 import type { SchoolLevelValue } from "@/data/school-levels";
-
-import { getSchoolDetail } from "../api/onboarding-api";
 
 interface Result {
   levels: SchoolLevelValue[];
@@ -15,11 +14,11 @@ interface Result {
 }
 
 // The reliable source of the school's levels for filtering Classes/Subjects
-// prefills. Prefers the school-store (populated at create-school or login);
-// only when that's empty (e.g. a fresh login that hydrated from a summary
-// endpoint without levels) does it fetch GET /api/schools/:id/ — the
-// school-DETAIL endpoint, which includes levels — and hydrate the store.
-// Never reads the school-list endpoint, whose summary omits levels.
+// prefills (onboarding and dashboard Settings both use this). Prefers the
+// school-store (populated at create-school or login); only when that's empty
+// does it fetch GET /api/schools/:id/ — the school-DETAIL endpoint, which
+// includes levels — and hydrate the store. Never reads the school-list
+// endpoint, whose summary omits levels.
 export function useSchoolLevels(): Result {
   const storeLevels = useSchoolStore((s) => s.currentSchool?.levels);
   const setLevels = useSchoolStore((s) => s.setLevels);
@@ -27,7 +26,7 @@ export function useSchoolLevels(): Result {
   const schoolId = getSchoolId();
 
   const { data, isPending } = useQuery({
-    queryKey: ["onboarding", "school-levels", schoolId],
+    queryKey: ["school-levels", schoolId],
     queryFn: () => getSchoolDetail(schoolId as string),
     enabled: !hasLevels && !!schoolId,
   });

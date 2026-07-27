@@ -28,6 +28,7 @@ export interface CurrentSchool {
 }
 
 export interface BrandingUpdate {
+  name?: string;
   primaryColor?: string;
   accentColor?: string;
   logoUrl?: string | null;

@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import { ENDPOINTS } from "@/lib/api/endpoints";
+import { ENDPOINTS, ROLE_ENDPOINTS } from "@/lib/api/endpoints";
 
 import type { InviteAdminFormValues } from "../schemas/invite-admin-schema";
 import type { InviteTeacherFormValues } from "../schemas/invite-teacher-schema";
@@ -66,6 +66,6 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
 }
 
 export async function getRoles(): Promise<Role[]> {
-  const { data } = await apiClient.get<RolesListResponse>(ENDPOINTS.ROLES);
+  const { data } = await apiClient.get<RolesListResponse>(ROLE_ENDPOINTS.LIST());
   return data.results;
 }

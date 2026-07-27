@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/features/dashboard/components/coming-soon";
+import { SchoolProfilePage } from "@/features/settings/components/school-profile-page";
 
 export const metadata: Metadata = { title: "School Profile & Branding — SchoolOS" };
 
 export default function Page() {
-  return <ComingSoon href="/settings/school" />;
+  return <SchoolProfilePage />;
 }

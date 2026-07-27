@@ -15,10 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useSchoolLevels } from "@/lib/school/use-school-levels";
 
 import { classesSchema, type ClassesFormValues } from "../../schemas/classes-schema";
 import { useAddClass } from "../../hooks/use-class-mutations";
-import { useSchoolLevels } from "../../hooks/use-school-levels";
 import { ClassRow } from "../class-row";
 
 function blankClass(level: string): ClassesFormValues["classes"][number] {

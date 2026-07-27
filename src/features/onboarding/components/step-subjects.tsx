@@ -5,12 +5,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
 import type { StepKey } from "@/lib/school/onboarding-steps";
+import { useSchoolLevels } from "@/lib/school/use-school-levels";
 
 import { subjectsSchema } from "../schemas/subjects-schema";
 import { useCreateSubjects } from "../hooks/use-create-subjects";
 import { useSubjectTemplates } from "../hooks/use-subject-templates";
 import { useSubjectEntries } from "../hooks/use-subject-entries";
-import { useSchoolLevels } from "../hooks/use-school-levels";
 import { SubjectRow } from "./subject-row";
 import { AddSubjectControl } from "./add-subject-control";
 import { PrefillNotice } from "./prefill-notice";

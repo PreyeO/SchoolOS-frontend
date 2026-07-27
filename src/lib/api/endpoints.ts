@@ -15,7 +15,6 @@ export const ENDPOINTS = {
   INVITE_TEACHER: "/api/invites/invite-teacher/",
   INVITE_PARENT: "/api/invites/invite-parent/",
   INVITE_STUDENT: "/api/invites/invite-student/",
-  ROLES: "/api/school-admin-roles",
 } as const;
 
 // Id-scoped endpoint builders. Confirmed against accounts/urls.py (SchoolViewSet
@@ -34,6 +33,7 @@ export const SCHOOL_ENDPOINTS = {
 // Confirmed against academic/urls.py + academic/views.py — all DRF-router
 // generated, so all carry a trailing slash like CLASSES_BULK/SUBJECTS_BULK above.
 export const ACADEMIC_SESSION_ENDPOINTS = {
+  LIST: () => `/api/academic-sessions/`,
   DETAIL: (id: string) => `/api/academic-sessions/${id}/`,
   ADD_PERIOD: (id: string) => `/api/academic-sessions/${id}/academic-periods/`,
 } as const;
@@ -43,6 +43,7 @@ export const ACADEMIC_PERIOD_ENDPOINTS = {
 } as const;
 
 export const CLASS_ENDPOINTS = {
+  LIST: () => `/api/classes/`,
   DETAIL: (id: string) => `/api/classes/${id}/`,
   ADD_ARM: (id: string) => `/api/classes/${id}/arms/`,
 } as const;
@@ -52,5 +53,16 @@ export const CLASS_ARM_ENDPOINTS = {
 } as const;
 
 export const SUBJECT_ENDPOINTS = {
+  LIST: () => `/api/subjects/`,
   DETAIL: (id: string) => `/api/subjects/${id}/`,
+} as const;
+
+// Replaces the old flat ENDPOINTS.ROLES (no trailing slash, GET-only — worked
+// only via Django's APPEND_SLASH redirect, same class of bug already fixed for
+// onboarding's stage/review endpoints). The new CRUD + permissions-catalog
+// actions include POST/PATCH/DELETE, which don't get that redirect safety net.
+export const ROLE_ENDPOINTS = {
+  LIST: () => `/api/school-admin-roles/`,
+  DETAIL: (id: string) => `/api/school-admin-roles/${id}/`,
+  PERMISSIONS: () => `/api/school-admin-roles/permissions/`,
 } as const;

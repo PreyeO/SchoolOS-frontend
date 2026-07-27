@@ -1,15 +1,16 @@
 "use client";
 
+import { useMutationWithToast } from "@/lib/api/use-mutation-with-toast";
+
 import { deleteSession, updateSession } from "../api/review-api";
-import { useReviewMutation } from "./use-review-mutation";
 
 export function useUpdateSessionName() {
-  return useReviewMutation(
+  return useMutationWithToast(
     ({ id, name }: { id: string; name: string }) => updateSession(id, { name }),
     "Saved",
   );
 }
 
 export function useDeleteSession() {
-  return useReviewMutation((id: string) => deleteSession(id), "Removed");
+  return useMutationWithToast((id: string) => deleteSession(id), "Removed");
 }

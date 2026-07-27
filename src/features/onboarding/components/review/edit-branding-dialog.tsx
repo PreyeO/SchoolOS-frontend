@@ -15,13 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ColorPicker } from "@/components/shared/color-picker";
+import { LogoUrlField } from "@/components/shared/logo-url-field";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 
 import { brandingSchema, type BrandingFormValues } from "../../schemas/branding-schema";
 import { useEditBranding } from "../../hooks/use-branding-edit";
 import { contrastRatio } from "../../lib/contrast-ratio";
-import { ColorPicker } from "../color-picker";
-import { LogoUrlField } from "../logo-url-field";
 import type { SchoolResponse } from "../../types";
 
 interface Props {

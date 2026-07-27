@@ -1,10 +1,10 @@
 "use client";
 
+import { useMutationWithToast } from "@/lib/api/use-mutation-with-toast";
 import { getSchoolId } from "@/lib/school/get-school-id";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { updateBranding } from "../api/onboarding-api";
-import { useReviewMutation } from "./use-review-mutation";
 import type { BrandingFormValues } from "../schemas/branding-schema";
 
 // Same PATCH /schools/:id/ as the onboarding branding step, but scoped to just
@@ -13,7 +13,7 @@ import type { BrandingFormValues } from "../schemas/branding-schema";
 export function useEditBranding() {
   const updateBrandingStore = useSchoolStore((s) => s.updateBranding);
 
-  return useReviewMutation(
+  return useMutationWithToast(
     (values: BrandingFormValues) => {
       const schoolId = getSchoolId();
       if (!schoolId) throw new Error("Missing school id — please log in again.");

@@ -8,11 +8,11 @@ import type { FieldErrors } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import type { StepKey } from "@/lib/school/onboarding-steps";
+import { useSchoolLevels } from "@/lib/school/use-school-levels";
 
 import { classesSchema, type ClassesFormValues } from "../schemas/classes-schema";
 import { useCreateClasses } from "../hooks/use-create-classes";
 import { useClassTemplates } from "../hooks/use-class-templates";
-import { useSchoolLevels } from "../hooks/use-school-levels";
 import { useSeedClassesFromTemplates } from "../hooks/use-seed-classes-from-templates";
 import { focusFirstError } from "../lib/first-error-field-id";
 import { ClassRow } from "./class-row";

@@ -7,6 +7,8 @@ import type { FieldErrors } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ColorPicker } from "@/components/shared/color-picker";
+import { LogoUrlField } from "@/components/shared/logo-url-field";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
 import { useSchoolStore } from "@/stores/school-store";
@@ -16,8 +18,6 @@ import { brandingSchema, type BrandingFormValues } from "../schemas/branding-sch
 import { useUpdateBranding } from "../hooks/use-update-branding";
 import { focusFirstError } from "../lib/first-error-field-id";
 import { contrastRatio } from "../lib/contrast-ratio";
-import { ColorPicker } from "./color-picker";
-import { LogoUrlField } from "./logo-url-field";
 
 interface Props {
   onAdvanced: (step: StepKey) => void;
