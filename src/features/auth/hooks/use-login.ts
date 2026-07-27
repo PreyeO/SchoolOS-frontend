@@ -7,10 +7,11 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api/get-error-message";
 import { applyAuthTokens } from "@/lib/auth/apply-auth-tokens";
 import { resolvePostAuthPath } from "@/lib/auth/resolve-post-auth-path";
+import { getSchoolDetail } from "@/lib/school/get-school-detail";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSchoolStore } from "@/stores/school-store";
 
-import { getCurrentSchool, login, resendOtp } from "../api/auth-api";
+import { login, resendOtp } from "../api/auth-api";
 import type { LoginPayload, LoginResponse, SchoolSummary } from "../types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,25 +23,32 @@ interface UseLoginOptions {
 export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
   const router = useRouter();
   const setPendingEmail = useAuthStore((s) => s.setPendingVerificationEmail);
-  const setCurrentSchool = useSchoolStore((s) => s.setCurrentSchool);
+  const hydrateSchool = useSchoolStore((s) => s.hydrateSchool);
 
   async function handleScoped(data: LoginResponse, variables: LoginPayload) {
     if (data.requires_school_selection) return;
-    applyAuthTokens(data.access, data.refresh);
+    const claims = applyAuthTokens(data.access, data.refresh);
 
-    // Hydrate branding so the dashboard/onboarding shell paints correctly.
-    // Non-blocking: on failure it falls back to SchoolOS defaults.
-    try {
-      const school = await getCurrentSchool();
-      setCurrentSchool({
-        id: school.id,
-        name: school.name,
-        slug: school.slug,
-        school_type: school.school_type,
-        levels: school.levels,
-      });
-    } catch {
-      /* dashboard/onboarding still renders with defaults */
+    // Hydrate identity + branding so the dashboard/onboarding shell paints
+    // with the school's real colours. Non-blocking: on failure it falls back
+    // to whatever's already in the store (or SchoolOS defaults for a fresh one).
+    if (claims.school_id) {
+      try {
+        const school = await getSchoolDetail(claims.school_id);
+        hydrateSchool({
+          id: school.id,
+          name: school.name,
+          slug: school.slug,
+          school_type: school.school_type,
+          levels: school.levels,
+          primaryColor: school.primary_color,
+          accentColor: school.accent_color,
+          logoUrl: school.logo,
+          motto: school.motto,
+        });
+      } catch {
+        /* dashboard/onboarding still renders with whatever's already in the store */
+      }
     }
 
     const { path, external } = await resolvePostAuthPath({ state: data.state, slug: variables.school_slug });

@@ -95,12 +95,3 @@ export interface LoginSelectionResponse {
 }
 
 export type LoginResponse = LoginScopedResponse | LoginSelectionResponse;
-
-// Shape needed to paint dashboard branding after login.
-export interface CurrentSchoolInfo {
-  id: string;
-  name: string;
-  slug: string;
-  school_type: SchoolType;
-  levels: SchoolLevel[];
-}

@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/client";
 import { ENDPOINTS, SCHOOL_ENDPOINTS } from "@/lib/api/endpoints";
 import { getOnboardingStage, type OnboardingStageResponse } from "@/lib/school/get-onboarding-stage";
+import { getSchoolDetail } from "@/lib/school/get-school-detail";
 import type { StepKey } from "@/lib/school/onboarding-steps";
 
 import type {
@@ -19,18 +20,10 @@ import type {
 
 // Re-exported so hooks only ever import from this one api file, per the
 // project's schema/types/api/hook/UI separation convention.
-export { getOnboardingStage };
+export { getOnboardingStage, getSchoolDetail };
 
 export async function updateBranding(schoolId: string, payload: BrandingPayload): Promise<SchoolResponse> {
   const { data } = await apiClient.patch<SchoolResponse>(SCHOOL_ENDPOINTS.DETAIL(schoolId), payload);
-  return data;
-}
-
-// The reliable source of the school's levels (among other fields) — the
-// school-list endpoint's summary omits levels, so this detail endpoint is
-// used instead whenever the store doesn't already have them.
-export async function getSchoolDetail(schoolId: string): Promise<SchoolResponse> {
-  const { data } = await apiClient.get<SchoolResponse>(SCHOOL_ENDPOINTS.DETAIL(schoolId));
   return data;
 }
 

@@ -8,7 +8,6 @@ import type { VerifyOtpFormValues } from "../schemas/verify-otp-schema";
 import type {
   CreateSchoolPayload,
   CreateSchoolResponse,
-  CurrentSchoolInfo,
   LoginPayload,
   LoginResponse,
   ResendOtpPayload,
@@ -38,13 +37,6 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   // `school_slug` set to the chosen school (vs a dedicated select-school endpoint).
   // If a dedicated endpoint exists, only this function changes.
   const { data } = await apiClient.post<LoginResponse>(ENDPOINTS.LOGIN, payload);
-  return data;
-}
-
-export async function getCurrentSchool(): Promise<CurrentSchoolInfo> {
-  // TODO confirm: the endpoint that returns the token-scoped current school.
-  // Reusing the school endpoint (GET) for now; swap when the real one is confirmed.
-  const { data } = await apiClient.get<CurrentSchoolInfo>(ENDPOINTS.SCHOOL);
   return data;
 }
 

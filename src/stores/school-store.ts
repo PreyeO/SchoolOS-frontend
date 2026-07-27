@@ -34,6 +34,15 @@ export interface BrandingUpdate {
   motto?: string | null;
 }
 
+// Identity + branding for hydrating an EXISTING school (login, verify-otp
+// into an already-set-up school) — deliberately excludes session/classes/
+// subjectCount/setupStatus, which setCurrentSchool resets for a genuinely
+// new school. hydrateSchool must never wipe those for a returning user.
+export type SchoolIdentity = Pick<
+  CurrentSchool,
+  "id" | "name" | "slug" | "school_type" | "levels" | "primaryColor" | "accentColor" | "logoUrl" | "motto"
+>;
+
 export interface SetupStatus {
   branding: boolean;
   academic_year: boolean;
@@ -50,6 +59,7 @@ interface SchoolState {
       "primaryColor" | "accentColor" | "logoUrl" | "motto" | "sessionName" | "currentTermName" | "classes" | "subjectCount"
     >,
   ) => void;
+  hydrateSchool: (school: SchoolIdentity) => void;
   updateBranding: (branding: BrandingUpdate) => void;
   updateSession: (sessionName: string, currentTermName: string | null) => void;
   setLevels: (levels: SchoolLevelValue[]) => void;
@@ -94,6 +104,17 @@ export const useSchoolStore = create<SchoolState>()(
           },
           setupStatus: INITIAL_SETUP,
         }),
+      hydrateSchool: (school) =>
+        set((s) => ({
+          currentSchool: {
+            sessionName: null,
+            currentTermName: null,
+            classes: [],
+            subjectCount: 0,
+            ...s.currentSchool,
+            ...school,
+          },
+        })),
       updateBranding: (branding) =>
         set((s) => ({
           currentSchool: s.currentSchool ? { ...s.currentSchool, ...branding } : null,
