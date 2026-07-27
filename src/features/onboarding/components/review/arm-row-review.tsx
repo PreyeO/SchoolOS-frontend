@@ -21,7 +21,7 @@ export function ArmRowReview({ arm }: { arm: ArmResponse }) {
         isPending={updateArm.isPending}
         onSave={(name) => updateArm.mutateAsync({ id: arm.id, name })}
         trigger={
-          <button type="button" aria-label={`Rename ${arm.name}`} className="cursor-pointer text-n-400 hover:text-brand">
+          <button type="button" aria-label={`Rename ${arm.name}`} className="cursor-pointer text-n-400 hover:text-primary">
             <Pencil className="size-3" />
           </button>
         }

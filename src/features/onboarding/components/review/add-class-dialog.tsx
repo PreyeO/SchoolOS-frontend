@@ -28,7 +28,9 @@ function blankClass(level: string): ClassesFormValues["classes"][number] {
 // Reuses the exact same ClassRow + classesSchema pipeline as the onboarding
 // Classes step, just constrained to a one-item form, so a school can add a
 // single new class from Review without re-submitting its existing ones.
-export function AddClassDialog() {
+// `trigger` defaults to the ghost link onboarding Review uses inline; Settings'
+// Classes page passes a solid header button instead.
+export function AddClassDialog({ trigger }: { trigger?: React.ReactNode } = {}) {
   const [open, setOpen] = useState(false);
   const { levels: schoolLevels } = useSchoolLevels();
   const addClass = useAddClass();
@@ -61,9 +63,11 @@ export function AddClassDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="text-brand">
-          <Plus className="size-4 mr-1" /> Add class
-        </Button>
+        {trigger ?? (
+          <Button type="button" variant="ghost" size="sm" className="text-primary">
+            <Plus className="size-4 mr-1" /> Add class
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

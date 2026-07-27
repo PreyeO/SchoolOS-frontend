@@ -63,7 +63,7 @@ export function ClassRowReview({ klass }: { klass: ClassResponse }) {
           trigger={
             <button
               type="button"
-              className="inline-flex cursor-pointer items-center gap-0.5 text-xs font-medium text-brand hover:underline"
+              className="inline-flex cursor-pointer items-center gap-0.5 text-xs font-medium text-primary hover:underline"
             >
               <Plus className="size-3" /> Add arm
             </button>

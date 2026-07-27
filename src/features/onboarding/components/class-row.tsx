@@ -134,7 +134,7 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
       <button
         type="button"
         onClick={addArm}
-        className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-brand hover:underline"
+        className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-primary hover:underline"
       >
         <Plus className="size-3.5" /> Add arm
       </button>
