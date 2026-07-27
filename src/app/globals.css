@@ -63,16 +63,20 @@
   --muted:                #14342c;
   --muted-foreground:     var(--n-300);
   --border:               rgba(246,247,243,0.12);
-  --primary:              var(--shell-accent, var(--amber));
+  --primary:              var(--shell-primary, var(--amber));
   --primary-foreground:   var(--ink);
   color: var(--paper);
   background-color: var(--ink);
 }
 
-/* Dashboard shell only: lets a school's brand color drive --primary without
-   affecting marketing/auth pages. Set --shell-accent on the shell root. */
+/* Dashboard shell only: lets a school's own primary_color/accent_color drive
+   --primary/--accent without affecting marketing/auth pages. Set
+   --shell-primary/--shell-accent (school.primary_color/accent_color) on the
+   shell root — see dashboard-shell.tsx. --accent inherits into
+   [data-surface="ink"] (the sidebar) since it isn't redeclared there. */
 [data-dashboard-shell] {
-  --primary: var(--shell-accent, var(--brand));
+  --primary: var(--shell-primary, var(--brand));
+  --accent: var(--shell-accent, var(--amber));
 }
 
 [data-surface="brand"] {

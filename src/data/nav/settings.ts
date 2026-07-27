@@ -18,11 +18,11 @@ export const settingsGroup: NavGroup = {
   icon: Settings,
   items: [
     adminItem({
-      label: "School Profile & Branding",
+      label: "School Profile",
       href: "/settings/school",
       icon: Building2,
       description: "Update your school's details, logo, and brand colors.",
-    }),
+    }, false),
     adminItem({
       label: "Sessions & Terms",
       href: "/settings/sessions",

@@ -10,12 +10,15 @@ import { AppTopbar } from "./app-topbar";
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const primaryColor = useSchoolStore((s) => s.currentSchool?.primaryColor);
+  const accentColor = useSchoolStore((s) => s.currentSchool?.accentColor);
 
-  // The school's brand color drives --primary shell-wide (sidebar accent, active
-  // states, chart/KPI accents); omitted when unset so CSS falls back to pine/amber.
-  const shellStyle = primaryColor
-    ? ({ "--shell-accent": primaryColor } as CSSProperties)
-    : undefined;
+  // The school's own colors drive --primary/--accent shell-wide (sidebar
+  // accent, active states, chart/KPI accents); each is omitted when unset so
+  // CSS falls back to the SchoolOS pine/amber palette.
+  const shellStyle: CSSProperties = {
+    ...(primaryColor ? { "--shell-primary": primaryColor } : {}),
+    ...(accentColor ? { "--shell-accent": accentColor } : {}),
+  } as CSSProperties;
 
   return (
     <AuthGuard>

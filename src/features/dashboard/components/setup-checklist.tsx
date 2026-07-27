@@ -54,7 +54,7 @@ export function SetupChecklist() {
             <circle cx="18" cy="18" r="15" fill="none" stroke="var(--n-100)" strokeWidth="3.5" />
             <circle
               cx="18" cy="18" r="15" fill="none"
-              stroke="var(--shell-accent, var(--brand))" strokeWidth="3.5"
+              stroke="var(--shell-primary, var(--brand))" strokeWidth="3.5"
               strokeDasharray={`${pct * 0.942} 94.2`}
               strokeLinecap="round"
               className="transition-[stroke-dasharray] duration-500 ease-out"

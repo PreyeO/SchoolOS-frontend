@@ -17,7 +17,7 @@ export function SchoolProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-ink">School Profile & Branding</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">School Profile</h1>
         <p className="mt-1 text-sm text-n-500">Update your school&rsquo;s details and how it looks across the dashboard.</p>
       </div>
       <SchoolProfileForm school={school} />
