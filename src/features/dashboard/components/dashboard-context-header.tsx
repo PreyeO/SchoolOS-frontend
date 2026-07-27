@@ -17,17 +17,12 @@ export function DashboardContextHeader() {
   const school = useSchoolStore((s) => s.currentSchool);
   const { data: trial } = useTrialStatus();
 
-  const term = school?.currentTermName
-    ? `${school.currentTermName} · ${school.sessionName}`
-    : school?.sessionName;
-
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">
           {greeting()}, {school?.name ?? "your school"} 👋
         </h1>
-        {term && <p className="mt-1 text-sm text-n-500">{term}</p>}
       </div>
 
       {trial?.isTrialing && (
