@@ -35,13 +35,13 @@ export function InvitePeoplePanel() {
               aria-pressed={active}
               className={cn(
                 "flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors",
-                active ? "border-brand bg-brand/5" : "border-n-200 hover:border-n-300",
+                active ? "border-primary bg-primary/5" : "border-n-200 hover:border-n-300",
               )}
             >
               <div
                 className={cn(
                   "flex size-9 items-center justify-center rounded-lg",
-                  active ? "bg-brand text-white" : "bg-n-100 text-n-500",
+                  active ? "bg-primary text-primary-foreground" : "bg-n-100 text-n-500",
                 )}
               >
                 <Icon className="size-4" />
