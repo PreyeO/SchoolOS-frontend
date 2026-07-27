@@ -5,6 +5,7 @@ export interface Role {
   id: string;
   name: string;
   permissions: string[];
+  is_owner: boolean;
 }
 
 // GET /api/school-admin-roles is paginated (DRF default); we only surface the

@@ -52,7 +52,7 @@ export const settingsGroup: NavGroup = {
       href: "/settings/roles",
       icon: ShieldCheck,
       description: "Create custom roles and control what each staff member can access.",
-    }),
+    }, false),
     adminItem({
       label: "Report Card Templates",
       href: "/settings/report-cards",
