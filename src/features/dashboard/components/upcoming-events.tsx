@@ -22,7 +22,7 @@ export function UpcomingEvents() {
         <ul className="space-y-2">
           {data.map((event) => (
             <li key={event.id} className="flex items-center gap-3 rounded-lg bg-n-50 px-3 py-2">
-              <CalendarDays className="size-4 shrink-0 text-accent" />
+              <CalendarDays className="size-4 shrink-0 text-primary" />
               <div className="min-w-0">
                 <p className="text-sm text-ink truncate">{event.title}</p>
                 <p className="text-xs text-n-400">{event.date}</p>

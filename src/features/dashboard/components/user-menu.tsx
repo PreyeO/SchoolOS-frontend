@@ -35,7 +35,7 @@ export function UserMenu() {
           className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar>
-            <AvatarFallback className="bg-accent/10 text-accent">
+            <AvatarFallback className="bg-primary/10 text-primary">
               <UserRound className="size-4" />
             </AvatarFallback>
           </Avatar>

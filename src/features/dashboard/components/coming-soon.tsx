@@ -15,8 +15,8 @@ export function ComingSoon({ href, label, description, icon }: Props) {
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-6">
-      <div className="flex size-14 items-center justify-center rounded-2xl bg-accent/10">
-        <Icon className="size-6 text-accent" />
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+        <Icon className="size-6 text-primary" />
       </div>
       <h1 className="mt-5 font-display text-2xl font-bold text-ink">
         {label ?? item?.label ?? "Coming soon"}
