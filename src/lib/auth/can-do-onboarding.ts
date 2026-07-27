@@ -1,7 +1,9 @@
 import type { AuthClaims } from "./decode-token";
 
-// TODO: restrict to "owner" once the backend adds a distinct owner persona.
-// Admins are allowed through for now — flip this one line when it's ready.
+// Onboarding is the Owner's setup wizard — confirmed against the backend
+// (accounts/tokens.py emits "owner" in personas when the membership's admin
+// role has is_owner=True; accounts/permissions.py's IsSchoolOwner enforces
+// the same restriction server-side on the onboarding/advance/review actions).
 export function canDoOnboarding(claims: AuthClaims | null): boolean {
-  return claims?.personas.includes("admin") ?? false;
+  return claims?.personas.includes("owner") ?? false;
 }

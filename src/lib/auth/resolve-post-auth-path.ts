@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/stores/auth-store";
 import { getSchoolId } from "@/lib/school/get-school-id";
 import { getOnboardingStage } from "@/lib/school/get-onboarding-stage";
+import { canDoOnboarding } from "./can-do-onboarding";
 import { resolveNextStep } from "./resolve-next-step";
 
 interface Args {
@@ -21,7 +22,7 @@ export async function resolvePostAuthPath({ state, slug }: Args): Promise<{ path
   if (base.external || base.path !== "/dashboard") return base;
 
   const schoolId = getSchoolId();
-  if (!schoolId) return base;
+  if (!schoolId || !canDoOnboarding(claims)) return base;
 
   try {
     const stage = await getOnboardingStage(schoolId);
