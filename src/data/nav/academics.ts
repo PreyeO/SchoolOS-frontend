@@ -22,13 +22,13 @@ export const academicsGroup: NavGroup = {
       href: "/classes",
       icon: LayoutGrid,
       description: "Organize classes and parallel arms, assign teachers, and manage class capacity.",
-    }),
+    }, false),
     adminItem({
       label: "Subjects",
       href: "/subjects",
       icon: BookOpen,
       description: "Manage the subjects taught at each level and assign them to classes.",
-    }),
+    }, false),
     adminItem({
       label: "Timetable",
       href: "/timetable",
