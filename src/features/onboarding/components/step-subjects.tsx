@@ -62,23 +62,25 @@ export function StepSubjects({ onAdvanced, onBack }: Props) {
 
       <p aria-live="polite" className="sr-only">{selectedCount} subjects selected</p>
 
-      <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
+      <div className="space-y-4">
         {groups.map(({ level, items }) => (
           <div key={level.value} className="space-y-2">
             <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-n-400">{level.label}</p>
             {items.length === 0 ? (
               <p className="text-xs text-n-400 italic">No subjects yet — add one below.</p>
             ) : (
-              items.map((entry) => (
-                <SubjectRow
-                  key={entry.id}
-                  entry={entry}
-                  onToggle={() => patch(entry.id, { selected: !entry.selected })}
-                  onRename={(name) => patch(entry.id, { name })}
-                  onToggleCore={() => patch(entry.id, { is_core: !entry.is_core })}
-                  onRemove={() => removeEntry(entry.id)}
-                />
-              ))
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {items.map((entry) => (
+                  <SubjectRow
+                    key={entry.id}
+                    entry={entry}
+                    onToggle={() => patch(entry.id, { selected: !entry.selected })}
+                    onRename={(name) => patch(entry.id, { name })}
+                    onToggleCore={() => patch(entry.id, { is_core: !entry.is_core })}
+                    onRemove={() => removeEntry(entry.id)}
+                  />
+                ))}
+              </div>
             )}
           </div>
         ))}

@@ -21,9 +21,12 @@ interface Props {
   onRemove: () => void;
 }
 
+// Compact chip — sized to sit several-per-row in a grid (see step-subjects.tsx)
+// rather than stacked one-per-line, so the level's full list fits without its
+// own inner scroll.
 export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }: Props) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-n-200 pl-2.5 pr-2 py-1.5">
+    <div className="flex items-center gap-1.5 rounded-full border border-n-200 py-1 pr-1.5 pl-2">
       <input
         type="checkbox"
         className="accent-brand shrink-0"
@@ -32,7 +35,7 @@ export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }
         aria-label={`Include ${entry.name}`}
       />
       <Input
-        className="h-7 flex-1 border-none px-1 text-sm shadow-none focus-visible:ring-0"
+        className="h-6 min-w-0 flex-1 border-none px-1 text-xs shadow-none focus-visible:ring-0"
         value={entry.name}
         onChange={(e) => onRename(e.target.value)}
       />
@@ -40,15 +43,14 @@ export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }
         type="button"
         onClick={onToggleCore}
         aria-pressed={entry.is_core}
+        aria-label={entry.is_core ? `${entry.name} is a core subject` : `Mark ${entry.name} as core`}
         title={entry.is_core ? "Core subject" : "Mark as core"}
         className={cn(
-          "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
-          entry.is_core
-            ? "border-brand/30 bg-brand/10 text-brand"
-            : "border-n-200 text-n-400 hover:border-n-300",
+          "size-5 shrink-0 rounded-full border text-[9px] font-semibold transition-colors",
+          entry.is_core ? "border-brand/30 bg-brand/10 text-brand" : "border-n-200 text-n-400 hover:border-n-300",
         )}
       >
-        Core
+        C
       </button>
       <ConfirmDeleteDialog
         trigger={
@@ -57,7 +59,7 @@ export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }
             className="shrink-0 text-n-400 transition-colors hover:text-clay"
             aria-label={`Remove ${entry.name}`}
           >
-            <Trash2 className="size-4" />
+            <Trash2 className="size-3.5" />
           </button>
         }
         title={`Remove ${entry.name || "this subject"}?`}
