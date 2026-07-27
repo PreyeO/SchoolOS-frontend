@@ -7,8 +7,8 @@ import { useRoles } from "@/features/invitations/hooks/use-roles";
 
 import { usePermissionsCatalog } from "../hooks/use-permissions-catalog";
 import { useCreateRole } from "../hooks/use-role-mutations";
-import { RoleCard } from "./role-card";
 import { RoleFormDialog } from "./role-form-dialog";
+import { RolesTable } from "./roles/roles-table";
 
 export function RolesPage() {
   const { data: roles, isPending: rolesPending, isError: rolesError } = useRoles();
@@ -44,11 +44,7 @@ export function RolesPage() {
         />
       </div>
 
-      <div className="space-y-2">
-        {roles.map((role) => (
-          <RoleCard key={role.id} role={role} catalog={catalog} />
-        ))}
-      </div>
+      <RolesTable roles={roles} catalog={catalog} />
     </div>
   );
 }
