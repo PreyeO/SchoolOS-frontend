@@ -28,7 +28,7 @@ export const settingsGroup: NavGroup = {
       href: "/settings/sessions",
       icon: CalendarRange,
       description: "Manage academic sessions, terms, and their start and end dates.",
-    }),
+    }, false),
     adminItem({
       label: "Grading Configuration",
       href: "/settings/grading",
