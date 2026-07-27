@@ -68,7 +68,7 @@ export function AddSubjectControl({ schoolLevels, onAdd }: Props) {
             onClick={() => toggleLevel(l.value)}
             aria-pressed={levels.has(l.value)}
             className={cn(
-              "rounded-full border px-2.5 py-1 text-xs transition-colors",
+              "cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors",
               levels.has(l.value)
                 ? "border-brand/30 bg-brand/10 text-brand"
                 : "border-n-200 text-n-500 hover:border-n-300",

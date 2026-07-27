@@ -26,7 +26,7 @@ function RemoveButton({ onClick, ariaLabel, className }: { onClick?: () => void;
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className={cn("shrink-0 text-n-400 hover:text-clay transition-colors", className)}
+      className={cn("shrink-0 cursor-pointer text-n-400 hover:text-clay transition-colors", className)}
     >
       <Trash2 className="size-4" />
     </button>
@@ -134,7 +134,7 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
       <button
         type="button"
         onClick={addArm}
-        className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
+        className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-brand hover:underline"
       >
         <Plus className="size-3.5" /> Add arm
       </button>

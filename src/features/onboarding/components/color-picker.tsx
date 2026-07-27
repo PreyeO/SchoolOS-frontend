@@ -56,7 +56,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
           onKeyDown={(e) => handleKeyDown(e, i)}
           onClick={() => onChange(preset.value)}
           className={cn(
-            "relative flex size-9 items-center justify-center rounded-full transition-transform",
+            "relative flex size-9 cursor-pointer items-center justify-center rounded-full transition-transform",
             "hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2",
             value === preset.value && "ring-2 ring-offset-2 ring-offset-background",
           )}
@@ -87,7 +87,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
           onKeyDown={(e) => handleKeyDown(e, CUSTOM_INDEX)}
           onClick={() => colorInputRef.current?.click()}
           className={cn(
-            "relative flex size-9 items-center justify-center rounded-full border-2 border-dashed",
+            "relative flex size-9 cursor-pointer items-center justify-center rounded-full border-2 border-dashed",
             "transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2",
             !isPreset(value) ? "border-transparent ring-2 ring-offset-2 ring-offset-background" : "border-n-300",
           )}

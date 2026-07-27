@@ -36,7 +36,7 @@ export function StepIndicator({ activeIndex, maxIndex, onJump }: Props) {
                 "flex size-7 items-center justify-center rounded-full text-xs font-semibold transition-colors",
                 i < maxIndex ? "bg-brand text-white" : i === maxIndex ? "bg-amber text-ink" : "bg-n-100 text-n-400",
                 i === activeIndex && "ring-2 ring-offset-2 ring-brand",
-                !reachable && "cursor-not-allowed opacity-60",
+                reachable ? "cursor-pointer" : "cursor-not-allowed opacity-60",
               )}
             >
               {i + 1}

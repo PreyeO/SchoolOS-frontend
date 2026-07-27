@@ -46,7 +46,7 @@ export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }
         aria-label={entry.is_core ? `${entry.name} is a core subject` : `Mark ${entry.name} as core`}
         title={entry.is_core ? "Core subject" : "Mark as core"}
         className={cn(
-          "size-5 shrink-0 rounded-full border text-[9px] font-semibold transition-colors",
+          "size-5 shrink-0 cursor-pointer rounded-full border text-[9px] font-semibold transition-colors",
           entry.is_core ? "border-brand/30 bg-brand/10 text-brand" : "border-n-200 text-n-400 hover:border-n-300",
         )}
       >
@@ -56,7 +56,7 @@ export function SubjectRow({ entry, onToggle, onRename, onToggleCore, onRemove }
         trigger={
           <button
             type="button"
-            className="shrink-0 text-n-400 transition-colors hover:text-clay"
+            className="shrink-0 cursor-pointer text-n-400 transition-colors hover:text-clay"
             aria-label={`Remove ${entry.name}`}
           >
             <Trash2 className="size-3.5" />

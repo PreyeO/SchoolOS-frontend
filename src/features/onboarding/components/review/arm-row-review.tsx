@@ -21,14 +21,14 @@ export function ArmRowReview({ arm }: { arm: ArmResponse }) {
         isPending={updateArm.isPending}
         onSave={(name) => updateArm.mutateAsync({ id: arm.id, name })}
         trigger={
-          <button type="button" aria-label={`Rename ${arm.name}`} className="text-n-400 hover:text-brand">
+          <button type="button" aria-label={`Rename ${arm.name}`} className="cursor-pointer text-n-400 hover:text-brand">
             <Pencil className="size-3" />
           </button>
         }
       />
       <ConfirmDeleteDialog
         trigger={
-          <button type="button" aria-label={`Delete arm ${arm.name}`} className="text-n-400 hover:text-clay">
+          <button type="button" aria-label={`Delete arm ${arm.name}`} className="cursor-pointer text-n-400 hover:text-clay">
             <Trash2 className="size-3" />
           </button>
         }

@@ -31,14 +31,14 @@ export function SubjectRowReview({ subject, schoolLevels }: Props) {
         isPending={updateSubject.isPending}
         onSave={(values) => updateSubject.mutateAsync({ id: subject.id, payload: values })}
         trigger={
-          <button type="button" aria-label={`Edit ${subject.name}`} className="text-n-400 hover:text-brand">
+          <button type="button" aria-label={`Edit ${subject.name}`} className="cursor-pointer text-n-400 hover:text-brand">
             <Pencil className="size-3" />
           </button>
         }
       />
       <ConfirmDeleteDialog
         trigger={
-          <button type="button" aria-label={`Delete ${subject.name}`} className="text-n-400 hover:text-clay">
+          <button type="button" aria-label={`Delete ${subject.name}`} className="cursor-pointer text-n-400 hover:text-clay">
             <Trash2 className="size-3" />
           </button>
         }

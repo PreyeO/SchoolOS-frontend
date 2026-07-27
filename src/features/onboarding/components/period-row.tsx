@@ -64,7 +64,7 @@ export function PeriodRow({
               <button
                 type="button"
                 aria-label={`Remove ${name || `term ${i + 1}`}`}
-                className="shrink-0 text-n-400 hover:text-clay transition-colors"
+                className="shrink-0 cursor-pointer text-n-400 hover:text-clay transition-colors"
               >
                 <Trash2 className="size-4" />
               </button>
