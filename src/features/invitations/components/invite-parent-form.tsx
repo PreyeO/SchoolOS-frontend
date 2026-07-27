@@ -55,7 +55,7 @@ export function InviteParentForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full h-11 bg-amber hover:bg-amber/90 text-ink font-semibold"
+        className="w-full h-11 font-semibold"
       >
         {isPending ? "Sending invite…" : "Invite parent"}
       </Button>

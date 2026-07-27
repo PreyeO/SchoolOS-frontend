@@ -106,7 +106,7 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
         <Input id="motto" placeholder="For humankind!" {...register("motto")} />
       </FieldWrapper>
 
-      <Button type="submit" disabled={isPending} className="bg-amber hover:bg-amber/90 text-ink font-semibold">
+      <Button type="submit" disabled={isPending} className="font-semibold">
         {isPending ? "Saving…" : "Save changes"}
       </Button>
     </form>

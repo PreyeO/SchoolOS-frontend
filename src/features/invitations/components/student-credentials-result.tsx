@@ -75,7 +75,7 @@ export function StudentCredentialsResult({ student, onAddAnother }: Props) {
         <Button
           type="button"
           onClick={() => router.push("/dashboard")}
-          className="flex-1 bg-amber hover:bg-amber/90 text-ink font-semibold"
+          className="flex-1 font-semibold"
         >
           Done
         </Button>
