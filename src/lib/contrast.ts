@@ -25,3 +25,11 @@ export function contrastRatio(hexA: string, hexB: string): number {
     return 21; // don't warn on a colour we can't parse
   }
 }
+
+// Picks whichever of the two given text colours reads better against the
+// given background (higher WCAG contrast) — keeps an arbitrary school
+// primary/accent color from producing illegible text (e.g. a light
+// primary_color used as a dark sidebar's background).
+export function pickReadableForeground(backgroundHex: string, darkHex = "#0E2A24", lightHex = "#F6F7F3"): string {
+  return contrastRatio(backgroundHex, darkHex) >= contrastRatio(backgroundHex, lightHex) ? darkHex : lightHex;
+}

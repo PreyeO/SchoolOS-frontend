@@ -18,10 +18,10 @@ import {
 import { ColorPicker } from "@/components/shared/color-picker";
 import { LogoUrlField } from "@/components/shared/logo-url-field";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
+import { contrastRatio } from "@/lib/contrast";
 
 import { brandingSchema, type BrandingFormValues } from "../../schemas/branding-schema";
 import { useEditBranding } from "../../hooks/use-branding-edit";
-import { contrastRatio } from "../../lib/contrast-ratio";
 import type { SchoolResponse } from "../../types";
 
 interface Props {

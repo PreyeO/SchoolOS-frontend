@@ -11,7 +11,7 @@ import { ColorPicker } from "@/components/shared/color-picker";
 import { LogoUrlField } from "@/components/shared/logo-url-field";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { focusFirstError } from "@/features/onboarding/lib/first-error-field-id";
-import { contrastRatio } from "@/features/onboarding/lib/contrast-ratio";
+import { contrastRatio } from "@/lib/contrast";
 import type { SchoolDetailResponse } from "@/lib/school/get-school-detail";
 
 import { schoolProfileSchema, type SchoolProfileFormValues } from "../schemas/school-profile-schema";

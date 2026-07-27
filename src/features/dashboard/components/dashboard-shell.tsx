@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { pickReadableForeground } from "@/lib/contrast";
 import { useSchoolStore } from "@/stores/school-store";
 import { AppSidebar } from "./app-sidebar";
 import { AppTopbar } from "./app-topbar";
@@ -12,12 +13,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const primaryColor = useSchoolStore((s) => s.currentSchool?.primaryColor);
   const accentColor = useSchoolStore((s) => s.currentSchool?.accentColor);
 
-  // The school's own colors drive --primary/--accent shell-wide (sidebar
-  // accent, active states, chart/KPI accents); each is omitted when unset so
-  // CSS falls back to the SchoolOS pine/amber palette.
+  // The school's own colors drive the sidebar background (primary_color) and
+  // its accents — active item, focus rings, trial badge (accent_color); each
+  // is omitted when unset so CSS falls back to the SchoolOS pine/amber
+  // palette. The paired -fg variable picks readable text for whichever exact
+  // color the school chose, so an unusually light/dark pick can't produce
+  // illegible text.
   const shellStyle: CSSProperties = {
-    ...(primaryColor ? { "--shell-primary": primaryColor } : {}),
-    ...(accentColor ? { "--shell-accent": accentColor } : {}),
+    ...(primaryColor
+      ? { "--shell-primary": primaryColor, "--shell-primary-fg": pickReadableForeground(primaryColor) }
+      : {}),
+    ...(accentColor
+      ? { "--shell-accent": accentColor, "--shell-accent-fg": pickReadableForeground(accentColor) }
+      : {}),
   } as CSSProperties;
 
   return (

@@ -55,28 +55,39 @@
    Add data-surface="ink" or data-surface="brand" to <section>
    elements. CSS variable inheritance darkens all descendants.
 */
+/* The sidebar's background is the school's primary_color (falls back to the
+   fixed pine --ink when unset, e.g. marketing/auth pages never set
+   --shell-primary at all). Its "primary" accent slot — active nav indicator,
+   focus rings, trial badge icon — is the school's accent_color instead, so
+   the two colors a school picks both show up, doing different jobs. --card/
+   --muted/--border are derived relative to whatever the background actually
+   is (color-mix), so they stay coherent for an arbitrary custom color instead
+   of clashing with the old fixed dark-green hover states. -fg variables (see
+   dashboard-shell.tsx) pick readable text for that exact background. */
 [data-surface="ink"] {
-  --background:           var(--ink);
-  --foreground:           var(--paper);
-  --card:                 #14342c;
-  --card-foreground:      var(--paper);
-  --muted:                #14342c;
-  --muted-foreground:     var(--n-300);
-  --border:               rgba(246,247,243,0.12);
-  --primary:              var(--shell-primary, var(--amber));
-  --primary-foreground:   var(--ink);
-  color: var(--paper);
-  background-color: var(--ink);
+  --background:           var(--shell-primary, var(--ink));
+  --foreground:           var(--shell-primary-fg, var(--paper));
+  --card:                 color-mix(in srgb, var(--background) 92%, white 8%);
+  --card-foreground:      var(--shell-primary-fg, var(--paper));
+  --muted:                color-mix(in srgb, var(--background) 92%, white 8%);
+  --muted-foreground:     color-mix(in srgb, var(--shell-primary-fg, var(--paper)) 65%, transparent);
+  --border:               color-mix(in srgb, var(--shell-primary-fg, var(--paper)) 12%, transparent);
+  --primary:              var(--shell-accent, var(--amber));
+  --primary-foreground:   var(--shell-accent-fg, var(--ink));
+  color: var(--shell-primary-fg, var(--paper));
+  background-color: var(--background);
 }
 
 /* Dashboard shell only: lets a school's own primary_color/accent_color drive
-   --primary/--accent without affecting marketing/auth pages. Set
-   --shell-primary/--shell-accent (school.primary_color/accent_color) on the
-   shell root — see dashboard-shell.tsx. --accent inherits into
-   [data-surface="ink"] (the sidebar) since it isn't redeclared there. */
+   --primary/--accent in the MAIN content area (outside the sidebar) without
+   affecting marketing/auth pages. Set --shell-primary/--shell-accent
+   (school.primary_color/accent_color) on the shell root — see
+   dashboard-shell.tsx. */
 [data-dashboard-shell] {
   --primary: var(--shell-primary, var(--brand));
+  --primary-foreground: var(--shell-primary-fg, var(--paper));
   --accent: var(--shell-accent, var(--amber));
+  --accent-foreground: var(--shell-accent-fg, var(--ink));
 }
 
 [data-surface="brand"] {

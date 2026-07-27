@@ -13,11 +13,11 @@ import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
 import { useSchoolStore } from "@/stores/school-store";
 import type { StepKey } from "@/lib/school/onboarding-steps";
+import { contrastRatio } from "@/lib/contrast";
 
 import { brandingSchema, type BrandingFormValues } from "../schemas/branding-schema";
 import { useUpdateBranding } from "../hooks/use-update-branding";
 import { focusFirstError } from "../lib/first-error-field-id";
-import { contrastRatio } from "../lib/contrast-ratio";
 
 interface Props {
   onAdvanced: (step: StepKey) => void;
