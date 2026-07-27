@@ -53,18 +53,13 @@ src/hooks/  src/lib/{api,auth,tenant,validations,utils}  src/stores/  src/types/
 - **Quality floor everywhere:** premium/standard look (Linear/Vercel/Stripe-level), brand-coloured (no rainbow charts), skeleton loaders, designed empty/error states, responsive to ~360px, full a11y (labels, keyboard, focus mgmt, `aria-live`, focus-trap dialogs, contrast, reduced-motion). Sidebar nav is collapsible accordion groups driven by `data/navigation.ts`.
 
 ## Phase status
-**Built:** scaffold → landing → signup → verify-otp/resend → create-school → login (+multi-school selection) → onboarding UI wired to real APIs (branding, academic session, classes, subjects, review with edit/add/delete — Phase 4.2) → owner-only onboarding gating (frontend + backend) → premium dashboard shell + full navigation IA → invitations (create flows: admin/teacher/parent/student, + roles list for admin-invite `role_id`).
+**Built:** scaffold → landing → signup → verify-otp/resend → create-school → login (+multi-school selection, branding correctly hydrates via `GET /api/schools/:id/`) → onboarding UI wired to real APIs (branding, academic session, classes, subjects, review with edit/add/delete — Phase 4.2) → owner-only onboarding gating (frontend + backend) → premium dashboard shell + full navigation IA → dynamic school-color system (sidebar, buttons, charts, icon badges, focus rings, and — via a portal-container fix — modals/dropdowns/mobile nav too, all driven by each school's `primary_color`/`accent_color`) → Dashboard Settings (School Profile, Sessions & Terms, Classes & Arms, Subjects, Roles & Permissions — all five with well-designed, non-onboarding-reused UI: tables/tabs/search where the data warrants it) → invitations (create flows: admin/teacher/parent/student, + roles list for admin-invite `role_id`; part 2: pending-invites list/filter/resend + public accept-invite page).
 
-**Known bug (confirmed, not yet fixed):** branding never actually hydrates on a plain login. `use-login.ts` calls `getCurrentSchool()`, which hits `GET /api/auth/school/` — that path only has a `POST` route registered (`create_school`), so the GET has no handler and the call fails; it's silently swallowed (falls back to defaults). Separately, even if it resolved, only `id/name/slug/school_type/levels` are forwarded to `setCurrentSchool` — `primary_color`/`accent_color`/`logo`/`motto` are dropped before they'd ever reach the store. Fix: call `GET /api/schools/:id/` instead (already the correct, working pattern used by onboarding's `useSchoolLevels()`), and forward the branding fields too.
-
-**Next up (recommended order, reflects backend being well ahead of this doc as of the last audit):**
-1. **Fix the branding-hydration bug above** — small, isolated, actively wrong today.
-2. **Forgot/reset password** — backend is fully ready (`POST /api/auth/password-reset/request/`, `POST /api/auth/password-reset/confirm/`); the `/forgot-password` page is currently a static "not available yet" placeholder.
-3. **Dashboard Settings** — School Profile & Branding (full profile; PATCH `/api/schools/:id/`), Academic Sessions & Terms, Classes & Arms, Subjects, Roles. Every backend contract needed already exists (list + CRUD across the board) — this is almost entirely reusing the Phase 4.2 edit/add/delete components verbatim, not new backend discovery.
-4. **Invitations part 2** — pending-invites list/detail/resend + public accept-invite page. Backend contracts are fully confirmed now (see `API.md`); nothing here is backend-blocked anymore.
-5. **Staff/Teacher, Student, Parent directories** (read-only list/detail) — backend-ready today (search, filter, platform-admin cross-school access all built). Enrolment/assignment *actions* (see gaps below) are still backend-blocked, so ship these as directories first.
-6. **Parent↔student linking UI** — backend-ready (`ParentStudentLinkViewSet`).
-7. **Daily-ops modules** (need #5's data model first): Attendance → Results & Report Cards → Fees & Payments.
+**Next up (recommended order):**
+1. **Forgot/reset password** — backend is fully ready (`POST /api/auth/password-reset/request/`, `POST /api/auth/password-reset/confirm/`); the `/forgot-password` page is currently a static "not available yet" placeholder.
+2. **Staff/Teacher, Student, Parent directories** (read-only list/detail) — backend-ready today (search, filter, platform-admin cross-school access all built). Enrolment/assignment *actions* (see gaps below) are still backend-blocked, so ship these as directories first.
+3. **Parent↔student linking UI** — backend-ready (`ParentStudentLinkViewSet`).
+4. **Daily-ops modules** (need #2's data model first): Attendance → Results & Report Cards → Fees & Payments.
 
 ## Real backend gaps (not a docs problem — these genuinely don't exist yet)
 - **Student → class/arm enrolment:** `StudentProfile` has no FK to `Class`/`ClassArm` at all. Needed before the Students module can do more than list/view.

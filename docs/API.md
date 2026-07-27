@@ -91,14 +91,14 @@ POST /api/invites/invite-parent/
 Body: { first_name, last_name, email, phone_number? } → { detail }. Wired. (Parent↔student linking is separate — see below.)
 POST /api/invites/invite-student/ — direct create (NOT an email invite)
 Body: { first_name, last_name, admission_number, password, gender, date_of_birth?, email? } (gender ∈ male|female|other). Success returns the student object incl. credentials: { first_name, last_name, email (auto internal), phone_number, subdomain, admission_number, gender, date_of_birth, password } → show a copyable credentials screen ("won't be shown again"). Student logs in with admission_number + password. Wired.
-GET /api/invites/ — list pending invites (confirmed, NOT yet wired on the frontend)
-Paginated, filterable/searchable by email. Persona-scoped server-side: the caller only sees invite types their own admin permissions allow (manage_roles → admin invites, add_staff → teacher, add_students → parent+student) — a non-admin or under-permissioned admin gets an empty list, not a 403.
-GET /api/invites/{token}/ — invite detail (public, confirmed, NOT yet wired)
-For rendering the accept-invite form.
-POST /api/invites/accept/ — accept an invite (public, confirmed, NOT yet wired)
-Body: { token, password? } (password required only if the invitee has none yet). Success: JWT pair, same shape as login.
-POST /api/invites/{id}/resend/ — resend an invite (confirmed, NOT yet wired)
-Invalidates the existing token and issues a fresh one. Response: the new invite token object.
+GET /api/invites/ — list pending invites. Wired.
+Paginated (fetched with page_size=100, no pagination UI), filterable (?persona=, ?status=) and searchable (?search=, by email). Persona-scoped server-side: the caller only sees invite types their own admin permissions allow (manage_roles → admin invites, add_staff → teacher, add_students → parent+student) — a non-admin or under-permissioned admin gets an empty list, not a 403. Item shape: { id, token, email, persona, school_admin_role: {id,name,permissions}|null, status: pending|accepted|expired, expires_at, created_at }.
+GET /api/invites/{token}/ — invite detail (public). Wired.
+For rendering the accept-invite page. Returns { school: {name,slug,subdomain}, persona, email, has_password }.
+POST /api/invites/accept/ — accept an invite (public). Wired.
+Body: { token, password?, confirm_password? } (both required only if the invitee has none yet — confirm_password is cross-checked server-side too, not just client-side). Success: JWT pair, same shape as login (built from the same _token_pair_dict helper) — the frontend's useAcceptInvite reuses useLogin's exact post-success flow (store tokens, hydrate school branding, resolve landing path).
+POST /api/invites/{id}/resend/ — resend an invite. Wired.
+Invalidates the existing token and issues a fresh one (confirmed: only blocks on already-accepted, not on expiry — so an expired invite can still be resent). Response: the new invite token object, same shape as the list item.
 
 Directories — list + detail (all school-scoped for school members; platform admins see all + can filter by school_id)
 GET /api/teachers/ , GET /api/teachers/:id/ — requires view_staff (school) / view_platform_staff (platform). Confirmed built, NOT yet wired on the frontend (features/students, staff-equivalent module still empty scaffolds).
