@@ -74,6 +74,7 @@
   --border:               color-mix(in srgb, var(--shell-primary-fg, var(--paper)) 12%, transparent);
   --primary:              var(--shell-accent, var(--amber));
   --primary-foreground:   var(--shell-accent-fg, var(--ink));
+  --ring:                 var(--shell-accent, var(--amber));
   color: var(--shell-primary-fg, var(--paper));
   background-color: var(--background);
 }
@@ -88,6 +89,7 @@
   --primary-foreground: var(--shell-primary-fg, var(--paper));
   --accent: var(--shell-accent, var(--amber));
   --accent-foreground: var(--shell-accent-fg, var(--ink));
+  --ring: var(--shell-primary, var(--brand));
 }
 
 [data-surface="brand"] {
