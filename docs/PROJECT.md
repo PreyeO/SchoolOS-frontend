@@ -2,6 +2,8 @@
 
 Read this and `API.md` before building. The backend code in this workspace (the `SchoolOS-backend` folder) is the **source of truth** for API contracts — reconcile anything here against it, and prefer reading the serializers/urls/views over assuming. The backend moves fast; re-check rather than trusting a stale ⚠️ here.
 
+**`SchoolOS-backend/` is read-only.** Read it as much as needed to confirm contracts (or hit the running dev server directly to verify live) — never create, edit, or delete anything inside it. It's a separate codebase the user develops directly. A missing endpoint or field is a gap to report, not something to patch here.
+
 ## What this is
 SchoolOS is a school-management SaaS for Nigerian K–12 schools (daycare/creche, nursery, primary, junior & senior secondary), sold to private schools. Users: school owners/admins, bursars, teachers, parents, students. Frontend is this repo (`SchoolOS-frontend`); backend is Django/DRF in `SchoolOS-backend`.
 
