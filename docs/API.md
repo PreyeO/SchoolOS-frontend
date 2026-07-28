@@ -108,12 +108,12 @@ POST /api/students/:id/reissue-password/ — admin reissues a password for a stu
 All three support ?search=, is_active (bool, filters on membership.is_active), created_at_after/before, page, page_size — plus teacher_type (teachers), gender/enrollment_status (students), state (parents).
 Real gap, not a docs gap: none of these profiles carry a class/arm (student) or class/subject (teacher) assignment yet — those FKs don't exist on the backend models. Directory read views ship without them; "enrol"/"assign" actions can't until the backend adds them.
 
-Parent↔student linking (authenticated)
-GET /api/parent-student-links/ — list, filterable by parent_profile / student_profile
+Parent↔student linking (authenticated). Wired — frontend: features/parent-student-links (shared create/delete), surfaced directly on the Student and Parent detail pages (features/students, features/parents) rather than a separate page.
+GET /api/parent-student-links/ — list, filterable by parent_profile / student_profile (not used directly by the frontend — it reads links from the parent/student detail responses' nested student_links/parent_links instead).
 POST /api/parent-student-links/ — create
-Body: { parent_profile_id, student_profile_id, relationship, is_primary_contact? } — confirmed live; the field names are parent_profile_id/student_profile_id (with the _id suffix), not parent_profile/student_profile. Gated on add_students (same permission as parent/student invites).
+Body: { parent_profile_id, student_profile_id, relationship, is_primary_contact? } — the field names are parent_profile_id/student_profile_id (with the _id suffix), not parent_profile/student_profile. Gated on add_students (same permission as parent/student invites). Response: { id, parent_profile: ParentListItem, student_profile: StudentListItem, relationship, is_primary_contact, created_at }.
 DELETE /api/parent-student-links/:id/ — remove
-No update action — change relationship/is_primary_contact by delete + recreate. Confirmed built, NOT yet wired on the frontend.
+No update action — change relationship/is_primary_contact by delete + recreate (the UI does this as unlink + a fresh "Link a parent/student" dialog).
 
 Reference values
 Levels: creche, nursery, primary, junior_secondary, senior_secondary.
