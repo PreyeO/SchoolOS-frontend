@@ -15,11 +15,18 @@ interface AuthState {
   // production should move tokens to httpOnly cookies — web storage is XSS-exposed
   tokens: AuthTokens | null;
   claims: AuthClaims | null;
+  // True once persist has finished reading sessionStorage. Reading `tokens`
+  // before this flips is meaningless — it's always null on the very first
+  // render regardless of whether a session actually exists — so anything
+  // deciding "is this user logged in" (AuthGuard, LoginView) must wait for it
+  // instead of treating an unhydrated null as a real logged-out state.
+  hasHydrated: boolean;
   setPendingVerificationEmail: (email: string) => void;
   clearPendingVerificationEmail: () => void;
   setTokens: (tokens: AuthTokens) => void;
   setClaims: (claims: AuthClaims) => void;
   clearAuth: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
 
 const ssrSafeSessionStorage = {
@@ -41,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
       pendingVerificationEmail: null,
       tokens: null,
       claims: null,
+      hasHydrated: false,
       setPendingVerificationEmail: (email) =>
         set({ pendingVerificationEmail: email }),
       clearPendingVerificationEmail: () =>
@@ -49,10 +57,19 @@ export const useAuthStore = create<AuthState>()(
       setClaims: (claims) => set({ claims }),
       clearAuth: () =>
         set({ pendingVerificationEmail: null, tokens: null, claims: null }),
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {
       name: "schoolos-auth",
       storage: createJSONStorage(() => ssrSafeSessionStorage),
+      partialize: (state) => ({
+        pendingVerificationEmail: state.pendingVerificationEmail,
+        tokens: state.tokens,
+        claims: state.claims,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

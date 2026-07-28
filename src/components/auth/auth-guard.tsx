@@ -8,13 +8,17 @@ import { useAuthStore } from "@/stores/auth-store";
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const tokens = useAuthStore((s) => s.tokens);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
 
+  // tokens is always null before persist finishes reading sessionStorage —
+  // redirecting on that alone (before hasHydrated flips) was sending a
+  // genuinely logged-in user refreshing any dashboard page on a brief detour
+  // through /login, which then bounced them to /dashboard instead of back to
+  // whichever page they'd refreshed.
   useEffect(() => {
-    if (!tokens) router.replace("/login");
-  }, [tokens, router]);
+    if (hasHydrated && !tokens) router.replace("/login");
+  }, [hasHydrated, tokens, router]);
 
-  // Zustand starts with tokens=null before rehydrating from sessionStorage,
-  // so both server and initial client render return null — no hydration mismatch.
-  if (!tokens) return null;
+  if (!hasHydrated || !tokens) return null;
   return <>{children}</>;
 }
