@@ -16,10 +16,10 @@ POST /api/auth/resend-verification/ — resend OTP
 Body: { email } → { detail }.
 POST /api/auth/login/ — login
 Body: { identifier, password, school_slug? }. identifier = email OR admission_number (don't validate as email). Include school_slug when on a school subdomain; omit to allow multi-school selection. Success (single/scoped): { requires_school_selection: false, state, access, refresh }. Success (must pick school, no tokens): { requires_school_selection: true, state, schools: [{ name, slug, subdomain }] } → user picks → re-POST login with school_slug to get scoped tokens. Errors: { detail } e.g. "Please verify your email address before logging in." (→ resend + go to verify), "No active membership found for this school."
-POST /api/auth/password-reset/request/ — request reset OTP
-Body: { email }. Always returns 200 with a generic { "detail": "If an account with this email exists and is eligible, a reset OTP has been sent." } regardless of whether the email exists (no account-existence leak). Confirmed built; NOT yet wired on the frontend — /forgot-password is currently a static placeholder.
-POST /api/auth/password-reset/confirm/ — complete reset
-Body: { email, otp (6 digits), password, confirm_password }. Success: { "detail": "Password reset successful. Please log in with your new password." }.
+POST /api/auth/password-reset/request/ — request reset OTP. Wired (/forgot-password).
+Body: { email }. Always returns 200 with a generic { "detail": "If an account with this email exists and is eligible, a reset OTP has been sent." } regardless of whether the email exists — also silently no-ops for a synthetic internal student email (no self-serve reset path for those; an admin uses reissue-password instead). No account-existence leak, so the frontend copy doesn't hint at either case.
+POST /api/auth/password-reset/confirm/ — complete reset. Wired (/reset-password).
+Body: { email, otp (6 digits), password, confirm_password }. Success: { "detail": "Password reset successful. Please log in with your new password." } — no token pair, frontend redirects to /login. Confirmed live: reusing the same OTP a second time correctly 400s with "Invalid or expired OTP."
 ⚠️ GET /api/auth/school/ is NOT a valid route — only POST (create_school) is registered on that path. features/auth/api/auth-api.ts's getCurrentSchool() currently calls GET on this path and almost certainly always fails silently (caught in use-login.ts, falls back to default branding). Use GET /api/schools/:id/ instead — see below.
 
 School
