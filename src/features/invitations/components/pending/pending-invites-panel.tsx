@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { usePendingInvites } from "../../hooks/use-pending-invites";
 import type { InvitePersona, InviteStatus, PendingInvitesFilters as Filters } from "../../types";
 import { PendingInvitesFilters } from "./pending-invites-filters";

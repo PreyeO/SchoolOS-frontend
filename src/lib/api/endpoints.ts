@@ -76,3 +76,20 @@ export const INVITE_ENDPOINTS = {
   ACCEPT: () => `/api/invites/accept/`,
   RESEND: (id: string) => `/api/invites/${id}/resend/`,
 } as const;
+
+// Read-only directories — all DRF-router generated, trailing slash throughout.
+export const TEACHER_ENDPOINTS = {
+  LIST: () => `/api/teachers/`,
+  DETAIL: (id: string) => `/api/teachers/${id}/`,
+} as const;
+
+export const STUDENT_ENDPOINTS = {
+  LIST: () => `/api/students/`,
+  DETAIL: (id: string) => `/api/students/${id}/`,
+  REISSUE_PASSWORD: (id: string) => `/api/students/${id}/reissue-password/`,
+} as const;
+
+export const PARENT_ENDPOINTS = {
+  LIST: () => `/api/parents/`,
+  DETAIL: (id: string) => `/api/parents/${id}/`,
+} as const;
