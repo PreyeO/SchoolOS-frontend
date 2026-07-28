@@ -100,17 +100,18 @@ Body: { token, password?, confirm_password? } (both required only if the invitee
 POST /api/invites/{id}/resend/ — resend an invite. Wired.
 Invalidates the existing token and issues a fresh one (confirmed: only blocks on already-accepted, not on expiry — so an expired invite can still be resent). Response: the new invite token object, same shape as the list item.
 
-Directories — list + detail (all school-scoped for school members; platform admins see all + can filter by school_id)
-GET /api/teachers/ , GET /api/teachers/:id/ — requires view_staff (school) / view_platform_staff (platform). Confirmed built, NOT yet wired on the frontend (features/students, staff-equivalent module still empty scaffolds).
-GET /api/parents/ , GET /api/parents/:id/ — requires view_parents / view_platform_parents. Detail response prefetches linked students.
-GET /api/students/ , GET /api/students/:id/ — requires view_students / view_platform_students. Detail response prefetches linked parents. Search covers name, email, and admission_number.
-POST /api/students/:id/reissue-password/ — admin reissues a password for a student with a synthetic internal email. Requires edit_students. Body: { password }.
-Real gap, not a docs gap: none of these profiles carry a class/arm (student) or class/subject (teacher) assignment yet — those FKs don't exist on the backend models. Directory read views can ship now; "enrol"/"assign" actions can't until the backend adds them.
+Directories — list + detail (all school-scoped for school members; platform admins see all + can filter by school_id). Wired.
+GET /api/teachers/ , GET /api/teachers/:id/ — requires view_staff (school) / view_platform_staff (platform). Frontend: features/staff (nav label "Staff"). List item: { id, user: UserMinimal, employee_id, teacher_type, specialization, created_at }. Detail adds membership, school, qualification, date_joined_school.
+GET /api/parents/ , GET /api/parents/:id/ — requires view_parents / view_platform_parents. Frontend: features/parents. Detail response prefetches linked students as student_links: [{ id, student_id, student_name, admission_number, relationship, is_primary_contact }].
+GET /api/students/ , GET /api/students/:id/ — requires view_students / view_platform_students. Frontend: features/students. Search covers name, email, and admission_number. Detail prefetches linked parents as parent_links (same shape, reversed) and includes medical/admission fields (blood_group, genotype, allergies, etc. — all nullable).
+POST /api/students/:id/reissue-password/ — admin reissues a password for a student with a synthetic internal email. Requires edit_students. Body: { password }. Wired — only shown in the UI when the student's email ends in @internal.schoolos.com (real-email students must use self-serve reset instead; the backend rejects it otherwise).
+All three support ?search=, is_active (bool, filters on membership.is_active), created_at_after/before, page, page_size — plus teacher_type (teachers), gender/enrollment_status (students), state (parents).
+Real gap, not a docs gap: none of these profiles carry a class/arm (student) or class/subject (teacher) assignment yet — those FKs don't exist on the backend models. Directory read views ship without them; "enrol"/"assign" actions can't until the backend adds them.
 
 Parent↔student linking (authenticated)
 GET /api/parent-student-links/ — list, filterable by parent_profile / student_profile
 POST /api/parent-student-links/ — create
-Body: { parent_profile, student_profile, relationship, is_primary_contact? }. Gated on add_students (same permission as parent/student invites).
+Body: { parent_profile_id, student_profile_id, relationship, is_primary_contact? } — confirmed live; the field names are parent_profile_id/student_profile_id (with the _id suffix), not parent_profile/student_profile. Gated on add_students (same permission as parent/student invites).
 DELETE /api/parent-student-links/:id/ — remove
 No update action — change relationship/is_primary_contact by delete + recreate. Confirmed built, NOT yet wired on the frontend.
 
