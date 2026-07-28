@@ -1,4 +1,5 @@
 import type { MembershipSummary, SchoolContextSummary, UserDetail, UserMinimal } from "@/lib/api/profile-summary";
+import type { RelationshipType } from "@/features/parent-student-links/types";
 
 export interface ParentListItem {
   id: string;
@@ -12,7 +13,7 @@ export interface ParentStudentLink {
   student_id: string;
   student_name: string;
   admission_number: string;
-  relationship: string;
+  relationship: RelationshipType;
   is_primary_contact: boolean;
 }
 

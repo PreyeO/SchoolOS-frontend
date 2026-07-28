@@ -12,6 +12,7 @@ import { useStudentDetail } from "../hooks/use-student-detail";
 import { isSyntheticEmail } from "../lib/is-synthetic-email";
 import { bloodGroupLabel, genderLabel, genotypeLabel, religionLabel } from "../lib/labels";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
+import { LinkParentDialog } from "./link-parent-dialog";
 import { ReissuePasswordDialog } from "./reissue-password-dialog";
 import { StudentParentLinks } from "./student-parent-links";
 
@@ -90,8 +91,11 @@ export function StudentDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Linked parents</h2>
-        <StudentParentLinks links={student.parent_links} />
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink">Linked parents</h2>
+          <LinkParentDialog studentId={student.id} />
+        </div>
+        <StudentParentLinks studentId={student.id} links={student.parent_links} />
       </div>
     </div>
   );

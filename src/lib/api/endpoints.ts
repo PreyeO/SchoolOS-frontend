@@ -93,3 +93,11 @@ export const PARENT_ENDPOINTS = {
   LIST: () => `/api/parents/`,
   DETAIL: (id: string) => `/api/parents/${id}/`,
 } as const;
+
+// Create body uses parent_profile_id/student_profile_id (confirmed live —
+// not parent_profile/student_profile). No update action; change
+// relationship/is_primary_contact via delete + recreate.
+export const PARENT_STUDENT_LINK_ENDPOINTS = {
+  LIST: () => `/api/parent-student-links/`,
+  DETAIL: (id: string) => `/api/parent-student-links/${id}/`,
+} as const;

@@ -8,6 +8,7 @@ import { DetailField } from "@/components/shared/detail-field";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 
 import { useParentDetail } from "../hooks/use-parent-detail";
+import { LinkStudentDialog } from "./link-student-dialog";
 import { ParentStudentLinks } from "./parent-student-links";
 
 export function ParentDetailPage({ id }: { id: string }) {
@@ -54,8 +55,11 @@ export function ParentDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Linked children</h2>
-        <ParentStudentLinks links={parent.student_links} />
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink">Linked children</h2>
+          <LinkStudentDialog parentId={parent.id} />
+        </div>
+        <ParentStudentLinks parentId={parent.id} links={parent.student_links} />
       </div>
     </div>
   );
