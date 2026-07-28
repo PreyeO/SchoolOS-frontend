@@ -11,19 +11,19 @@ export const peopleGroup: NavGroup = {
       href: "/students",
       icon: Users,
       description: "Manage student records, enrollment, class placement, and academic history.",
-    }),
+    }, false),
     adminItem({
       label: "Staff",
       href: "/staff",
       icon: Briefcase,
       description: "Manage staff profiles, roles, subjects taught, and employment records.",
-    }),
+    }, false),
     adminItem({
       label: "Parents & Guardians",
       href: "/parents",
       icon: Users2,
       description: "Manage parent and guardian accounts and their linked children.",
-    }),
+    }, false),
     adminItem({
       label: "Admissions",
       href: "/admissions",
