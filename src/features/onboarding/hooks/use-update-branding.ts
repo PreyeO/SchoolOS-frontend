@@ -17,7 +17,6 @@ export function useUpdateBranding(onAdvanced: (currentStep: StepKey) => void) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const updateBrandingStore = useSchoolStore((s) => s.updateBranding);
-  const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   const save = useMutation({
     mutationFn: async (values: BrandingFormValues) => {
@@ -40,7 +39,6 @@ export function useUpdateBranding(onAdvanced: (currentStep: StepKey) => void) {
         logoUrl: school.logo,
         motto: school.motto,
       });
-      markSetupStep("branding");
       queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
       handleStageResult(stage, router, onAdvanced);
     },

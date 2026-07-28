@@ -18,7 +18,6 @@ export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const setClasses = useSchoolStore((s) => s.setClasses);
-  const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   return useMutation({
     mutationFn: async (values: ClassesFormValues) => {
@@ -35,7 +34,6 @@ export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
     },
     onSuccess: ({ createdClasses, stage }) => {
       setClasses(createdClasses);
-      markSetupStep("classes");
       queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
       handleStageResult(stage, router, onAdvanced);
     },

@@ -133,13 +133,3 @@ export interface AdvanceStagePayload {
   step: StepKey;
   skipped?: boolean;
 }
-
-// Kept for the dashboard's local setup checklist (features/dashboard) — tracks
-// per-session step completion client-side, separate from the real backend
-// onboarding stage which now drives the wizard itself.
-export interface SetupStatusResponse {
-  branding: boolean;
-  academic_year: boolean;
-  classes: boolean;
-  subjects: boolean;
-}

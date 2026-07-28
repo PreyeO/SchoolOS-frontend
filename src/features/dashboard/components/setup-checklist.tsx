@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ChevronDown, Circle, PartyPopper, X } from "lucide-react";
 
-import { useSetupStatus } from "@/features/onboarding/hooks/use-setup-status";
+import { useSetupStatus } from "../hooks/use-setup-status";
 import { cn } from "@/lib/utils";
 
 const CHECKLIST_ITEMS = [

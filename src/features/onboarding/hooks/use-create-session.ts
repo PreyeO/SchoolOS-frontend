@@ -17,7 +17,6 @@ export function useCreateSession(onAdvanced: (currentStep: StepKey) => void) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const updateSession = useSchoolStore((s) => s.updateSession);
-  const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   return useMutation({
     mutationFn: async (values: AcademicYearFormValues) => {
@@ -40,7 +39,6 @@ export function useCreateSession(onAdvanced: (currentStep: StepKey) => void) {
     onSuccess: ({ session, stage }) => {
       const currentPeriod = session.periods.find((p) => p.is_current);
       updateSession(session.name, currentPeriod?.name ?? null);
-      markSetupStep("academic_year");
       queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
       handleStageResult(stage, router, onAdvanced);
     },

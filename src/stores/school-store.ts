@@ -37,23 +37,15 @@ export interface BrandingUpdate {
 
 // Identity + branding for hydrating an EXISTING school (login, verify-otp
 // into an already-set-up school) — deliberately excludes session/classes/
-// subjectCount/setupStatus, which setCurrentSchool resets for a genuinely
-// new school. hydrateSchool must never wipe those for a returning user.
+// subjectCount, which setCurrentSchool resets for a genuinely new school.
+// hydrateSchool must never wipe those for a returning user.
 export type SchoolIdentity = Pick<
   CurrentSchool,
   "id" | "name" | "slug" | "school_type" | "levels" | "primaryColor" | "accentColor" | "logoUrl" | "motto"
 >;
 
-export interface SetupStatus {
-  branding: boolean;
-  academic_year: boolean;
-  classes: boolean;
-  subjects: boolean;
-}
-
 interface SchoolState {
   currentSchool: CurrentSchool | null;
-  setupStatus: SetupStatus;
   setCurrentSchool: (
     school: Omit<
       CurrentSchool,
@@ -66,7 +58,6 @@ interface SchoolState {
   setLevels: (levels: SchoolLevelValue[]) => void;
   setClasses: (classes: ClassRecord[]) => void;
   updateSubjectCount: (count: number) => void;
-  markSetupStep: (step: keyof SetupStatus) => void;
   clearSchool: () => void;
 }
 
@@ -83,13 +74,10 @@ const ssrSafeSessionStorage = {
   },
 } as Storage;
 
-const INITIAL_SETUP: SetupStatus = { branding: false, academic_year: false, classes: false, subjects: false };
-
 export const useSchoolStore = create<SchoolState>()(
   persist(
     (set) => ({
       currentSchool: null,
-      setupStatus: INITIAL_SETUP,
       setCurrentSchool: (school) =>
         set({
           currentSchool: {
@@ -103,7 +91,6 @@ export const useSchoolStore = create<SchoolState>()(
             classes: [],
             subjectCount: 0,
           },
-          setupStatus: INITIAL_SETUP,
         }),
       hydrateSchool: (school) =>
         set((s) => ({
@@ -136,9 +123,7 @@ export const useSchoolStore = create<SchoolState>()(
         set((s) => ({
           currentSchool: s.currentSchool ? { ...s.currentSchool, subjectCount } : null,
         })),
-      markSetupStep: (step) =>
-        set((s) => ({ setupStatus: { ...s.setupStatus, [step]: true } })),
-      clearSchool: () => set({ currentSchool: null, setupStatus: INITIAL_SETUP }),
+      clearSchool: () => set({ currentSchool: null }),
     }),
     {
       name: "schoolos-school",

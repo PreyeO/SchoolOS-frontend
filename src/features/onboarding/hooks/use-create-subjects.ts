@@ -17,7 +17,6 @@ export function useCreateSubjects(onAdvanced: (currentStep: StepKey) => void) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const updateSubjectCount = useSchoolStore((s) => s.updateSubjectCount);
-  const markSetupStep = useSchoolStore((s) => s.markSetupStep);
 
   const save = useMutation({
     mutationFn: async (payload: CreateSubjectsPayload) => {
@@ -30,7 +29,6 @@ export function useCreateSubjects(onAdvanced: (currentStep: StepKey) => void) {
     },
     onSuccess: ({ result, stage }) => {
       updateSubjectCount(result.length);
-      markSetupStep("subjects");
       queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
       handleStageResult(stage, router, onAdvanced);
     },
