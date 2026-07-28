@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-form";
+
 export const metadata: Metadata = { title: "Forgot password" };
 
 export default function ForgotPasswordPage() {
@@ -15,9 +17,13 @@ export default function ForgotPasswordPage() {
         </Link>
         <h1 className="font-display text-3xl font-bold text-ink">Reset your password</h1>
         <p className="mt-3 text-n-500 leading-relaxed">
-          Password reset isn&apos;t available just yet. In the meantime, contact your
-          school administrator for help getting back into your account.
+          Enter the email on your account and we&rsquo;ll send you a code to reset your password.
         </p>
+
+        <div className="mt-8">
+          <ForgotPasswordForm />
+        </div>
+
         <p className="mt-6 text-sm text-n-500">
           <Link href="/login" className="text-brand underline underline-offset-4">
             Back to log in

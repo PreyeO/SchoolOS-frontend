@@ -10,6 +10,9 @@ import type {
   CreateSchoolResponse,
   LoginPayload,
   LoginResponse,
+  PasswordResetConfirmPayload,
+  PasswordResetConfirmResponse,
+  PasswordResetRequestResponse,
   ResendOtpPayload,
   ResendOtpResponse,
   SchoolLevel,
@@ -51,6 +54,21 @@ export async function verifyEmail(
 export async function resendOtp(email: string): Promise<ResendOtpResponse> {
   const payload: ResendOtpPayload = { email };
   const { data } = await apiClient.post<ResendOtpResponse>(ENDPOINTS.RESEND_OTP, payload);
+  return data;
+}
+
+// Always returns 200 with a generic message — never leaks whether the email
+// exists or is eligible (synthetic student emails have no self-serve reset).
+export async function requestPasswordReset(email: string): Promise<PasswordResetRequestResponse> {
+  const { data } = await apiClient.post<PasswordResetRequestResponse>(ENDPOINTS.PASSWORD_RESET_REQUEST, { email });
+  return data;
+}
+
+// No token pair on success — the backend expects the frontend to route back to /login.
+export async function confirmPasswordReset(
+  payload: PasswordResetConfirmPayload,
+): Promise<PasswordResetConfirmResponse> {
+  const { data } = await apiClient.post<PasswordResetConfirmResponse>(ENDPOINTS.PASSWORD_RESET_CONFIRM, payload);
   return data;
 }
 

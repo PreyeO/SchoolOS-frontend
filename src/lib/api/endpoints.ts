@@ -5,6 +5,8 @@ export const ENDPOINTS = {
   VERIFY_EMAIL: "/api/auth/verify-email/",
   RESEND_OTP: "/api/auth/resend-verification/",
   SCHOOL: "/api/auth/school/",
+  PASSWORD_RESET_REQUEST: "/api/auth/password-reset/request/",
+  PASSWORD_RESET_CONFIRM: "/api/auth/password-reset/confirm/",
   ACADEMIC_SESSIONS_WITH_PERIODS: "/api/academic-sessions/with-periods/",
   CLASSES_BULK: "/api/classes/bulk/",
   // No trailing slash — per the confirmed backend contract.

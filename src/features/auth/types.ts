@@ -95,3 +95,21 @@ export interface LoginSelectionResponse {
 }
 
 export type LoginResponse = LoginScopedResponse | LoginSelectionResponse;
+
+export interface PasswordResetRequestResponse {
+  detail: string;
+}
+
+// email is compared server-side too via confirm_password — sent even though
+// client-side validation already caught a mismatch, since the backend is the
+// authoritative check (accounts.serializers.PasswordResetConfirmSerializer).
+export interface PasswordResetConfirmPayload {
+  email: string;
+  otp: string;
+  password: string;
+  confirm_password: string;
+}
+
+export interface PasswordResetConfirmResponse {
+  detail: string;
+}

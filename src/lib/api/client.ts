@@ -19,6 +19,8 @@ const PUBLIC_PATHS = [
   "/api/auth/verify-email/",
   "/api/auth/resend-verification/",
   "/api/auth/login/",
+  ENDPOINTS.PASSWORD_RESET_REQUEST,
+  ENDPOINTS.PASSWORD_RESET_CONFIRM,
   ENDPOINTS.REFRESH,
 ];
 
