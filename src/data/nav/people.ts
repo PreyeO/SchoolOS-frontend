@@ -1,4 +1,4 @@
-import { UsersRound, Users, Briefcase, Users2, UserPlus, UserRoundPlus } from "lucide-react";
+import { UsersRound, Users, Briefcase, Users2, UserCog, UserPlus, UserRoundPlus } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
 
@@ -17,6 +17,12 @@ export const peopleGroup: NavGroup = {
       href: "/staff",
       icon: Briefcase,
       description: "Manage staff profiles, roles, subjects taught, and employment records.",
+    }, false),
+    adminItem({
+      label: "School Admins",
+      href: "/admins",
+      icon: UserCog,
+      description: "See your school's admin staff and manage which role each one holds.",
     }, false),
     adminItem({
       label: "Parents & Guardians",

@@ -103,3 +103,12 @@ export const PARENT_STUDENT_LINK_ENDPOINTS = {
   LIST: () => `/api/parent-student-links/`,
   DETAIL: (id: string) => `/api/parent-student-links/${id}/`,
 } as const;
+
+// School's own admin staff (distinct from the Staff/Teacher directory).
+// assign-role/unassign-role both require manage_roles.
+export const ADMIN_ENDPOINTS = {
+  LIST: () => `/api/school-admins/`,
+  DETAIL: (id: string) => `/api/school-admins/${id}/`,
+  ASSIGN_ROLE: (id: string) => `/api/school-admins/${id}/assign-role/`,
+  UNASSIGN_ROLE: (id: string) => `/api/school-admins/${id}/unassign-role/`,
+} as const;
