@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { DetailField } from "@/components/shared/detail-field";
+import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { formatDate } from "@/lib/text/format-date";
 
@@ -12,14 +13,14 @@ import { useTeacherDetail } from "../hooks/use-teacher-detail";
 import { teacherTypeLabel } from "../lib/teacher-type-label";
 
 export function StaffDetailPage({ id }: { id: string }) {
-  const { data: teacher, isPending, isError } = useTeacherDetail(id);
+  const { data: teacher, isPending, isError, error } = useTeacherDetail(id);
 
   if (isPending) {
-    return <p className="text-sm text-n-400" role="status">Loading staff profile…</p>;
+    return <p className="text-sm text-n-400" role="status">Loading teacher profile…</p>;
   }
 
   if (isError || !teacher) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load this staff profile. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="this teacher profile" />;
   }
 
   const { user } = teacher;
@@ -27,7 +28,7 @@ export function StaffDetailPage({ id }: { id: string }) {
   return (
     <div className="space-y-6">
       <Link href="/staff" className="inline-flex items-center gap-1.5 text-sm text-n-500 hover:text-ink">
-        <ArrowLeft className="size-4" /> Back to staff
+        <ArrowLeft className="size-4" /> Back to teachers
       </Link>
 
       <div className="flex items-center gap-4 rounded-xl border border-n-200 bg-white p-5">

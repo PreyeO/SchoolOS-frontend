@@ -13,10 +13,10 @@ export const peopleGroup: NavGroup = {
       description: "Manage student records, enrollment, class placement, and academic history.",
     }, false),
     adminItem({
-      label: "Staff",
+      label: "Teachers",
       href: "/staff",
       icon: Briefcase,
-      description: "Manage staff profiles, roles, subjects taught, and employment records.",
+      description: "Manage teacher profiles, subjects taught, and employment records.",
     }, false),
     adminItem({
       label: "School Admins",

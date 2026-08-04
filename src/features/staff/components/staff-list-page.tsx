@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
@@ -28,13 +29,13 @@ export function StaffListPage() {
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
   };
 
-  const { data, isPending, isError } = useTeachers(filters);
+  const { data, isPending, isError, error } = useTeachers(filters);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">Staff</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">Teachers</h1>
           <p className="mt-1 text-sm text-n-500">Teachers at your school, their type, and their specialization.</p>
         </div>
         <Button type="button" asChild>
@@ -52,9 +53,9 @@ export function StaffListPage() {
       />
 
       {isPending ? (
-        <p className="text-sm text-n-400" role="status">Loading staff…</p>
+        <p className="text-sm text-n-400" role="status">Loading teachers…</p>
       ) : isError || !data ? (
-        <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load staff. Please refresh.</p>
+        <ErrorState error={error} resourceLabel="teachers" />
       ) : (
         <>
           <StaffTable teachers={data.results} />
