@@ -26,7 +26,8 @@ interface Props {
 const DEFAULT_TERM_NAMES = ["1st Term", "2nd Term", "3rd Term"];
 
 export function StepAcademicYear({ onAdvanced, onBack }: Props) {
-  const { mutate, isPending } = useCreateSession(onAdvanced);
+  const { save, isSaving, skip, isSkipping } = useCreateSession(onAdvanced);
+  const pending = isSaving || isSkipping;
   const newRowRef = useRef<HTMLInputElement | null>(null);
 
   const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<AcademicYearFormValues>({
@@ -62,7 +63,7 @@ export function StepAcademicYear({ onAdvanced, onBack }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v), onInvalid)} noValidate className="space-y-6">
+    <form onSubmit={handleSubmit((v) => save(v), onInvalid)} noValidate className="space-y-6">
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-ink" htmlFor="name">
           Academic session
@@ -116,12 +117,15 @@ export function StepAcademicYear({ onAdvanced, onBack }: Props) {
 
       <div className="flex gap-3">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
+        <Button type="button" variant="ghost" onClick={() => skip()} disabled={pending}>
+          {isSkipping ? "Skipping…" : "Skip"}
+        </Button>
         <Button
           type="submit"
-          disabled={isPending}
+          disabled={pending}
           className="flex-1 bg-amber hover:bg-amber/90 text-ink font-semibold"
         >
-          {isPending ? "Saving…" : "Save & continue"}
+          {isSaving ? "Saving…" : "Save & continue"}
         </Button>
       </div>
     </form>

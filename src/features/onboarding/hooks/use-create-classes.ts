@@ -19,7 +19,7 @@ export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
   const queryClient = useQueryClient();
   const setClasses = useSchoolStore((s) => s.setClasses);
 
-  return useMutation({
+  const save = useMutation({
     mutationFn: async (values: ClassesFormValues) => {
       const schoolId = getSchoolId();
       if (!schoolId) throw new Error("Missing school id — please log in again.");
@@ -41,4 +41,27 @@ export function useCreateClasses(onAdvanced: (currentStep: StepKey) => void) {
       toast.error(getErrorMessage(error));
     },
   });
+
+  // Skippable — no classes created, just advances with skipped: true.
+  const skip = useMutation({
+    mutationFn: async () => {
+      const schoolId = getSchoolId();
+      if (!schoolId) throw new Error("Missing school id — please log in again.");
+      return advanceOnboardingStage(schoolId, "classes", true);
+    },
+    onSuccess: (stage) => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding", "review"] });
+      handleStageResult(stage, router, onAdvanced);
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+
+  return {
+    save: save.mutate,
+    isSaving: save.isPending,
+    skip: skip.mutate,
+    isSkipping: skip.isPending,
+  };
 }

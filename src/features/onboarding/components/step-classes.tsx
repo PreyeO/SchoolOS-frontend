@@ -26,7 +26,8 @@ interface Props {
 export function StepClasses({ onAdvanced, onBack }: Props) {
   const { levels: schoolLevels, isLoading: levelsLoading } = useSchoolLevels();
   const { data: templates, isPending: templatesLoading } = useClassTemplates();
-  const { mutate, isPending } = useCreateClasses(onAdvanced);
+  const { save, isSaving, skip, isSkipping } = useCreateClasses(onAdvanced);
+  const pending = isSaving || isSkipping;
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ClassesFormValues>({
     resolver: zodResolver(classesSchema),
@@ -46,7 +47,7 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit((v) => mutate(v), onInvalid)} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit((v) => save(v), onInvalid)} noValidate className="space-y-4">
       <p className="text-sm text-n-500">
         Each class needs a name and a level, e.g.{" "}
         <span className="text-ink font-medium">Primary 1</span>. Add arms only if
@@ -90,12 +91,15 @@ export function StepClasses({ onAdvanced, onBack }: Props) {
 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
+        <Button type="button" variant="ghost" onClick={() => skip()} disabled={pending}>
+          {isSkipping ? "Skipping…" : "Skip"}
+        </Button>
         <Button
           type="submit"
-          disabled={isPending}
+          disabled={pending}
           className="flex-1 bg-amber hover:bg-amber/90 text-ink font-semibold"
         >
-          {isPending ? "Saving…" : `Save ${fields.length} class${fields.length !== 1 ? "es" : ""}`}
+          {isSaving ? "Saving…" : `Save ${fields.length} class${fields.length !== 1 ? "es" : ""}`}
         </Button>
       </div>
     </form>
