@@ -7,6 +7,7 @@ import type { SchoolLevelValue } from "@/data/school-levels";
 import type { SchoolType } from "@/lib/school/derive-school-type";
 import type { ClassRecord } from "@/lib/school/class-record";
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
+import { ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
 
 export interface CurrentSchool {
   id: string;
@@ -61,19 +62,6 @@ interface SchoolState {
   clearSchool: () => void;
 }
 
-const ssrSafeSessionStorage = {
-  getItem: (name: string) => {
-    if (typeof window === "undefined") return null;
-    return sessionStorage.getItem(name);
-  },
-  setItem: (name: string, value: string) => {
-    if (typeof window !== "undefined") sessionStorage.setItem(name, value);
-  },
-  removeItem: (name: string) => {
-    if (typeof window !== "undefined") sessionStorage.removeItem(name);
-  },
-} as Storage;
-
 export const useSchoolStore = create<SchoolState>()(
   persist(
     (set) => ({
@@ -127,7 +115,7 @@ export const useSchoolStore = create<SchoolState>()(
     }),
     {
       name: "schoolos-school",
-      storage: createJSONStorage(() => ssrSafeSessionStorage),
+      storage: createJSONStorage(() => ssrSafeLocalStorage),
     }
   )
 );

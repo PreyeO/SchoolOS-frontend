@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 import type { AuthClaims } from "@/lib/auth/decode-token";
+import { ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
 
 export interface AuthTokens {
   access: string;
@@ -15,7 +16,7 @@ interface AuthState {
   // production should move tokens to httpOnly cookies — web storage is XSS-exposed
   tokens: AuthTokens | null;
   claims: AuthClaims | null;
-  // True once persist has finished reading sessionStorage. Reading `tokens`
+  // True once persist has finished reading localStorage. Reading `tokens`
   // before this flips is meaningless — it's always null on the very first
   // render regardless of whether a session actually exists — so anything
   // deciding "is this user logged in" (AuthGuard, LoginView) must wait for it
@@ -28,19 +29,6 @@ interface AuthState {
   clearAuth: () => void;
   setHasHydrated: (value: boolean) => void;
 }
-
-const ssrSafeSessionStorage = {
-  getItem: (name: string) => {
-    if (typeof window === "undefined") return null;
-    return sessionStorage.getItem(name);
-  },
-  setItem: (name: string, value: string) => {
-    if (typeof window !== "undefined") sessionStorage.setItem(name, value);
-  },
-  removeItem: (name: string) => {
-    if (typeof window !== "undefined") sessionStorage.removeItem(name);
-  },
-} as Storage;
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -61,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "schoolos-auth",
-      storage: createJSONStorage(() => ssrSafeSessionStorage),
+      storage: createJSONStorage(() => ssrSafeLocalStorage),
       partialize: (state) => ({
         pendingVerificationEmail: state.pendingVerificationEmail,
         tokens: state.tokens,
