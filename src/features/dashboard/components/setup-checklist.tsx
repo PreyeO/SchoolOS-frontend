@@ -4,8 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ChevronDown, Circle, PartyPopper, X } from "lucide-react";
 
-import { useSetupStatus } from "../hooks/use-setup-status";
+import { canDoOnboarding } from "@/lib/auth/can-do-onboarding";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
+import { useOnboardingStage } from "@/features/onboarding/hooks/use-onboarding-stage";
+
+import { useChecklistDismissed } from "../hooks/use-checklist-dismissed";
+import { useSetupStatus } from "../hooks/use-setup-status";
 
 const CHECKLIST_ITEMS = [
   { label: "Set up school branding", key: "branding" as const, href: "/settings/school" },
@@ -15,11 +20,23 @@ const CHECKLIST_ITEMS = [
 ];
 
 export function SetupChecklist() {
-  const { setupStatus, isComplete, completedCount, totalSteps } = useSetupStatus();
+  const claims = useAuthStore((s) => s.claims);
+  const { setupStatus, isComplete, completedCount, totalSteps, currentSchool } = useSetupStatus();
+  const { data: stage } = useOnboardingStage();
+  const { dismissed, dismiss } = useChecklistDismissed(currentSchool?.id);
   const [expanded, setExpanded] = useState(true);
-  const [dismissed, setDismissed] = useState(false);
 
+  // Onboarding is owner-only (accounts/permissions.py's IsSchoolOwner enforces
+  // this server-side) — other admins/personas never see this card at all.
+  if (!canDoOnboarding(claims)) return null;
   if (dismissed) return null;
+
+  // Until the wizard itself is finished, every item must resume it there —
+  // completing the same step via a Settings page instead would never touch
+  // onboarding_progress.current_step, leaving the wizard's own progress out
+  // of sync with what the owner actually did. Defaults to "unfinished" while
+  // the stage is still loading, since that's the safe direction to guess.
+  const wizardUnfinished = stage?.is_completed !== true;
 
   const pct = Math.round((completedCount / totalSteps) * 100);
 
@@ -32,7 +49,7 @@ export function SetupChecklist() {
         </p>
         <button
           type="button"
-          onClick={() => setDismissed(true)}
+          onClick={dismiss}
           aria-label="Dismiss"
           className="text-n-400 hover:text-ink transition-colors"
         >
@@ -78,7 +95,7 @@ export function SetupChecklist() {
             return (
               <li key={item.key}>
                 <Link
-                  href={item.href}
+                  href={wizardUnfinished ? "/onboarding" : item.href}
                   className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-n-50 transition-colors"
                 >
                   {done
