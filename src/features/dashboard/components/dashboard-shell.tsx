@@ -8,10 +8,12 @@ import { pickReadableForeground } from "@/lib/contrast";
 import { useSchoolStore } from "@/stores/school-store";
 import { AppSidebar } from "./app-sidebar";
 import { AppTopbar } from "./app-topbar";
+import { useSyncSchoolData } from "../hooks/use-sync-school-data";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [shellEl, setShellEl] = useState<HTMLDivElement | null>(null);
+  useSyncSchoolData();
   const primaryColor = useSchoolStore((s) => s.currentSchool?.primaryColor);
   const accentColor = useSchoolStore((s) => s.currentSchool?.accentColor);
 
