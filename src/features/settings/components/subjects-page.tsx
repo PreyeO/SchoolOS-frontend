@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Input } from "@/components/ui/input";
+import { ErrorState } from "@/components/shared/error-state";
 import { useSchoolLevels } from "@/lib/school/use-school-levels";
 import type { SchoolLevelValue } from "@/data/school-levels";
 
@@ -12,7 +13,7 @@ import { LevelTabs } from "./subjects/level-tabs";
 import { SubjectsTable } from "./subjects/subjects-table";
 
 export function SubjectsPage() {
-  const { data: subjects, isPending, isError } = useSubjects();
+  const { data: subjects, isPending, isError, error } = useSubjects();
   const { levels: schoolLevels } = useSchoolLevels();
   const [activeLevel, setActiveLevel] = useState<SchoolLevelValue | "all">("all");
   const [query, setQuery] = useState("");
@@ -32,7 +33,7 @@ export function SubjectsPage() {
   }
 
   if (isError || !subjects) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load your subjects. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="your subjects" />;
   }
 
   return (

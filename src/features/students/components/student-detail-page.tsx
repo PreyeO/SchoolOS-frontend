@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { DetailField } from "@/components/shared/detail-field";
+import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { formatDate } from "@/lib/text/format-date";
 
@@ -17,14 +18,14 @@ import { ReissuePasswordDialog } from "./reissue-password-dialog";
 import { StudentParentLinks } from "./student-parent-links";
 
 export function StudentDetailPage({ id }: { id: string }) {
-  const { data: student, isPending, isError } = useStudentDetail(id);
+  const { data: student, isPending, isError, error } = useStudentDetail(id);
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading student profile…</p>;
   }
 
   if (isError || !student) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load this student profile. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="this student profile" />;
   }
 
   const { user } = student;

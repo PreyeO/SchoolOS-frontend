@@ -1,18 +1,20 @@
 "use client";
 
+import { ErrorState } from "@/components/shared/error-state";
+
 import { useAcademicSessions } from "../hooks/use-academic-sessions";
 import { AddSessionDialog } from "./add-session-dialog";
 import { SessionCard } from "./sessions/session-card";
 
 export function SessionsPage() {
-  const { data: sessions, isPending, isError } = useAcademicSessions();
+  const { data: sessions, isPending, isError, error } = useAcademicSessions();
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading your academic sessions…</p>;
   }
 
   if (isError || !sessions) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load your sessions. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="your sessions" />;
   }
 
   const sorted = [...sessions].sort(

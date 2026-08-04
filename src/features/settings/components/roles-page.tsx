@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/shared/error-state";
 import { useRoles } from "@/features/invitations/hooks/use-roles";
 
 import { usePermissionsCatalog } from "../hooks/use-permissions-catalog";
@@ -11,8 +12,13 @@ import { RoleFormDialog } from "./role-form-dialog";
 import { RolesTable } from "./roles/roles-table";
 
 export function RolesPage() {
-  const { data: roles, isPending: rolesPending, isError: rolesError } = useRoles();
-  const { data: catalog, isPending: catalogPending, isError: catalogError } = usePermissionsCatalog();
+  const { data: roles, isPending: rolesPending, isError: rolesError, error: rolesErrorObj } = useRoles();
+  const {
+    data: catalog,
+    isPending: catalogPending,
+    isError: catalogError,
+    error: catalogErrorObj,
+  } = usePermissionsCatalog();
   const createRole = useCreateRole();
 
   if (rolesPending || catalogPending) {
@@ -20,7 +26,7 @@ export function RolesPage() {
   }
 
   if (rolesError || catalogError || !roles || !catalog) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load your roles. Please refresh.</p>;
+    return <ErrorState error={rolesErrorObj ?? catalogErrorObj} resourceLabel="your roles" />;
   }
 
   return (

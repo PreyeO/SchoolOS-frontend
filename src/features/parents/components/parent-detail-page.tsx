@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { DetailField } from "@/components/shared/detail-field";
+import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 
 import { useParentDetail } from "../hooks/use-parent-detail";
@@ -12,14 +13,14 @@ import { LinkStudentDialog } from "./link-student-dialog";
 import { ParentStudentLinks } from "./parent-student-links";
 
 export function ParentDetailPage({ id }: { id: string }) {
-  const { data: parent, isPending, isError } = useParentDetail(id);
+  const { data: parent, isPending, isError, error } = useParentDetail(id);
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading parent profile…</p>;
   }
 
   if (isError || !parent) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load this parent profile. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="this parent profile" />;
   }
 
   const { user } = parent;

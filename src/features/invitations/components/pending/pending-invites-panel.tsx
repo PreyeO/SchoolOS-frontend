@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ErrorState } from "@/components/shared/error-state";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { usePendingInvites } from "../../hooks/use-pending-invites";
 import type { InvitePersona, InviteStatus, PendingInvitesFilters as Filters } from "../../types";
@@ -20,7 +21,7 @@ export function PendingInvitesPanel() {
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
   };
 
-  const { data: invites, isPending, isError } = usePendingInvites(filters);
+  const { data: invites, isPending, isError, error } = usePendingInvites(filters);
 
   return (
     <div className="space-y-4">
@@ -41,7 +42,7 @@ export function PendingInvitesPanel() {
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading invites…</p>
       ) : isError || !invites ? (
-        <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load invites. Please refresh.</p>
+        <ErrorState error={error} resourceLabel="invites" />
       ) : (
         <PendingInvitesTable invites={invites} />
       )}

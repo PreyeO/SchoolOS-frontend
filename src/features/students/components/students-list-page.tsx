@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
@@ -30,7 +31,7 @@ export function StudentsListPage() {
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
   };
 
-  const { data, isPending, isError } = useStudents(filters);
+  const { data, isPending, isError, error } = useStudents(filters);
 
   function resetPage() {
     setPage(1);
@@ -62,7 +63,7 @@ export function StudentsListPage() {
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading students…</p>
       ) : isError || !data ? (
-        <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load students. Please refresh.</p>
+        <ErrorState error={error} resourceLabel="students" />
       ) : (
         <>
           <StudentsTable students={data.results} />

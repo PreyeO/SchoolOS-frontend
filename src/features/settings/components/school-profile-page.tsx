@@ -1,17 +1,19 @@
 "use client";
 
+import { ErrorState } from "@/components/shared/error-state";
+
 import { useSchoolProfile } from "../hooks/use-school-profile";
 import { SchoolProfileForm } from "./school-profile-form";
 
 export function SchoolProfilePage() {
-  const { data: school, isPending, isError } = useSchoolProfile();
+  const { data: school, isPending, isError, error } = useSchoolProfile();
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading your school profile…</p>;
   }
 
   if (isError || !school) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load your school profile. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="your school profile" />;
   }
 
   return (

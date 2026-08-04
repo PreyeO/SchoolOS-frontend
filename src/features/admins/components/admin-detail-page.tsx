@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 
 import { useAdminDetail } from "../hooks/use-admin-detail";
@@ -13,7 +14,7 @@ import { useUnassignRole } from "../hooks/use-unassign-role";
 import { AssignRoleDialog } from "./assign-role-dialog";
 
 export function AdminDetailPage({ id }: { id: string }) {
-  const { data: admin, isPending, isError } = useAdminDetail(id);
+  const { data: admin, isPending, isError, error } = useAdminDetail(id);
   const unassignRole = useUnassignRole(id);
 
   if (isPending) {
@@ -21,7 +22,7 @@ export function AdminDetailPage({ id }: { id: string }) {
   }
 
   if (isError || !admin) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load this admin profile. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="this admin profile" />;
   }
 
   const { user, school_admin_role: role } = admin;

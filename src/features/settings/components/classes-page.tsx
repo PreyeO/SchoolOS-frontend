@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/shared/error-state";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
 import { useSchoolLevels } from "@/lib/school/use-school-levels";
 import { AddClassDialog } from "@/features/onboarding/components/review/add-class-dialog";
@@ -11,7 +12,7 @@ import { ClassRowReview } from "@/features/onboarding/components/review/class-ro
 import { useClasses } from "../hooks/use-classes";
 
 export function ClassesPage() {
-  const { data: classes, isPending, isError } = useClasses();
+  const { data: classes, isPending, isError, error } = useClasses();
   const { levels: schoolLevels } = useSchoolLevels();
 
   if (isPending) {
@@ -19,7 +20,7 @@ export function ClassesPage() {
   }
 
   if (isError || !classes) {
-    return <p className="text-sm text-clay" role="alert">Couldn&rsquo;t load your classes. Please refresh.</p>;
+    return <ErrorState error={error} resourceLabel="your classes" />;
   }
 
   const groups = SCHOOL_LEVELS.filter((l) => schoolLevels.includes(l.value))
