@@ -7,6 +7,7 @@ const STATUS_TABS: { value: InviteStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
   { value: "accepted", label: "Accepted" },
+  { value: "invalidated", label: "Invalidated" },
   { value: "expired", label: "Expired" },
 ];
 

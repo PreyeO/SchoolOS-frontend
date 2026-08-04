@@ -28,7 +28,7 @@ export function PendingInviteRow({ invite }: { invite: PendingInvite }) {
           variant="ghost"
           size="sm"
           className="text-primary"
-          disabled={invite.status === "accepted" || resendInvite.isPending}
+          disabled={invite.status === "accepted" || invite.status === "invalidated" || resendInvite.isPending}
           onClick={() => resendInvite.mutate(invite.id)}
         >
           {resendInvite.isPending ? "Resending…" : "Resend"}

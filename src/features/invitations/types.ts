@@ -69,7 +69,9 @@ export interface StudentCreatedResponse {
 
 // --- Pending invites (GET /api/invites/, POST /api/invites/:id/resend/) ---
 export type InvitePersona = "admin" | "teacher" | "parent" | "student";
-export type InviteStatus = "pending" | "accepted" | "expired";
+// "expired" is derived server-side (pending + past expires_at, not stored);
+// the other three are the InviteToken.status field's real values.
+export type InviteStatus = "pending" | "accepted" | "invalidated" | "expired";
 
 export interface InviteRoleSummary {
   id: string;

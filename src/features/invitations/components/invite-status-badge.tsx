@@ -6,12 +6,14 @@ import type { InviteStatus } from "../types";
 const STYLES: Record<InviteStatus, string> = {
   pending: "bg-n-100 text-n-500",
   accepted: "bg-grass/10 text-grass",
+  invalidated: "bg-n-200 text-n-600",
   expired: "bg-clay/10 text-clay",
 };
 
 const LABELS: Record<InviteStatus, string> = {
   pending: "Pending",
   accepted: "Accepted",
+  invalidated: "Invalidated",
   expired: "Expired",
 };
 
