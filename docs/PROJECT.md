@@ -73,6 +73,7 @@ src/hooks/  src/lib/{api,auth,tenant,validations,utils}  src/stores/  src/types/
 - **Teacher → class/subject assignment:** `TeacherProfile` has `teacher_type` but no FK linking a teacher to specific classes or subjects. Needed before the Staff module's "assign to classes/subjects."
 - **Attendance, Fees, Results apps:** confirmed empty scaffolds, not registered in `INSTALLED_APPS` — see #3 above. Nothing to build against yet.
 - **Admissions:** no backend app at all — see #4 above.
+- **`student_capacity` can't be changed after create-school:** it's set once by `SchoolCreationSerializer` and excluded from `SchoolBrandingUpdateSerializer`'s whitelist (whose docstring groups it with the billing fields — `admin.py` puts it alongside `trial_ends_at`/`price_per_student`), so the only way to edit it is Django admin. Nothing enforces it either — no student-creation path checks it. The create-school hint therefore calls it an estimate rather than promising it's editable; if a guarded update flow lands, that copy should change to match.
 
 ## How to work in this repo
 - One concern per prompt. State your plan, then build. Run `lint` + `build` and show results before "done".

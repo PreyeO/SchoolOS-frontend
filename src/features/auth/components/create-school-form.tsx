@@ -134,7 +134,19 @@ export function CreateSchoolForm() {
           <FieldWrapper id="phone_number" label="School phone" error={errors.phone_number?.message} required>
             <Input id="phone_number" type="tel" inputMode="tel" {...register("phone_number")} />
           </FieldWrapper>
-          <FieldWrapper id="student_capacity" label="Student capacity" error={errors.student_capacity?.message} required>
+          {/* Deliberately does NOT say "you can update it later" like the email
+              field above: student_capacity is excluded from
+              SchoolBrandingUpdateSerializer's whitelist (grouped with the
+              billing fields), so there's no self-serve way to change it yet.
+              What IS true is that nothing enforces it — no student-creation
+              path checks it — so it's an estimate, not a cap. */}
+          <FieldWrapper
+            id="student_capacity"
+            label="Student capacity"
+            hint="An estimate is fine — it's for your plan, not a cap on how many students you can add."
+            error={errors.student_capacity?.message}
+            required
+          >
             <Input id="student_capacity" type="number" inputMode="numeric" min={1} {...register("student_capacity", { valueAsNumber: true })} />
           </FieldWrapper>
         </div>
