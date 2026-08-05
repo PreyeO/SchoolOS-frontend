@@ -74,11 +74,19 @@ Body: { subjects: [{ name, level, is_core }] }. Response: bare array [{ id, name
 PATCH /api/subjects/:id/ edit (name / level / is_core) · DELETE — remove
 /api/subjects/bulk-update/ exists but not used — prefer per-record PATCH.
 
+Grading (shipped 2026-08-02, wired to /settings/grading)
+GET /api/grading-systems/ — list (school-scoped, paginated — a school has at most one per level, ≤5 total, so the default page size always covers it) · GET /api/grading-systems/:id/ — detail
+Item shape: { id, level, name, components: [{id,name,max_obtainable,order}], ranges: [{id,grade,min_score,max_score,remark}], created_at }.
+POST /api/grading-systems/ create — Body: { level, name?, components: [{name,max_obtainable,order}], ranges: [{grade,min_score,max_score,remark}] }. Atomic — creates the system with its components and ranges in one call. Validation (400): level must be one the school offers; only one system per (school, level); component max_obtainable values must sum to exactly 100; ranges must be contiguous, no gaps/overlaps, covering 0-100 inclusive. Gated on manage_academic_structure.
+PATCH /api/grading-systems/:id/ edit — Body: { name?, components?, ranges? }. If components/ranges is provided, it WHOLLY REPLACES the existing set (deleted and recreated) — not merged, and independent of each other. level is not editable post-creation. Same validation as create.
+DELETE /api/grading-systems/:id/ — cascades to components and ranges. Gated on manage_academic_structure.
+Confirmed live: duplicate-level create correctly 400s ("A grading system already exists for this level"); creating for a level the school doesn't offer 400s ("School does not offer level(s): ...").
+
 Roles
 GET /api/school-admin-roles/ — list roles for the caller's school
-{ id, name, permissions, is_owner }[], paginated. Already wired: features/invitations/hooks/use-roles.ts, used for the admin-invite role_id picker.
+{ id, name, permissions, is_owner }[], paginated. Wired: features/invitations/hooks/use-roles.ts (admin-invite role_id picker) and Settings → Roles (features/settings/components/roles-page.tsx).
 POST /api/school-admin-roles/ create · PATCH /api/school-admin-roles/:id/ edit · DELETE remove
-All gated on manage_roles. The Owner role can't be renamed or deleted. Not yet used by the frontend (would back a Settings → Roles page).
+All gated on manage_roles. The Owner role can't be renamed or deleted. Wired: Settings → Roles.
 GET /api/school-admin-roles/permissions/ — full permission-string catalog
 { permissions: [...] } — the complete SCHOOL_PERMISSIONS list, for populating a role-creation multiselect. Requires only school membership, not manage_roles.
 
@@ -117,6 +125,15 @@ POST /api/parent-student-links/ — create
 Body: { parent_profile_id, student_profile_id, relationship, is_primary_contact? } — the field names are parent_profile_id/student_profile_id (with the _id suffix), not parent_profile/student_profile. Gated on add_students (same permission as parent/student invites). Response: { id, parent_profile: ParentListItem, student_profile: StudentListItem, relationship, is_primary_contact, created_at }.
 DELETE /api/parent-student-links/:id/ — remove
 No update action — change relationship/is_primary_contact by delete + recreate (the UI does this as unlink + a fresh "Link a parent/student" dialog).
+
+Switch school (shipped 2026-08-02, NOT yet wired — SchoolSwitcher is still a mock)
+POST /api/auth/switch-school/ — Body: { school_slug }. Requires IsAuthenticated (any current JWT — school-scoped or unscoped). Exchanges it for a fresh JWT pair scoped to a different school the user has an active membership at, no re-auth needed. Success: same shape as login's scoped response ({ access, refresh, ... } via the shared _token_pair_dict). Errors: 400 if no active membership at that slug; platform admins get a PermissionDenied (they don't have personal school memberships to switch between). Gap: no endpoint lists a user's OTHER school memberships outside login's one-time requires_school_selection response — needed to populate the switcher's dropdown before this can be fully wired.
+
+Audit log (new `audit` app, shipped 2026-08-02/03, NOT yet wired — dashboard's Recent Activity is still mock data)
+GET /api/audit-logs/ , GET /api/audit-logs/:id/ — read-only (no write endpoints anywhere, immutable by design). School members need view_audit_logs and see only their own school's logs (school=null platform-level entries excluded); platform admins need view_platform_audit_logs and see everything, filterable by school_id.
+Item shape: { id, actor: UserMinimal|null, school, school_name, action, target_type, target_id, target_repr, changes, created_at }. actor is null for system-triggered events. changes is a list of {field,old,new} dicts, null for create/delete (target_repr suffices there).
+Filters: ?action= (icontains), ?actor= (UUID), ?school_id= (UUID, platform admins only in practice), ?created_at_after=/?created_at_before= (date), ?search= (actor's name/email). Paginated.
+Populated by both the accounts and academic apps' services (invites, role changes, branding/session/class/subject/grading edits, etc.) — real recent-activity data, not the fee/attendance/results placeholders the current mock (`features/dashboard/api/dashboard-activity-api.ts`) invents.
 
 Reference values
 Levels: creche, nursery, primary, junior_secondary, senior_secondary.
