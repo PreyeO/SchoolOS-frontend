@@ -16,8 +16,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
+import { focusFirstError } from "@/features/onboarding/lib/first-error-field-id";
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 
+import { resolveGradingFormError } from "../../lib/grading-form-error";
 import { gradingSystemSchema, type GradingSystemFormValues } from "../../schemas/grading-schema";
 import { GradeComponentsField } from "./grade-components-field";
 import { GradeRangesField } from "./grade-ranges-field";
@@ -46,13 +48,11 @@ export function GradingFormDialog({ trigger, title, initialValues, availableLeve
     if (next) reset(initialValues);
   }
 
+  // errors is populated by the time onInvalid runs, so it can be read directly
+  // rather than taking the handler's argument.
   function onInvalid() {
-    const first =
-      errors.level?.message ??
-      errors.components?.message ??
-      errors.ranges?.message ??
-      "Please check the form and try again.";
-    toast.error(first);
+    focusFirstError(errors);
+    toast.error(resolveGradingFormError(errors));
   }
 
   async function submit(values: GradingSystemFormValues) {

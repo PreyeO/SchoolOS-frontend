@@ -15,17 +15,24 @@ interface Props {
 
 export function GradeComponentRow({ index: i, register, errors, onRemove }: Props) {
   const rowErrors = errors.components?.[i];
+  // Each input's id is its react-hook-form path, so focusFirstError() can jump
+  // to the offending field on a failed submit — same convention as the
+  // onboarding step forms.
+  const nameId = `components.${i}.name`;
+  const scoreId = `components.${i}.max_obtainable`;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
         <Input
+          id={nameId}
           placeholder="e.g. 1st CA"
           className="flex-1"
           aria-invalid={!!rowErrors?.name}
           {...register(`components.${i}.name`)}
         />
         <Input
+          id={scoreId}
           type="number"
           min={1}
           max={100}

@@ -4,6 +4,7 @@ import { useFieldArray } from "react-hook-form";
 import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Plus } from "lucide-react";
 
+import { arrayLevelMessage } from "../../lib/grading-form-error";
 import type { GradingSystemFormValues } from "../../schemas/grading-schema";
 import { GradeRangeRow } from "./grade-range-row";
 
@@ -24,8 +25,8 @@ export function GradeRangesField({ control, register, errors }: Props) {
           <GradeRangeRow key={field.id} index={i} register={register} errors={errors} onRemove={() => remove(i)} />
         ))}
       </div>
-      {typeof errors.ranges?.message === "string" && (
-        <p role="alert" className="text-xs text-red-600">{errors.ranges.message}</p>
+      {arrayLevelMessage(errors.ranges) && (
+        <p role="alert" className="text-xs text-red-600">{arrayLevelMessage(errors.ranges)}</p>
       )}
       <button
         type="button"

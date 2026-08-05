@@ -20,13 +20,16 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
+        {/* ids are the react-hook-form paths so focusFirstError() can target them. */}
         <Input
+          id={`ranges.${i}.grade`}
           placeholder="Grade (e.g. A1)"
           className="w-24"
           aria-invalid={!!rowErrors?.grade}
           {...register(`ranges.${i}.grade`)}
         />
         <Input
+          id={`ranges.${i}.min_score`}
           type="number"
           min={0}
           max={100}
@@ -38,6 +41,7 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
         />
         <span className="text-n-400">–</span>
         <Input
+          id={`ranges.${i}.max_score`}
           type="number"
           min={0}
           max={100}
@@ -48,6 +52,7 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
           {...register(`ranges.${i}.max_score`, { valueAsNumber: true })}
         />
         <Input
+          id={`ranges.${i}.remark`}
           placeholder="Remark (e.g. Excellent)"
           className="flex-1"
           aria-invalid={!!rowErrors?.remark}
