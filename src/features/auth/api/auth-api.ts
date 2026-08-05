@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import { ENDPOINTS } from "@/lib/api/endpoints";
+import { ENDPOINTS, SCHOOL_ENDPOINTS } from "@/lib/api/endpoints";
 import { deriveSchoolType, sortLevels } from "@/lib/school/derive-school-type";
 
 import type { CreateSchoolFormValues } from "../schemas/create-school-schema";
@@ -17,6 +17,7 @@ import type {
   ResendOtpPayload,
   ResendOtpResponse,
   SchoolLevel,
+  SchoolSearchResult,
   SignupPayload,
   SignupResponse,
   VerifyOtpPayload,
@@ -79,6 +80,13 @@ export async function confirmPasswordReset(
 // from any of the user's own schools (or an unscoped token).
 export async function switchSchool(schoolSlug: string): Promise<LoginScopedResponse> {
   const { data } = await apiClient.post<LoginScopedResponse>(ENDPOINTS.SWITCH_SCHOOL, { school_slug: schoolSlug });
+  return data;
+}
+
+// Returns a bare array (no pagination envelope) — confirmed live. The backend
+// rejects q shorter than 2 characters, so callers must gate on that.
+export async function searchSchools(q: string): Promise<SchoolSearchResult[]> {
+  const { data } = await apiClient.get<SchoolSearchResult[]>(SCHOOL_ENDPOINTS.SEARCH(), { params: { q } });
   return data;
 }
 

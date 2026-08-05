@@ -7,12 +7,14 @@ import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { DuplicateSchoolNotice } from "./duplicate-school-notice";
 import { FieldWrapper } from "./field-wrapper";
 import { LevelsSelect } from "./levels-select";
 import { SlugField } from "./slug-field";
 import { StateSelect } from "./state-select";
 import { createSchoolSchema, type CreateSchoolFormValues } from "../schemas/create-school-schema";
 import { useCreateSchool } from "../hooks/use-create-school";
+import { useSchoolNameSearch } from "../hooks/use-school-name-search";
 import type { SchoolLevel } from "../types";
 
 function toSlug(name: string): string {
@@ -64,6 +66,9 @@ export function CreateSchoolForm() {
     if (!slugEdited.current) setValue("slug", toSlug(nameValue ?? ""));
   }, [nameValue, setValue]);
 
+  // Reuses the name already watched above for slug derivation.
+  const { data: similarSchools } = useSchoolNameSearch(nameValue ?? "");
+
   const slugField = register("slug");
 
   return (
@@ -87,6 +92,7 @@ export function CreateSchoolForm() {
             />
           </FieldWrapper>
         </div>
+        <DuplicateSchoolNotice matches={similarSchools ?? []} />
         <FieldWrapper
           id="email"
           label="School email"

@@ -32,6 +32,11 @@ export const SCHOOL_ENDPOINTS = {
   // this same resource. Do NOT use the school-list endpoint for levels — its
   // summary omits them and only has school_type.
   DETAIL: (id: string) => `/api/schools/${id}/`,
+  // Public (AllowAny) name search, ?q= must be >= 2 chars or it 400s. Exists
+  // specifically to warn a would-be owner about duplicate schools at
+  // create-school time — school NAMES have no uniqueness constraint (only slug
+  // does), so this is advisory, never a gate.
+  SEARCH: () => `/api/schools/search/`,
   // Returns every school the caller has an active membership at (not just the
   // one their current token is scoped to) — confirmed live with a two-school
   // test account. Summary shape only (no branding colors — see get-my-schools.ts).
@@ -51,6 +56,10 @@ export const ACADEMIC_SESSION_ENDPOINTS = {
 
 export const ACADEMIC_PERIOD_ENDPOINTS = {
   DETAIL: (id: string) => `/api/academic-periods/${id}/`,
+  // Dedicated one-click action for term rollover. PATCHing is_current also
+  // works (update_academic_period unsets any other current period too), but
+  // this keeps the common case a single POST with no other fields in play.
+  MARK_CURRENT: (id: string) => `/api/academic-periods/${id}/mark-current/`,
 } as const;
 
 export const CLASS_ENDPOINTS = {

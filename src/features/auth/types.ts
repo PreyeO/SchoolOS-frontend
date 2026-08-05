@@ -73,6 +73,17 @@ export interface LoginPayload {
   school_slug?: string;
 }
 
+// GET /api/schools/search/ — matches SchoolSearchResultSerializer exactly.
+// city/state are returned precisely so a near-duplicate can be told apart from
+// the real thing (many Nigerian schools share a name across states).
+export interface SchoolSearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  state: string;
+}
+
 export interface SchoolSummary {
   name: string;
   slug: string;
