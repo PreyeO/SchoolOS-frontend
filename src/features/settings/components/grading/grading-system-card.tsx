@@ -8,6 +8,8 @@ import { SCHOOL_LEVELS } from "@/data/school-levels";
 
 import type { GradingSystem } from "../../api/grading-api";
 import { useDeleteGradingSystem, useUpdateGradingSystem } from "../../hooks/use-grading-mutations";
+import { GradeComponentsBar } from "./grade-components-bar";
+import { GradeScaleStrip } from "./grade-scale-strip";
 import { GradingFormDialog } from "./grading-form-dialog";
 
 export function GradingSystemCard({ system }: { system: GradingSystem }) {
@@ -68,34 +70,14 @@ export function GradingSystemCard({ system }: { system: GradingSystem }) {
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-n-400">Components</p>
-          <ul className="space-y-1">
-            {sortedComponents.map((c) => (
-              <li key={c.id} className="flex justify-between text-sm">
-                <span className="text-ink">{c.name}</span>
-                <span className="text-n-500">{c.max_obtainable}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-n-400">Grade ranges</p>
-          <ul className="space-y-1">
-            {sortedRanges.map((r) => (
-              <li key={r.id} className="flex justify-between text-sm">
-                <span className="text-ink">
-                  {r.grade}{" "}
-                  <span className="text-n-400">
-                    ({r.min_score}–{r.max_score})
-                  </span>
-                </span>
-                <span className="text-n-500">{r.remark}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-n-400">Components</p>
+        <GradeComponentsBar components={sortedComponents} />
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-n-400">Grade scale</p>
+        <GradeScaleStrip ranges={sortedRanges} />
       </div>
     </div>
   );
