@@ -5,7 +5,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditPeriodDialog } from "@/features/onboarding/components/review/edit-period-dialog";
 import { DeletePeriodDialog } from "@/features/onboarding/components/review/delete-period-dialog";
-import { useUpdatePeriod } from "@/features/onboarding/hooks/use-period-mutations";
+import { useMarkPeriodCurrent, useUpdatePeriod } from "@/features/onboarding/hooks/use-period-mutations";
 import type { PeriodResponse } from "@/features/onboarding/types";
 
 import { formatDateRange } from "../../lib/format-date-range";
@@ -18,6 +18,7 @@ interface Props {
 
 export function TermRow({ period, otherPeriods, canDelete }: Props) {
   const updatePeriod = useUpdatePeriod();
+  const markCurrent = useMarkPeriodCurrent();
 
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border border-n-100 px-3 py-2">
@@ -31,6 +32,22 @@ export function TermRow({ period, otherPeriods, canDelete }: Props) {
         <span className="shrink-0 text-xs text-n-400">{formatDateRange(period.start_date, period.end_date)}</span>
       </div>
       <span className="flex shrink-0 items-center gap-1">
+        {/* Term rollover is a recurring chore, so it gets a direct action rather
+            than living only as a checkbox inside the edit dialog. The endpoint
+            unsets the previous current term itself, so there's nothing to
+            confirm or clean up. */}
+        {!period.is_current && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-primary"
+            disabled={markCurrent.isPending}
+            onClick={() => markCurrent.mutate(period.id)}
+          >
+            {markCurrent.isPending ? "Setting…" : "Make current"}
+          </Button>
+        )}
         <EditPeriodDialog
           title={`Edit ${period.name}`}
           initialValues={{

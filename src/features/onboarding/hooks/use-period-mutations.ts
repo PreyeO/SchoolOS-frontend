@@ -2,7 +2,7 @@
 
 import { useMutationWithToast } from "@/lib/api/use-mutation-with-toast";
 
-import { addPeriod, deletePeriod, updatePeriod } from "../api/review-api";
+import { addPeriod, deletePeriod, markPeriodCurrent, updatePeriod } from "../api/review-api";
 import type { AddPeriodPayload, UpdatePeriodPayload } from "../types-review";
 
 export function useUpdatePeriod() {
@@ -10,6 +10,10 @@ export function useUpdatePeriod() {
     ({ id, payload }: { id: string; payload: UpdatePeriodPayload }) => updatePeriod(id, payload),
     "Saved",
   );
+}
+
+export function useMarkPeriodCurrent() {
+  return useMutationWithToast((id: string) => markPeriodCurrent(id), "Current term updated");
 }
 
 export function useDeletePeriod() {

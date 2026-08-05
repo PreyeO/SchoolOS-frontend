@@ -46,6 +46,13 @@ export async function updatePeriod(id: string, payload: UpdatePeriodPayload): Pr
   return data;
 }
 
+// Marks this period as the school's current one, unsetting whichever was
+// current before (handled atomically server-side).
+export async function markPeriodCurrent(id: string): Promise<PeriodResponse> {
+  const { data } = await apiClient.post<PeriodResponse>(ACADEMIC_PERIOD_ENDPOINTS.MARK_CURRENT(id));
+  return data;
+}
+
 export async function deletePeriod(id: string): Promise<void> {
   await apiClient.delete(ACADEMIC_PERIOD_ENDPOINTS.DETAIL(id));
 }
