@@ -178,21 +178,34 @@
    occupy layout, so the print area is lifted out to the top-left to avoid
    printing a page of blank space above it. */
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    margin: 14mm;
   }
 
-  [data-print-area],
-  [data-print-area] * {
-    visibility: visible;
+  /* Hide every element that is neither the print area, nor inside it, nor an
+     ancestor of it — :has() keeps the ancestor chain alive so the print area
+     isn't taken down with its parents.
+
+     display:none rather than visibility:hidden: hidden-but-laid-out chrome
+     still reserves its full height, which is what left the sidebar and topbar
+     occupying printed pages. Collapsing it outright means the slip prints on
+     one page. !important so no utility class can out-specify it. */
+  body :not(:has([data-print-area])):not([data-print-area]):not([data-print-area] *) {
+    display: none !important;
   }
 
-  [data-print-area] {
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
+  /* The surviving ancestors are dashboard shell layout (flex, min-h-screen,
+     max-widths, padding) — none of which should shape a printed slip. */
+  body,
+  body :has([data-print-area]) {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    overflow: visible !important;
     /* Colour-on-white: the shell's themed backgrounds waste ink and can drop
        out entirely depending on the browser's background-graphics setting. */
-    background: #fff;
+    background: #fff !important;
   }
 }
