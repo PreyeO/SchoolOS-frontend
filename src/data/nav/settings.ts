@@ -34,7 +34,7 @@ export const settingsGroup: NavGroup = {
       href: "/settings/grading",
       icon: SlidersHorizontal,
       description: "Define grade boundaries, remarks, and how scores are computed.",
-    }),
+    }, false),
     adminItem({
       label: "Fee Structure",
       href: "/settings/fees",
