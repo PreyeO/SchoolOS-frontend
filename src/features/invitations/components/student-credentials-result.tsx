@@ -25,13 +25,18 @@ function CopyField({ label, value }: FieldProps) {
     <div className="flex items-center justify-between gap-3 rounded-lg border border-n-200 px-3 py-2.5">
       <div className="min-w-0">
         <p className="text-xs text-n-500">{label}</p>
-        <p className="text-sm font-medium text-ink truncate">{value}</p>
+        {/* Truncation is fine on screen (the value is one click from the
+            clipboard) but would silently cut off a long internal email on
+            paper, where there's no way to recover it. */}
+        <p className="text-sm font-medium text-ink truncate print:overflow-visible print:whitespace-normal print:break-all">
+          {value}
+        </p>
       </div>
       <button
         type="button"
         onClick={handleCopy}
         aria-label={`Copy ${label}`}
-        className="shrink-0 text-n-400 hover:text-brand transition-colors"
+        className="shrink-0 text-n-400 hover:text-brand transition-colors print:hidden"
       >
         {copied ? <Check className="size-4 text-grass" /> : <Copy className="size-4" />}
       </button>
@@ -48,7 +53,10 @@ export function StudentCredentialsResult({ student, onAddAnother }: Props) {
   const router = useRouter();
 
   return (
-    <div className="space-y-4 print:p-6">
+    // data-print-area scopes window.print() to just this card — see the
+    // @media print block in globals.css. Without it the whole dashboard
+    // (sidebar, topbar, the pending-invites table below) printed too.
+    <div data-print-area className="space-y-4 print:p-6">
       <div className="flex items-start gap-2.5 rounded-lg border border-clay/30 bg-clay/10 px-3.5 py-3">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-clay" />
         <p className="text-sm text-ink">

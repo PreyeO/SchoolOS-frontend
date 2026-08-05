@@ -167,3 +167,32 @@
     * { transition-duration: 0ms !important; }
   }
 }
+
+/* ─── Print ──────────────────────────────────────────────────────
+   Anything marked [data-print-area] prints on its own — without this,
+   window.print() inside the dashboard also renders the sidebar, topbar and
+   the rest of the page (student credentials were printing the whole screen).
+
+   visibility (not display) hides the surrounding chrome, because display:none
+   on an ancestor would take the print area down with it. Hidden elements still
+   occupy layout, so the print area is lifted out to the top-left to avoid
+   printing a page of blank space above it. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  [data-print-area],
+  [data-print-area] * {
+    visibility: visible;
+  }
+
+  [data-print-area] {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    /* Colour-on-white: the shell's themed backgrounds waste ink and can drop
+       out entirely depending on the browser's background-graphics setting. */
+    background: #fff;
+  }
+}
