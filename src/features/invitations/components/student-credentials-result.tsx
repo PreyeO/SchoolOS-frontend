@@ -5,7 +5,27 @@ import { useRouter } from "next/navigation";
 import { Check, Copy, Printer, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { formatDate, toLocalIsoDate } from "@/lib/text/format-date";
+import { useSchoolStore } from "@/stores/school-store";
 import type { StudentCreatedResponse } from "../types";
+
+// Print-only. On screen the school name already sits in the topbar and the
+// heading above says what this is, but on paper the slip travels on its own —
+// a stack of them is otherwise unidentifiable, and there's nothing to say when
+// the credentials were issued. Deliberately text-only: the stored logo can be a
+// local blob URL, which wouldn't print reliably (or at all after a reload).
+function PrintSlipHeader() {
+  const schoolName = useSchoolStore((s) => s.currentSchool?.name);
+
+  return (
+    <div className="hidden print:block border-b border-n-200 pb-3">
+      <p className="font-display text-base font-bold text-ink">{schoolName ?? "SchoolOS"}</p>
+      <p className="mt-0.5 text-xs text-n-500">
+        Student login details · Issued {formatDate(toLocalIsoDate())}
+      </p>
+    </div>
+  );
+}
 
 interface FieldProps {
   label: string;
@@ -57,6 +77,8 @@ export function StudentCredentialsResult({ student, onAddAnother }: Props) {
     // @media print block in globals.css. Without it the whole dashboard
     // (sidebar, topbar, the pending-invites table below) printed too.
     <div data-print-area className="space-y-4 print:p-6">
+      <PrintSlipHeader />
+
       <div className="flex items-start gap-2.5 rounded-lg border border-clay/30 bg-clay/10 px-3.5 py-3">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-clay" />
         <p className="text-sm text-ink">
