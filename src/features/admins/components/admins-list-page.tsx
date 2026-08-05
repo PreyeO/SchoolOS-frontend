@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { inviteHref } from "@/features/invitations/lib/invite-persona-param";
 
 import { useAdmins } from "../hooks/use-admins";
 import type { AdminFilters as Filters } from "../types";
@@ -43,7 +44,7 @@ export function AdminsListPage() {
           <p className="mt-1 text-sm text-n-500">Admin staff at your school and the role each one holds.</p>
         </div>
         <Button type="button" asChild>
-          <Link href="/invitations">Invite admin</Link>
+          <Link href={inviteHref("admin")}>Invite admin</Link>
         </Button>
       </div>
 

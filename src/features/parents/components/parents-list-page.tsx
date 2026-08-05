@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { inviteHref } from "@/features/invitations/lib/invite-persona-param";
 
 import { useParents } from "../hooks/use-parents";
 import type { ParentFilters as Filters } from "../types";
@@ -43,7 +44,7 @@ export function ParentsListPage() {
           <p className="mt-1 text-sm text-n-500">Parent and guardian accounts and their linked children.</p>
         </div>
         <Button type="button" asChild>
-          <Link href="/invitations">Invite parent</Link>
+          <Link href={inviteHref("parent")}>Invite parent</Link>
         </Button>
       </div>
 

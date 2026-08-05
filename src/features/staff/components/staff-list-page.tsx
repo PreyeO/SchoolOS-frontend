@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { inviteHref } from "@/features/invitations/lib/invite-persona-param";
 
 import { useTeachers } from "../hooks/use-teachers";
 import type { TeacherFilters, TeacherType } from "../types";
@@ -39,7 +40,7 @@ export function StaffListPage() {
           <p className="mt-1 text-sm text-n-500">Teachers at your school, their type, and their specialization.</p>
         </div>
         <Button type="button" asChild>
-          <Link href="/invitations">Invite teacher</Link>
+          <Link href={inviteHref("teacher")}>Invite teacher</Link>
         </Button>
       </div>
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import { inviteHref } from "@/features/invitations/lib/invite-persona-param";
 
 import { useStudents } from "../hooks/use-students";
 import type { EnrollmentStatus, Gender, StudentFilters } from "../types";
@@ -45,7 +46,7 @@ export function StudentsListPage() {
           <p className="mt-1 text-sm text-n-500">Every student enrolled at your school.</p>
         </div>
         <Button type="button" asChild>
-          <Link href="/invitations">Add student</Link>
+          <Link href={inviteHref("student")}>Add student</Link>
         </Button>
       </div>
 
