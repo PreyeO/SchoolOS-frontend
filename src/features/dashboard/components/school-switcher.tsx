@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, Check } from "lucide-react";
-import { toast } from "sonner";
+import { ChevronsUpDown, Check, Loader2 } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -12,19 +11,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSchoolStore } from "@/stores/school-store";
+import { useMySchools } from "../hooks/use-my-schools";
+import { useSwitchSchool } from "../hooks/use-switch-school";
 import { SchoolLogo } from "./school-logo";
 
-// MOCK — replace with the user's real school memberships once the multi-school
-// membership endpoint is available.
-function getMockOtherSchools(currentSlug?: string) {
-  return [{ name: "Bright Kids Academy", slug: "bright-kids" }, { name: "Falcon International", slug: "falcon-intl" }].filter(
-    (s) => s.slug !== currentSlug,
+// Other schools' list items only carry a plain logo URL (no brand colors —
+// GET /api/schools/'s summary shape omits those), so they get a plain
+// gray-on-initial avatar here rather than SchoolLogo's brand-colored one,
+// which needs the fuller CurrentSchool shape this list doesn't provide.
+function OtherSchoolAvatar({ name, logo }: { name: string; logo: string | null }) {
+  if (logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logo} alt={name} className="size-5 shrink-0 rounded object-cover" />;
+  }
+  return (
+    <div className="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-[10px] font-bold text-muted-foreground">
+      {name[0]?.toUpperCase() ?? "S"}
+    </div>
   );
 }
 
 export function SchoolSwitcher() {
   const school = useSchoolStore((s) => s.currentSchool);
-  const otherSchools = getMockOtherSchools(school?.slug);
+  const { data: schools } = useMySchools();
+  const switchSchool = useSwitchSchool();
+
+  const otherSchools = (schools ?? []).filter((s) => s.slug !== school?.slug);
 
   return (
     <DropdownMenu>
@@ -50,9 +62,15 @@ export function SchoolSwitcher() {
         {otherSchools.map((s) => (
           <DropdownMenuItem
             key={s.slug}
-            onClick={() => toast.info("Multi-school switching is coming soon.")}
+            disabled={switchSchool.isPending}
+            onClick={() => switchSchool.mutate(s.slug)}
+            className="gap-2"
           >
-            {s.name}
+            <OtherSchoolAvatar name={s.name} logo={s.logo} />
+            <span className="truncate">{s.name}</span>
+            {switchSchool.isPending && switchSchool.variables === s.slug && (
+              <Loader2 className="ml-auto size-3.5 shrink-0 animate-spin text-muted-foreground" />
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

@@ -10,6 +10,7 @@ import type {
   CreateSchoolResponse,
   LoginPayload,
   LoginResponse,
+  LoginScopedResponse,
   PasswordResetConfirmPayload,
   PasswordResetConfirmResponse,
   PasswordResetRequestResponse,
@@ -69,6 +70,15 @@ export async function confirmPasswordReset(
   payload: PasswordResetConfirmPayload,
 ): Promise<PasswordResetConfirmResponse> {
   const { data } = await apiClient.post<PasswordResetConfirmResponse>(ENDPOINTS.PASSWORD_RESET_CONFIRM, payload);
+  return data;
+}
+
+// Response is identical to login's scoped shape (both built from the same
+// backend _token_pair_dict helper) — confirmed live with a two-school test
+// account. Requires only IsAuthenticated, not IsSchoolMember, so it works
+// from any of the user's own schools (or an unscoped token).
+export async function switchSchool(schoolSlug: string): Promise<LoginScopedResponse> {
+  const { data } = await apiClient.post<LoginScopedResponse>(ENDPOINTS.SWITCH_SCHOOL, { school_slug: schoolSlug });
   return data;
 }
 

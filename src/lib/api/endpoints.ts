@@ -17,6 +17,11 @@ export const ENDPOINTS = {
   INVITE_TEACHER: "/api/invites/invite-teacher/",
   INVITE_PARENT: "/api/invites/invite-parent/",
   INVITE_STUDENT: "/api/invites/invite-student/",
+  // Confirmed live: SchoolViewSet.get_queryset() filters to the caller's own
+  // active memberships for non-platform-admins, and its list/retrieve actions
+  // only require IsAuthenticated (not IsSchoolMember) — so this works with
+  // any valid token, scoped to any one of the user's schools or unscoped.
+  SWITCH_SCHOOL: "/api/auth/switch-school/",
 } as const;
 
 // Id-scoped endpoint builders. Confirmed against accounts/urls.py (SchoolViewSet
@@ -27,6 +32,10 @@ export const SCHOOL_ENDPOINTS = {
   // this same resource. Do NOT use the school-list endpoint for levels — its
   // summary omits them and only has school_type.
   DETAIL: (id: string) => `/api/schools/${id}/`,
+  // Returns every school the caller has an active membership at (not just the
+  // one their current token is scoped to) — confirmed live with a two-school
+  // test account. Summary shape only (no branding colors — see get-my-schools.ts).
+  LIST: () => `/api/schools/`,
   ONBOARDING_STAGE: (id: string) => `/api/schools/${id}/onboarding/`,
   ONBOARDING_ADVANCE: (id: string) => `/api/schools/${id}/onboarding/advance/`,
   ONBOARDING_REVIEW: (id: string) => `/api/schools/${id}/onboarding/review/`,
