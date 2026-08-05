@@ -30,7 +30,6 @@ export function GradingSystemCard({ system }: { system: GradingSystem }) {
             title="Edit grading system"
             initialValues={{
               level: system.level,
-              name: system.name ?? "",
               components: sortedComponents.map((c) => ({ name: c.name, max_obtainable: c.max_obtainable })),
               ranges: sortedRanges.map((r) => ({
                 grade: r.grade,
@@ -44,7 +43,6 @@ export function GradingSystemCard({ system }: { system: GradingSystem }) {
               updateSystem.mutateAsync({
                 id: system.id,
                 payload: {
-                  name: values.name,
                   components: values.components.map((c, i) => ({ ...c, order: i + 1 })),
                   ranges: values.ranges,
                 },

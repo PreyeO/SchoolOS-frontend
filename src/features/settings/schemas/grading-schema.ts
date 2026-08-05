@@ -22,7 +22,6 @@ const rangeSchema = z.object({
 export const gradingSystemSchema = z
   .object({
     level: z.string().min(1, "Required"),
-    name: z.string().trim().max(100).optional(),
     components: z.array(componentSchema).min(1, "Add at least one component"),
     ranges: z.array(rangeSchema).min(1, "Add at least one grade range"),
   })

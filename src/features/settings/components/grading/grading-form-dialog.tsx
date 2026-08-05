@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogClose,
@@ -89,10 +88,6 @@ export function GradingFormDialog({ trigger, title, initialValues, availableLeve
               </select>
             </FieldWrapper>
           ) : null}
-
-          <FieldWrapper id="grading-name" label="Name" hint="Optional" error={errors.name?.message}>
-            <Input id="grading-name" placeholder="e.g. Senior Secondary Grading" {...register("name")} />
-          </FieldWrapper>
 
           <GradeComponentsField control={control} register={register} errors={errors} />
           <GradeRangesField control={control} register={register} errors={errors} />

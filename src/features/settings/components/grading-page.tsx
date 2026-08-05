@@ -43,7 +43,6 @@ export function GradingPage() {
             title="Add a grading system"
             initialValues={{
               level: "",
-              name: "",
               components: DEFAULT_GRADE_COMPONENTS,
               ranges: firstAvailable ? getDefaultGradeRanges(firstAvailable) : [],
             }}
@@ -52,7 +51,6 @@ export function GradingPage() {
             onSave={(values) =>
               createSystem.mutateAsync({
                 level: values.level as (typeof availableLevels)[number],
-                name: values.name,
                 components: values.components.map((c, i) => ({ ...c, order: i + 1 })),
                 ranges: values.ranges,
               })
