@@ -32,6 +32,8 @@ GET /api/schools/ — school list (authenticated). Wired: features/dashboard (sc
 Paginated { count, next, previous, results: [{ id, name, slug, subdomain, school_type, levels, city, state, logo, is_active, created_at }] }. Has levels but no branding colours (primary_color/accent_color) — fine for a school-switcher list, not for branding logic (use the :id/ detail endpoint for that). get_queryset() filters to the caller's OWN active memberships for non-platform-admins (platform admins get every school) — confirmed live: returns every school a user belongs to regardless of which one their current token is scoped to, since list/retrieve only require IsAuthenticated, not IsSchoolMember.
 POST /api/auth/switch-school/ — switch JWT context (authenticated). Wired: features/dashboard/hooks/use-switch-school.ts.
 Body: { school_slug }. Exchanges any valid current JWT (scoped to any of the user's schools, or unscoped) for one scoped to a different school the caller has an active membership at — no re-auth needed. Success: same shape as login's scoped response (built from the same backend _token_pair_dict helper) — { requires_school_selection: false, state, access, refresh }. Errors: 400 if no active membership at that slug; platform admins get PermissionDenied (no personal school memberships to switch between).
+GET /api/schools/search/?q= — public school name search (AllowAny). Wired: create-school's duplicate warning, via features/auth/api/auth-api.ts searchSchools().
+Returns a BARE ARRAY (no pagination envelope) of { id, name, slug, city, state } — confirmed live. Matches name__icontains, so it's a substring search ("Academy" matches anything containing it). q must be >= 2 chars or it 400s ("Ensure this field has at least 2 characters."), so callers must gate on length. city/state are returned so a near-duplicate can be told apart from the real thing. Purpose per its own docstring: warn a would-be owner about duplicate schools during registration — advisory only, since school NAMES have no uniqueness constraint (only slug does).
 PATCH /api/schools/:id/ — update school / branding (authenticated)
 Confirmed PATCH. Onboarding branding step sends ONLY: { logo, primary_color, accent_color, motto }. Full profile (name, address, city, phone_number, email, website) editable here in dashboard Settings. Returns full school → update currentSchool (repaint shell).
 
@@ -50,10 +52,9 @@ GET /api/academic-sessions/ — list (confirmed, school-scoped) · GET /api/acad
 PATCH /api/academic-sessions/:id/ — edit session (name and/or full periods replace) · DELETE — remove session
 PATCH /api/academic-periods/:id/ — edit one period (name/order/start_date/end_date/is_current) · DELETE /api/academic-periods/:id/ — remove one period
 Confirmed built (already wired: Phase 4.2 Review edit/add/delete). No backend guard against deleting a session's last period, or against leaving no period is_current after a delete — both are enforced client-side only.
+POST /api/academic-periods/:id/mark-current/ — one-click term rollover. Wired: Settings > Sessions' "Make current" action (features/settings/components/sessions/term-row.tsx). No body. Requires manage_academic_structure. Unsets whichever period was current before, atomically — verified live on a 3-term session. Redundant with PATCH { is_current: true } (update_academic_period unsets the others too), but avoids sending unrelated fields for the common case.
 POST /api/academic-sessions/:id/academic-periods/ — add a period to an existing session
 Confirmed built and wired (nested @action on AcademicSessionViewSet). Body: { name, order, start_date, end_date, is_current? }.
-POST /api/academic-periods/:id/mark-current/ — dedicated "make this the current period" action
-Exists as an alternative to PATCH { is_current: true } (both work; the frontend uses PATCH for one code path).
 
 Classes & arms
 GET /api/classes/templates (no trailing slash — separately confirmed against a live request, an exception to the general DRF-router rule above)
