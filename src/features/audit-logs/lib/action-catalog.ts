@@ -69,10 +69,3 @@ export const ACTION_CATALOG: Record<string, ActionMeta> = {
 export function actionMeta(action: string): ActionMeta {
   return ACTION_CATALOG[action] ?? { rest: (t) => `${(action.split(".")[1] ?? action).replace(/_/g, " ")} ${t}`.trim() };
 }
-
-// Suggestions for the action filter's datalist. Verified to be an exact 1:1
-// match with every action string the backend logs (40 as of 2026-08-05), so the
-// list is a real reference rather than a guess — but the filter itself stays
-// free text, since the backend matches ?action= with icontains and a partial
-// like "deleted" or "grade" is often what someone actually wants.
-export const ALL_AUDIT_ACTIONS = Object.keys(ACTION_CATALOG).sort();
