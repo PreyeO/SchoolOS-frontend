@@ -1,10 +1,5 @@
 // MOCK — replace with real API calls when the backend endpoints are ready.
-
-export interface ActivityItem {
-  id: string;
-  text: string;
-  timestamp: string;
-}
+// (Recent activity is no longer mocked — see features/dashboard/api/audit-log-api.ts.)
 
 export interface UpcomingEvent {
   id: string;
@@ -21,17 +16,6 @@ export interface Notification {
 
 function delay(ms = 500): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function getRecentActivity(): Promise<ActivityItem[]> {
-  await delay();
-  return [
-    { id: "1", text: "Chidinma A. recorded ₦45,000 fee payment for Amara O.", timestamp: "10 minutes ago" },
-    { id: "2", text: "New admission application submitted for Primary 3", timestamp: "1 hour ago" },
-    { id: "3", text: "Mr. Okafor posted an announcement: \"Mid-term break dates\"", timestamp: "3 hours ago" },
-    { id: "4", text: "Attendance completed for JSS 2 — 32/34 present", timestamp: "Yesterday" },
-    { id: "5", text: "Second Term results published for SSS 3", timestamp: "2 days ago" },
-  ];
 }
 
 export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
