@@ -52,15 +52,25 @@ export function StudentCredentialsResult({ student, onAddAnother }: Props) {
       <div className="flex items-start gap-2.5 rounded-lg border border-clay/30 bg-clay/10 px-3.5 py-3">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-clay" />
         <p className="text-sm text-ink">
-          Save these — the student signs in with the admission number and password. This
-          password won&rsquo;t be shown again.
+          {student.password
+            ? "Save these — the student signs in with the admission number and password. This password won’t be shown again."
+            : "This email already had an account, so its existing password was kept — share the admission number and let them sign in with the password they already use."}
         </p>
       </div>
 
       <div className="space-y-2">
         <CopyField label="Student" value={`${student.first_name} ${student.last_name}`} />
         <CopyField label="Admission number" value={student.admission_number} />
-        <CopyField label="Password" value={student.password} />
+        {student.password ? (
+          <CopyField label="Password" value={student.password} />
+        ) : (
+          <div className="rounded-lg border border-n-200 px-3 py-2.5">
+            <p className="text-xs text-n-500">Password</p>
+            <p className="text-sm text-n-500 italic">
+              {student.password_note ?? "Existing password kept — not shown here."}
+            </p>
+          </div>
+        )}
         <CopyField label="School subdomain" value={student.subdomain} />
         <CopyField label="Internal email" value={student.email} />
       </div>

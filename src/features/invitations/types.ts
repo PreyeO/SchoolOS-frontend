@@ -64,7 +64,12 @@ export interface StudentCreatedResponse {
   admission_number: string;
   gender: Gender;
   date_of_birth: string | null;
-  password: string;
+  // Both null when admission_number/email resolved to an EXISTING user
+  // (accounts/services.py's _get_or_create_invitee found rather than created
+  // one) — their existing password is kept as-is, so there's nothing new to
+  // show, and password_note explains why.
+  password: string | null;
+  password_note: string | null;
 }
 
 // --- Pending invites (GET /api/invites/, POST /api/invites/:id/resend/) ---
