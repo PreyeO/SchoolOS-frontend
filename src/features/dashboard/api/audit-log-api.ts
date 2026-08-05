@@ -27,7 +27,8 @@ export interface AuditLogEntry {
 
 // Model's default ordering is already -created_at, so the first `limit`
 // results are exactly the most recent entries — no extra sort param needed.
-export async function getAuditLogs(limit = 8): Promise<AuditLogEntry[]> {
+// Dashboard home shows at most 5, so there's no reason to fetch more.
+export async function getAuditLogs(limit = 5): Promise<AuditLogEntry[]> {
   const { data } = await apiClient.get<PaginatedResponse<AuditLogEntry>>(AUDIT_LOG_ENDPOINTS.LIST(), {
     params: { page_size: limit },
   });
