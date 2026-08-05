@@ -1,5 +1,5 @@
 // MOCK — replace with real API calls when the backend endpoints are ready.
-// (Recent activity is no longer mocked — see features/dashboard/api/audit-log-api.ts.)
+// (Recent activity is no longer mocked — see features/audit-logs/.)
 
 export interface UpcomingEvent {
   id: string;
