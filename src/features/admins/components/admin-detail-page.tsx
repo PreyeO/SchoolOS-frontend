@@ -6,8 +6,10 @@ import { ArrowLeft } from "lucide-react";
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { DetailField } from "@/components/shared/detail-field";
 import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { formatDate } from "@/lib/text/format-date";
 
 import { useAdminDetail } from "../hooks/use-admin-detail";
 import { useUnassignRole } from "../hooks/use-unassign-role";
@@ -49,7 +51,11 @@ export function AdminDetailPage({ id }: { id: string }) {
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-ink">Role</h2>
-        <div className="flex items-center justify-between gap-3">
+        <DetailField
+          label="Joined this school"
+          value={admin.date_joined_school ? formatDate(admin.date_joined_school) : null}
+        />
+        <div className="mt-4 flex items-center justify-between gap-3">
           <div>
             {role ? (
               <>

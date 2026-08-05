@@ -7,6 +7,7 @@ import { ActiveBadge } from "@/components/shared/active-badge";
 import { DetailField } from "@/components/shared/detail-field";
 import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { formatDate } from "@/lib/text/format-date";
 
 import { useParentDetail } from "../hooks/use-parent-detail";
 import { LinkStudentDialog } from "./link-student-dialog";
@@ -52,6 +53,10 @@ export function ParentDetailPage({ id }: { id: string }) {
           <DetailField label="Address" value={parent.address} />
           <DetailField label="City" value={parent.city} />
           <DetailField label="State" value={parent.state} />
+          <DetailField
+            label="Joined this school"
+            value={parent.date_joined_school ? formatDate(parent.date_joined_school) : null}
+          />
         </div>
       </div>
 

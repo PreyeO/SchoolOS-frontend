@@ -27,6 +27,7 @@ export interface ParentDetail {
   city: string | null;
   state: string | null;
   country: string | null;
+  date_joined_school: string | null;
   student_links: ParentStudentLink[];
   created_at: string;
 }

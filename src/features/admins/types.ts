@@ -14,6 +14,7 @@ export interface AdminDetail {
   membership: MembershipSummary;
   school: SchoolContextSummary;
   school_admin_role: InviteRoleSummary | null;
+  date_joined_school: string | null;
   created_at: string;
 }
 
