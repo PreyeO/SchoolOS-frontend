@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/features/dashboard/components/coming-soon";
+import { GradingPage } from "@/features/settings/components/grading-page";
 
-export const metadata: Metadata = { title: "Grading Configuration — SchoolOS" };
+export const metadata: Metadata = { title: "Grading — SchoolOS" };
 
 export default function Page() {
-  return <ComingSoon href="/settings/grading" />;
+  return <GradingPage />;
 }

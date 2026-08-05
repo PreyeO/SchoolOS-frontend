@@ -59,6 +59,11 @@ export const SUBJECT_ENDPOINTS = {
   DETAIL: (id: string) => `/api/subjects/${id}/`,
 } as const;
 
+export const GRADING_SYSTEM_ENDPOINTS = {
+  LIST: () => `/api/grading-systems/`,
+  DETAIL: (id: string) => `/api/grading-systems/${id}/`,
+} as const;
+
 // Replaces the old flat ENDPOINTS.ROLES (no trailing slash, GET-only — worked
 // only via Django's APPEND_SLASH redirect, same class of bug already fixed for
 // onboarding's stage/review endpoints). The new CRUD + permissions-catalog
