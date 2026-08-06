@@ -17,9 +17,6 @@ export interface SubjectEntry {
 let idCounter = 0;
 const nextId = () => `subj_${idCounter++}`;
 
-// Only these levels have NERDC templates — nursery/creche start empty (add-your-own).
-const TEMPLATE_LEVELS = ["primary", "junior_secondary", "senior_secondary"] as const;
-
 export function useSubjectEntries(
   schoolLevels: SchoolLevelValue[],
   templates: SubjectTemplatesResponse | undefined,
@@ -36,9 +33,10 @@ export function useSubjectEntries(
   // one hydrated from a fresh login would seed with zero entries.
   if (templates && !levelsLoading && !seeded) {
     const seededEntries: SubjectEntry[] = [];
+    // A level the backend has no template for (creche) seeds nothing and is left
+    // for add-your-own.
     schoolLevels.forEach((level) => {
-      if (!(TEMPLATE_LEVELS as readonly string[]).includes(level)) return;
-      const items = templates[level as (typeof TEMPLATE_LEVELS)[number]] ?? [];
+      const items = templates[level] ?? [];
       items.forEach((item) => {
         seededEntries.push({ id: nextId(), name: item.name, level, is_core: item.is_core, selected: true });
       });

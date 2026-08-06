@@ -60,11 +60,11 @@ export interface ClassTemplateItem {
   order: number;
 }
 
-export interface ClassTemplatesResponse {
-  primary?: ClassTemplateItem[];
-  junior_secondary?: ClassTemplateItem[];
-  senior_secondary?: ClassTemplateItem[];
-}
+// Keyed by school level. The backend returns a key for every level it has seed
+// data for — nursery, primary, junior_secondary, senior_secondary (see
+// academic/constants.py DEFAULT_CLASSES). Creche has no seed data, so its key is
+// absent and that level starts empty for add-your-own.
+export type ClassTemplatesResponse = Partial<Record<SchoolLevelValue, ClassTemplateItem[]>>;
 
 // Request-only shape: just a name, no id/order/capacity — the backend assigns those.
 export interface ArmPayload {
@@ -96,11 +96,9 @@ export interface SubjectTemplateItem {
   is_core: boolean;
 }
 
-export interface SubjectTemplatesResponse {
-  primary?: SubjectTemplateItem[];
-  junior_secondary?: SubjectTemplateItem[];
-  senior_secondary?: SubjectTemplateItem[];
-}
+// Same shape as ClassTemplatesResponse — a key per level with NERDC seed data
+// (nursery, primary, junior_secondary, senior_secondary); creche has none.
+export type SubjectTemplatesResponse = Partial<Record<SchoolLevelValue, SubjectTemplateItem[]>>;
 
 export interface SubjectPayload {
   name: string;
