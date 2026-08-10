@@ -16,12 +16,23 @@ export type BloodGroup =
   | "o_negative"
   | "unknown";
 
+// The student's class/arm for the school's current session. Null when they have
+// no enrollment in it — or when no period is marked is_current at all.
+export interface CurrentClass {
+  class_arm_id: string;
+  class_name: string;
+  arm_name: string;
+  session: string;
+}
+
 export interface StudentListItem {
   id: string;
   user: UserMinimal;
   admission_number: string;
   gender: Gender;
   enrollment_status: EnrollmentStatus;
+  date_of_admission: string | null;
+  current_class: CurrentClass | null;
   created_at: string;
 }
 
@@ -67,5 +78,10 @@ export interface StudentFilters {
   gender?: Gender;
   enrollment_status?: EnrollmentStatus;
   is_active?: boolean;
+  // Students whose *current* class arm is this one — resolved server-side to the
+  // latest enrollment in the current session, so mid-session transfers land in
+  // the right register. Returns nothing when no period is marked is_current.
+  class_arm_id?: string;
   page?: number;
+  page_size?: number;
 }

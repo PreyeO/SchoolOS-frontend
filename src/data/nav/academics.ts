@@ -47,7 +47,7 @@ export const academicsGroup: NavGroup = {
       href: "/attendance",
       icon: ClipboardCheck,
       description: "Take daily attendance, track patterns, and notify parents of absences.",
-    }),
+    }, false),
     adminItem({
       label: "Results & Report Cards",
       href: "/results",

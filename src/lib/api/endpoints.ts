@@ -94,6 +94,14 @@ export const SUBJECT_ASSIGNMENT_ENDPOINTS = {
   MINE: () => `/api/subject-assignments/my-assignments/`,
 } as const;
 
+// LIST is readable by teachers and by admins holding view_attendance. BULK_MARK
+// is teacher-only — AttendanceService._authorize_marker rejects admins outright,
+// with no permission that overrides it. Confirmed against attendance/services.py.
+export const ATTENDANCE_ENDPOINTS = {
+  LIST: () => `/api/attendance/`,
+  BULK_MARK: () => `/api/attendance/bulk-mark/`,
+} as const;
+
 export const GRADING_SYSTEM_ENDPOINTS = {
   LIST: () => `/api/grading-systems/`,
   DETAIL: (id: string) => `/api/grading-systems/${id}/`,
