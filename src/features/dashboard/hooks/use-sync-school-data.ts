@@ -40,6 +40,10 @@ export function useSyncSchoolData() {
     const current = sessions
       .flatMap((s) => s.periods.map((p) => ({ sessionName: s.name, period: p })))
       .find((entry) => entry.period.is_current);
-    if (current) updateSession(current.sessionName, current.period.name);
+    // Clear when nothing is current, rather than leaving the last known term in
+    // place. A school between terms genuinely has no current session, and every
+    // enrollment path (invite-student, enroll) hard-fails until one is set — so
+    // the chip showing a stale term would hide the actual cause of those errors.
+    updateSession(current?.sessionName ?? null, current?.period.name ?? null);
   }, [sessions, updateSession]);
 }

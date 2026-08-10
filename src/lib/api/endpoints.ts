@@ -68,13 +68,30 @@ export const CLASS_ENDPOINTS = {
   ADD_ARM: (id: string) => `/api/classes/${id}/arms/`,
 } as const;
 
+// assign/unassign both require manage_academic_structure and return the updated
+// arm (with class_teacher nested, null after unassign). The backend rejects any
+// teacher whose teacher_type isn't 'class' or 'both' — the picker filters to
+// those, so a rejection here means the teacher's type changed under us.
 export const CLASS_ARM_ENDPOINTS = {
   DETAIL: (id: string) => `/api/class-arms/${id}/`,
+  ASSIGN_CLASS_TEACHER: (id: string) => `/api/class-arms/${id}/assign-class-teacher/`,
+  UNASSIGN_CLASS_TEACHER: (id: string) => `/api/class-arms/${id}/unassign-class-teacher/`,
 } as const;
 
 export const SUBJECT_ENDPOINTS = {
   LIST: () => `/api/subjects/`,
   DETAIL: (id: string) => `/api/subjects/${id}/`,
+} as const;
+
+// list/create/destroy all require manage_academic_structure; MINE is open to any
+// school member so a teacher can read their own load. Note the asymmetry between
+// read and write: the list filters on the FK names (?class_arm=, ?teacher=,
+// ?subject=) while the create body takes class_arm_id/subject_id/
+// teacher_profile_id. Confirmed against academic/views.py.
+export const SUBJECT_ASSIGNMENT_ENDPOINTS = {
+  LIST: () => `/api/subject-assignments/`,
+  DETAIL: (id: string) => `/api/subject-assignments/${id}/`,
+  MINE: () => `/api/subject-assignments/my-assignments/`,
 } as const;
 
 export const GRADING_SYSTEM_ENDPOINTS = {

@@ -9,6 +9,7 @@ import {
   NotebookPen,
   FileText,
   BookMarked,
+  UsersRound,
 } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
@@ -28,6 +29,12 @@ export const academicsGroup: NavGroup = {
       href: "/subjects",
       icon: BookOpen,
       description: "Manage the subjects taught at each level and assign them to classes.",
+    }, false),
+    adminItem({
+      label: "Teaching Assignments",
+      href: "/teaching-assignments",
+      icon: UsersRound,
+      description: "Set which teacher takes each subject for each class arm.",
     }, false),
     adminItem({
       label: "Timetable",

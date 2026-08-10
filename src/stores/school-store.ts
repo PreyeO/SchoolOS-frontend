@@ -55,7 +55,9 @@ interface SchoolState {
   ) => void;
   hydrateSchool: (school: SchoolIdentity) => void;
   updateBranding: (branding: BrandingUpdate) => void;
-  updateSession: (sessionName: string, currentTermName: string | null) => void;
+  // Both null when the school has no period marked current — see
+  // useSyncSchoolData, which must clear rather than leave a stale term showing.
+  updateSession: (sessionName: string | null, currentTermName: string | null) => void;
   setLevels: (levels: SchoolLevelValue[]) => void;
   setClasses: (classes: ClassRecord[]) => void;
   updateSubjectCount: (count: number) => void;

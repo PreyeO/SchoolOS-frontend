@@ -3,9 +3,23 @@
 // features/onboarding/) so both the onboarding feature and the school-store
 // can reference the same real record — including ids — without either
 // depending on the other.
+// Minimal class teacher as embedded on an arm (academic ClassTeacherSerializer).
+// `id` is the TeacherProfile id — the same id assign-class-teacher takes.
+export interface ClassTeacherSummary {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export interface ClassArmRecord {
   id: string;
   name: string;
+  // True for the placeholder arm the backend auto-creates when a class is made
+  // with no arms, so every class always has one arm to key enrollment and
+  // attendance off. Never shown as a real arm — see isRealArm() — but its id is
+  // still what enrollment/invite/attendance payloads must send for such a class.
+  is_default: boolean;
+  class_teacher: ClassTeacherSummary | null;
 }
 
 export interface ClassRecord {

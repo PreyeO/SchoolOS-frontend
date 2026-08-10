@@ -8,6 +8,7 @@ import { DetailField } from "@/components/shared/detail-field";
 import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { formatDate } from "@/lib/text/format-date";
+import { TeacherSubjectAssignments } from "@/features/teaching-assignments/components/teacher-subject-assignments";
 
 import { useTeacherDetail } from "../hooks/use-teacher-detail";
 import { teacherTypeLabel } from "../lib/teacher-type-label";
@@ -58,6 +59,33 @@ export function StaffDetailPage({ id }: { id: string }) {
           />
         </div>
       </div>
+
+      <div className="rounded-xl border border-n-200 bg-white p-5">
+        <h2 className="mb-1 text-sm font-semibold text-ink">Class teacher of</h2>
+        <p className="mb-4 text-xs text-n-400">
+          Assign or change this in{" "}
+          <Link href="/classes" className="text-primary hover:underline">
+            Classes &amp; Arms
+          </Link>
+          .
+        </p>
+        {teacher.class_arms.length === 0 ? (
+          <p className="text-sm text-n-400 italic">Not the class teacher of any arm.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-1.5">
+            {teacher.class_arms.map((arm) => (
+              <li
+                key={arm.id}
+                className="rounded-full border border-n-200 px-2.5 py-0.5 text-xs text-ink"
+              >
+                {arm.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <TeacherSubjectAssignments teacherProfileId={teacher.id} />
     </div>
   );
 }

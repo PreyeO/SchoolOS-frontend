@@ -80,6 +80,20 @@ export async function deleteArm(id: string): Promise<void> {
   await apiClient.delete(CLASS_ARM_ENDPOINTS.DETAIL(id));
 }
 
+// Both return the updated arm, so the caller gets class_teacher back without a
+// refetch — though the teacher side (class_arms) still needs invalidating.
+export async function assignClassTeacher(armId: string, teacherProfileId: string): Promise<ArmResponse> {
+  const { data } = await apiClient.post<ArmResponse>(CLASS_ARM_ENDPOINTS.ASSIGN_CLASS_TEACHER(armId), {
+    teacher_profile_id: teacherProfileId,
+  });
+  return data;
+}
+
+export async function unassignClassTeacher(armId: string): Promise<ArmResponse> {
+  const { data } = await apiClient.post<ArmResponse>(CLASS_ARM_ENDPOINTS.UNASSIGN_CLASS_TEACHER(armId));
+  return data;
+}
+
 export async function updateSubject(id: string, payload: UpdateSubjectPayload): Promise<SubjectResponse> {
   const { data } = await apiClient.patch<SubjectResponse>(SUBJECT_ENDPOINTS.DETAIL(id), payload);
   return data;
