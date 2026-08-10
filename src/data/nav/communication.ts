@@ -1,30 +1,32 @@
 import { Radio, Megaphone, MessageSquare, MessageCircle, CalendarDays } from "lucide-react";
 
-import { adminItem, type NavGroup } from "./types";
+import { adminItem, staffItem, type NavGroup } from "./types";
 
 export const communicationGroup: NavGroup = {
   label: "Communication",
   icon: Radio,
   items: [
-    adminItem({
+    staffItem({
       label: "Announcements",
       href: "/announcements",
       icon: Megaphone,
       description: "Broadcast announcements to staff, parents, and students in one place.",
     }),
-    adminItem({
+    staffItem({
       label: "Messages",
       href: "/messages",
       icon: MessageSquare,
       description: "Message individual parents, staff, or students directly in-app.",
     }),
+    // Bulk SMS/WhatsApp is a billed, school-wide broadcast — an admin decision,
+    // not something an individual teacher sends.
     adminItem({
       label: "SMS & WhatsApp",
       href: "/messaging",
       icon: MessageCircle,
       description: "Send bulk SMS and WhatsApp updates for fees, results, and events.",
     }),
-    adminItem({
+    staffItem({
       label: "Events & Calendar",
       href: "/calendar",
       icon: CalendarDays,

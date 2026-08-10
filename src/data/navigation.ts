@@ -9,6 +9,7 @@ import { settingsGroup } from "./nav/settings";
 import type { Persona } from "./nav/types";
 
 export type { NavGroup, NavItem, Persona } from "./nav/types";
+export { isPersona } from "./nav/types";
 
 export const NAV_GROUPS = [
   overviewGroup,
@@ -29,9 +30,12 @@ export function getNavItemByHref(href: string) {
   return undefined;
 }
 
-export function getNavGroupsForPersona(persona: Persona) {
+// Personas are not exclusive — a user can be an admin and a teacher at the same
+// school, and should see what either can do rather than whichever the token
+// happened to list first. An item shows if any of the caller's personas match.
+export function getNavGroupsForPersonas(personas: Persona[]) {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => item.personas.includes(persona)),
+    items: group.items.filter((item) => item.personas.some((p) => personas.includes(p))),
   })).filter((group) => group.items.length > 0);
 }

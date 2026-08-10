@@ -141,6 +141,12 @@ export const STUDENT_ENDPOINTS = {
   LIST: () => `/api/students/`,
   DETAIL: (id: string) => `/api/students/${id}/`,
   REISSUE_PASSWORD: (id: string) => `/api/students/${id}/reissue-password/`,
+  // Enrolls into a class arm for the CURRENT session — used for first placement,
+  // mid-session transfers and promotions alike. Needs edit_students, and 400s if
+  // no period is marked is_current, or if the student is already in that arm this
+  // session. HISTORY needs only view_students.
+  ENROLL: (id: string) => `/api/students/${id}/enroll/`,
+  ENROLLMENT_HISTORY: (id: string) => `/api/students/${id}/enrollment-history/`,
 } as const;
 
 export const PARENT_ENDPOINTS = {

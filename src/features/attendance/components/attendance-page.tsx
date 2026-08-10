@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/shared/error-state";
 import { useCanMarkAttendance } from "@/lib/auth/use-personas";
+import { ArmPicker } from "@/components/shared/arm-picker";
+import { getErrorMessage, isPermissionDeniedError } from "@/lib/api/get-error-message";
+import { armlessClasses, buildArmOptions } from "@/lib/school/arm-options";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useSchoolStore } from "@/stores/school-store";
-import { ArmPicker } from "@/features/teaching-assignments/components/arm-picker";
-import { armlessClasses, buildArmOptions } from "@/features/teaching-assignments/lib/arm-options";
 
 import { useBulkMark } from "../hooks/use-bulk-mark";
 import { useAttendance, useRoster } from "../hooks/use-register";
@@ -44,7 +45,7 @@ export function AttendancePage() {
   const selectedId = armId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
-  const { data: roster, isPending: rosterLoading } = useRoster(selectedId);
+  const { data: roster, isPending: rosterLoading, error: rosterError } = useRoster(selectedId);
   const { data: saved, isPending: savedLoading } = useAttendance(selectedId, date);
   const bulkMark = useBulkMark();
 
@@ -156,6 +157,18 @@ export function AttendancePage() {
           <div className="rounded-xl border border-n-200 bg-white">
             {loadingRegister ? (
               <p className="p-5 text-sm text-n-400" role="status">Loading register…</p>
+            ) : rosterError ? (
+              // A failed roster fetch is not an empty class, and saying "no
+              // students" for a 403 would send someone hunting for enrolments
+              // that are actually there.
+              <div className="p-5">
+                <p className="text-sm font-medium text-ink">Couldn&rsquo;t load the class list.</p>
+                <p className="mt-1 text-sm text-n-500">
+                  {isPermissionDeniedError(rosterError)
+                    ? "Your account isn't permitted to read the student list, so the register can't be built. This is a known gap for teacher accounts — an administrator can view the register in the meantime."
+                    : getErrorMessage(rosterError)}
+                </p>
+              </div>
             ) : !students || students.length === 0 ? (
               <p className="p-5 text-sm text-n-400 italic">
                 No students enrolled in {selected?.label ?? "this arm"} for the current term.

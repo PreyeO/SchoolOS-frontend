@@ -64,6 +64,7 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
     admission_number: values.admission_number,
     password: values.password,
     gender: values.gender,
+    class_arm_id: values.class_arm_id,
     ...(values.date_of_birth?.trim() ? { date_of_birth: values.date_of_birth } : {}),
     ...(values.email?.trim() ? { email: values.email } : {}),
   };

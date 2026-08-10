@@ -1,6 +1,7 @@
-import type { ClassRecord } from "@/lib/school/class-record";
-import { realArms } from "@/lib/school/real-arms";
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
+
+import type { ClassRecord } from "./class-record";
+import { realArms } from "./real-arms";
 
 export interface ArmOption {
   armId: string;
@@ -20,8 +21,12 @@ export interface ArmOptionGroup {
 // Flattens classes into the pickable teaching units, grouped by level in school
 // order. A class with real arms contributes one option per arm; a class with
 // only the system placeholder contributes a single option carrying that arm's
-// id — the id is still what assignment payloads need, it's only the *name* that
-// must never surface.
+// id — the id is still what enrollment/attendance/assignment payloads need, it's
+// only the *name* that must never surface.
+//
+// Lives in lib/ rather than a feature: teaching assignments, attendance and
+// adding a student all pick an arm the same way, and all three must apply the
+// same default-arm rule.
 export function buildArmOptions(classes: ClassRecord[]): ArmOptionGroup[] {
   const options: ArmOption[] = [];
 
@@ -32,12 +37,12 @@ export function buildArmOptions(classes: ClassRecord[]): ArmOptionGroup[] {
       const level = klass.level as SchoolLevelValue;
 
       if (arms.length === 0) {
-        // Only the system placeholder: still assignable — its id is what the
+        // Only the system placeholder: still pickable — its id is what the
         // payload needs — but labelled by class, since "Default" is internal.
         const systemArm = klass.arms[0];
         // No arms at all. Only possible for classes created before the
         // placeholder-arm behaviour existed; nothing here can hold an
-        // assignment, so it's excluded — see armlessClasses, which reports it
+        // enrollment, so it's excluded — see armlessClasses, which reports it
         // rather than letting the class vanish from the picker unexplained.
         if (!systemArm) return;
         options.push({ armId: systemArm.id, label: klass.name, className: klass.name, level });
@@ -58,9 +63,9 @@ export function buildArmOptions(classes: ClassRecord[]): ArmOptionGroup[] {
 
 // Classes carrying no arm whatsoever — not even the system placeholder. Every
 // class created since that behaviour landed has one, so this only catches older
-// rows. They can't hold a teaching assignment (or an enrollment, or attendance)
-// because all three key off a class_arm_id, so the picker has to skip them —
-// this names them instead of dropping them silently.
+// rows. They can't hold an enrollment, a teaching assignment or attendance
+// because all three key off a class_arm_id, so pickers have to skip them — this
+// names them instead of dropping them silently.
 export function armlessClasses(classes: ClassRecord[]): ClassRecord[] {
   return classes.filter((klass) => klass.arms.length === 0);
 }

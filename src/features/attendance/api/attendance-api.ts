@@ -17,12 +17,13 @@ export async function getRoster(
   return { students: data.results, total: data.count };
 }
 
-// Existing marks for one arm on one date. Empty on a day nobody has marked yet,
-// which is the normal morning case — the roster is what seeds the register, not
-// this.
-export async function getAttendance(classArmId: string, date: string): Promise<AttendanceRecord[]> {
+// Existing marks for one arm. With a date, that day's register — empty on a day
+// nobody has marked yet, which is the normal morning case (the roster is what
+// seeds the register, not this). Without one, the arm's recent history, newest
+// first, which is what the teacher home derives its trend and counts from.
+export async function getAttendance(classArmId: string, date?: string): Promise<AttendanceRecord[]> {
   const { data } = await apiClient.get<PaginatedResponse<AttendanceRecord>>(ATTENDANCE_ENDPOINTS.LIST(), {
-    params: { class_arm_id: classArmId, date, page_size: 100 },
+    params: { class_arm_id: classArmId, page_size: 100, ...(date ? { date } : {}) },
   });
   return data.results;
 }

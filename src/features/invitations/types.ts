@@ -53,6 +53,10 @@ export interface AddStudentPayload {
   gender: Gender;
   date_of_birth?: string;
   email?: string;
+  // Required. Creating a student also creates their Enrollment for the school's
+  // current session, so the request 400s without it — and again if no academic
+  // period is marked is_current.
+  class_arm_id: string;
 }
 
 export interface StudentCreatedResponse {

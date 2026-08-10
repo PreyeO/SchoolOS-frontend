@@ -3,14 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { ArmPicker } from "@/components/shared/arm-picker";
 import { ErrorState } from "@/components/shared/error-state";
+import { armlessClasses, buildArmOptions } from "@/lib/school/arm-options";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useSubjects } from "@/features/settings/hooks/use-subjects";
 import type { SubjectResponse } from "@/features/onboarding/types";
 
 import { useArmAssignments } from "../hooks/use-arm-assignments";
-import { armlessClasses, buildArmOptions } from "../lib/arm-options";
-import { ArmPicker } from "./arm-picker";
 import { AssignSubjectTeacherDialog } from "./assign-subject-teacher-dialog";
 import { SubjectCoverageRow } from "./subject-coverage-row";
 

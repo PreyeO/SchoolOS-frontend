@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/text/format-date";
 import { useStudentDetail } from "../hooks/use-student-detail";
 import { isSyntheticEmail } from "../lib/is-synthetic-email";
 import { bloodGroupLabel, genderLabel, genotypeLabel, religionLabel } from "../lib/labels";
+import { EnrollmentCard } from "./enrollment-card";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
 import { ReissuePasswordDialog } from "./reissue-password-dialog";
@@ -52,6 +53,12 @@ export function StudentDetailPage({ id }: { id: string }) {
         </div>
         {isSyntheticEmail(user.email) && <ReissuePasswordDialog studentId={student.id} />}
       </div>
+
+      <EnrollmentCard
+        studentId={student.id}
+        studentName={`${user.first_name} ${user.last_name}`}
+        currentClass={student.current_class}
+      />
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-ink">Admission</h2>

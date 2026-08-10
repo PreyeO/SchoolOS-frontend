@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ArmPicker } from "@/components/shared/arm-picker";
+import { buildArmOptions } from "@/lib/school/arm-options";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { PasswordInput } from "@/features/auth/components/password-input";
+import { useClasses } from "@/features/settings/hooks/use-classes";
+import { useSchoolStore } from "@/stores/school-store";
 
 import { addStudentSchema, type AddStudentFormValues } from "../schemas/add-student-schema";
 import { useAddStudent } from "../hooks/use-add-student";
@@ -18,11 +23,17 @@ import { StudentCredentialsResult } from "./student-credentials-result";
 export function AddStudentForm() {
   const { mutate, isPending } = useAddStudent();
   const [created, setCreated] = useState<StudentCreatedResponse | null>(null);
+  const { data: classes, isPending: classesLoading } = useClasses();
+  const sessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
+
+  const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
+  const hasArms = groups.length > 0;
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentSchema),
@@ -34,6 +45,7 @@ export function AddStudentForm() {
       gender: "male",
       date_of_birth: "",
       email: "",
+      class_arm_id: "",
     },
   });
 
@@ -109,9 +121,55 @@ export function AddStudentForm() {
         <Input id="student-email" type="email" {...register("email")} />
       </FieldWrapper>
 
+      <FieldWrapper
+        id="student-class-arm"
+        label="Class"
+        error={errors.class_arm_id?.message}
+        hint="The student is enrolled here for the current term"
+        required
+      >
+        <Controller
+          name="class_arm_id"
+          control={control}
+          render={({ field }) => (
+            <ArmPicker
+              id="student-class-arm"
+              groups={groups}
+              value={field.value || null}
+              onChange={field.onChange}
+              placeholder={classesLoading ? "Loading classes…" : "Select a class…"}
+              hasError={!!errors.class_arm_id}
+            />
+          )}
+        />
+      </FieldWrapper>
+
+      {/* Both of these make the request fail server-side, so say so before the
+          admin fills the whole form in. */}
+      {!classesLoading && !hasArms && (
+        <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
+          No class has an arm to enrol into yet. Add one in{" "}
+          <Link href="/classes" className="text-primary hover:underline">
+            Classes &amp; Arms
+          </Link>{" "}
+          first.
+        </p>
+      )}
+
+      {!sessionName && (
+        <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
+          No academic term is marked current, so the enrolment can&rsquo;t be created.
+          Set one in{" "}
+          <Link href="/settings/sessions" className="text-primary hover:underline">
+            Sessions &amp; Terms
+          </Link>{" "}
+          first.
+        </p>
+      )}
+
       <Button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || !hasArms || !sessionName}
         className="w-full h-11 font-semibold"
       >
         {isPending ? "Creating student…" : "Create student"}

@@ -1,4 +1,5 @@
 import type { MembershipSummary, SchoolContextSummary, UserDetail, UserMinimal } from "@/lib/api/profile-summary";
+import type { ClassArmRecord } from "@/lib/school/class-record";
 import type { RelationshipType } from "@/features/parent-student-links/types";
 
 export type Gender = "male" | "female" | "other";
@@ -70,6 +71,18 @@ export interface StudentDetail {
   previous_school: string | null;
   photo: string | null;
   parent_links: StudentParentLink[];
+  current_class: CurrentClass | null;
+  created_at: string;
+}
+
+// One row of a student's enrollment history. History is never collapsed per
+// session — a mid-session transfer adds a row rather than replacing one, so the
+// same session can appear more than once, newest first.
+export interface EnrollmentRecord {
+  id: string;
+  class_arm: ClassArmRecord;
+  class_name: string;
+  session: string;
   created_at: string;
 }
 
