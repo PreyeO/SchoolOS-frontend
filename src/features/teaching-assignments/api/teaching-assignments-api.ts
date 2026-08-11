@@ -1,8 +1,32 @@
 import { apiClient } from "@/lib/api/client";
-import { SUBJECT_ASSIGNMENT_ENDPOINTS } from "@/lib/api/endpoints";
+import { CLASS_ARM_SUBJECT_ENDPOINTS, SUBJECT_ASSIGNMENT_ENDPOINTS } from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 
-import type { CreateSubjectAssignmentPayload, SubjectAssignment } from "../types";
+import type {
+  ClassArmSubject,
+  CreateClassArmSubjectPayload,
+  CreateSubjectAssignmentPayload,
+  SubjectAssignment,
+} from "../types";
+
+// The subjects an arm offers. Same page_size reasoning as assignments — a senior
+// arm can carry 20+ subjects and this screen has no pagination.
+export async function getArmSubjects(classArmId: string): Promise<ClassArmSubject[]> {
+  const { data } = await apiClient.get<PaginatedResponse<ClassArmSubject>>(
+    CLASS_ARM_SUBJECT_ENDPOINTS.LIST(),
+    { params: { class_arm: classArmId, page_size: 100 } },
+  );
+  return data.results;
+}
+
+export async function addArmSubject(payload: CreateClassArmSubjectPayload): Promise<ClassArmSubject> {
+  const { data } = await apiClient.post<ClassArmSubject>(CLASS_ARM_SUBJECT_ENDPOINTS.LIST(), payload);
+  return data;
+}
+
+export async function removeArmSubject(id: string): Promise<void> {
+  await apiClient.delete(CLASS_ARM_SUBJECT_ENDPOINTS.DETAIL(id));
+}
 
 // One arm's assignments across all its subjects. page_size=100 (backend max) —
 // a senior arm can carry 20+ subjects and several teachers share some of them,

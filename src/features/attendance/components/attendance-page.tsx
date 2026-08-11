@@ -12,6 +12,7 @@ import { ArmPicker } from "@/components/shared/arm-picker";
 import { getErrorMessage, isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { armlessClasses, buildArmOptions } from "@/lib/school/arm-options";
 import { useClasses } from "@/features/settings/hooks/use-classes";
+import { useMyClasses } from "@/features/teacher/hooks/use-my-classes";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useBulkMark } from "../hooks/use-bulk-mark";
@@ -30,10 +31,11 @@ function todayLocal(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-export function AttendancePage() {
+export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const canMark = useCanMarkAttendance();
   const sessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
   const { data: classes, isPending: classesLoading, isError, error } = useClasses();
+  const { classes: myClasses } = useMyClasses();
 
   const [armId, setArmId] = useState<string | null>(null);
   const [date, setDate] = useState(todayLocal());
@@ -42,7 +44,12 @@ export function AttendancePage() {
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
   const skipped = useMemo(() => armlessClasses(classes ?? []), [classes]);
 
-  const selectedId = armId ?? allOptions[0]?.armId ?? null;
+  // Which register to open on, in order of how likely it is to be the one
+  // wanted: an explicit ?arm=, then the teacher's own class (form class first —
+  // useMyClasses sorts those to the front), then whatever sorts first. A teacher
+  // shouldn't have to hunt through a school-wide list for their own register.
+  const selectedId =
+    armId ?? initialArmId ?? myClasses[0]?.classArmId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
   const { data: roster, isPending: rosterLoading, error: rosterError } = useRoster(selectedId);

@@ -5,6 +5,11 @@ export const ENDPOINTS = {
   VERIFY_EMAIL: "/api/auth/verify-email/",
   RESEND_OTP: "/api/auth/resend-verification/",
   SCHOOL: "/api/auth/school/",
+  // The caller's school-scoped profile, with a block per active persona. The one
+  // place a non-admin can read their own context — a teacher's arms and subjects,
+  // a parent's children, a student's class — none of which the directories expose
+  // to them. Requires school context: an owner with no school yet gets a 403.
+  ME: "/api/auth/me/",
   PASSWORD_RESET_REQUEST: "/api/auth/password-reset/request/",
   PASSWORD_RESET_CONFIRM: "/api/auth/password-reset/confirm/",
   ACADEMIC_SESSIONS_WITH_PERIODS: "/api/academic-sessions/with-periods/",
@@ -88,6 +93,16 @@ export const SUBJECT_ENDPOINTS = {
 // read and write: the list filters on the FK names (?class_arm=, ?teacher=,
 // ?subject=) while the create body takes class_arm_id/subject_id/
 // teacher_profile_id. Confirmed against academic/views.py.
+// Which subjects a class arm officially takes, independent of who teaches them.
+// Arms under one class diverge (a science-track arm vs an arts-track one), so
+// this can't be derived from teacher assignments — and the backend requires an
+// offering to exist before a teacher can be assigned to that subject.
+// Read filter is ?class_arm=; the create body takes class_arm_id + subject_id.
+export const CLASS_ARM_SUBJECT_ENDPOINTS = {
+  LIST: () => `/api/class-arm-subjects/`,
+  DETAIL: (id: string) => `/api/class-arm-subjects/${id}/`,
+} as const;
+
 export const SUBJECT_ASSIGNMENT_ENDPOINTS = {
   LIST: () => `/api/subject-assignments/`,
   DETAIL: (id: string) => `/api/subject-assignments/${id}/`,

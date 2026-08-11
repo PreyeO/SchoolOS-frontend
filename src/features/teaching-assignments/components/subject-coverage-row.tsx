@@ -1,11 +1,12 @@
 "use client";
 
-import { Plus, TriangleAlert, X } from "lucide-react";
+import { Plus, Trash2, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import type { SubjectResponse } from "@/features/onboarding/types";
 
+import { useRemoveArmSubject } from "../hooks/use-arm-subjects";
 import { useDeleteAssignment } from "../hooks/use-assignment-mutations";
 import type { SubjectAssignment } from "../types";
 
@@ -13,11 +14,15 @@ interface Props {
   subject: SubjectResponse;
   assignments: SubjectAssignment[];
   armLabel: string;
+  // Id of the ClassArmSubjectOffering that puts this subject on the arm, so it
+  // can be taken off again. Absent only while the offering list is still loading.
+  offeringId?: string;
   onAssign: () => void;
 }
 
-export function SubjectCoverageRow({ subject, assignments, armLabel, onAssign }: Props) {
+export function SubjectCoverageRow({ subject, assignments, armLabel, offeringId, onAssign }: Props) {
   const remove = useDeleteAssignment();
+  const removeOffering = useRemoveArmSubject();
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
@@ -75,6 +80,32 @@ export function SubjectCoverageRow({ subject, assignments, armLabel, onAssign }:
           <Plus className="size-3 mr-0.5" />
           {assignments.length === 0 ? "Assign" : "Add"}
         </Button>
+
+        {offeringId && (
+          <ConfirmDeleteDialog
+            trigger={
+              <button
+                type="button"
+                aria-label={`Remove ${subject.name} from ${armLabel}`}
+                className="cursor-pointer rounded-md p-1.5 text-n-400 transition-colors hover:bg-clay/10 hover:text-clay"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            }
+            title={`Remove ${subject.name} from ${armLabel}?`}
+            // Verified: the backend does NOT cascade this to SubjectAssignment,
+            // so an assigned teacher keeps an assignment for a subject the arm
+            // no longer takes. Say so rather than implying it's cleaned up.
+            description={
+              assignments.length > 0
+                ? `${armLabel} will no longer take this subject. ${assignments.length === 1 ? "The teacher" : `All ${assignments.length} teachers`} assigned to it will stay assigned — remove ${assignments.length === 1 ? "them" : "them"} first if that isn't what you want.`
+                : `${armLabel} will no longer take this subject. It stays available to add back.`
+            }
+            confirmLabel="Remove"
+            isPending={removeOffering.isPending}
+            onConfirm={() => removeOffering.mutate(offeringId)}
+          />
+        )}
       </span>
     </li>
   );

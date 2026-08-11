@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, School, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/shared/error-state";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useTeacherOverview } from "../hooks/use-teacher-overview";
@@ -26,6 +27,8 @@ export function TeacherHome() {
   const school = useSchoolStore((s) => s.currentSchool);
   const {
     isPending,
+    isError,
+    error,
     classes,
     registers,
     trend,
@@ -67,6 +70,8 @@ export function TeacherHome() {
 
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading your classes…</p>
+      ) : isError ? (
+        <ErrorState error={error} resourceLabel="your classes" />
       ) : classes.length === 0 ? (
         <div className="rounded-xl border border-n-200 bg-white p-8 text-center">
           <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-n-100">

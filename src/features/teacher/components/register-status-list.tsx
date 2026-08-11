@@ -15,8 +15,19 @@ export function RegisterStatusList({ registers }: { registers: RegisterStatus[] 
       {registers.map((register) => (
         <li key={register.classArmId} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium text-ink">{register.label}</span>
-            <span className="block truncate text-xs text-n-400">{register.subjects.join(", ")}</span>
+            <span className="flex items-center gap-2">
+              <span className="truncate text-sm font-medium text-ink">{register.label}</span>
+              {/* The arm they're form teacher of — the register that's actually
+                  theirs to take, as opposed to one they teach a subject in. */}
+              {register.isFormClass && (
+                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                  Form class
+                </span>
+              )}
+            </span>
+            <span className="block truncate text-xs text-n-400">
+              {register.subjects.length > 0 ? register.subjects.join(", ") : "No subjects assigned"}
+            </span>
           </span>
 
           {register.markedToday ? (
@@ -32,7 +43,9 @@ export function RegisterStatusList({ registers }: { registers: RegisterStatus[] 
           )}
 
           <Button type="button" variant="ghost" size="sm" asChild className="h-7 text-xs text-primary">
-            <Link href="/attendance">{register.markedToday ? "Review" : "Take register"}</Link>
+            <Link href={`/attendance?arm=${register.classArmId}`}>
+              {register.markedToday ? "Review" : "Take register"}
+            </Link>
           </Button>
         </li>
       ))}

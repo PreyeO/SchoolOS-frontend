@@ -4,7 +4,8 @@ import { useQueries } from "@tanstack/react-query";
 
 import { getAttendance } from "@/features/attendance/api/attendance-api";
 import type { AttendanceRecord } from "@/features/attendance/types";
-import { groupByClassArm, useMyAssignments } from "@/features/teaching-assignments/hooks/use-my-assignments";
+
+import { useMyClasses } from "./use-my-classes";
 
 // Local calendar date, not toISOString() — that converts to UTC and returns
 // yesterday for anyone opening the app before ~1am WAT.
@@ -17,6 +18,7 @@ export interface RegisterStatus {
   classArmId: string;
   label: string;
   subjects: string[];
+  isFormClass: boolean;
   markedToday: boolean;
   presentToday: number;
   totalToday: number;
@@ -108,8 +110,7 @@ function rosterSize(records: AttendanceRecord[]): number {
 // dependency list built from it would invalidate anyway, and these are linear
 // passes over a few hundred rows.
 export function useTeacherOverview() {
-  const { data: assignments, isPending: assignmentsLoading } = useMyAssignments();
-  const classes = groupByClassArm(assignments);
+  const { classes, isPending: classesLoading, isError, error } = useMyClasses();
   const today = todayLocal();
 
   // One request per arm the teacher touches — bounded by their own teaching
@@ -121,7 +122,7 @@ export function useTeacherOverview() {
     })),
   });
 
-  const isPending = assignmentsLoading || results.some((r) => r.isPending);
+  const isPending = classesLoading || results.some((r) => r.isPending);
   const recordsByArm = results.map((r) => r.data ?? []);
   const allRecords = recordsByArm.flat();
 
@@ -131,6 +132,7 @@ export function useTeacherOverview() {
       classArmId: klass.classArmId,
       label: klass.label,
       subjects: klass.subjects,
+      isFormClass: klass.isFormClass,
       markedToday: todays.length > 0,
       presentToday: todays.filter((r) => PRESENT_STATUSES.has(r.status)).length,
       totalToday: todays.length,
@@ -141,6 +143,11 @@ export function useTeacherOverview() {
 
   return {
     isPending,
+    // Surfaced rather than swallowed: a failed load leaves `classes` empty,
+    // which is indistinguishable from a teacher who genuinely has none. Showing
+    // "no classes assigned" for a 500 sends them to an admin over nothing.
+    isError,
+    error,
     classes,
     registers,
     trend,

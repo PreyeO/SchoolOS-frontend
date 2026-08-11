@@ -4,6 +4,8 @@ import { GraduationCap, Users2, Wallet, type LucideIcon } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { TeacherHome } from "@/features/teacher/components/teacher-home";
+import { ParentHome } from "@/features/parent/components/parent-home";
+import { StudentHome } from "@/features/student/components/student-home";
 import { PersonaPlaceholder } from "./persona-placeholder";
 import { DashboardContextHeader } from "./dashboard-context-header";
 import { SetupChecklist } from "./setup-checklist";
@@ -58,6 +60,14 @@ export function DashboardHome() {
 
   if (!isAdmin && personas.includes("teacher")) {
     return <TeacherHome />;
+  }
+
+  if (!isAdmin && personas.includes("parent")) {
+    return <ParentHome />;
+  }
+
+  if (!isAdmin && personas.includes("student")) {
+    return <StudentHome />;
   }
 
   if (!isAdmin) {

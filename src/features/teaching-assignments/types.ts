@@ -21,3 +21,20 @@ export interface CreateSubjectAssignmentPayload {
   subject_id: string;
   teacher_profile_id: string;
 }
+
+// A subject this arm officially takes. Must exist before a teacher can be
+// assigned to it — "offered" is a prerequisite of "taught". Also the set results
+// uses to decide which subjects an arm's broadsheet must cover.
+export interface ClassArmSubject {
+  id: string;
+  subject: SubjectResponse;
+  class_arm_id: string;
+  class_name: string;
+  arm_name: string;
+  created_at: string;
+}
+
+export interface CreateClassArmSubjectPayload {
+  class_arm_id: string;
+  subject_id: string;
+}
