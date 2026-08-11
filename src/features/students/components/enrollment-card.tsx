@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowRight, GraduationCap, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/text/format-date";
+import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useEnrollmentHistory } from "../hooks/use-enrollment";
 import type { CurrentClass } from "../types";
@@ -81,7 +81,7 @@ export function EnrollmentCard({ studentId, studentName, currentClass }: Props) 
                   <GraduationCap className="size-3.5 shrink-0 self-center text-n-400" />
                   <span className="text-ink">{row.class_arm.name || row.class_name}</span>
                   <span className="text-n-400">{row.session}</span>
-                  <span className="text-n-400">· {formatDate(row.created_at)}</span>
+                  <span className="text-n-400">· {formatTimestamp(row.created_at)}</span>
                 </li>
               ))}
             </ul>

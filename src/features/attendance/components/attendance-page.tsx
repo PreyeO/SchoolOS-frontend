@@ -57,7 +57,7 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const bulkMark = useBulkMark();
 
   const students = roster?.students;
-  const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount } =
+  const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount, movedOut } =
     useRegisterDraft(selectedId, date, saved, students);
 
   const counts = useMemo(() => {
@@ -221,6 +221,15 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
                     />
                   ))}
                 </ul>
+
+                {movedOut > 0 && (
+                  <p className="border-t border-n-100 px-5 py-2.5 text-xs text-n-400">
+                    {movedOut} mark{movedOut === 1 ? "" : "s"} from this date{" "}
+                    {movedOut === 1 ? "belongs" : "belong"} to a student who has since moved
+                    to another class, so {movedOut === 1 ? "it isn't" : "they aren't"} counted
+                    above. The record stays on this date&rsquo;s history.
+                  </p>
+                )}
 
                 {roster && roster.total > students.length && (
                   <p className="border-t border-n-100 px-5 py-3 text-xs text-clay">

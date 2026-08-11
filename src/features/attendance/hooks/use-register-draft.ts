@@ -31,9 +31,18 @@ export function useRegisterDraft(
   const key = `${classArmId ?? ""}|${date}`;
   const ready = !!classArmId && !!saved && !!students;
 
+  // Records can outlive a student's membership of the arm: AttendanceRecord
+  // snapshots class_arm at marking time, so transferring a student out leaves
+  // their mark behind on the old arm's register. Those rows are history, not
+  // part of today's register — seeding them would count someone the roster no
+  // longer lists, so the summary and the rows would disagree.
+  const rosterIds = new Set((students ?? []).map((s) => s.id));
+  const onRoster = (saved ?? []).filter((r) => rosterIds.has(r.student.id));
+  const movedOut = (saved ?? []).length - onRoster.length;
+
   if (ready && seededKey !== key) {
     const seed: Record<string, DraftEntry> = {};
-    saved.forEach((record) => {
+    onRoster.forEach((record) => {
       seed[record.student.id] = { status: record.status, note: record.note ?? "" };
     });
     setDraft(seed);
@@ -97,6 +106,10 @@ export function useRegisterDraft(
     changed,
     markedCount,
     unmarkedCount,
+    // Marks on this date belonging to students who have since transferred out.
+    // Reported rather than silently dropped, so a count that no longer adds up
+    // against an earlier screenshot has a visible explanation.
+    movedOut,
     // Discards local edits and re-seeds from the server on the next render.
     reset: () => setSeededKey(null),
   };
