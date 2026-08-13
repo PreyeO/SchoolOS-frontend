@@ -18,7 +18,7 @@ import { useTeachers } from "@/features/staff/hooks/use-teachers";
 import { teacherTypeLabel } from "@/features/staff/lib/teacher-type-label";
 import type { SubjectResponse } from "@/features/onboarding/types";
 
-import { useCreateAssignment } from "../hooks/use-assignment-mutations";
+import { useCreateAssignments } from "../hooks/use-assignment-mutations";
 
 interface Props {
   open: boolean;
@@ -43,7 +43,7 @@ export function AssignSubjectTeacherDialog({
 }: Props) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const create = useCreateAssignment();
+  const create = useCreateAssignments();
 
   // Unlike class teacher, the backend puts no teacher_type restriction on
   // subject assignments — any teacher at the school is eligible.
@@ -70,9 +70,12 @@ export function AssignSubjectTeacherDialog({
   async function submit() {
     if (!selected) return;
     try {
+      // The endpoint takes a list so one teacher can be given several subjects
+      // at once; this dialog is opened from a single subject row, so it sends
+      // that one.
       await create.mutateAsync({
         class_arm_id: classArmId,
-        subject_id: subject.id,
+        subject_ids: [subject.id],
         teacher_profile_id: selected,
       });
       onOpenChange(false);

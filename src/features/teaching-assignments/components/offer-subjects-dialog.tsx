@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { SubjectResponse } from "@/features/onboarding/types";
 
-import { useAddArmSubject } from "../hooks/use-arm-subjects";
+import { useAddArmSubjects } from "../hooks/use-arm-subjects";
 
 interface Props {
   classArmId: string;
@@ -33,7 +33,7 @@ export function OfferSubjectsDialog({ classArmId, armLabel, available }: Props) 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const add = useAddArmSubject();
+  const add = useAddArmSubjects();
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -58,11 +58,9 @@ export function OfferSubjectsDialog({ classArmId, armLabel, available }: Props) 
   async function submit() {
     if (selected.size === 0) return;
     try {
-      // One request per subject — the endpoint creates a single offering, and
-      // sequencing keeps a mid-way failure from being reported as total success.
-      for (const subjectId of selected) {
-        await add.mutateAsync({ class_arm_id: classArmId, subject_id: subjectId });
-      }
+      // One request for the whole batch. The backend validates every subject
+      // before writing any, so this can't half-apply.
+      await add.mutateAsync({ class_arm_id: classArmId, subject_ids: [...selected] });
       setOpen(false);
     } catch {
       // Error already toasted by the mutation.

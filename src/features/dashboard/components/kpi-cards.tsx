@@ -19,13 +19,17 @@ function KpiCard({ stat }: { stat: KpiStat }) {
       {stat.hasData ? (
         <>
           <p className="font-display text-2xl font-bold text-ink">{stat.value}</p>
-          <div className={cn("flex items-center gap-1 text-xs", TREND_COLOR[stat.trend.direction])}>
-            <TrendIcon className="size-3.5" />
-            <span>{stat.trend.label}</span>
-          </div>
+          {stat.trend.label && (
+            <div className={cn("flex items-center gap-1 text-xs", TREND_COLOR[stat.trend.direction])}>
+              {/* Only a real rise or fall gets an arrow. A flat descriptor like
+                  "3 of 4 marked" isn't a trend and shouldn't wear one. */}
+              {stat.trend.direction !== "flat" && <TrendIcon className="size-3.5" />}
+              <span>{stat.trend.label}</span>
+            </div>
+          )}
         </>
       ) : (
-        <p className="text-sm text-n-400 pt-1">No data yet</p>
+        <p className="pt-1 text-sm text-n-400">No data yet</p>
       )}
     </div>
   );

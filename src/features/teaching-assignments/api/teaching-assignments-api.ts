@@ -19,8 +19,10 @@ export async function getArmSubjects(classArmId: string): Promise<ClassArmSubjec
   return data.results;
 }
 
-export async function addArmSubject(payload: CreateClassArmSubjectPayload): Promise<ClassArmSubject> {
-  const { data } = await apiClient.post<ClassArmSubject>(CLASS_ARM_SUBJECT_ENDPOINTS.LIST(), payload);
+// Takes an array and returns one offering per subject. All validation happens
+// before any write, so a partial batch never lands.
+export async function addArmSubjects(payload: CreateClassArmSubjectPayload): Promise<ClassArmSubject[]> {
+  const { data } = await apiClient.post<ClassArmSubject[]>(CLASS_ARM_SUBJECT_ENDPOINTS.LIST(), payload);
   return data;
 }
 
@@ -59,10 +61,14 @@ export async function getMyAssignments(): Promise<SubjectAssignment[]> {
   return data;
 }
 
-export async function createAssignment(
+// Returns one assignment per subject in the batch.
+export async function createAssignments(
   payload: CreateSubjectAssignmentPayload,
-): Promise<SubjectAssignment> {
-  const { data } = await apiClient.post<SubjectAssignment>(SUBJECT_ASSIGNMENT_ENDPOINTS.LIST(), payload);
+): Promise<SubjectAssignment[]> {
+  const { data } = await apiClient.post<SubjectAssignment[]>(
+    SUBJECT_ASSIGNMENT_ENDPOINTS.LIST(),
+    payload,
+  );
   return data;
 }
 

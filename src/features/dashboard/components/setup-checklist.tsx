@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, ChevronDown, Circle, PartyPopper, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Circle, PartyPopper, X } from "lucide-react";
 
 import { canDoOnboarding } from "@/lib/auth/can-do-onboarding";
 import { cn } from "@/lib/utils";
@@ -11,33 +11,30 @@ import { useOnboardingStage } from "@/features/onboarding/hooks/use-onboarding-s
 
 import { useChecklistDismissed } from "../hooks/use-checklist-dismissed";
 import { useSetupStatus } from "../hooks/use-setup-status";
-
-const CHECKLIST_ITEMS = [
-  { label: "Set up school branding", key: "branding" as const, href: "/settings/school" },
-  { label: "Create academic year", key: "academic_year" as const, href: "/settings/sessions" },
-  { label: "Add your classes", key: "classes" as const, href: "/classes" },
-  { label: "Choose subjects", key: "subjects" as const, href: "/subjects" },
-];
+import { SETUP_STAGES, type SetupStep, type SetupStepKey } from "../lib/setup-steps";
 
 export function SetupChecklist() {
   const claims = useAuthStore((s) => s.claims);
-  const { setupStatus, isComplete, completedCount, totalSteps, currentSchool } = useSetupStatus();
+  const { setupStatus, completedCount, totalSteps, isComplete, canTakeRegister, currentSchool } =
+    useSetupStatus();
   const { data: stage } = useOnboardingStage();
   const { dismissed, dismiss } = useChecklistDismissed(currentSchool?.id);
+
+  // Opens on the first stage that still has work, so the card lands on what to
+  // do next rather than on whatever happens to be first.
+  const firstIncomplete = SETUP_STAGES.find((s) => s.steps.some((step) => !setupStatus[step.key]));
+  const [openStage, setOpenStage] = useState<string | null>(firstIncomplete?.label ?? null);
   const [expanded, setExpanded] = useState(true);
 
-  // Onboarding is owner-only (accounts/permissions.py's IsSchoolOwner enforces
-  // this server-side) — other admins/personas never see this card at all.
+  // Onboarding is owner-only (IsSchoolOwner enforces this server-side) — other
+  // admins and personas never see this card.
   if (!canDoOnboarding(claims)) return null;
   if (dismissed) return null;
 
-  // Until the wizard itself is finished, every item must resume it there —
-  // completing the same step via a Settings page instead would never touch
-  // onboarding_progress.current_step, leaving the wizard's own progress out
-  // of sync with what the owner actually did. Defaults to "unfinished" while
-  // the stage is still loading, since that's the safe direction to guess.
+  // Until the wizard itself is finished, every item resumes it there — doing the
+  // same step via a Settings page would never advance onboarding_progress,
+  // leaving the wizard out of sync with what the owner actually did.
   const wizardUnfinished = stage?.is_completed !== true;
-
   const pct = Math.round((completedCount / totalSteps) * 100);
 
   if (isComplete) {
@@ -51,7 +48,7 @@ export function SetupChecklist() {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="text-n-400 hover:text-ink transition-colors"
+          className="text-n-400 transition-colors hover:text-ink"
         >
           <X className="size-4" />
         </button>
@@ -64,6 +61,7 @@ export function SetupChecklist() {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className="flex w-full items-center gap-4 px-4 py-3.5"
       >
         <div className="relative size-11 shrink-0">
@@ -82,34 +80,112 @@ export function SetupChecklist() {
           </span>
         </div>
         <div className="flex-1 text-left">
-          <p className="font-semibold text-sm text-ink">Finish setting up your school</p>
-          <p className="text-xs text-n-500 mt-0.5">{completedCount} of {totalSteps} steps done</p>
+          <p className="text-sm font-semibold text-ink">Getting started</p>
+          <p className="mt-0.5 text-xs text-n-500">
+            {completedCount} of {totalSteps} done
+            {/* The milestone that matters, called out separately from raw
+                progress: it's the first point the product does something. */}
+            {canTakeRegister
+              ? " · ready to take registers"
+              : " · a few more before you can take a register"}
+          </p>
         </div>
         <ChevronDown className={cn("size-4 text-n-400 transition-transform", expanded && "rotate-180")} />
       </button>
 
       {expanded && (
-        <ul className="space-y-1 px-4 pb-4">
-          {CHECKLIST_ITEMS.map((item) => {
-            const done = setupStatus[item.key];
+        <div className="space-y-1 px-2 pb-3">
+          {SETUP_STAGES.map((group) => {
+            const done = group.steps.filter((s) => setupStatus[s.key]).length;
+            const stageComplete = done === group.steps.length;
+            const isOpen = openStage === group.label;
+
             return (
-              <li key={item.key}>
-                <Link
-                  href={wizardUnfinished ? "/onboarding" : item.href}
-                  className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-n-50 transition-colors"
+              <div key={group.label}>
+                <button
+                  type="button"
+                  onClick={() => setOpenStage(isOpen ? null : group.label)}
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-n-50"
                 >
-                  {done
-                    ? <CheckCircle2 className="size-4 shrink-0 text-grass" />
-                    : <Circle className="size-4 shrink-0 text-n-300" />}
-                  <span className={cn("text-sm", done ? "text-n-400 line-through" : "text-ink")}>
-                    {item.label}
+                  {stageComplete ? (
+                    <CheckCircle2 className="size-4 shrink-0 text-grass" />
+                  ) : (
+                    <Circle className="size-4 shrink-0 text-n-300" />
+                  )}
+                  <span className={cn("text-sm font-medium", stageComplete ? "text-n-400" : "text-ink")}>
+                    {group.label}
                   </span>
-                </Link>
-              </li>
+                  <span className="text-xs text-n-400">
+                    {done}/{group.steps.length}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "ml-auto size-3.5 text-n-400 transition-transform",
+                      isOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {isOpen && (
+                  <ul className="space-y-0.5 pb-1 pl-8 pr-2">
+                    {group.steps.map((step) => (
+                      <StepRow
+                        key={step.key}
+                        step={step}
+                        done={setupStatus[step.key]}
+                        wizardUnfinished={wizardUnfinished}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );
 }
+
+function StepRow({
+  step,
+  done,
+  wizardUnfinished,
+}: {
+  step: SetupStep;
+  done: boolean;
+  wizardUnfinished: boolean;
+}) {
+  if (done) {
+    return (
+      <li className="flex items-center gap-2 py-1">
+        <CheckCircle2 className="size-3.5 shrink-0 text-grass" />
+        <span className="text-sm text-n-400 line-through">{step.label}</span>
+      </li>
+    );
+  }
+
+  return (
+    <li className="py-1.5">
+      <div className="flex items-start gap-2">
+        <Circle className="mt-0.5 size-3.5 shrink-0 text-n-300" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-ink">{step.label}</p>
+          {/* Why it matters, not a restatement of the label — this is where the
+              admin learns the model instead of discovering it via a 400. */}
+          <p className="mt-0.5 text-xs text-n-400">{step.consequence}</p>
+          <Link
+            href={wizardUnfinished ? "/onboarding" : step.href}
+            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            {wizardUnfinished ? "Continue setup" : step.cta}
+            <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export type { SetupStepKey };

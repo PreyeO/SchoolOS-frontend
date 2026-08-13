@@ -16,9 +16,11 @@ export interface SubjectAssignment {
   created_at: string;
 }
 
+// One teacher, one arm, one or more subjects — a teacher commonly takes several
+// subjects in the same class. Validated wholly before any write.
 export interface CreateSubjectAssignmentPayload {
   class_arm_id: string;
-  subject_id: string;
+  subject_ids: string[];
   teacher_profile_id: string;
 }
 
@@ -34,7 +36,9 @@ export interface ClassArmSubject {
   created_at: string;
 }
 
+// Bulk by design: every check runs before any write, so a batch either lands
+// whole or fails whole with one message naming what was wrong.
 export interface CreateClassArmSubjectPayload {
   class_arm_id: string;
-  subject_id: string;
+  subject_ids: string[];
 }

@@ -54,9 +54,13 @@ export function SchoolSwitcher() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel>Your schools</DropdownMenuLabel>
-        <DropdownMenuItem disabled className="justify-between">
-          {school?.name ?? "This school"}
-          <Check className="size-4 text-primary" />
+        {/* Uses SchoolLogo rather than OtherSchoolAvatar: the active school is
+            the one shape that carries brand colors, so its fallback initial is
+            branded like the trigger's instead of plain gray. */}
+        <DropdownMenuItem disabled className="gap-2">
+          <SchoolLogo school={school} className="size-5 text-[10px]" />
+          <span className="truncate">{school?.name ?? "This school"}</span>
+          <Check className="ml-auto size-4 shrink-0 text-primary" />
         </DropdownMenuItem>
         {otherSchools.length > 0 && <DropdownMenuSeparator />}
         {otherSchools.map((s) => (

@@ -93,13 +93,13 @@ export function SubjectCoverageRow({ subject, assignments, armLabel, offeringId,
               </button>
             }
             title={`Remove ${subject.name} from ${armLabel}?`}
-            // Verified: the backend does NOT cascade this to SubjectAssignment,
-            // so an assigned teacher keeps an assignment for a subject the arm
-            // no longer takes. Say so rather than implying it's cleaned up.
+            // Two backend rules worth stating up front: removal is refused once
+            // any score exists for this (arm, subject), and teacher assignments
+            // are NOT cleared — both verified against the service.
             description={
               assignments.length > 0
-                ? `${armLabel} will no longer take this subject. ${assignments.length === 1 ? "The teacher" : `All ${assignments.length} teachers`} assigned to it will stay assigned — remove ${assignments.length === 1 ? "them" : "them"} first if that isn't what you want.`
-                : `${armLabel} will no longer take this subject. It stays available to add back.`
+                ? `${armLabel} will no longer take this subject. ${assignments.length === 1 ? "The teacher" : `All ${assignments.length} teachers`} assigned to it stay assigned, so remove them too if that isn't what you want. Not possible once scores have been entered.`
+                : `${armLabel} will no longer take this subject. It stays available to add back, and can't be removed once scores have been entered.`
             }
             confirmLabel="Remove"
             isPending={removeOffering.isPending}

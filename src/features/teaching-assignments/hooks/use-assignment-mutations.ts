@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useMutationWithToast } from "@/lib/api/use-mutation-with-toast";
 
-import { createAssignment, deleteAssignment } from "../api/teaching-assignments-api";
+import { createAssignments, deleteAssignment } from "../api/teaching-assignments-api";
 import type { CreateSubjectAssignmentPayload } from "../types";
 
 // An assignment shows up on the teacher's side too (staff detail), so both
@@ -15,11 +15,11 @@ function useInvalidateStaff() {
   return () => queryClient.invalidateQueries({ queryKey: ["staff"] });
 }
 
-export function useCreateAssignment() {
+export function useCreateAssignments() {
   const invalidateStaff = useInvalidateStaff();
 
   return useMutationWithToast(
-    (payload: CreateSubjectAssignmentPayload) => createAssignment(payload),
+    (payload: CreateSubjectAssignmentPayload) => createAssignments(payload),
     "Teacher assigned",
     invalidateStaff,
   );
