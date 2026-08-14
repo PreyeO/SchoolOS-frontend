@@ -22,7 +22,7 @@ export function useAssignClassTeacher() {
   return useMutationWithToast(
     ({ armId, teacherProfileId }: { armId: string; teacherProfileId: string }) =>
       assignClassTeacher(armId, teacherProfileId),
-    "Class teacher assigned",
+    "Form teacher assigned",
     invalidateStaff,
   );
 }
@@ -32,7 +32,7 @@ export function useUnassignClassTeacher() {
 
   return useMutationWithToast(
     (armId: string) => unassignClassTeacher(armId),
-    "Class teacher removed",
+    "Form teacher removed",
     invalidateStaff,
   );
 }

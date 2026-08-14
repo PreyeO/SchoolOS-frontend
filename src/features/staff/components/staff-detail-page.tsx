@@ -61,7 +61,7 @@ export function StaffDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
-        <h2 className="mb-1 text-sm font-semibold text-ink">Class teacher of</h2>
+        <h2 className="mb-1 text-sm font-semibold text-ink">Form teacher of</h2>
         <p className="mb-4 text-xs text-n-400">
           Assign or change this in{" "}
           <Link href="/classes" className="text-primary hover:underline">
@@ -70,7 +70,7 @@ export function StaffDetailPage({ id }: { id: string }) {
           .
         </p>
         {teacher.class_arms.length === 0 ? (
-          <p className="text-sm text-n-400 italic">Not the class teacher of any arm.</p>
+          <p className="text-sm text-n-400 italic">Not the form teacher of any arm.</p>
         ) : (
           <ul className="flex flex-wrap gap-1.5">
             {teacher.class_arms.map((arm) => (

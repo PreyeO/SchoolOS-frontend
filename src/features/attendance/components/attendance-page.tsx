@@ -121,7 +121,7 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
         <p className="mt-1 text-sm text-n-500">
           {canMark
             ? "Mark the daily register for a class arm. Re-marking a day updates it."
-            : "Review the daily register. Only a class's teacher can record or change marks."}
+            : "Review the daily register. Only a teacher can record or change marks."}
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
           <Info className="mt-0.5 size-4 shrink-0 text-n-400" />
           <span>
             You&rsquo;re viewing this as an admin, so the register is read-only. Attendance
-            can only be recorded by a teacher — assign one to each arm in{" "}
+            can only be recorded by a teacher — assign a form teacher to each arm in{" "}
             <Link href="/classes" className="text-primary hover:underline">
               Classes &amp; Arms
             </Link>

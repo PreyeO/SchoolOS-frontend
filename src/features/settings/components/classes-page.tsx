@@ -5,6 +5,7 @@ import { Check, Plus, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
+import { realArms } from "@/lib/school/real-arms";
 import { useSchoolLevels } from "@/lib/school/use-school-levels";
 import { AddClassDialog } from "@/features/onboarding/components/review/add-class-dialog";
 import { ClassRowReview } from "@/features/onboarding/components/review/class-row-review";
@@ -40,6 +41,12 @@ export function ClassesPage() {
   const withoutTeacher = allArms.filter((a) => !a.class_teacher).length;
   const armlessClassCount = classes.filter((c) => c.arms.length === 0).length;
 
+  // Nobody has named an arm yet. That's a perfectly finished school, not a gap —
+  // but the page is called "Classes & Arms" and every row offers "Add arm", so
+  // an admin can reasonably wonder whether they've missed a step. Said once,
+  // here, and only while the question can arise.
+  const noNamedArms = classes.length > 0 && !classes.some((c) => realArms(c).length > 0);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -53,7 +60,7 @@ export function ClassesPage() {
                   <Check className="size-3.5 shrink-0 text-emerald-600" />
                   <span className="text-n-500">
                     All {allArms.length} {allArms.length === 1 ? "class has" : "classes have"} a
-                    class teacher.
+                    form teacher.
                   </span>
                 </>
               ) : (
@@ -61,7 +68,7 @@ export function ClassesPage() {
                   <TriangleAlert className="size-3.5 shrink-0 text-amber" />
                   <span className="text-ink">
                     {withoutTeacher} of {allArms.length}{" "}
-                    {allArms.length === 1 ? "class has" : "classes have"} no class teacher
+                    {allArms.length === 1 ? "class has" : "classes have"} no form teacher
                   </span>
                   <span className="text-n-400">— their registers can&rsquo;t be marked.</span>
                 </>
@@ -78,14 +85,24 @@ export function ClassesPage() {
         />
       </div>
 
-      {/* Pre-placeholder rows that hold no arm at all. They can't take a class
+      {/* Pre-placeholder rows that hold no arm at all. They can't take a form
           teacher, an enrolment or attendance, and they're invisible in the count
           above because they contribute no arms — so they're named separately. */}
       {armlessClassCount > 0 && (
         <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
           {armlessClassCount} {armlessClassCount === 1 ? "class has" : "classes have"} no arm at
           all. Until you add one, {armlessClassCount === 1 ? "it" : "they"} can&rsquo;t take a
-          class teacher, an enrolment or attendance.
+          form teacher, an enrolment or attendance.
+        </p>
+      )}
+
+      {/* Deliberately neutral, not amber: this is information, not a warning. */}
+      {noNamedArms && (
+        <p className="rounded-lg border border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
+          <span className="font-medium text-ink">Arms are optional.</span> Add one only if a
+          class runs parallel streams — Primary 1 A and Primary 1 B, taught separately. If each
+          class is a single group, you&rsquo;re already set up: enrolment, attendance and
+          teaching all work as they are.
         </p>
       )}
 

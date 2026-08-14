@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
-import { realArms } from "@/lib/school/real-arms";
 import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useSubjects } from "@/features/settings/hooks/use-subjects";
@@ -52,9 +51,6 @@ export function useSetupStatus() {
     // creation, but a term rollover or a skipped step can leave none.
     current_term: (sessions ?? []).some((s) => s.periods.some((p) => p.is_current)),
     classes: (classes?.length ?? 0) > 0,
-    // Real arms only. The system placeholder keeps enrolment working, but a
-    // school that never names an arm hasn't actually set its structure up.
-    arms: (classes ?? []).some((c) => realArms(c).length > 0),
     subjects: (subjects?.length ?? 0) > 0,
     teachers: (counts?.teachers ?? 0) > 0,
     // Counts the placeholder arm too: a class with no named arms still holds

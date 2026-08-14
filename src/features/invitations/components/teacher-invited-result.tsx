@@ -14,7 +14,7 @@ interface Props {
 // Shown in place of the form after a successful invite. A toast would say the
 // same thing and then vanish — the part worth keeping on screen is that
 // acceptance gates everything else, which is the non-obvious bit: a teacher's
-// membership stays inactive until they accept, so they can't be made a class
+// membership stays inactive until they accept, so they can't be made a form
 // teacher or given subjects before then.
 export function TeacherInvitedResult({ name, email, onInviteAnother }: Props) {
   return (
@@ -38,7 +38,7 @@ export function TeacherInvitedResult({ name, email, onInviteAnother }: Props) {
               className="flex items-center gap-2 text-sm text-primary hover:underline"
             >
               <LayoutGrid className="size-3.5 shrink-0" />
-              Make them a class teacher
+              Make them a form teacher
               <ArrowRight className="size-3 shrink-0" />
             </Link>
             <p className="ml-5.5 mt-0.5 text-xs text-n-400">

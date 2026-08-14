@@ -8,16 +8,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
+import { teacherTypeDescription, teacherTypeLabel } from "@/features/staff/lib/teacher-type-label";
+import type { TeacherType } from "@/features/staff/types";
 
 import { inviteTeacherSchema, type InviteTeacherFormValues } from "../schemas/invite-teacher-schema";
 import { useInviteTeacher } from "../hooks/use-invite-teacher";
 import { TeacherInvitedResult } from "./teacher-invited-result";
 
-const TEACHER_TYPES = [
-  { value: "class", label: "Class teacher" },
-  { value: "subject", label: "Subject teacher" },
-  { value: "both", label: "Both" },
-] as const;
+// Labels and descriptions come from the shared helper, so this form and the
+// pickers that filter on type can't drift apart in what they call things.
+const TEACHER_TYPES: TeacherType[] = ["class", "subject", "both"];
 
 export function InviteTeacherForm() {
   const { mutate, isPending } = useInviteTeacher();
@@ -32,7 +32,10 @@ export function InviteTeacherForm() {
     formState: { errors },
   } = useForm<InviteTeacherFormValues>({
     resolver: zodResolver(inviteTeacherSchema),
-    defaultValues: { first_name: "", last_name: "", email: "", phone_number: "", teacher_type: "class" },
+    // teacher_type deliberately has no default. It used to sit on "class", so an
+    // admin inviting a subject teacher who tabbed past this field made them a
+    // form teacher without ever seeing the word. Better to require the answer.
+    defaultValues: { first_name: "", last_name: "", email: "", phone_number: "" },
   });
 
   function onInvalid() {
@@ -78,19 +81,46 @@ export function InviteTeacherForm() {
         <Input id="teacher-phone" type="tel" placeholder="+234 800 000 0000" {...register("phone_number")} />
       </FieldWrapper>
 
-      <FieldWrapper id="teacher-type" label="Teacher type" error={errors.teacher_type?.message} required>
-        <select
-          id="teacher-type"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          {...register("teacher_type")}
-        >
-          {TEACHER_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
+      {/* Radio cards rather than a <select>: this is the one field on the form
+          whose consequences aren't obvious from its label — it decides whether
+          the person can take a register at all — and an option list can't carry
+          the explanation. A native radio group keeps keyboard and screen-reader
+          behaviour without a component. */}
+      <fieldset>
+        <legend className="mb-2 text-sm font-medium text-ink">
+          Teacher type <span className="text-clay">*</span>
+        </legend>
+        <div className="space-y-2">
+          {/* Selected styling via has-[:checked] rather than watch()ing the
+              field: reading it in JS makes React Compiler skip memoizing this
+              whole component, and the browser already knows which radio is
+              checked. */}
+          {TEACHER_TYPES.map((type) => (
+            <label
+              key={type}
+              className="flex cursor-pointer gap-3 rounded-xl border border-n-200 p-3 transition-colors hover:border-n-300 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+            >
+              <input
+                type="radio"
+                value={type}
+                {...register("teacher_type")}
+                className="mt-1 size-4 shrink-0 accent-primary"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-ink">{teacherTypeLabel(type)}</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-n-500">
+                  {teacherTypeDescription(type)}
+                </span>
+              </span>
+            </label>
           ))}
-        </select>
-      </FieldWrapper>
+        </div>
+        {errors.teacher_type?.message && (
+          <p role="alert" className="mt-1.5 text-xs text-clay">
+            {errors.teacher_type.message}
+          </p>
+        )}
+      </fieldset>
 
       <Button
         type="submit"

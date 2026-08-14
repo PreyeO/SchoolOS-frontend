@@ -11,12 +11,19 @@
 // because "no class teacher" doesn't obviously mean "attendance is impossible"
 // unless you already know the model.
 
+// Arms are deliberately absent. Every class the backend creates already carries
+// a system arm, so enrolment, attendance and teaching all work without the admin
+// ever naming one — a school that runs a single stream per class is complete as
+// it stands, and asking it to invent "Primary 1 A" is asking it to model
+// something it doesn't have. Arms remain available on Classes & Arms for schools
+// that do stream. The one genuinely broken state — a class carrying no arm at
+// all, only possible on rows predating that behaviour — is already reported
+// there, and on the attendance and teaching-assignment screens.
 export type SetupStepKey =
   | "branding"
   | "academic_year"
   | "current_term"
   | "classes"
-  | "arms"
   | "subjects"
   | "teachers"
   | "class_teachers"
@@ -78,14 +85,6 @@ export const SETUP_STAGES: SetupStage[] = [
         cta: "Classes & Arms",
       },
       {
-        key: "arms",
-        label: "Give each class at least one arm",
-        consequence:
-          "Enrolment, attendance and teaching all attach to an arm, not a class.",
-        href: "/classes",
-        cta: "Classes & Arms",
-      },
-      {
         key: "subjects",
         label: "Choose the subjects you teach",
         consequence: "Classes can't be given subjects, and results have nothing to score.",
@@ -100,13 +99,13 @@ export const SETUP_STAGES: SetupStage[] = [
       {
         key: "teachers",
         label: "Invite your teachers",
-        consequence: "There's nobody to make a class teacher or assign a subject to.",
+        consequence: "There's nobody to make a form teacher or assign a subject to.",
         href: "/invitations?persona=teacher",
         cta: "Invite teachers",
       },
       {
         key: "class_teachers",
-        label: "Assign a class teacher to each arm",
+        label: "Assign a form teacher to each arm",
         consequence: "Only a teacher can mark a register, and only for an arm that has one.",
         href: "/classes",
         cta: "Classes & Arms",
@@ -151,7 +150,6 @@ export const REGISTER_PREREQUISITES: SetupStepKey[] = [
   "academic_year",
   "current_term",
   "classes",
-  "arms",
   "teachers",
   "class_teachers",
   "students",

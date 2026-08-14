@@ -85,7 +85,7 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Class teacher for {label ?? arm.name}</DialogTitle>
+          <DialogTitle>Form teacher for {label ?? arm.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -111,9 +111,9 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
               </p>
               {!query && (
                 <p className="text-xs text-n-400">
-                  A class can only be led by someone added as a {teacherTypeLabel("class")} or{" "}
-                  {teacherTypeLabel("both")} teacher. Invite one, or change an existing
-                  teacher&rsquo;s type.
+                  Only a teacher whose type is &ldquo;{teacherTypeLabel("class")}&rdquo; or
+                  &ldquo;{teacherTypeLabel("both")}&rdquo; can run a class. Invite one, or
+                  change an existing teacher&rsquo;s type.
                 </p>
               )}
             </div>
@@ -142,7 +142,7 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
                         </span>
                         <span className="block truncate text-xs text-n-400">
                           {leads.length > 0
-                            ? `Already leads ${leads.map((a) => a.name).join(", ")}`
+                            ? `Already form teacher of ${leads.map((a) => a.name).join(", ")}`
                             : teacher.user.email}
                         </span>
                       </span>
@@ -157,7 +157,7 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
 
         {arm.class_teacher && (
           <p className="text-xs text-n-400">
-            Removing the class teacher leaves {label ?? arm.name} without one — nobody can
+            Removing the form teacher leaves {label ?? arm.name} without one — nobody can
             mark its attendance until another is assigned.
           </p>
         )}
@@ -171,7 +171,7 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
               disabled={pending}
               className="text-clay hover:bg-clay/10 hover:text-clay"
             >
-              {unassign.isPending ? "Removing…" : "Remove teacher"}
+              {unassign.isPending ? "Removing…" : "Remove form teacher"}
             </Button>
           ) : (
             <span />

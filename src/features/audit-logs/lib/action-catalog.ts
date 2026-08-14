@@ -90,11 +90,11 @@ export const ACTION_CATALOG: Record<string, ActionMeta> = {
   // in one visual bucket.
   "class_arm.class_teacher_assigned": {
     category: "teaching",
-    rest: (t) => `set the class teacher for ${t}`,
+    rest: (t) => `set the form teacher for ${t}`,
   },
   "class_arm.class_teacher_unassigned": {
     category: "teaching",
-    rest: (t) => `removed the class teacher from ${t}`,
+    rest: (t) => `removed the form teacher from ${t}`,
   },
   "subject_assignment.created": {
     category: "teaching",
@@ -144,7 +144,7 @@ export const ACTION_CATALOG: Record<string, ActionMeta> = {
   // ever changes that prefix.
   "student_result_remark.class_teacher_remark_set": {
     category: "results",
-    rest: (t) => `set the class teacher remark — ${t.replace(/^Remark for /, "")}`,
+    rest: (t) => `set the form teacher's remark — ${t.replace(/^Remark for /, "")}`,
   },
   "student_result_remark.principal_remark_set": {
     category: "results",

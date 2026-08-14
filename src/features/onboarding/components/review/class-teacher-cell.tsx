@@ -30,15 +30,15 @@ export function ClassTeacherCell({ arm, label }: Props) {
           type="button"
           aria-label={
             teacher
-              ? `Class teacher for ${label ?? arm.name}: ${teacher.name}. Change or remove.`
-              : `Assign a class teacher for ${label ?? arm.name}`
+              ? `Form teacher for ${label ?? arm.name}: ${teacher.name}. Change or remove.`
+              : `Assign a form teacher for ${label ?? arm.name}`
           }
           className={cn(
             "inline-flex min-w-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
             teacher
               ? "border-n-200 text-ink hover:border-n-300 hover:bg-n-50"
               : // Unassigned is a blocking state, not a neutral empty one: without a
-                // class teacher nobody can mark this arm's register at all. Tinted
+                // form teacher nobody can mark this arm's register at all. Tinted
                 // fill rather than amber text, which fails contrast at this size.
                 "border-amber/40 bg-amber/10 text-ink hover:bg-amber/20",
           )}
@@ -51,7 +51,7 @@ export function ClassTeacherCell({ arm, label }: Props) {
           ) : (
             <>
               <TriangleAlert className="size-3.5 shrink-0 text-amber" />
-              <span>No class teacher</span>
+              <span>No form teacher</span>
             </>
           )}
         </button>
