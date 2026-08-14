@@ -166,11 +166,13 @@ export const ALL_SETUP_STEPS: SetupStep[] = SETUP_STAGES.flatMap((s) => s.steps)
 // The subset that has to be true before a register can be marked at all. Used
 // to decide when the card may finally say the school is ready — "ready" means
 // the product can do its first real job, not that every box is ticked.
+// class_teachers is deliberately absent: its own tick needs *every* class
+// staffed, which is a stricter bar than "can a register be marked at all".
+// useSetupStatus adds the weaker "at least one" test separately.
 export const REGISTER_PREREQUISITES: SetupStepKey[] = [
   "academic_year",
   "current_term",
   "classes",
   "teachers",
-  "class_teachers",
   "students",
 ];

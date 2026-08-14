@@ -44,6 +44,7 @@ export function useSetupStatus() {
   );
 
   const allArms = (classes ?? []).flatMap((c) => c.arms);
+  const armsWithTeacher = allArms.filter((a) => !!a.class_teacher).length;
 
   const setupStatus: Record<SetupStepKey, boolean> = {
     branding,
@@ -56,7 +57,12 @@ export function useSetupStatus() {
     teachers: (counts?.teachers ?? 0) > 0,
     // Counts the placeholder arm too: a class with no named arms still holds
     // its class teacher there, so excluding it would under-report coverage.
-    class_teachers: allArms.length > 0 && allArms.every((a) => !!a.class_teacher),
+    //
+    // Every one of them, because the step says "each". A school staffing its
+    // classes one at a time sees no movement here for a long time, which is why
+    // the checklist renders stepProgress alongside it — the tick is all-or-
+    // nothing, the number isn't.
+    class_teachers: allArms.length > 0 && armsWithTeacher === allArms.length,
     students: (counts?.students ?? 0) > 0,
     class_subjects: (counts?.classSubjects ?? 0) > 0,
     subject_teachers: (counts?.subjectTeachers ?? 0) > 0,
@@ -65,10 +71,22 @@ export function useSetupStatus() {
   const completedCount = ALL_SETUP_STEPS.filter((s) => setupStatus[s.key]).length;
   // "Ready" is not "every box ticked" — it's the point the product can do its
   // first real job. Optional polish like branding shouldn't hold that back.
-  const canTakeRegister = REGISTER_PREREQUISITES.every((key) => setupStatus[key]);
+  //
+  // One staffed class is the bar here, not all of them: that teacher can mark
+  // that class's register today. Requiring full coverage told a school with 4 of
+  // 12 classes staffed that it couldn't take a register, while four teachers
+  // were already able to.
+  const canTakeRegister =
+    REGISTER_PREREQUISITES.every((key) => setupStatus[key]) && armsWithTeacher > 0;
 
   return {
     setupStatus,
+    // Partial progress for steps that are done "for each X" rather than once.
+    // Without it, staffing 4 of 12 classes looks identical to staffing none, and
+    // the step reads as broken rather than as underway.
+    stepProgress: {
+      class_teachers: { done: armsWithTeacher, total: allArms.length },
+    } as Partial<Record<SetupStepKey, { done: number; total: number }>>,
     // "class" or "arm", whichever this school actually uses — the checklist
     // interpolates it rather than telling a single-stream school about arms.
     unitWords: teachingUnitWords(classes),

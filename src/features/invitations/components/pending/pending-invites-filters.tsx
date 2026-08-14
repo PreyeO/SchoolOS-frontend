@@ -11,7 +11,11 @@ const STATUS_TABS: { value: InviteStatus | "all"; label: string }[] = [
   { value: "expired", label: "Expired" },
 ];
 
-const PERSONAS: InvitePersona[] = ["admin", "teacher", "parent", "student"];
+// No "student". UserService.invite_student creates the account outright and
+// hands back a password — it never writes an InviteToken, so that filter could
+// only ever return nothing. Confirmed in code and against live data: every token
+// in the table is admin, teacher or parent.
+const PERSONAS: InvitePersona[] = ["admin", "teacher", "parent"];
 
 interface Props {
   status: InviteStatus | "all";

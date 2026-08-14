@@ -16,8 +16,16 @@ import type { TeachingUnitWords } from "@/lib/school/teaching-unit";
 
 export function SetupChecklist() {
   const claims = useAuthStore((s) => s.claims);
-  const { setupStatus, unitWords, completedCount, totalSteps, isComplete, canTakeRegister, currentSchool } =
-    useSetupStatus();
+  const {
+    setupStatus,
+    stepProgress,
+    unitWords,
+    completedCount,
+    totalSteps,
+    isComplete,
+    canTakeRegister,
+    currentSchool,
+  } = useSetupStatus();
   const { data: stage } = useOnboardingStage();
   const { dismissed, dismiss } = useChecklistDismissed(currentSchool?.id);
 
@@ -135,6 +143,7 @@ export function SetupChecklist() {
                         key={step.key}
                         step={step}
                         done={setupStatus[step.key]}
+                        progress={stepProgress[step.key]}
                         unitWords={unitWords}
                         wizardUnfinished={wizardUnfinished}
                       />
@@ -153,11 +162,14 @@ export function SetupChecklist() {
 function StepRow({
   step,
   done,
+  progress,
   unitWords,
   wizardUnfinished,
 }: {
   step: SetupStep;
   done: boolean;
+  // Set only for steps completed per-item, so partial work is visible.
+  progress?: { done: number; total: number };
   unitWords: TeachingUnitWords;
   wizardUnfinished: boolean;
 }) {
@@ -177,7 +189,14 @@ function StepRow({
       <div className="flex items-start gap-2">
         <Circle className="mt-0.5 size-3.5 shrink-0 text-n-300" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-ink">{label}</p>
+          <p className="text-sm text-ink">
+            {label}
+            {progress && progress.total > 0 && (
+              <span className="ml-1.5 text-xs text-n-400">
+                {progress.done} of {progress.total}
+              </span>
+            )}
+          </p>
           {/* Why it matters, not a restatement of the label — this is where the
               admin learns the model instead of discovering it via a 400. */}
           <p className="mt-0.5 text-xs text-n-400">{resolveStepText(step.consequence, unitWords)}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -27,7 +28,21 @@ export function PendingInvitesPanel() {
     <div className="space-y-4">
       <div>
         <h2 className="font-display text-lg font-semibold text-ink">Pending invites</h2>
-        <p className="mt-1 text-sm text-n-500">Track invites you&rsquo;ve sent and resend any that have expired.</p>
+        <p className="mt-1 text-sm text-n-500">
+          Track invites you&rsquo;ve sent and resend any that have expired.
+        </p>
+        {/* Said up front rather than left to be discovered. Adding a student
+            creates the account immediately with a password — there's no email to
+            accept and nothing to resend — so students never appear here, and
+            looking for one reads as a bug. */}
+        <p className="mt-1.5 text-xs text-n-400">
+          Admins, teachers and parents only. Students are created straight away with a
+          password instead of being emailed an invite, so they appear in{" "}
+          <Link href="/students" className="text-primary hover:underline">
+            Students
+          </Link>{" "}
+          rather than here.
+        </p>
       </div>
 
       <PendingInvitesFilters
