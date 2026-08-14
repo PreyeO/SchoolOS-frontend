@@ -14,8 +14,11 @@ interface Props {
   classCount: number;
   subjectCount: number;
   studentCount: number;
+  // Rosters have landed, so studentCount is real rather than not-yet-known.
+  hasRoster: boolean;
+  // The attendance tile keys off latestRate being null instead — a rate only
+  // exists once a day has been marked, so a second flag would say the same thing.
   latestRate: number | null;
-  hasAnyRecords: boolean;
 }
 
 // Headline numbers are stat tiles, not one-bar charts. Values use proportional
@@ -24,8 +27,8 @@ export function TeacherStatTiles({
   classCount,
   subjectCount,
   studentCount,
+  hasRoster,
   latestRate,
-  hasAnyRecords,
 }: Props) {
   const tiles: Tile[] = [
     {
@@ -46,11 +49,11 @@ export function TeacherStatTiles({
     },
     {
       label: "Students",
-      value: hasAnyRecords ? String(studentCount) : "—",
-      // Said plainly rather than showing a confident zero: the student directory
-      // is admin-only, so a teacher's roster size is only knowable from the last
-      // register that was taken.
-      hint: hasAnyRecords ? "on your most recent registers" : "known once a register is taken",
+      // Straight off the roster now, so it's right as soon as students are
+      // enrolled — no register required. It used to be inferred from the last
+      // marked day, which meant a freshly staffed class showed nothing at all.
+      value: hasRoster ? String(studentCount) : "—",
+      hint: hasRoster ? "enrolled in your classes" : "loading your classes…",
       icon: Users,
     },
     {

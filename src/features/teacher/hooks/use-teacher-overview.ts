@@ -3,7 +3,7 @@
 import { useQueries } from "@tanstack/react-query";
 
 import { armDisplayName } from "@/lib/school/arm-display-name";
-import { getAttendance } from "@/features/attendance/api/attendance-api";
+import { getAttendance, getRoster } from "@/features/attendance/api/attendance-api";
 import type { AttendanceRecord } from "@/features/attendance/types";
 
 import { useMyClasses } from "./use-my-classes";
@@ -94,20 +94,18 @@ function buildAtRisk(records: AttendanceRecord[]): AbsenceEntry[] {
   return [...tally.values()].sort((a, b) => b.absences - a.absences).slice(0, MAX_AT_RISK);
 }
 
-// Roster size = the headcount on the most recent marked day. Only knowable once
-// a register exists, because the student directory itself is admin-only.
-function rosterSize(records: AttendanceRecord[]): number {
-  if (records.length === 0) return 0;
-  const latest = records.reduce((max, r) => (r.date > max ? r.date : max), records[0].date);
-  return records.filter((r) => r.date === latest).length;
-}
+// Roster size used to be inferred from the headcount on the most recent marked
+// day, because the student directory was admin-only and a teacher had no other
+// way to count their class. CanViewStudents changed that — list/retrieve now
+// admit any teacher — so the roster is read directly and the count is right from
+// the moment students are enrolled, with no register needed.
 
-// Everything the teacher home shows, derived from attendance records.
+// Everything the teacher home shows.
 //
-// Attendance is the one dataset a teacher is allowed to read — the student
-// directory is admin-only — and its records nest full student details, so the
-// rosters, counts, trend and at-risk list all come from here rather than from
-// /api/students/, which would 403.
+// The trend and the at-risk list come from attendance records, which nest full
+// student details. The headcount comes from the roster instead — a teacher can
+// read that now (CanViewStudents), and it's the honest source: enrolment is what
+// puts a student in a class, not whether anyone has marked them present yet.
 //
 // Deliberately not memoised: `results` is a fresh array every render, so any
 // dependency list built from it would invalidate anyway, and these are linear
@@ -125,9 +123,23 @@ export function useTeacherOverview() {
     })),
   });
 
+  // Same query key the attendance page's useRoster uses, so opening a register
+  // reuses what the dashboard already fetched rather than asking again.
+  const rosters = useQueries({
+    queries: classes.map((klass) => ({
+      queryKey: ["attendance", "roster", klass.classArmId],
+      queryFn: () => getRoster(klass.classArmId),
+    })),
+  });
+
   const isPending = classesLoading || results.some((r) => r.isPending);
   const recordsByArm = results.map((r) => r.data ?? []);
   const allRecords = recordsByArm.flat();
+
+  // `total` rather than students.length: getRoster caps the page at 100 and
+  // reports the real count separately, so a very large arm still totals right.
+  const rostersLoaded = rosters.length === 0 || rosters.some((r) => r.data);
+  const studentCount = rosters.reduce((sum, r) => sum + (r.data?.total ?? 0), 0);
 
   // Form classes only. The backend authorises *any* teacher to mark *any* arm
   // (AttendanceService._authorize_marker checks only that you're a teacher), but
@@ -166,7 +178,11 @@ export function useTeacherOverview() {
     classes,
     registers,
     trend,
-    studentCount: recordsByArm.reduce((sum, records) => sum + rosterSize(records), 0),
+    studentCount,
+    // Whether the count can be trusted yet. Separate from hasAnyRecords, which
+    // still gates the attendance-rate tile — that one genuinely does need a
+    // register to exist.
+    hasRoster: rostersLoaded,
     subjectCount: new Set(classes.flatMap((c) => c.subjects)).size,
     needsAttention: buildAtRisk(allRecords),
     latestRate: trend.length > 0 ? trend[trend.length - 1].rate : null,

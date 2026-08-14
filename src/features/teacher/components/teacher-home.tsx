@@ -38,6 +38,7 @@ export function TeacherHome() {
     registers,
     trend,
     studentCount,
+    hasRoster,
     subjectCount,
     needsAttention,
     latestRate,
@@ -101,8 +102,8 @@ export function TeacherHome() {
             classCount={classes.length}
             subjectCount={subjectCount}
             studentCount={studentCount}
+            hasRoster={hasRoster}
             latestRate={latestRate}
-            hasAnyRecords={hasAnyRecords}
           />
 
           <div className="grid gap-4 lg:grid-cols-5">
