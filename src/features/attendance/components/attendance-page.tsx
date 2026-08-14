@@ -11,6 +11,7 @@ import { useCanMarkAttendance } from "@/lib/auth/use-personas";
 import { ArmPicker } from "@/components/shared/arm-picker";
 import { getErrorMessage, isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { armlessClasses, buildArmOptions } from "@/lib/school/arm-options";
+import { teachingUnitWords } from "@/lib/school/teaching-unit";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useMyClasses } from "@/features/teacher/hooks/use-my-classes";
 import { useSchoolStore } from "@/stores/school-store";
@@ -48,6 +49,8 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
   const skipped = useMemo(() => armlessClasses(classes ?? []), [classes]);
+  // This school's own word for the thing holding a register.
+  const unit = useMemo(() => teachingUnitWords(classes), [classes]);
 
   // Which register to open on, in order of how likely it is to be the one
   // wanted: an explicit ?arm=, then the teacher's own class (form class first —
@@ -120,7 +123,7 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
         <h1 className="font-display text-2xl font-bold text-ink">Attendance</h1>
         <p className="mt-1 text-sm text-n-500">
           {canMark
-            ? "Mark the daily register for a class arm. Re-marking a day updates it."
+            ? `Mark the daily register for a ${unit.one}. Re-marking a day updates it.`
             : "Review the daily register. Only a teacher can record or change marks."}
         </p>
       </div>
@@ -132,7 +135,7 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
           <Info className="mt-0.5 size-4 shrink-0 text-n-400" />
           <span>
             You&rsquo;re viewing this as an admin, so the register is read-only. Attendance
-            can only be recorded by a teacher — assign a form teacher to each arm in{" "}
+            can only be recorded by a teacher — assign a form teacher to each {unit.one} in{" "}
             <Link href="/classes" className="text-primary hover:underline">
               Classes &amp; Arms
             </Link>

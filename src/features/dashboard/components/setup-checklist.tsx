@@ -11,11 +11,12 @@ import { useOnboardingStage } from "@/features/onboarding/hooks/use-onboarding-s
 
 import { useChecklistDismissed } from "../hooks/use-checklist-dismissed";
 import { useSetupStatus } from "../hooks/use-setup-status";
-import { SETUP_STAGES, type SetupStep, type SetupStepKey } from "../lib/setup-steps";
+import { SETUP_STAGES, resolveStepText, type SetupStep, type SetupStepKey } from "../lib/setup-steps";
+import type { TeachingUnitWords } from "@/lib/school/teaching-unit";
 
 export function SetupChecklist() {
   const claims = useAuthStore((s) => s.claims);
-  const { setupStatus, completedCount, totalSteps, isComplete, canTakeRegister, currentSchool } =
+  const { setupStatus, unitWords, completedCount, totalSteps, isComplete, canTakeRegister, currentSchool } =
     useSetupStatus();
   const { data: stage } = useOnboardingStage();
   const { dismissed, dismiss } = useChecklistDismissed(currentSchool?.id);
@@ -134,6 +135,7 @@ export function SetupChecklist() {
                         key={step.key}
                         step={step}
                         done={setupStatus[step.key]}
+                        unitWords={unitWords}
                         wizardUnfinished={wizardUnfinished}
                       />
                     ))}
@@ -151,17 +153,21 @@ export function SetupChecklist() {
 function StepRow({
   step,
   done,
+  unitWords,
   wizardUnfinished,
 }: {
   step: SetupStep;
   done: boolean;
+  unitWords: TeachingUnitWords;
   wizardUnfinished: boolean;
 }) {
+  const label = resolveStepText(step.label, unitWords);
+
   if (done) {
     return (
       <li className="flex items-center gap-2 py-1">
         <CheckCircle2 className="size-3.5 shrink-0 text-grass" />
-        <span className="text-sm text-n-400 line-through">{step.label}</span>
+        <span className="text-sm text-n-400 line-through">{label}</span>
       </li>
     );
   }
@@ -171,10 +177,10 @@ function StepRow({
       <div className="flex items-start gap-2">
         <Circle className="mt-0.5 size-3.5 shrink-0 text-n-300" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-ink">{step.label}</p>
+          <p className="text-sm text-ink">{label}</p>
           {/* Why it matters, not a restatement of the label — this is where the
               admin learns the model instead of discovering it via a 400. */}
-          <p className="mt-0.5 text-xs text-n-400">{step.consequence}</p>
+          <p className="mt-0.5 text-xs text-n-400">{resolveStepText(step.consequence, unitWords)}</p>
           <Link
             href={wizardUnfinished ? "/onboarding" : step.href}
             className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"

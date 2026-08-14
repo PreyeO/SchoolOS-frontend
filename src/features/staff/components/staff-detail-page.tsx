@@ -69,8 +69,11 @@ export function StaffDetailPage({ id }: { id: string }) {
           </Link>
           .
         </p>
+        {/* The empty state is noun-free on purpose: this page doesn't load
+            classes, so it can't know whether this school says "class" or "arm" —
+            and it doesn't need to in order to say nothing is assigned. */}
         {teacher.class_arms.length === 0 ? (
-          <p className="text-sm text-n-400 italic">Not the form teacher of any arm.</p>
+          <p className="text-sm text-n-400 italic">Not assigned as a form teacher yet.</p>
         ) : (
           <ul className="flex flex-wrap gap-1.5">
             {teacher.class_arms.map((arm) => (

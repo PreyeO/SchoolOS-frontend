@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { DEFAULT_ACCENT_COLOR, DEFAULT_PRIMARY_COLOR } from "@/data/color-presets";
+import { teachingUnitWords } from "@/lib/school/teaching-unit";
 import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useSubjects } from "@/features/settings/hooks/use-subjects";
@@ -68,6 +69,9 @@ export function useSetupStatus() {
 
   return {
     setupStatus,
+    // "class" or "arm", whichever this school actually uses — the checklist
+    // interpolates it rather than telling a single-stream school about arms.
+    unitWords: teachingUnitWords(classes),
     completedCount,
     totalSteps: ALL_SETUP_STEPS.length,
     isComplete: completedCount === ALL_SETUP_STEPS.length,

@@ -11,6 +11,8 @@
 // because "no class teacher" doesn't obviously mean "attendance is impossible"
 // unless you already know the model.
 
+import type { TeachingUnitWords } from "@/lib/school/teaching-unit";
+
 // Arms are deliberately absent. Every class the backend creates already carries
 // a system arm, so enrolment, attendance and teaching all work without the admin
 // ever naming one — a school that runs a single stream per class is complete as
@@ -31,12 +33,22 @@ export type SetupStepKey =
   | "class_subjects"
   | "subject_teachers";
 
+// Copy that has to name the unit holding a register takes the school's own word
+// for it rather than hardcoding "arm" — see TeachingUnitWords. Plain strings
+// stay plain: most steps never need the noun, and making all of them functions
+// would be ceremony for nothing.
+type StepText = string | ((unit: TeachingUnitWords) => string);
+
+export function resolveStepText(text: StepText, unit: TeachingUnitWords): string {
+  return typeof text === "function" ? text(unit) : text;
+}
+
 export interface SetupStep {
   key: SetupStepKey;
-  label: string;
+  label: StepText;
   // Shown only while the step is outstanding. States what stays broken until
   // it's done — never a restatement of the label.
-  consequence: string;
+  consequence: StepText;
   href: string;
   cta: string;
 }
@@ -105,15 +117,19 @@ export const SETUP_STAGES: SetupStage[] = [
       },
       {
         key: "class_teachers",
-        label: "Assign a form teacher to each arm",
-        consequence: "Only a teacher can mark a register, and only for an arm that has one.",
+        label: (unit) => `Assign a form teacher to each ${unit.one}`,
+        // Deliberately noun-free: a register is only markable by the teacher
+        // assigned to it, and that's true whether the unit is a class or an arm.
+        consequence: "A register can only be marked by the form teacher assigned to it.",
         href: "/classes",
         cta: "Classes & Arms",
       },
       {
         key: "students",
         label: "Add your students",
-        consequence: "Registers stay empty until students are enrolled into an arm.",
+        // Was "...enrolled into an arm". Where they're enrolled isn't the point
+        // of this step, and naming the unit only invited the question.
+        consequence: "Registers stay empty until students are enrolled.",
         href: "/invitations?persona=student",
         cta: "Add students",
       },
@@ -125,8 +141,12 @@ export const SETUP_STAGES: SetupStage[] = [
       {
         key: "class_subjects",
         label: "Set which subjects each class takes",
-        consequence:
-          "A teacher can't be assigned to a subject the class doesn't take — arms in the same class often differ.",
+        // The trailing clause only earns its place for a streamed school; to
+        // everyone else "arms in the same class" is a sentence about nothing.
+        consequence: (unit) =>
+          unit.streamed
+            ? "A teacher can't be assigned to a subject the class doesn't take — arms in the same class often differ."
+            : "A teacher can't be assigned to a subject the class doesn't take.",
         href: "/teaching-assignments",
         cta: "Teaching Assignments",
       },
