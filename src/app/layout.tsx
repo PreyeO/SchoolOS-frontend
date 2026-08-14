@@ -29,6 +29,22 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "SchoolOS" }],
   creator: "SchoolOS",
+  // iOS reads these rather than the manifest for a home-screen web app.
+  //
+  // `title` is the one that matters most: without it the home-screen label comes
+  // from the page <title>, and this app's template is "%s | SchoolOS" — so
+  // installing from /dashboard would label the icon "Dashboard". `capable` keeps
+  // it launching chrome-free on iOS below 16.4, where Safari doesn't yet read
+  // the manifest's display: standalone.
+  //
+  // statusBarStyle stays "default" deliberately: "black-translucent" pushes the
+  // page content up under the notch, which needs safe-area padding this layout
+  // doesn't have.
+  appleWebApp: {
+    capable: true,
+    title: "SchoolOS",
+    statusBarStyle: "default",
+  },
   openGraph: {
     type: "website",
     siteName: "SchoolOS",
