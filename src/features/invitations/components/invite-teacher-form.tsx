@@ -23,7 +23,13 @@ export function InviteTeacherForm() {
   const { mutate, isPending } = useInviteTeacher();
   // The invite response is only a detail string, so the invitee is captured from
   // the submitted values to name them back on the success panel.
-  const [invited, setInvited] = useState<{ name: string; email: string } | null>(null);
+  const [invited, setInvited] = useState<{
+    name: string;
+    email: string;
+    // Carried through so the success panel can offer only the next steps this
+    // type actually allows.
+    teacherType: TeacherType;
+  } | null>(null);
 
   const {
     register,
@@ -46,7 +52,11 @@ export function InviteTeacherForm() {
   function submit(values: InviteTeacherFormValues) {
     mutate(values, {
       onSuccess: () => {
-        setInvited({ name: `${values.first_name} ${values.last_name}`, email: values.email });
+        setInvited({
+          name: `${values.first_name} ${values.last_name}`,
+          email: values.email,
+          teacherType: values.teacher_type,
+        });
         reset();
       },
     });
@@ -57,6 +67,7 @@ export function InviteTeacherForm() {
       <TeacherInvitedResult
         name={invited.name}
         email={invited.email}
+        teacherType={invited.teacherType}
         onInviteAnother={() => setInvited(null)}
       />
     );

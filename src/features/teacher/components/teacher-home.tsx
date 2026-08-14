@@ -5,6 +5,7 @@ import { ArrowRight, School, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
+import { useMe } from "@/features/me/hooks/use-me";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useTeacherOverview } from "../hooks/use-teacher-overview";
@@ -25,6 +26,10 @@ function todayLabel(): string {
 
 export function TeacherHome() {
   const school = useSchoolStore((s) => s.currentSchool);
+  // Already in cache — useTeacherOverview reaches /me through useMyClasses — so
+  // this costs nothing extra.
+  const { data: me } = useMe();
+  const firstName = me?.user.first_name;
   const {
     isPending,
     isError,
@@ -48,7 +53,11 @@ export function TeacherHome() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">{greeting()}</h1>
+          {/* Falls back to the bare greeting rather than showing a comma with
+              nothing after it while /me is still in flight. */}
+          <h1 className="font-display text-2xl font-bold text-ink">
+            {firstName ? `${greeting()}, ${firstName}` : greeting()}
+          </h1>
           <p className="mt-1 text-sm text-n-500">
             {todayLabel()}
             {term && <span className="text-n-400"> · {term}</span>}
