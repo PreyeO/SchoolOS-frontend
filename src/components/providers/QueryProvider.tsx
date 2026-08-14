@@ -38,9 +38,19 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             // refetch-on-mount/focus for cross-session sync (docs/PROJECT.md).
             // Persisted data renders instantly and still revalidates behind it.
             staleTime: 0,
-            // The axios timeout is 15s, so the default of 3 retries means a
-            // 45-second hang on a dead network before anything is shown.
-            retry: 1,
+            // A flat retry count spent an attempt on failures that can never
+            // succeed — a 403 is still a 403 the second time — while giving a
+            // genuinely flaky mobile connection only one extra go.
+            //
+            // Nothing here fires when the device is offline: networkMode
+            // "online" *pauses* queries instead, so this only covers the case
+            // where the browser believes it's online but the request still
+            // fails — a dropped packet, a sleeping backend, a CORS rejection.
+            retry: (failureCount, error) => {
+              const status = (error as { response?: { status?: number } })?.response?.status;
+              if (status && status < 500) return false;
+              return failureCount < 2;
+            },
           },
           mutations: {
             // networkMode "online" (the default) is what makes an offline
