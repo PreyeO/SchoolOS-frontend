@@ -31,7 +31,11 @@ export function TeacherStatTiles({
     {
       label: "Classes",
       value: String(classCount),
-      hint: classCount === 1 ? "class arm you teach" : "class arms you teach",
+      // Not "class arm", and not "you teach". "Arm" is admin-side vocabulary for
+      // how a class is split — a teacher just has classes, which is why the nav
+      // item is My Classes. And this counts form classes too, where the teacher
+      // may take no subject at all, so "teach" was wrong for the commonest case.
+      hint: classCount === 1 ? "class you're assigned to" : "classes you're assigned to",
       icon: School,
     },
     {

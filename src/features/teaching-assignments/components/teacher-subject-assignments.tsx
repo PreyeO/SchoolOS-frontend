@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useTeacherAssignments } from "../hooks/use-teacher-assignments";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 
 // Read-only view of everything one teacher teaches, for the staff detail page.
 // Grouped by class arm rather than listed flat: "JSS 1 A — Maths, Basic Science"
@@ -13,7 +14,7 @@ export function TeacherSubjectAssignments({ teacherProfileId }: { teacherProfile
   const groups = new Map<string, { label: string; subjects: string[] }>();
   (assignments ?? []).forEach((a) => {
     const existing = groups.get(a.class_arm_id);
-    const label = a.arm_name || a.class_name;
+    const label = armDisplayName(a.arm_name, a.class_name);
     if (existing) existing.subjects.push(a.subject.name);
     else groups.set(a.class_arm_id, { label, subjects: [a.subject.name] });
   });

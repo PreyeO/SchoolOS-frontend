@@ -1,5 +1,6 @@
 "use client";
 
+import { armDisplayName } from "@/lib/school/arm-display-name";
 import { useMe } from "@/features/me/hooks/use-me";
 
 export interface MyClass {
@@ -29,7 +30,11 @@ export function useMyClasses() {
   teacher?.class_arms.forEach((arm) => {
     byArm.set(arm.id, {
       classArmId: arm.id,
-      label: arm.name || arm.class_name,
+      // armDisplayName, not arm.name: a school that never named an arm carries a
+      // placeholder called "Default", and /me gives no way to spot it beyond the
+      // name itself. Showing it verbatim would present the internal word to the
+      // teacher as though it were their class.
+      label: armDisplayName(arm.name, arm.class_name),
       className: arm.class_name,
       subjects: [],
       isFormClass: true,
@@ -46,7 +51,7 @@ export function useMyClasses() {
     }
     byArm.set(assignment.class_arm_id, {
       classArmId: assignment.class_arm_id,
-      label: assignment.arm_name || assignment.class_name,
+      label: armDisplayName(assignment.arm_name, assignment.class_name),
       className: assignment.class_name,
       subjects: [assignment.subject.name],
       isFormClass: false,

@@ -7,6 +7,7 @@ import { ActiveBadge } from "@/components/shared/active-badge";
 import { DetailField } from "@/components/shared/detail-field";
 import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 import { formatDate } from "@/lib/text/format-date";
 import { TeacherSubjectAssignments } from "@/features/teaching-assignments/components/teacher-subject-assignments";
 
@@ -81,7 +82,9 @@ export function StaffDetailPage({ id }: { id: string }) {
                 key={arm.id}
                 className="rounded-full border border-n-200 px-2.5 py-0.5 text-xs text-ink"
               >
-                {arm.name}
+                {/* Same placeholder guard as the teacher's own screens — this
+                    serializer doesn't expose is_default either. */}
+                {armDisplayName(arm.name, arm.class_name)}
               </li>
             ))}
           </ul>

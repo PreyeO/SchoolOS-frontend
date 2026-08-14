@@ -4,6 +4,7 @@ import { Construction, School, UserRound } from "lucide-react";
 
 import { useMe } from "@/features/me/hooks/use-me";
 import { useSchoolStore } from "@/stores/school-store";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -44,7 +45,7 @@ export function StudentHome() {
             <p className="mt-1 text-sm text-n-400" role="status">Loading…</p>
           ) : currentClass ? (
             <p className="mt-0.5 text-lg font-semibold text-ink">
-              {currentClass.arm_name || currentClass.class_name}
+              {armDisplayName(currentClass.arm_name, currentClass.class_name)}
               <span className="ml-2 text-sm font-normal text-n-400">{currentClass.session}</span>
             </p>
           ) : (

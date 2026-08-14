@@ -20,6 +20,7 @@ import { useSchoolStore } from "@/stores/school-store";
 
 import { useEnrollStudent } from "../hooks/use-enrollment";
 import type { CurrentClass } from "../types";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 
 interface Props {
   studentId: string;
@@ -71,7 +72,7 @@ export function EnrollStudentDialog({ studentId, studentName, currentClass, trig
             <p className="text-sm text-n-500">
               Currently in{" "}
               <span className="font-medium text-ink">
-                {currentClass.arm_name || currentClass.class_name}
+                {armDisplayName(currentClass.arm_name, currentClass.class_name)}
               </span>{" "}
               for {currentClass.session}.
             </p>

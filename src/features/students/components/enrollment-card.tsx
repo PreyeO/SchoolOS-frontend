@@ -9,6 +9,7 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 import { useEnrollmentHistory } from "../hooks/use-enrollment";
 import type { CurrentClass } from "../types";
 import { EnrollStudentDialog } from "./enroll-student-dialog";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 
 interface Props {
   studentId: string;
@@ -31,7 +32,7 @@ export function EnrollmentCard({ studentId, studentName, currentClass }: Props) 
           {currentClass ? (
             <p className="mt-1 text-sm text-ink">
               <span className="font-medium">
-                {currentClass.arm_name || currentClass.class_name}
+                {armDisplayName(currentClass.arm_name, currentClass.class_name)}
               </span>
               <span className="text-n-400"> · {currentClass.session}</span>
             </p>
