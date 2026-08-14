@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 import type { AuthClaims } from "@/lib/auth/decode-token";
+import { clearPersistedQueryCaches } from "@/lib/api/query-persistence";
+import { clearAllRegisterDrafts } from "@/features/attendance/lib/draft-storage";
 import { ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
 
 export interface AuthTokens {
@@ -43,8 +45,15 @@ export const useAuthStore = create<AuthState>()(
         set({ pendingVerificationEmail: null }),
       setTokens: (tokens) => set({ tokens }),
       setClaims: (claims) => set({ claims }),
-      clearAuth: () =>
-        set({ pendingVerificationEmail: null, tokens: null, claims: null }),
+      clearAuth: () => {
+        // The offline cache holds a teacher's roster and any queued register,
+        // and the draft store holds half-marked ones. Leaving either behind on a
+        // shared staffroom device would expose one teacher's class to the next
+        // person to sign in.
+        clearPersistedQueryCaches();
+        clearAllRegisterDrafts();
+        set({ pendingVerificationEmail: null, tokens: null, claims: null });
+      },
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {

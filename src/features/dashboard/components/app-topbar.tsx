@@ -13,6 +13,7 @@ import { useSidebarAccordion } from "../hooks/use-sidebar-accordion";
 import { SidebarNavGroup } from "./sidebar-nav-group";
 import { SchoolLogo } from "./school-logo";
 import { TopbarSearch } from "./topbar-search";
+import { SyncIndicator } from "./sync-indicator";
 import { TermChip } from "./term-chip";
 import { NotificationBell } from "./notification-bell";
 import { SchoolSwitcher } from "./school-switcher";
@@ -68,6 +69,7 @@ export function AppTopbar() {
       <TopbarSearch />
 
       <div className="ml-auto flex items-center gap-2">
+        <SyncIndicator />
         <TermChip />
         <NotificationBell />
         <SchoolSwitcher />

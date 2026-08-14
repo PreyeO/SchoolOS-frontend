@@ -18,9 +18,12 @@ import { useSchoolStore } from "@/stores/school-store";
 import { useBulkMark } from "../hooks/use-bulk-mark";
 import { useAttendance, useRoster } from "../hooks/use-register";
 import { useRegisterDraft } from "../hooks/use-register-draft";
+import { useLastSkippedReport } from "../hooks/use-sync-status";
 import { STATUS_META } from "../lib/status-meta";
 import { ATTENDANCE_STATUSES } from "../types";
 import { RegisterRow } from "./register-row";
+import { SkippedMarksPanel } from "./skipped-marks-panel";
+import { SyncStatusStrip } from "./sync-status-strip";
 
 // Local calendar date as YYYY-MM-DD. Not toISOString(), which converts to UTC
 // and hands back yesterday for anyone marking a register before ~1am WAT.
@@ -39,6 +42,8 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
 
   const [armId, setArmId] = useState<string | null>(null);
   const [date, setDate] = useState(todayLocal());
+  const lastSkipped = useLastSkippedReport();
+  const [dismissedReportId, setDismissedReportId] = useState<number | null>(null);
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
@@ -118,6 +123,16 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
             .
           </span>
         </p>
+      )}
+
+      <SyncStatusStrip />
+
+      {lastSkipped && lastSkipped.id !== dismissedReportId && (
+        <SkippedMarksPanel
+          skipped={lastSkipped.skipped}
+          students={students}
+          onDismiss={() => setDismissedReportId(lastSkipped.id)}
+        />
       )}
 
       {!sessionName && (

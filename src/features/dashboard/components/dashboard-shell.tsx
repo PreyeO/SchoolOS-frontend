@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
 import { PortalContainerProvider } from "@/components/ui/portal-container";
 import { pickReadableForeground } from "@/lib/contrast";
 import { useSchoolStore } from "@/stores/school-store";
@@ -34,6 +35,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGuard>
+      <ServiceWorkerProvider />
       <PortalContainerProvider value={shellEl}>
         <div ref={setShellEl} data-dashboard-shell className="flex min-h-screen bg-background" style={shellStyle}>
           <AppSidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />

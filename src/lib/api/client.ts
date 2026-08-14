@@ -3,6 +3,7 @@ import axios, { type AxiosRequestConfig } from "axios";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores/auth-store";
 import { ENDPOINTS } from "./endpoints";
+import { isNetworkError } from "./get-error-message";
 
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
@@ -56,9 +57,18 @@ function flushQueue(token: string | null) {
   queue = [];
 }
 
-async function refreshAccessToken(): Promise<string | null> {
+interface RefreshOutcome {
+  token: string | null;
+  // True when the refresh request never reached the server. The session may be
+  // perfectly valid — we simply couldn't ask. Distinguished from a rejected
+  // refresh token so the caller doesn't log a working user out over a dropped
+  // connection, which for an offline register means discarding unsynced marks.
+  unreachable: boolean;
+}
+
+async function refreshAccessToken(): Promise<RefreshOutcome> {
   const refresh = useAuthStore.getState().tokens?.refresh;
-  if (!refresh) return null;
+  if (!refresh) return { token: null, unreachable: false };
 
   try {
     const { data } = await apiClient.post<{ access: string; refresh?: string }>(
@@ -66,9 +76,9 @@ async function refreshAccessToken(): Promise<string | null> {
       { refresh },
     );
     useAuthStore.getState().setTokens({ access: data.access, refresh: data.refresh ?? refresh });
-    return data.access;
-  } catch {
-    return null;
+    return { token: data.access, unreachable: false };
+  } catch (error) {
+    return { token: null, unreachable: isNetworkError(error) };
   }
 }
 
@@ -109,12 +119,15 @@ apiClient.interceptors.response.use(
 
     original._retried = true;
     isRefreshing = true;
-    const newToken = await refreshAccessToken();
+    const { token: newToken, unreachable } = await refreshAccessToken();
     isRefreshing = false;
     flushQueue(newToken);
 
     if (!newToken) {
-      forceLogout();
+      // Only a refusal ends the session. If the server was unreachable we keep
+      // the user signed in and let the request fail — they may be mid-lesson
+      // with queued attendance, and clearAuth() would strand it.
+      if (!unreachable) forceLogout();
       return Promise.reject(error);
     }
 

@@ -17,6 +17,14 @@ export interface AttendanceRecord {
   updated_at: string;
 }
 
+// One student's row in the register as the teacher currently has it — which may
+// differ from what the server holds, either because it hasn't been saved yet or
+// because the save is queued offline.
+export interface DraftEntry {
+  status: AttendanceStatus;
+  note: string;
+}
+
 export interface AttendanceMarkItem {
   student_id: string;
   status: AttendanceStatus;
