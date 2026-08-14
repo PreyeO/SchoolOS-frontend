@@ -18,7 +18,7 @@ import { useSchoolStore } from "@/stores/school-store";
 import { useBulkMark } from "../hooks/use-bulk-mark";
 import { useAttendance, useRoster } from "../hooks/use-register";
 import { useRegisterDraft } from "../hooks/use-register-draft";
-import { useLastSkippedReport } from "../hooks/use-sync-status";
+import { useLastSkippedReport, usePendingMarks } from "../hooks/use-sync-status";
 import { STATUS_META } from "../lib/status-meta";
 import { ATTENDANCE_STATUSES } from "../types";
 import { RegisterRow } from "./register-row";
@@ -60,6 +60,13 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const { data: roster, isPending: rosterLoading, error: rosterError } = useRoster(selectedId);
   const { data: saved, isPending: savedLoading } = useAttendance(selectedId, date);
   const bulkMark = useBulkMark();
+
+  // isPaused means "queued because there's no network", which is a finished
+  // action from the teacher's point of view — only a live request should lock
+  // the button. Conflating the two left Save stuck on "Saving…" offline, so a
+  // half-marked register could never be added to.
+  const isSubmitting = bulkMark.isPending && !bulkMark.isPaused;
+  const queuedCount = Object.keys(usePendingMarks(selectedId, date)).length;
 
   const students = roster?.students;
   const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount, movedOut } =
@@ -257,16 +264,22 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
                 {canMark && (
                   <div className="flex flex-wrap items-center justify-end gap-3 border-t border-n-100 px-5 py-3">
                     <span className="mr-auto text-xs text-n-400">
-                      {changed.length === 0
-                        ? "No unsaved changes."
-                        : `${changed.length} unsaved change${changed.length === 1 ? "" : "s"}.`}
+                      {changed.length > 0
+                        ? `${changed.length} unsaved change${changed.length === 1 ? "" : "s"}.`
+                        : queuedCount > 0
+                          ? "Saved on this device — will sync when you're back online."
+                          : "No unsaved changes."}
                     </span>
                     <Button
                       type="button"
                       onClick={submit}
-                      disabled={changed.length === 0 || bulkMark.isPending}
+                      // Only a request actually in flight blocks further saving.
+                      // A queued one is done as far as the teacher is concerned,
+                      // so they can keep marking and save again — the backend
+                      // upserts, and the later marked_at wins.
+                      disabled={changed.length === 0 || isSubmitting}
                     >
-                      {bulkMark.isPending ? "Saving…" : "Save register"}
+                      {isSubmitting ? "Saving…" : "Save register"}
                     </Button>
                   </div>
                 )}

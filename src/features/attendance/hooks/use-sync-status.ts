@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { onlineManager, useMutationState } from "@tanstack/react-query";
 
 import { BULK_MARK_MUTATION_KEY } from "./use-bulk-mark";
-import type { BulkMarkPayload, BulkMarkResponse } from "../types";
+import type { BulkMarkPayload, BulkMarkResponse, DraftEntry } from "../types";
 
 export type SyncState = "idle" | "offline-queued" | "syncing";
 
@@ -41,6 +41,35 @@ export function useSyncStatus(): SyncStatus {
     pendingCount: pending.length,
     oldestMarkedAt: markedAts[0] ?? null,
   };
+}
+
+// The marks for one register that are sitting in the queue — handed over but
+// not yet accepted. Keyed by student id, in the same shape as a draft entry so
+// it can be compared against one directly.
+export function usePendingMarks(
+  classArmId: string | null,
+  date: string,
+): Record<string, DraftEntry> {
+  const payloads = useMutationState({
+    filters: { mutationKey: BULK_MARK_MUTATION_KEY, status: "pending" },
+    select: (mutation) => mutation.state.variables as BulkMarkPayload | undefined,
+  });
+
+  // Not memoised: `payloads` is a fresh array every render, so any dependency
+  // list built from it would invalidate anyway — and this is a linear pass over
+  // a handful of queued batches.
+  const marks: Record<string, DraftEntry> = {};
+  if (!classArmId) return marks;
+
+  payloads.forEach((payload) => {
+    // Scoped to this exact register. A queued batch for another arm or another
+    // day says nothing about whether *this* one has unsaved work.
+    if (!payload || payload.class_arm_id !== classArmId || payload.date !== date) return;
+    payload.records.forEach((record) => {
+      marks[record.student_id] = { status: record.status, note: record.note ?? "" };
+    });
+  });
+  return marks;
 }
 
 export interface SkippedReport {

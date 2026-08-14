@@ -5,32 +5,41 @@
  * Next 16, and a custom webpack config makes the build fail — which rules out
  * Serwist and next-pwa, both of which require one. Files in public/ are served
  * byte-for-byte and are never compiled, so this has no build step and no
- * TypeScript. Keep it plain ES5-ish and dependency-free.
+ * TypeScript. Keep it plain and dependency-free.
  *
  * Scope: attendance only. The job is to get the app shell to load with no
- * network so a teacher can open a register they have already visited. API
- * responses are deliberately NOT cached here — TanStack Query persistence owns
- * that data, and a second copy in the SW would be a competing source of truth
- * that could serve a stale roster behind the app's back.
+ * network so a teacher can open a register. API responses are deliberately NOT
+ * cached here — TanStack Query persistence owns that data, and a second copy in
+ * the SW would be a competing source of truth that could serve a stale roster
+ * behind the app's back.
  */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `schoolos-shell-${VERSION}`;
 const ASSET_CACHE = `schoolos-assets-${VERSION}`;
 const OFFLINE_URL = "/offline";
 
-// The one route that must survive a cold offline start. Warmed on install so a
-// teacher who installs the app and loses signal still gets something useful.
-const PRECACHE_URLS = [OFFLINE_URL];
+// Warmed at install rather than waiting for a visit. A teacher usually reaches
+// the register by clicking the sidebar, which is a client-side navigation — the
+// browser never requests the /attendance document at all, so nothing would be
+// cached to serve on a later cold start.
+const PRECACHE_URLS = [OFFLINE_URL, "/attendance", "/dashboard"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      // A failed precache must not block activation — the runtime caching below
-      // still works, and a broken install would leave no worker at all.
-      .catch(() => undefined)
+      .then((cache) =>
+        // Individually, so one failure doesn't abandon the rest — addAll is
+        // all-or-nothing, and a single redirect would cost us the whole shell.
+        Promise.all(
+          PRECACHE_URLS.map((url) =>
+            fetch(url, { credentials: "same-origin" })
+              .then((response) => (response.ok ? cache.put(url, response) : undefined))
+              .catch(() => undefined),
+          ),
+        ),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -73,9 +82,9 @@ async function cacheFirst(request) {
   return response;
 }
 
-// Fresh when we can reach the network, last-known-good when we can't, and a
-// plain offline page when we've never seen the route at all.
-async function networkFirst(request) {
+// Fresh when we can reach the network, last-known-good when we can't, and the
+// offline page as a final fallback for a route never visited.
+async function networkFirst(request, { fallbackToOfflinePage }) {
   const cache = await caches.open(SHELL_CACHE);
 
   try {
@@ -83,11 +92,16 @@ async function networkFirst(request) {
     if (response && response.ok) cache.put(request, response.clone());
     return response;
   } catch (error) {
+    // The Cache API honours the response's Vary header, and Next varies on RSC
+    // — so a document request can't be answered with an RSC payload, or the
+    // reverse, even though both live under the same URL.
     const cached = await cache.match(request);
     if (cached) return cached;
 
-    const offline = await cache.match(OFFLINE_URL);
-    if (offline) return offline;
+    if (fallbackToOfflinePage) {
+      const offline = await cache.match(OFFLINE_URL);
+      if (offline) return offline;
+    }
     throw error;
   }
 }
@@ -106,12 +120,19 @@ self.addEventListener("fetch", (event) => {
   // with a roster the app's own cache has already superseded.
   if (url.pathname.startsWith("/api/")) return;
 
-  if (request.mode === "navigate") {
-    event.respondWith(networkFirst(request));
+  if (isStaticAsset(url)) {
+    event.respondWith(cacheFirst(request));
     return;
   }
 
-  if (isStaticAsset(url)) {
-    event.respondWith(cacheFirst(request));
-  }
+  // Everything else same-origin: full page loads (mode "navigate") and the RSC
+  // payloads a client-side navigation fetches from the same URLs. Both need to
+  // survive offline — handling only navigations left sidebar clicks broken while
+  // the app was already open.
+  //
+  // Only a real navigation may fall back to the offline page; answering an RSC
+  // fetch with an HTML document would break the router rather than inform it.
+  event.respondWith(
+    networkFirst(request, { fallbackToOfflinePage: request.mode === "navigate" }),
+  );
 });

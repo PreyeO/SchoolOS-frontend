@@ -6,6 +6,7 @@ import type { StudentListItem } from "@/features/students/types";
 import { useAuthStore } from "@/stores/auth-store";
 
 import { clearDraft, draftKey, readDraft, writeDraft } from "../lib/draft-storage";
+import { usePendingMarks } from "./use-sync-status";
 import type { AttendanceRecord, AttendanceStatus, DraftEntry } from "../types";
 
 export type { DraftEntry };
@@ -82,6 +83,16 @@ export function useRegisterDraft(
     return map;
   }, [saved]);
 
+  // Marks already handed to the queue but not yet accepted by the server.
+  //
+  // Without this, offline saves never "take": the server copy can't change while
+  // there's no network, so every queued mark stays in `changed` and the register
+  // insists it has unsaved work no matter how many times it's saved. Treating a
+  // queued mark as committed is what lets a teacher save, keep marking, and save
+  // again. If a queued batch later errors it leaves this set, and those marks
+  // correctly reappear as unsaved.
+  const queuedByStudent = usePendingMarks(classArmId, date);
+
   function setStatus(studentId: string, status: AttendanceStatus) {
     setDraft((prev) => ({ ...prev, [studentId]: { status, note: prev[studentId]?.note ?? "" } }));
   }
@@ -112,11 +123,17 @@ export function useRegisterDraft(
   const changed = useMemo(
     () =>
       Object.entries(draft).filter(([studentId, entry]) => {
+        // A queued mark counts as committed — it's on its way, and resubmitting
+        // it would only duplicate the work.
+        const queued = queuedByStudent[studentId];
+        if (queued) {
+          return queued.status !== entry.status || queued.note !== entry.note;
+        }
         const record = savedById[studentId];
         if (!record) return true;
         return record.status !== entry.status || (record.note ?? "") !== entry.note;
       }),
-    [draft, savedById],
+    [draft, savedById, queuedByStudent],
   );
 
   // Once nothing differs from the server there is no unsaved work to protect,
