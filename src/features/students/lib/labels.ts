@@ -3,7 +3,11 @@ import type { BloodGroup, EnrollmentStatus, Gender, Genotype, Religion } from ".
 const GENDER_LABELS: Record<Gender, string> = { male: "Male", female: "Female", other: "Other" };
 
 const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
-  active: "Active",
+  // "Enrolled", not "Active". Enrollment status and membership.is_active are
+  // different facts — one is "currently in a class", the other "can still sign
+  // in" — and calling them both "Active" put two identical green pills side by
+  // side on the student header. Every other value here already names itself.
+  active: "Enrolled",
   graduated: "Graduated",
   transferred: "Transferred out",
   withdrawn: "Withdrawn",

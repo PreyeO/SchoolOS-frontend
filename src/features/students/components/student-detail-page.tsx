@@ -45,7 +45,11 @@ export function StudentDetailPage({ id }: { id: string }) {
               <h1 className="font-display text-xl font-bold text-ink truncate">
                 {user.first_name} {user.last_name}
               </h1>
-              <ActiveBadge isActive={student.membership.is_active} />
+              {/* The account badge only when it's news. An active account
+                  alongside an enrolment badge adds nothing — both just mean "in
+                  good standing" — whereas a deactivated account sitting next to
+                  "Enrolled" is exactly the contradiction worth showing. */}
+              {!student.membership.is_active && <ActiveBadge isActive={false} />}
               <EnrollmentStatusBadge status={student.enrollment_status} />
             </div>
             <p className="mt-0.5 text-sm text-n-500">{user.email}</p>
