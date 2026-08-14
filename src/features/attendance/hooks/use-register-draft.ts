@@ -29,10 +29,20 @@ export function useRegisterDraft(
   date: string,
   saved: AttendanceRecord[] | undefined,
   students: StudentListItem[] | undefined,
+  // The most recent sync that had marks rejected, plus the query's own data
+  // version. The version is what makes this reliable: invalidateQueries only
+  // *schedules* a refetch, so an isFetching check can read false in the window
+  // before it starts — reconciling then would restore the very marks the server
+  // rejected and mark itself done.
+  reconcile?: { skippedReportId: number | null; savedUpdatedAt: number },
 ) {
   const membershipId = useAuthStore((s) => s.claims?.membership_id ?? null);
   const [draft, setDraft] = useState<Record<string, DraftEntry>>({});
   const [seededKey, setSeededKey] = useState<string | null>(null);
+  const [handledReportId, setHandledReportId] = useState<number | null>(null);
+  // The data version at the moment a rejection was learned of. Anything newer
+  // than this is post-sync server truth.
+  const [baseline, setBaseline] = useState<{ reportId: number; updatedAt: number } | null>(null);
 
   const key = classArmId ? draftKey(classArmId, date) : "";
   const ready = !!classArmId && !!saved && !!students;
@@ -45,6 +55,34 @@ export function useRegisterDraft(
   const rosterIds = new Set((students ?? []).map((s) => s.id));
   const onRoster = (saved ?? []).filter((r) => rosterIds.has(r.student.id));
   const movedOut = (saved ?? []).length - onRoster.length;
+
+  // A rejected mark must not keep showing as though it stuck. This runs in two
+  // steps, both during render like the seed below:
+  //
+  //   1. On learning of a rejection, note the data version we're looking at.
+  //   2. Once a *newer* version has landed — the refetch invalidateQueries
+  //      triggered — drop the stored draft and re-seed from it.
+  //
+  // The result: skipped students revert to whichever mark actually won, while
+  // students whose marks *were* applied keep them, since those are now the
+  // server's own values.
+  const skippedReportId = reconcile?.skippedReportId ?? null;
+  const savedUpdatedAt = reconcile?.savedUpdatedAt ?? 0;
+  const awaitingReconcile = skippedReportId !== null && skippedReportId !== handledReportId;
+
+  if (awaitingReconcile && baseline?.reportId !== skippedReportId) {
+    setBaseline({ reportId: skippedReportId, updatedAt: savedUpdatedAt });
+  } else if (
+    awaitingReconcile &&
+    ready &&
+    baseline &&
+    baseline.reportId === skippedReportId &&
+    savedUpdatedAt > baseline.updatedAt
+  ) {
+    clearDraft(membershipId, key);
+    setSeededKey(null);
+    setHandledReportId(skippedReportId);
+  }
 
   if (ready && seededKey !== key) {
     const seed: Record<string, DraftEntry> = {};

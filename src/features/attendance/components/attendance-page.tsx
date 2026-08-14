@@ -58,7 +58,13 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
   const { data: roster, isPending: rosterLoading, error: rosterError } = useRoster(selectedId);
-  const { data: saved, isPending: savedLoading } = useAttendance(selectedId, date);
+  const {
+    data: saved,
+    isPending: savedLoading,
+    // Bumped on every successful fetch, whether or not the rows changed — which
+    // is exactly what "the refetch has landed" needs.
+    dataUpdatedAt: savedUpdatedAt,
+  } = useAttendance(selectedId, date);
   const bulkMark = useBulkMark();
 
   // isPaused means "queued because there's no network", which is a finished
@@ -70,7 +76,10 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
 
   const students = roster?.students;
   const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount, movedOut } =
-    useRegisterDraft(selectedId, date, saved, students);
+    useRegisterDraft(selectedId, date, saved, students, {
+      skippedReportId: lastSkipped?.id ?? null,
+      savedUpdatedAt,
+    });
 
   const counts = useMemo(() => {
     const tally: Record<string, number> = {};
