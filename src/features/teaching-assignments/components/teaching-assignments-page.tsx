@@ -140,8 +140,12 @@ export function TeachingAssignmentsPage() {
               // has nothing to assign a teacher to. Say that rather than showing
               // an empty list that looks broken.
               <div className="py-6 text-center">
+                {/* One template literal rather than `{label} takes no…`: the arm
+                    name butting straight up against the next word was reported
+                    here, and building the sentence in JS puts the spacing beyond
+                    the reach of any JSX whitespace handling. */}
                 <p className="text-sm font-medium text-ink">
-                  {selected?.label} doesn&rsquo;t take any subjects yet
+                  {`No subjects added to ${selected?.label ?? "this class"} yet`}
                 </p>
                 <p className="mx-auto mt-1 max-w-sm text-sm text-n-500">
                   Add the subjects this class takes before assigning teachers to them.
@@ -174,6 +178,8 @@ export function TeachingAssignmentsPage() {
           armLabel={selected?.label ?? ""}
           subject={assigningSubject}
           alreadyAssignedIds={(bySubject.get(assigningSubject.id) ?? []).map((a) => a.teacher.id)}
+          armSubjects={offeredSubjects}
+          armAssignments={assignments ?? []}
         />
       )}
     </div>

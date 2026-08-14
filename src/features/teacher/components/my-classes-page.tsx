@@ -24,7 +24,8 @@ export function MyClassesPage() {
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">My Classes</h1>
         <p className="mt-1 text-sm text-n-500">
-          The class arms you lead or teach in, and the subjects you take in each.
+          Every class you&rsquo;re assigned to — as its form teacher, or for a subject you
+          teach in it.
         </p>
       </div>
 
@@ -79,7 +80,8 @@ export function MyClassesPage() {
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-n-400 italic">
-                    You lead this class but take no subjects in it.
+                    You&rsquo;re the form teacher here, but aren&rsquo;t assigned to teach a
+                    subject in it.
                   </p>
                 )}
               </div>

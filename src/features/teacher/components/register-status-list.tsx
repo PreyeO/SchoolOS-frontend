@@ -9,24 +9,33 @@ import type { RegisterStatus } from "../hooks/use-teacher-overview";
 // Marked / not-marked is a state, not a magnitude — so a list with status chips,
 // not a chart. Status colour always ships with an icon and a word, never colour
 // alone.
+//
+// Every row here is a form class (see useTeacherOverview), so there is no longer
+// a "Form class" badge — a badge on every row distinguishes nothing.
 export function RegisterStatusList({ registers }: { registers: RegisterStatus[] }) {
+  if (registers.length === 0) {
+    return (
+      <p className="py-6 text-sm text-n-400">
+        You&rsquo;re not the form teacher of any class, so no daily register is yours to
+        take. The subjects you teach are listed under{" "}
+        <Link href="/my-classes" className="text-primary hover:underline">
+          My Classes
+        </Link>
+        .
+      </p>
+    );
+  }
+
   return (
     <ul className="divide-y divide-n-100">
       {registers.map((register) => (
         <li key={register.classArmId} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2">
-              <span className="truncate text-sm font-medium text-ink">{register.label}</span>
-              {/* The arm they're form teacher of — the register that's actually
-                  theirs to take, as opposed to one they teach a subject in. */}
-              {register.isFormClass && (
-                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                  Form class
-                </span>
-              )}
-            </span>
+            <span className="truncate text-sm font-medium text-ink">{register.label}</span>
             <span className="block truncate text-xs text-n-400">
-              {register.subjects.length > 0 ? register.subjects.join(", ") : "No subjects assigned"}
+              {register.subjects.length > 0
+                ? register.subjects.join(", ")
+                : "You take no subjects in this class"}
             </span>
           </span>
 

@@ -126,18 +126,30 @@ export function useTeacherOverview() {
   const recordsByArm = results.map((r) => r.data ?? []);
   const allRecords = recordsByArm.flat();
 
-  const registers: RegisterStatus[] = classes.map((klass, i) => {
-    const todays = recordsByArm[i].filter((r) => r.date === today);
-    return {
-      classArmId: klass.classArmId,
-      label: klass.label,
-      subjects: klass.subjects,
-      isFormClass: klass.isFormClass,
-      markedToday: todays.length > 0,
-      presentToday: todays.filter((r) => PRESENT_STATUSES.has(r.status)).length,
-      totalToday: todays.length,
-    };
-  });
+  // Form classes only. The backend authorises *any* teacher to mark *any* arm
+  // (AttendanceService._authorize_marker checks only that you're a teacher), but
+  // the daily register belongs to the form teacher. Listing every arm someone
+  // teaches a subject in manufactured an obligation they don't have, and left
+  // two teachers both looking at the same register marked "Not marked".
+  //
+  // Mapped before filtering because the index is what pairs a class with its
+  // fetched records — the queries are keyed off the unfiltered `classes` list,
+  // which stays that way so the trend and headcount still span everything they
+  // teach.
+  const registers: RegisterStatus[] = classes
+    .map((klass, i) => {
+      const todays = recordsByArm[i].filter((r) => r.date === today);
+      return {
+        classArmId: klass.classArmId,
+        label: klass.label,
+        subjects: klass.subjects,
+        isFormClass: klass.isFormClass,
+        markedToday: todays.length > 0,
+        presentToday: todays.filter((r) => PRESENT_STATUSES.has(r.status)).length,
+        totalToday: todays.length,
+      };
+    })
+    .filter((register) => register.isFormClass);
 
   const trend = buildTrend(allRecords);
 

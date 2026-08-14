@@ -107,11 +107,13 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
           ) : matches.length === 0 ? (
             <div className="space-y-1 py-6 text-center">
               <p className="text-sm text-n-500">
-                {query ? "No teachers match that search." : "No eligible teachers yet."}
+                {query ? "No teachers match that search." : "No teachers to choose from yet."}
               </p>
               {!query && (
                 <p className="text-xs text-n-400">
-                  Only teachers of type {teacherTypeLabel("class")} or {teacherTypeLabel("both")} can lead a class.
+                  A class can only be led by someone added as a {teacherTypeLabel("class")} or{" "}
+                  {teacherTypeLabel("both")} teacher. Invite one, or change an existing
+                  teacher&rsquo;s type.
                 </p>
               )}
             </div>

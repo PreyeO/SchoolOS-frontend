@@ -55,6 +55,21 @@ export function OfferSubjectsDialog({ classArmId, armLabel, available }: Props) 
   const query = search.trim().toLowerCase();
   const matches = available.filter((s) => !query || s.name.toLowerCase().includes(query));
 
+  // A new arm usually takes nearly every subject at its level, so ticking twenty
+  // boxes by hand is the common case rather than the exception.
+  const allMatchesSelected = matches.length > 0 && matches.every((s) => selected.has(s.id));
+
+  function toggleAllMatches() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      // Scoped to what's on screen. Acting on the whole list while a search is
+      // active would silently add subjects the admin can't see, and clearing
+      // would silently drop ones they'd already ticked.
+      matches.forEach((s) => (allMatchesSelected ? next.delete(s.id) : next.add(s.id)));
+      return next;
+    });
+  }
+
   async function submit() {
     if (selected.size === 0) return;
     try {
@@ -100,32 +115,55 @@ export function OfferSubjectsDialog({ classArmId, armLabel, available }: Props) 
               {query ? "No subjects match that search." : "Every subject at this level is already added."}
             </p>
           ) : (
-            <ul className="max-h-64 space-y-1 overflow-y-auto pr-0.5">
-              {matches.map((subject) => {
-                const isSelected = selected.has(subject.id);
-                return (
-                  <li key={subject.id}>
-                    <button
-                      type="button"
-                      onClick={() => toggle(subject.id)}
-                      aria-pressed={isSelected}
-                      className={cn(
-                        "flex w-full cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors",
-                        isSelected ? "border-primary/40 bg-primary/5" : "border-n-200 hover:border-n-300",
-                      )}
-                    >
-                      <span className="min-w-0 flex-1 truncate text-sm text-ink">{subject.name}</span>
-                      {subject.is_core && (
-                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                          Core
-                        </span>
-                      )}
-                      {isSelected && <Check className="size-4 shrink-0 text-primary" />}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-n-400">
+                  {selected.size > 0
+                    ? `${selected.size} selected`
+                    : `${matches.length} available${query ? " in this search" : ""}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleAllMatches}
+                  className="cursor-pointer text-xs font-medium text-primary hover:underline"
+                >
+                  {allMatchesSelected
+                    ? query
+                      ? "Clear these"
+                      : "Clear all"
+                    : query
+                      ? `Select all ${matches.length} matching`
+                      : `Select all ${matches.length}`}
+                </button>
+              </div>
+
+              <ul className="max-h-64 space-y-1 overflow-y-auto pr-0.5">
+                {matches.map((subject) => {
+                  const isSelected = selected.has(subject.id);
+                  return (
+                    <li key={subject.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggle(subject.id)}
+                        aria-pressed={isSelected}
+                        className={cn(
+                          "flex w-full cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors",
+                          isSelected ? "border-primary/40 bg-primary/5" : "border-n-200 hover:border-n-300",
+                        )}
+                      >
+                        <span className="min-w-0 flex-1 truncate text-sm text-ink">{subject.name}</span>
+                        {subject.is_core && (
+                          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            Core
+                          </span>
+                        )}
+                        {isSelected && <Check className="size-4 shrink-0 text-primary" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </div>
 
@@ -136,7 +174,9 @@ export function OfferSubjectsDialog({ classArmId, armLabel, available }: Props) 
           <Button type="button" onClick={submit} disabled={selected.size === 0 || add.isPending}>
             {add.isPending
               ? "Adding…"
-              : `Add ${selected.size || ""} subject${selected.size === 1 ? "" : "s"}`.replace("  ", " ")}
+              : selected.size === 0
+                ? "Add subjects"
+                : `Add ${selected.size} subject${selected.size === 1 ? "" : "s"}`}
           </Button>
         </DialogFooter>
       </DialogContent>

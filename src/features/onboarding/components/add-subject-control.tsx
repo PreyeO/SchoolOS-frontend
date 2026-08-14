@@ -16,7 +16,10 @@ interface Props {
 
 export function AddSubjectControl({ schoolLevels, onAdd }: Props) {
   const [name, setName] = useState("");
-  const [levels, setLevels] = useState<Set<SchoolLevelValue>>(new Set(schoolLevels));
+  // Deliberately empty. Pre-selecting every level meant a subject typed in a
+  // hurry landed on all of them at once, and an already-highlighted chip reads
+  // as a choice the admin made rather than one still waiting on them.
+  const [levels, setLevels] = useState<Set<SchoolLevelValue>>(new Set());
   const options = SCHOOL_LEVELS.filter((l) => schoolLevels.includes(l.value));
 
   function toggleLevel(value: SchoolLevelValue) {
@@ -32,7 +35,7 @@ export function AddSubjectControl({ schoolLevels, onAdd }: Props) {
     const added = onAdd(name.trim(), [...levels]);
     if (added > 0) {
       setName("");
-      setLevels(new Set(schoolLevels));
+      setLevels(new Set());
     }
   }
 
@@ -60,6 +63,12 @@ export function AddSubjectControl({ schoolLevels, onAdd }: Props) {
           <Plus className="size-4 mr-1" /> Add
         </Button>
       </div>
+      {/* Labelled because nothing is pre-selected: an unlabelled row of unlit
+          chips gives no hint that a choice is still owed before Add will work. */}
+      <p className="text-xs text-n-500">
+        Which levels is it taught at?
+        {levels.size === 0 && <span className="ml-1 text-n-400">Pick at least one.</span>}
+      </p>
       <div className="flex flex-wrap gap-1.5">
         {options.map((l) => (
           <button

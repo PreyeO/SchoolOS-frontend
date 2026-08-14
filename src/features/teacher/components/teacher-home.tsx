@@ -54,7 +54,10 @@ export function TeacherHome() {
             {term && <span className="text-n-400"> · {term}</span>}
           </p>
         </div>
-        {!isPending && classes.length > 0 && (
+        {/* Gated on `registers`, not `classes`: for a subject-only teacher the
+            list is empty, and "All registers marked today" would be a cheerful
+            lie about work that was never theirs. */}
+        {!isPending && registers.length > 0 && (
           <p className="text-sm text-n-500">
             {unmarkedToday === 0 ? (
               <span className="text-ink">All registers marked today.</span>
