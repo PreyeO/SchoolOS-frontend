@@ -216,7 +216,13 @@ export function AssignSubjectTeacherDialog({
                   </button>
                 )}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              {/* Capped and scrollable: a senior arm can offer 20+ subjects, and
+                  unbounded chips pushed the Assign button out of reach. Sized so
+                  roughly three rows show, which is enough to read as scrollable
+                  without the dialog needing to scroll as a whole. */}
+              {/* content-start because a wrapped flex row in a height-capped box
+                  otherwise stretches its lines to fill, spacing the chips out. */}
+              <div className="flex max-h-28 flex-wrap content-start gap-1.5 overflow-y-auto pr-0.5">
                 {otherSubjects.map((s) => {
                   const held = heldByTeacher.has(s.id);
                   const on = extras.has(s.id);
