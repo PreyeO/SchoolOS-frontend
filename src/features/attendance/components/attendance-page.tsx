@@ -7,13 +7,14 @@ import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/shared/error-state";
+import { OfflineNotice } from "@/components/shared/offline-notice";
 import { useCanMarkAttendance } from "@/lib/auth/use-personas";
 import { ArmPicker } from "@/components/shared/arm-picker";
 import { getErrorMessage, isPermissionDeniedError } from "@/lib/api/get-error-message";
-import { armlessClasses, buildArmOptions } from "@/lib/school/arm-options";
+import { armlessClasses, buildArmOptions, type ArmOptionGroup } from "@/lib/school/arm-options";
 import { teachingUnitWords } from "@/lib/school/teaching-unit";
 import { useClasses } from "@/features/settings/hooks/use-classes";
-import { useMyClasses } from "@/features/teacher/hooks/use-my-classes";
+import { useMyClasses, type MyClass } from "@/features/teacher/hooks/use-my-classes";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useBulkMark } from "../hooks/use-bulk-mark";
@@ -25,6 +26,26 @@ import { ATTENDANCE_STATUSES } from "../types";
 import { RegisterRow } from "./register-row";
 import { SkippedMarksPanel } from "./skipped-marks-panel";
 import { SyncStatusStrip } from "./sync-status-strip";
+
+// The teacher's own arms, shaped like the picker's normal input. One group, not
+// grouped by level — /me doesn't carry a level per arm, and a teacher has a
+// handful of classes rather than a school-sized list, so there's nothing to
+// group. armId is what every payload needs and it's the same id either way.
+function armOptionsFromMyClasses(myClasses: MyClass[]): ArmOptionGroup[] {
+  if (myClasses.length === 0) return [];
+  return [
+    {
+      level: "primary",
+      levelLabel: "Your classes",
+      options: myClasses.map((klass) => ({
+        armId: klass.classArmId,
+        label: klass.label,
+        className: klass.className,
+        level: "primary" as const,
+      })),
+    },
+  ];
+}
 
 // Local calendar date as YYYY-MM-DD. Not toISOString(), which converts to UTC
 // and hands back yesterday for anyone marking a register before ~1am WAT.
@@ -38,7 +59,15 @@ function todayLocal(): string {
 export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const canMark = useCanMarkAttendance();
   const sessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
-  const { data: classes, isPending: classesLoading, isError, error } = useClasses();
+  const {
+    data: classes,
+    isPending: classesLoading,
+    // Offline with nothing cached, TanStack pauses rather than fails. Told apart
+    // from a real load so the page can say so instead of spinning forever.
+    isPaused: classesPaused,
+    isError,
+    error,
+  } = useClasses();
   const { classes: myClasses } = useMyClasses();
 
   const [armId, setArmId] = useState<string | null>(null);
@@ -46,7 +75,15 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const lastSkipped = useLastSkippedReport();
   const [dismissedReportId, setDismissedReportId] = useState<number | null>(null);
 
-  const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
+  // The school-wide class list is the richer source — it groups by level and
+  // knows about arms with no teacher. But it's an admin-shaped request a teacher
+  // doesn't need, and on a device that has never loaded it there's nothing
+  // cached. /me is always persisted and already carries the arms this teacher is
+  // responsible for, so it stands in when the full list isn't there.
+  const groups = useMemo(
+    () => (classes ? buildArmOptions(classes) : armOptionsFromMyClasses(myClasses)),
+    [classes, myClasses],
+  );
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
   const skipped = useMemo(() => armlessClasses(classes ?? []), [classes]);
   // This school's own word for the thing holding a register.
@@ -107,12 +144,24 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
     });
   }
 
-  if (classesLoading) {
-    return <p className="text-sm text-n-400" role="status">Loading classes…</p>;
-  }
+  // Order matters. A teacher whose own arms are known can open their register
+  // even with no class list at all, so that's checked before any loading or
+  // error state — otherwise the page would block on a request it doesn't need.
+  const canWorkFromMyClasses = allOptions.length > 0;
 
-  if (isError || !classes) {
-    return <ErrorState error={error} resourceLabel="your classes" />;
+  if (!canWorkFromMyClasses) {
+    // Paused, not loading: offline with nothing cached. Saying "Loading…" here
+    // was the forever-spinner — the request cannot resolve until the network
+    // returns, so the honest answer is that there's no saved copy.
+    if (classesPaused) {
+      return <OfflineNotice resourceLabel="Your class list" />;
+    }
+    if (classesLoading) {
+      return <p className="text-sm text-n-400" role="status">Loading classes…</p>;
+    }
+    if (isError || !classes) {
+      return <ErrorState error={error} resourceLabel="your classes" />;
+    }
   }
 
   const loadingRegister = rosterLoading || savedLoading;

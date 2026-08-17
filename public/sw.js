@@ -14,7 +14,12 @@
  * behind the app's back.
  */
 
-const VERSION = "v2";
+// Read off this worker's own URL, which ServiceWorkerProvider stamps with the
+// build id (/sw.js?v=…). It used to be a hand-edited constant, which nobody ever
+// bumped — so caches from builds long since replaced stayed live for months, and
+// a single flaky fetch could serve a document referencing chunk hashes that no
+// longer exist. Now every deploy is its own generation and activate clears the rest.
+const VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
 const SHELL_CACHE = `schoolos-shell-${VERSION}`;
 const ASSET_CACHE = `schoolos-assets-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -23,7 +28,7 @@ const OFFLINE_URL = "/offline";
 // the register by clicking the sidebar, which is a client-side navigation — the
 // browser never requests the /attendance document at all, so nothing would be
 // cached to serve on a later cold start.
-const PRECACHE_URLS = [OFFLINE_URL, "/attendance", "/dashboard"];
+const PRECACHE_URLS = [OFFLINE_URL, "/attendance", "/dashboard", "/my-classes"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -69,7 +74,8 @@ function isStaticAsset(url) {
 }
 
 // Content-hashed and immutable, so a hit is always correct and the network is
-// never worth waiting for.
+// never worth waiting for. No ignoreSearch here on purpose — for a static asset
+// the query string is part of its identity.
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -95,7 +101,18 @@ async function networkFirst(request, { fallbackToOfflinePage }) {
     // The Cache API honours the response's Vary header, and Next varies on RSC
     // — so a document request can't be answered with an RSC payload, or the
     // reverse, even though both live under the same URL.
-    const cached = await cache.match(request);
+    //
+    // ignoreSearch is what makes the register reachable at all. Every link into
+    // it carries the arm id — /attendance?arm=<uuid> — while what's cached is
+    // the bare /attendance from precache. Cache matching includes the query
+    // string by default, so those never matched and every "Take register" tap
+    // landed on the offline page claiming the route had never been opened.
+    //
+    // Safe here because the query string is only ever read client-side after
+    // hydration: the server returns the same document for /attendance whatever
+    // ?arm= says. It would be wrong for any future route whose server output
+    // depends on its query.
+    const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) return cached;
 
     if (fallbackToOfflinePage) {

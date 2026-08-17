@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { CloudOff } from "lucide-react";
 
 export const metadata: Metadata = { title: "Offline — SchoolOS" };
@@ -16,23 +15,29 @@ export default function OfflinePage() {
         </div>
 
         <h1 className="mt-5 font-display text-2xl font-bold text-ink">You&rsquo;re offline</h1>
+        {/* No longer claims the page was never opened — it often had been, and
+            the cache simply hadn't matched. Says what's true either way. */}
         <p className="mt-2 text-sm leading-relaxed text-n-500">
-          This page hasn&rsquo;t been opened on this device before, so there&rsquo;s no saved
-          copy to show. Pages you&rsquo;ve already visited still work.
+          There&rsquo;s no saved copy of this page on your device, so it can&rsquo;t be
+          shown until you&rsquo;re back on the network.
         </p>
 
         <div className="mt-6 rounded-xl border border-n-200 bg-white p-4 text-left">
           <p className="text-sm font-medium text-ink">Taking a register?</p>
           <p className="mt-1 text-sm text-n-500">
-            If you&rsquo;ve opened it before while online, it still works — marks are saved
-            on this device and sync when you&rsquo;re back on the network.
+            Attendance works offline. Marks are saved on this device and sync as soon
+            as you&rsquo;re back on the network.
           </p>
-          <Link
+          {/* A plain anchor, deliberately. next/link does a client-side RSC
+              fetch, which offline fails with nothing to fall back on — the tap
+              simply did nothing. A real navigation is a document request the
+              service worker can answer from cache. */}
+          <a
             href="/attendance"
             className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
           >
             Open attendance
-          </Link>
+          </a>
         </div>
       </div>
     </div>

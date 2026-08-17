@@ -18,6 +18,14 @@ export const OFFLINE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const PERSISTED_PREFIXES = [
   "attendance", // roster, that date's records, and the dashboard's arm history
   "me", // the teacher's own arms; without it there is no register to open
+  // Classes and subjects. Omitting these was what broke the register offline:
+  // the attendance screen gates on useClasses(), and with networkMode "online"
+  // an offline query holding no cached data *pauses* rather than fails — so it
+  // sat at status "pending" and the page showed "Loading classes…" forever.
+  //
+  // Small and non-sensitive (names and levels, tens of rows), already scoped per
+  // membership and cleared by clearPersistedQueryCaches() on logout.
+  "academic-structure",
 ];
 
 export function shouldPersistQuery(query: Query): boolean {
