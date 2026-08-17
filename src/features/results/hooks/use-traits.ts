@@ -23,8 +23,8 @@ import type {
   SetRemarkPayload,
 } from "../types";
 
-// Under the persisted "results" root, so behaviour rating works offline for the
-// same reason score entry does.
+// Under the "results" root for invalidation, but note that only scores and
+// submission are persisted for offline use — see PERSISTED_KEYS.
 export const TRAITS_QUERY_KEY = ["results", "traits"];
 export const TRAIT_RATINGS_QUERY_KEY = ["results", "trait-ratings"];
 export const REMARKS_QUERY_KEY = ["results", "remarks"];
@@ -55,12 +55,18 @@ export function useRemarks(
   });
 }
 
-// ── Rating: the second offline surface ──────────────────────────────────────
+// ── Rating ──────────────────────────────────────────────────────────────────
 //
-// Same treatment as score entry, and for the same reason: TraitRatingService
-// upserts on (student, trait, academic_period) and resolves conflicts by the
-// client's marked_at. Behaviour is judged in the classroom, so it has to survive
-// having no signal there.
+// A keyed mutation with defaults, so a connection dropping mid-session pauses
+// the batch rather than failing it. Deliberately NOT persisted, though: rating
+// is term-end work done at a desk, and the screen it lives on also carries
+// remarks, which have no client timestamp and so can never be queued. Making
+// half a page work offline is worse than saying it needs a connection.
+//
+// The backend does support replay here (upsert on (student, trait, period),
+// marked_at last-write-wins), so this is a product choice, not a limitation —
+// adding ["results","trait-ratings"] and ["results","traits"] to PERSISTED_KEYS
+// is all it would take to reverse.
 export const TRAIT_RATING_MUTATION_KEY = ["results", "bulk-rate"] as const;
 
 export function registerTraitRatingDefaults(queryClient: QueryClient): void {
