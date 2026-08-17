@@ -5,11 +5,15 @@
 // realArms() can filter it properly; the embedded shapes did not, so this used
 // to match on the name — which worked, but broke the moment that literal changed.
 //
-// is_default now arrives on TeacherClassArmSerializer (teacher class_arms, staff
-// directory) and CurrentEnrollmentSerializer (a student's current_class), so
-// those are decided on the flag. SubjectAssignmentSerializer and
-// MeSubjectAssignmentSerializer still omit it, so their arm_name falls back to
-// the name check. Delete NAME fallback once those two carry the flag too.
+// is_default now arrives on every embedded arm shape but one:
+// TeacherClassArmSerializer (teacher class_arms, staff directory),
+// CurrentEnrollmentSerializer (a student's current_class), and both
+// SubjectAssignment serializers all carry it, so those are decided on the flag.
+//
+// The holdout is ClassArmSubjectResultSubmissionSerializer, which flattens
+// arm_name for the result review screens with no flag beside it — a class with
+// no named arms shows up there as {"arm_name": "Default"}. That one call site is
+// the only remaining reason this fallback exists; delete it once the flag lands.
 const PLACEHOLDER_ARM_NAME = "Default";
 
 interface ArmLike {
