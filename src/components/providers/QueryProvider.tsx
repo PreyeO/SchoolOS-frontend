@@ -17,8 +17,15 @@ import {
   persistKeyFor,
   shouldPersistQuery,
 } from "@/lib/api/query-persistence";
+import { installOnlineManager } from "@/lib/api/online-manager";
 import { registerBulkMarkDefaults } from "@/features/attendance/hooks/use-bulk-mark";
 import { useAuthStore } from "@/stores/auth-store";
+
+// At module scope on purpose, not in an effect. Child effects run before the
+// parent's, so a query mounted below this provider would subscribe — and decide
+// whether to pause — before a useEffect here could correct the state. This has
+// to be true before the first subscription, and it must be exactly once.
+installOnlineManager();
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   // Scopes the persisted cache to the signed-in membership so a shared device
