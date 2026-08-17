@@ -4,16 +4,20 @@ import { AttendancePage } from "@/features/attendance/components/attendance-page
 
 export const metadata: Metadata = { title: "Attendance — SchoolOS" };
 
-// ?arm= preselects a class arm, so "Take register" on a specific class in My
-// Classes or the teacher dashboard lands on that register rather than whichever
-// arm happens to sort first. Read server-side — the same searchParams pattern
-// the invitations route uses, which avoids needing a Suspense boundary.
+// ?arm= and ?date= say which register is open. Both are read here rather than
+// with useSearchParams, which is the same server-side pattern the invitations
+// route uses and avoids needing a Suspense boundary.
+//
+// The date belongs in the URL because it decides *what a save writes to*. Held
+// only in component state it reset to today on every refresh — so a teacher
+// correcting Friday's register, who reloaded for any reason, would carry on
+// marking and silently write those marks to today instead.
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ arm?: string }>;
+  searchParams: Promise<{ arm?: string; date?: string }>;
 }) {
-  const { arm } = await searchParams;
+  const { arm, date } = await searchParams;
 
-  return <AttendancePage initialArmId={arm} />;
+  return <AttendancePage initialArmId={arm} initialDate={date} />;
 }

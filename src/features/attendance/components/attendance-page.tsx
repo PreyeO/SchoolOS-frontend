@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,16 @@ function armOptionsFromMyClasses(myClasses: MyClass[]): ArmOptionGroup[] {
 // invalidate the draft's memos on every pass.
 const NO_RECORDS: AttendanceRecord[] = [];
 
+// A ?date= from the URL, only if it's a real past-or-present calendar date.
+// Anything else — malformed, or ahead of today, which the picker itself forbids —
+// falls back to today rather than opening a register that can't exist.
+function safeDate(value: string | undefined, today: string): string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return today;
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return today;
+  return value > today ? today : value;
+}
+
 // Local calendar date as YYYY-MM-DD. Not toISOString(), which converts to UTC
 // and hands back yesterday for anyone marking a register before ~1am WAT.
 function todayLocal(): string {
@@ -60,7 +71,15 @@ function todayLocal(): string {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
+export function AttendancePage({
+  initialArmId,
+  initialDate,
+}: {
+  initialArmId?: string;
+  initialDate?: string;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
   const canMark = useCanMarkAttendance();
   const sessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
   const {
@@ -74,8 +93,8 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   } = useClasses();
   const { classes: myClasses } = useMyClasses();
 
-  const [armId, setArmId] = useState<string | null>(null);
-  const [date, setDate] = useState(todayLocal());
+  const [armId, setArmId] = useState<string | null>(initialArmId ?? null);
+  const [date, setDate] = useState(() => safeDate(initialDate, todayLocal()));
   const lastSkipped = useLastSkippedReport();
   const [dismissedReportId, setDismissedReportId] = useState<number | null>(null);
 
@@ -100,6 +119,20 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
   const selectedId =
     armId ?? initialArmId ?? myClasses[0]?.classArmId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
+
+  // Keep the URL saying which register is open, so a refresh returns to it
+  // rather than silently snapping back to today's date and the default arm.
+  //
+  // replace, not push: the date input fires on every change, and pushing would
+  // bury the previous page under a dozen history entries. Mirrors the *derived*
+  // selection, so the arm chosen by default on first load is written down too.
+  useEffect(() => {
+    if (!selectedId) return;
+    const params = new URLSearchParams({ arm: selectedId, date });
+    const next = `${pathname}?${params.toString()}`;
+    if (`${window.location.pathname}${window.location.search}` === next) return;
+    router.replace(next, { scroll: false });
+  }, [selectedId, date, pathname, router]);
 
   const {
     data: roster,
