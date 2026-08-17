@@ -18,7 +18,8 @@ export function todayLocal(): string {
 export interface RegisterStatus {
   classArmId: string;
   label: string;
-  subjects: string[];
+  // No `subjects`: the register list is one line per class and doesn't show
+  // them. MyClass still carries them for My Classes and the subject-count tile.
   isFormClass: boolean;
   markedToday: boolean;
   presentToday: number;
@@ -157,7 +158,6 @@ export function useTeacherOverview() {
       return {
         classArmId: klass.classArmId,
         label: klass.label,
-        subjects: klass.subjects,
         isFormClass: klass.isFormClass,
         markedToday: todays.length > 0,
         presentToday: todays.filter((r) => PRESENT_STATUSES.has(r.status)).length,
