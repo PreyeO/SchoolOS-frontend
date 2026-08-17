@@ -5,11 +5,16 @@ import { BookOpen, ClipboardCheck, School } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
+import { OfflineNotice } from "@/components/shared/offline-notice";
 
 import { useMyClasses } from "../hooks/use-my-classes";
 
 export function MyClassesPage() {
-  const { classes, isPending, isError, error } = useMyClasses();
+  const { classes, isPending, unavailableOffline, isError, error } = useMyClasses();
+
+  if (unavailableOffline) {
+    return <OfflineNotice resourceLabel="Your classes" />;
+  }
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading your classes…</p>;
