@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarRange, Download, FileText, Lock, LockOpen } from "lucide-react";
+import { CalendarRange, Download, Eye, FileText, Lock, LockOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
@@ -26,6 +26,7 @@ import {
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import type { ResultSubmission } from "../types";
 import { ReportCardDialog } from "./report-card-dialog";
+import { ReportCardPreviewDialog } from "./report-card-preview-dialog";
 import { ReviewActionDialog } from "./review-action-dialog";
 
 // Locking is the moment results become real: it snapshots the arm's subjects,
@@ -41,6 +42,9 @@ export function PublishResultsPage() {
   const [armId, setArmId] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [viewingStudent, setViewingStudent] = useState<{ id: string; name: string } | null>(null);
+  const [previewingStudent, setPreviewingStudent] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
@@ -303,6 +307,16 @@ export function PublishResultsPage() {
                       </Button>
                       <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPreviewingStudent({ id: student.id, name })}
+                        className="h-8 shrink-0 text-xs text-primary"
+                      >
+                        <Eye className="size-3.5 mr-1" />
+                        Preview report card
+                      </Button>
+                      <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         disabled={download.isPending}
@@ -354,6 +368,16 @@ export function PublishResultsPage() {
           onOpenChange={(next) => !next && setViewingStudent(null)}
           studentId={viewingStudent.id}
           studentName={viewingStudent.name}
+          academicPeriodId={currentTerm.id}
+        />
+      )}
+
+      {previewingStudent && currentTerm && (
+        <ReportCardPreviewDialog
+          open={!!previewingStudent}
+          onOpenChange={(next) => !next && setPreviewingStudent(null)}
+          studentId={previewingStudent.id}
+          studentName={previewingStudent.name}
           academicPeriodId={currentTerm.id}
         />
       )}
