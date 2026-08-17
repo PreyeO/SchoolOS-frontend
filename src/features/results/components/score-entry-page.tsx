@@ -33,7 +33,8 @@ const STATUS_META: Record<SubmissionStatus, { label: string; className: string }
 };
 
 export function ScoreEntryPage() {
-  const { sheets, currentTerm, componentsForLevel, isPending, isError, error } = useScoreSheets();
+  const { sheets, currentTerm, componentsForLevel, isTeacher, isPending, isError, error } =
+    useScoreSheets();
   // Both blocked states below are fixed in Settings, which is admin-only. A
   // teacher still gets told what is wrong — just not pointed at a door that
   // won't open for them.
@@ -150,6 +151,29 @@ export function ScoreEntryPage() {
         marked_at: markedAt,
       })),
     });
+  }
+
+  // Reachable only if a teacher persona was removed while the screen was open —
+  // RouteAccessGuard stops a plain admin getting here. Worth handling anyway,
+  // because the alternative is the raw "Only teachers have subject assignments."
+  if (!isTeacher) {
+    return (
+      <div className="rounded-xl border border-n-200 bg-white p-8 text-center">
+        <p className="text-sm font-medium text-ink">Score entry is for teachers</p>
+        <p className="mx-auto mt-1.5 max-w-md text-sm text-n-500">
+          Scores are entered by the teacher assigned to a subject in a class — there&rsquo;s no
+          administrator override. As an admin you can approve them in{" "}
+          <Link href="/results/review" className="text-primary hover:underline">
+            Result Review
+          </Link>{" "}
+          and release them in{" "}
+          <Link href="/results/publish" className="text-primary hover:underline">
+            Publish Results
+          </Link>
+          .
+        </p>
+      </div>
+    );
   }
 
   if (isPending) {

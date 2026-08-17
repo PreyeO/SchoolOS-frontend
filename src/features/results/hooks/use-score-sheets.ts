@@ -7,6 +7,7 @@ import type { GradeComponent } from "@/features/settings/api/grading-api";
 import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { useGradingSystems } from "@/features/settings/hooks/use-grading-systems";
 import { useMyAssignments } from "@/features/teaching-assignments/hooks/use-my-assignments";
+import { useIsTeacher } from "@/lib/auth/use-personas";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 
 // One thing a teacher can enter scores for: a (class arm, subject) pair they
@@ -29,7 +30,18 @@ export interface CurrentTerm {
 }
 
 export function useScoreSheets() {
-  const { data: assignments, isPending: assignmentsLoading, isError, error } = useMyAssignments();
+  // /subject-assignments/my-assignments is teacher-only — it raises outright for
+  // a caller with no teacher profile, rather than returning an empty list. So the
+  // request is never made for an admin: RouteAccessGuard already keeps a
+  // non-teacher off this screen, and this makes the hook safe if one ever lands
+  // here another way (an admin whose teacher persona was just removed, say).
+  const isTeacher = useIsTeacher();
+  const {
+    data: assignments,
+    isPending: assignmentsLoading,
+    isError,
+    error,
+  } = useMyAssignments(isTeacher);
   const { data: sessions, isPending: sessionsLoading } = useAcademicSessions();
   const { data: gradingSystems, isPending: gradingLoading } = useGradingSystems();
 
@@ -85,7 +97,8 @@ export function useScoreSheets() {
     sheets,
     currentTerm,
     componentsForLevel,
-    isPending: assignmentsLoading || sessionsLoading || gradingLoading,
+    isTeacher,
+    isPending: isTeacher && (assignmentsLoading || sessionsLoading || gradingLoading),
     isError,
     error,
   };

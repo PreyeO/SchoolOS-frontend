@@ -57,11 +57,16 @@ export const academicsGroup: NavGroup = {
       icon: ClipboardCheck,
       description: "Take daily attendance, track patterns, and notify parents of absences.",
     }, false),
-    staffItem({
-      label: "Results & Report Cards",
+    // Teacher-only, not staff. Only the teacher holding the SubjectAssignment for
+    // a (class arm, subject) may enter scores — there is no admin override — and
+    // the screen is built from /subject-assignments/my-assignments, which the
+    // backend refuses outright for anyone with no teacher profile. An admin's
+    // results work is Result Review, Publish Results and Principal's Remarks.
+    teacherItem({
+      label: "Score Entry",
       href: "/results",
       icon: GraduationCap,
-      description: "Enter CA and exam scores, auto-compute positions, and publish branded report cards.",
+      description: "Enter CA and exam scores for the subjects you teach.",
     }, false),
     teacherItem({
       label: "Behaviour Ratings",
