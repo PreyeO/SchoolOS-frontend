@@ -39,11 +39,20 @@ export function useScoreSheets() {
   const {
     data: assignments,
     isPending: assignmentsLoading,
+    isPaused: assignmentsPaused,
     isError,
     error,
   } = useMyAssignments(isTeacher);
-  const { data: sessions, isPending: sessionsLoading } = useAcademicSessions();
-  const { data: gradingSystems, isPending: gradingLoading } = useGradingSystems();
+  const {
+    data: sessions,
+    isPending: sessionsLoading,
+    isPaused: sessionsPaused,
+  } = useAcademicSessions();
+  const {
+    data: gradingSystems,
+    isPending: gradingLoading,
+    isPaused: gradingPaused,
+  } = useGradingSystems();
 
   const sheets: ScoreSheet[] = useMemo(
     () =>
@@ -93,12 +102,22 @@ export function useScoreSheets() {
     return byLevel;
   }, [gradingSystems]);
 
+  // Offline with none of the three ever cached on this device. Told apart from
+  // a real load the same way score-entry's own roster/scores gate is — a query
+  // paused with no persisted data sits at status "pending" forever, so without
+  // this the picker never renders and "Loading your subjects…" never resolves.
+  const unavailableOffline =
+    (assignmentsPaused && !assignments) ||
+    (sessionsPaused && !sessions) ||
+    (gradingPaused && !gradingSystems);
+
   return {
     sheets,
     currentTerm,
     componentsForLevel,
     isTeacher,
     isPending: isTeacher && (assignmentsLoading || sessionsLoading || gradingLoading),
+    unavailableOffline,
     isError,
     error,
   };

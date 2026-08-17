@@ -23,21 +23,24 @@ export default function OfflinePage() {
         </p>
 
         <div className="mt-6 rounded-xl border border-n-200 bg-white p-4 text-left">
-          <p className="text-sm font-medium text-ink">Taking a register?</p>
+          <p className="text-sm font-medium text-ink">Taking a register or entering scores?</p>
           <p className="mt-1 text-sm text-n-500">
-            Attendance works offline. Marks are saved on this device and sync as soon
-            as you&rsquo;re back on the network.
+            Attendance and score entry both work offline for classes you&rsquo;ve already
+            opened. Marks and scores are saved on this device and sync as soon as
+            you&rsquo;re back on the network.
           </p>
-          {/* A plain anchor, deliberately. next/link does a client-side RSC
+          {/* Plain anchors, deliberately. next/link does a client-side RSC
               fetch, which offline fails with nothing to fall back on — the tap
               simply did nothing. A real navigation is a document request the
               service worker can answer from cache. */}
-          <a
-            href="/attendance"
-            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-          >
-            Open attendance
-          </a>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            <a href="/attendance" className="text-sm font-medium text-primary hover:underline">
+              Open attendance
+            </a>
+            <a href="/results" className="text-sm font-medium text-primary hover:underline">
+              Open score entry
+            </a>
+          </div>
         </div>
       </div>
     </div>
