@@ -7,11 +7,13 @@
  * byte-for-byte and are never compiled, so this has no build step and no
  * TypeScript. Keep it plain and dependency-free.
  *
- * Scope: attendance only. The job is to get the app shell to load with no
- * network so a teacher can open a register. API responses are deliberately NOT
- * cached here — TanStack Query persistence owns that data, and a second copy in
- * the SW would be a competing source of truth that could serve a stale roster
- * behind the app's back.
+ * Scope: attendance and score entry — the two screens TanStack Query
+ * persistence has data for (see lib/api/query-persistence.ts). The job is to
+ * get the app shell to load with no network so a teacher can open a register
+ * or a score sheet. API responses are deliberately NOT cached here — TanStack
+ * Query persistence owns that data, and a second copy in the SW would be a
+ * competing source of truth that could serve a stale roster behind the app's
+ * back.
  */
 
 // Read off this worker's own URL, which ServiceWorkerProvider stamps with the
@@ -25,10 +27,11 @@ const ASSET_CACHE = `schoolos-assets-${VERSION}`;
 const OFFLINE_URL = "/offline";
 
 // Warmed at install rather than waiting for a visit. A teacher usually reaches
-// the register by clicking the sidebar, which is a client-side navigation — the
-// browser never requests the /attendance document at all, so nothing would be
-// cached to serve on a later cold start.
-const PRECACHE_URLS = [OFFLINE_URL, "/attendance", "/dashboard", "/my-classes"];
+// the register (or score entry) by clicking the sidebar, which is a
+// client-side navigation — the browser never requests the /attendance or
+// /results document at all, so nothing would be cached to serve on a later
+// cold start.
+const PRECACHE_URLS = [OFFLINE_URL, "/attendance", "/dashboard", "/my-classes", "/results"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

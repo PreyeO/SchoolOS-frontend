@@ -34,8 +34,16 @@ const STATUS_META: Record<SubmissionStatus, { label: string; className: string }
 };
 
 export function ScoreEntryPage() {
-  const { sheets, currentTerm, componentsForLevel, isTeacher, isPending, isError, error } =
-    useScoreSheets();
+  const {
+    sheets,
+    currentTerm,
+    componentsForLevel,
+    isTeacher,
+    isPending,
+    unavailableOffline: sheetsUnavailableOffline,
+    isError,
+    error,
+  } = useScoreSheets();
   // Both blocked states below are fixed in Settings, which is admin-only. A
   // teacher still gets told what is wrong — just not pointed at a door that
   // won't open for them.
@@ -160,6 +168,10 @@ export function ScoreEntryPage() {
         </p>
       </div>
     );
+  }
+
+  if (sheetsUnavailableOffline) {
+    return <OfflineNotice resourceLabel="Your subjects and classes" />;
   }
 
   if (isPending) {
