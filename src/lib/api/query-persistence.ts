@@ -11,38 +11,38 @@ import { ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
 // for both gcTime and the persister's maxAge.
 export const OFFLINE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Only what the register needs to open and be marked offline. Persisting the
-// whole cache would put the admin directories — every student, every teacher —
-// into localStorage on a device that may be shared, for no offline benefit,
-// while competing with the auth store for the same 5MB budget.
-const PERSISTED_PREFIXES = [
-  "attendance", // roster, that date's records, and the dashboard's arm history
-  "me", // the teacher's own arms; without it there is no register to open
-  // Classes and subjects. Omitting these was what broke the register offline:
-  // the attendance screen gates on useClasses(), and with networkMode "online"
-  // an offline query holding no cached data *pauses* rather than fails — so it
-  // sat at status "pending" and the page showed "Loading classes…" forever.
-  //
-  // Small and non-sensitive (names and levels, tens of rows), already scoped per
-  // membership and cleared by clearPersistedQueryCaches() on logout.
-  "academic-structure",
-  // Score entry's own data: the grid for a (arm, subject, term) and its review
-  // status. Same reasoning as attendance — a teacher entering marks in a
-  // classroom needs the sheet to open with no network.
-  "results",
+// Exactly what the offline screens need, named key by key.
+//
+// This was a list of root prefixes, which was too blunt: "results" alone swept
+// in nine query families — the admin review queue, class-arm results, report
+// card settings, remarks (which are online-only by design), and report cards,
+// which are keyed per student and so grew a localStorage entry for every child
+// an admin looked at. All of it sitting on a possibly-shared device for a week,
+// competing with the auth store for the same 5MB.
+//
+// Anything not listed here is simply refetched when the network returns.
+const PERSISTED_KEYS: readonly (readonly string[])[] = [
+  // Roster, the date's records, and the dashboard's arm history.
+  ["attendance"],
+  // The teacher's own arms. Without it there is no register to open.
+  ["me"],
+  // Classes and subjects — the attendance picker gates on them.
+  ["academic-structure"],
   // Which (arm, subject) pairs this teacher may enter scores for. It's the
-  // authorisation as much as the picker, so without it offline there is no sheet
-  // to open at all — the same role /me plays for the register.
-  "my-assignments",
-  // Grading systems: the components a score is entered against, and the maximum
-  // each is validated on. A column can't be rendered, let alone bounded, without
-  // them. Also covers the permissions catalog, which is a handful of strings.
-  "settings",
+  // authorisation as much as the picker.
+  ["my-assignments"],
+  // The components a score is entered against, and each one's maximum. Narrower
+  // than the whole "settings" root, which also holds the permissions catalog.
+  ["settings", "grading-systems"],
+  // Score entry's own two: the grid, and whether it's still editable.
+  ["results", "scores"],
+  ["results", "submission"],
 ];
 
 export function shouldPersistQuery(query: Query): boolean {
-  const root = query.queryKey[0];
-  return typeof root === "string" && PERSISTED_PREFIXES.includes(root);
+  return PERSISTED_KEYS.some((prefix) =>
+    prefix.every((segment, i) => query.queryKey[i] === segment),
+  );
 }
 
 // Scoped per membership, following the schoolos-checklist-dismissed:{schoolId}
