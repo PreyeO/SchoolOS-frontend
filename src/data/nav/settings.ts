@@ -37,6 +37,12 @@ export const settingsGroup: NavGroup = {
       description: "Define grade boundaries, remarks, and how scores are computed.",
     }, false),
     adminItem({
+      label: "Behaviour Traits",
+      href: "/settings/behaviour-traits",
+      icon: SlidersHorizontal,
+      description: "Define the affective and psychomotor traits teachers rate for report cards.",
+    }, false),
+    adminItem({
       label: "Fee Structure",
       href: "/settings/fees",
       icon: Coins,
@@ -65,7 +71,7 @@ export const settingsGroup: NavGroup = {
       href: "/settings/report-cards",
       icon: FileStack,
       description: "Design and customize the layout of your school's report cards.",
-    }),
+    }, false),
     adminItem({
       label: "Subscription & Billing",
       href: "/settings/subscription",
