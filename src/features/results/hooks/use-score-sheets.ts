@@ -51,7 +51,7 @@ export function useScoreSheets() {
         .map((a) => ({
           key: `${a.class_arm_id}:${a.subject.id}`,
           classArmId: a.class_arm_id,
-          armLabel: armDisplayName({ name: a.arm_name }, a.class_name),
+          armLabel: armDisplayName({ name: a.arm_name, is_default: a.is_default }, a.class_name),
           subjectId: a.subject.id,
           subjectName: a.subject.name,
           level: a.subject.level as SchoolLevelValue,

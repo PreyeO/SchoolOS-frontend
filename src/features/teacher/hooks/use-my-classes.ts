@@ -51,9 +51,10 @@ export function useMyClasses() {
     }
     byArm.set(assignment.class_arm_id, {
       classArmId: assignment.class_arm_id,
-      // No is_default here — MeSubjectAssignmentSerializer doesn't send it yet,
-      // so this one still falls back to the name check inside armDisplayName.
-      label: armDisplayName({ name: assignment.arm_name }, assignment.class_name),
+      label: armDisplayName(
+        { name: assignment.arm_name, is_default: assignment.is_default },
+        assignment.class_name,
+      ),
       className: assignment.class_name,
       subjects: [assignment.subject.name],
       isFormClass: false,

@@ -13,6 +13,8 @@ export interface SubjectAssignment {
   class_arm_id: string;
   class_name: string;
   arm_name: string;
+  // See MeClassArm — the placeholder arm, shown as its class name.
+  is_default: boolean;
   created_at: string;
 }
 

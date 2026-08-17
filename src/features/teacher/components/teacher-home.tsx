@@ -11,6 +11,7 @@ import { useSchoolStore } from "@/stores/school-store";
 import { useTeacherOverview } from "../hooks/use-teacher-overview";
 import { AttendanceTrendChart } from "./attendance-trend-chart";
 import { RegisterStatusList } from "./register-status-list";
+import { OfflineActions } from "./offline-actions";
 import { TeacherStatTiles } from "./teacher-stat-tiles";
 
 function greeting(): string {
@@ -80,6 +81,8 @@ export function TeacherHome() {
           </p>
         )}
       </div>
+
+      <OfflineActions />
 
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading your classes…</p>
