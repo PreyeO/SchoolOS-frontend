@@ -86,8 +86,15 @@ function buildAtRisk(records: AttendanceRecord[]): AbsenceEntry[] {
         studentId: r.student.id,
         name: `${r.student.user.first_name} ${r.student.user.last_name}`,
         admissionNumber: r.student.admission_number,
+        // current_class names the arm `arm_name`, not `name`.
         className: r.student.current_class
-          ? armDisplayName(r.student.current_class.arm_name, r.student.current_class.class_name)
+          ? armDisplayName(
+              {
+                name: r.student.current_class.arm_name,
+                is_default: r.student.current_class.is_default,
+              },
+              r.student.current_class.class_name,
+            )
           : "",
         absences: 1,
       });

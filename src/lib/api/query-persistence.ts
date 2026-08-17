@@ -26,6 +26,18 @@ const PERSISTED_PREFIXES = [
   // Small and non-sensitive (names and levels, tens of rows), already scoped per
   // membership and cleared by clearPersistedQueryCaches() on logout.
   "academic-structure",
+  // Score entry's own data: the grid for a (arm, subject, term) and its review
+  // status. Same reasoning as attendance — a teacher entering marks in a
+  // classroom needs the sheet to open with no network.
+  "results",
+  // Which (arm, subject) pairs this teacher may enter scores for. It's the
+  // authorisation as much as the picker, so without it offline there is no sheet
+  // to open at all — the same role /me plays for the register.
+  "my-assignments",
+  // Grading systems: the components a score is entered against, and the maximum
+  // each is validated on. A column can't be rendered, let alone bounded, without
+  // them. Also covers the permissions catalog, which is a handful of strings.
+  "settings",
 ];
 
 export function shouldPersistQuery(query: Query): boolean {

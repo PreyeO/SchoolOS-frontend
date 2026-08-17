@@ -103,6 +103,24 @@ export const CLASS_ARM_SUBJECT_ENDPOINTS = {
   DETAIL: (id: string) => `/api/class-arm-subjects/${id}/`,
 } as const;
 
+// Results. Score entry is authorised per-teacher rather than by permission
+// string — only the teacher holding the SubjectAssignment for a (class_arm,
+// subject) pair may write, with no admin override, mirroring attendance.
+export const SCORE_ENDPOINTS = {
+  LIST: () => `/api/scores/`,
+  BULK_ENTER: () => `/api/scores/bulk-enter/`,
+} as const;
+
+// One row per (class_arm, subject, academic_period), carrying the review status.
+// Filter names are the plain FK fields, not *_id — they're filterset_fields.
+export const RESULT_SUBMISSION_ENDPOINTS = {
+  LIST: () => `/api/subject-result-submissions/`,
+  SUBMIT: (id: string) => `/api/subject-result-submissions/${id}/submit/`,
+  APPROVE: (id: string) => `/api/subject-result-submissions/${id}/approve/`,
+  REJECT: (id: string) => `/api/subject-result-submissions/${id}/reject/`,
+  UNLOCK: (id: string) => `/api/subject-result-submissions/${id}/unlock/`,
+} as const;
+
 export const SUBJECT_ASSIGNMENT_ENDPOINTS = {
   LIST: () => `/api/subject-assignments/`,
   DETAIL: (id: string) => `/api/subject-assignments/${id}/`,

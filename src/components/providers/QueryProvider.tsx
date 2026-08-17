@@ -19,6 +19,7 @@ import {
 } from "@/lib/api/query-persistence";
 import { installOnlineManager } from "@/lib/api/online-manager";
 import { registerBulkMarkDefaults } from "@/features/attendance/hooks/use-bulk-mark";
+import { registerScoreEntryDefaults } from "@/features/results/hooks/use-enter-scores";
 import { useAuthStore } from "@/stores/auth-store";
 
 // At module scope on purpose, not in an effect. Child effects run before the
@@ -70,6 +71,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     // Must happen before any cache is restored: a rehydrated paused mutation
     // looks its function up by key, and finds nothing if this hasn't run.
     registerBulkMarkDefaults(client);
+    registerScoreEntryDefaults(client);
     return client;
   });
 

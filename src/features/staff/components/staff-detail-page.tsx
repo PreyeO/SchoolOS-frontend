@@ -82,9 +82,8 @@ export function StaffDetailPage({ id }: { id: string }) {
                 key={arm.id}
                 className="rounded-full border border-n-200 px-2.5 py-0.5 text-xs text-ink"
               >
-                {/* Same placeholder guard as the teacher's own screens — this
-                    serializer doesn't expose is_default either. */}
-                {armDisplayName(arm.name, arm.class_name)}
+                {/* Placeholder arms show their class name, never "Default". */}
+                {armDisplayName(arm, arm.class_name)}
               </li>
             ))}
           </ul>

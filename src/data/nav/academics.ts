@@ -62,7 +62,13 @@ export const academicsGroup: NavGroup = {
       href: "/results",
       icon: GraduationCap,
       description: "Enter CA and exam scores, auto-compute positions, and publish branded report cards.",
-    }),
+    }, false),
+    adminItem({
+      label: "Result Review",
+      href: "/results/review",
+      icon: FileText,
+      description: "Approve or send back the scores teachers have submitted.",
+    }, false),
     staffItem({
       label: "Exams & CBT",
       href: "/exams",

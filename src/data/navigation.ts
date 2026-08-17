@@ -6,7 +6,7 @@ import { communicationGroup } from "./nav/communication";
 import { operationsGroup } from "./nav/operations";
 import { insightsGroup } from "./nav/insights";
 import { settingsGroup } from "./nav/settings";
-import type { Persona } from "./nav/types";
+import type { NavItem, Persona } from "./nav/types";
 
 export type { NavGroup, NavItem, Persona } from "./nav/types";
 export { isPersona } from "./nav/types";
@@ -28,6 +28,34 @@ export function getNavItemByHref(href: string) {
     if (item) return item;
   }
   return undefined;
+}
+
+// The nav item governing a pathname, including nested routes: /students/<id>
+// resolves to the /students item. Longest match wins, so /settings/grading picks
+// the grading item rather than /settings.
+//
+// This turns the nav's persona declarations into the single source of truth for
+// access, rather than a second list that could drift from it.
+export function findNavItemForPath(pathname: string) {
+  let best: NavItem | undefined;
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      const matches = item.href === pathname || pathname.startsWith(`${item.href}/`);
+      if (matches && (!best || item.href.length > best.href.length)) best = item;
+    }
+  }
+  return best;
+}
+
+// Whether these personas may open this path.
+//
+// A path with no nav item is deliberately allowed: detail pages, the onboarding
+// wizard and the platform area aren't in the sidebar, and denying by default
+// would lock people out of routes this registry was never meant to describe.
+export function canAccessPath(pathname: string, personas: Persona[]): boolean {
+  const item = findNavItemForPath(pathname);
+  if (!item) return true;
+  return item.personas.some((p) => personas.includes(p));
 }
 
 // Personas are not exclusive — a user can be an admin and a teacher at the same

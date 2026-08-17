@@ -72,7 +72,7 @@ export function EnrollStudentDialog({ studentId, studentName, currentClass, trig
             <p className="text-sm text-n-500">
               Currently in{" "}
               <span className="font-medium text-ink">
-                {armDisplayName(currentClass.arm_name, currentClass.class_name)}
+                {armDisplayName({ name: currentClass.arm_name, is_default: currentClass.is_default }, currentClass.class_name)}
               </span>{" "}
               for {currentClass.session}.
             </p>

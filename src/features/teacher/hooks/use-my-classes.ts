@@ -31,10 +31,10 @@ export function useMyClasses() {
     byArm.set(arm.id, {
       classArmId: arm.id,
       // armDisplayName, not arm.name: a school that never named an arm carries a
-      // placeholder called "Default", and /me gives no way to spot it beyond the
-      // name itself. Showing it verbatim would present the internal word to the
-      // teacher as though it were their class.
-      label: armDisplayName(arm.name, arm.class_name),
+      // placeholder literally called "Default", which must never be shown to a
+      // teacher as though it were their class. /me now sends is_default, so this
+      // is decided on the flag rather than the name.
+      label: armDisplayName(arm, arm.class_name),
       className: arm.class_name,
       subjects: [],
       isFormClass: true,
@@ -51,7 +51,9 @@ export function useMyClasses() {
     }
     byArm.set(assignment.class_arm_id, {
       classArmId: assignment.class_arm_id,
-      label: armDisplayName(assignment.arm_name, assignment.class_name),
+      // No is_default here — MeSubjectAssignmentSerializer doesn't send it yet,
+      // so this one still falls back to the name check inside armDisplayName.
+      label: armDisplayName({ name: assignment.arm_name }, assignment.class_name),
       className: assignment.class_name,
       subjects: [assignment.subject.name],
       isFormClass: false,

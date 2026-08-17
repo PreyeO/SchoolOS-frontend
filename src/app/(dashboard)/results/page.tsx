@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/features/dashboard/components/coming-soon";
+import { ScoreEntryPage } from "@/features/results/components/score-entry-page";
 
-export const metadata: Metadata = { title: "Results & Report Cards — SchoolOS" };
+export const metadata: Metadata = { title: "Score entry — SchoolOS" };
 
 export default function Page() {
-  return <ComingSoon href="/results" />;
+  return <ScoreEntryPage />;
 }

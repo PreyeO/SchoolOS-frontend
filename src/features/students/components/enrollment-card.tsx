@@ -32,7 +32,7 @@ export function EnrollmentCard({ studentId, studentName, currentClass }: Props) 
           {currentClass ? (
             <p className="mt-1 text-sm text-ink">
               <span className="font-medium">
-                {armDisplayName(currentClass.arm_name, currentClass.class_name)}
+                {armDisplayName({ name: currentClass.arm_name, is_default: currentClass.is_default }, currentClass.class_name)}
               </span>
               <span className="text-n-400"> · {currentClass.session}</span>
             </p>

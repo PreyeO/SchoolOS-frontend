@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { RouteAccessGuard } from "@/components/auth/route-access-guard";
 import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
 import { PortalContainerProvider } from "@/components/ui/portal-container";
 import { pickReadableForeground } from "@/lib/contrast";
@@ -42,7 +43,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-1 flex-col min-w-0">
             <AppTopbar />
             <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-              <div className="mx-auto max-w-6xl">{children}</div>
+              {/* Inside the shell, not around it: someone who lands on a page
+                  that isn't theirs still needs the sidebar to get somewhere
+                  that is. */}
+              <div className="mx-auto max-w-6xl">
+                <RouteAccessGuard>{children}</RouteAccessGuard>
+              </div>
             </main>
           </div>
         </div>

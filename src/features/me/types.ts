@@ -24,6 +24,9 @@ export interface MeAdminBlock {
 export interface MeClassArm {
   id: string;
   name: string;
+  // True for the system placeholder arm a class gets when it has none of its
+  // own. Its name is literally "Default", which must never reach a teacher.
+  is_default: boolean;
   class_id: string;
   class_name: string;
 }
