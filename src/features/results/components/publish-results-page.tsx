@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarRange, Download, FileText, Lock, LockOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,11 @@ import { ErrorState } from "@/components/shared/error-state";
 import { useRoster } from "@/features/attendance/hooks/use-register";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
+import { cn } from "@/lib/utils";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
+
+import { useArmSubjects } from "@/features/teaching-assignments/hooks/use-arm-subjects";
+import { useArmAssignments } from "@/features/teaching-assignments/hooks/use-arm-assignments";
 
 import { useReviewQueue } from "../hooks/use-review-queue";
 import {
@@ -19,6 +24,7 @@ import {
   useUnlockClassArmResult,
 } from "../hooks/use-report-card";
 import { useScoreSheets } from "../hooks/use-score-sheets";
+import type { ResultSubmission } from "../types";
 import { ReportCardDialog } from "./report-card-dialog";
 import { ReviewActionDialog } from "./review-action-dialog";
 
@@ -45,6 +51,10 @@ export function PublishResultsPage() {
   const submissions = submissionData?.submissions;
   const { data: batches } = useClassArmResults(currentTerm?.id);
   const { data: roster, isPending: rosterLoading } = useRoster(selectedId);
+  // The definitive list the backend locks against.
+  const { data: offerings } = useArmSubjects(selectedId);
+  // Only to explain *why* a subject has no scores yet.
+  const { data: assignments } = useArmAssignments(selectedId);
   const lock = useLockClassArmResult();
   const unlock = useUnlockClassArmResult();
   const download = useDownloadReportCard();
@@ -55,16 +65,68 @@ export function PublishResultsPage() {
   );
   const isLocked = batch?.is_locked ?? false;
 
-  // What the lock is waiting on, from the same submissions the review queue
-  // shows. Only APPROVED counts — draft, submitted and rejected all block.
-  const outstanding = useMemo(
+  // What the lock is waiting on — computed from what the arm *offers*, not from
+  // the submissions that happen to exist.
+  //
+  // The backend checks ClassArmSubjectOffering: every subject an arm takes needs
+  // an approved result, whether or not anyone has been assigned to teach it. A
+  // submission row is only created when a teacher first enters a score, so
+  // counting those made every unstaffed subject invisible — this screen said
+  // "All 2 subjects approved" while the server refused the lock and named
+  // twenty more.
+  const offeredSubjects = useMemo(() => (offerings ?? []).map((o) => o.subject), [offerings]);
+
+  const submissionBySubject = useMemo(() => {
+    const map = new Map<string, ResultSubmission>();
+    (submissions ?? []).forEach((s) => {
+      if (s.class_arm === selectedId) map.set(s.subject, s);
+    });
+    return map;
+  }, [submissions, selectedId]);
+
+  const teacherCountBySubject = useMemo(() => {
+    const map = new Map<string, number>();
+    (assignments ?? []).forEach((a) => {
+      map.set(a.subject.id, (map.get(a.subject.id) ?? 0) + 1);
+    });
+    return map;
+  }, [assignments]);
+
+  // Each offered subject with the reason it is or isn't ready. Naming the reason
+  // is the point: "no teacher assigned" is a different job from "teacher hasn't
+  // submitted", and only one of them is chased by talking to a teacher.
+  const subjectStates = useMemo(
     () =>
-      (submissions ?? []).filter((s) => s.class_arm === selectedId && s.status !== "approved"),
-    [submissions, selectedId],
+      offeredSubjects.map((subject) => {
+        const submission = submissionBySubject.get(subject.id);
+        const hasTeacher = (teacherCountBySubject.get(subject.id) ?? 0) > 0;
+        if (submission?.status === "approved") {
+          return { subject, ready: true, reason: "Approved" };
+        }
+        if (submission) {
+          return {
+            subject,
+            ready: false,
+            reason:
+              submission.status === "submitted"
+                ? "Awaiting your review"
+                : submission.status === "rejected"
+                  ? "Sent back, not resubmitted"
+                  : "Scores started, not submitted",
+          };
+        }
+        return {
+          subject,
+          ready: false,
+          reason: hasTeacher ? "No scores entered yet" : "No teacher assigned",
+        };
+      }),
+    [offeredSubjects, submissionBySubject, teacherCountBySubject],
   );
-  const approvedCount = (submissions ?? []).filter(
-    (s) => s.class_arm === selectedId && s.status === "approved",
-  ).length;
+
+  const outstanding = useMemo(() => subjectStates.filter((s) => !s.ready), [subjectStates]);
+  const approvedCount = subjectStates.length - outstanding.length;
+  const unstaffed = outstanding.filter((s) => s.reason === "No teacher assigned").length;
 
   const students = roster?.students;
 
@@ -129,26 +191,53 @@ export function PublishResultsPage() {
                   Unpublish
                 </Button>
               </div>
+            ) : subjectStates.length === 0 ? (
+              <div>
+                <p className="text-sm font-medium text-ink">
+                  {selected?.label ?? "This class"} takes no subjects yet
+                </p>
+                <p className="mt-1 text-sm text-n-500">
+                  There&rsquo;s nothing to publish until subjects are added to it in{" "}
+                  <Link href="/teaching-assignments" className="text-primary hover:underline">
+                    Teaching Assignments
+                  </Link>
+                  .
+                </p>
+              </div>
             ) : outstanding.length > 0 ? (
               <div>
                 <p className="text-sm font-medium text-ink">
-                  {outstanding.length} subject{outstanding.length === 1 ? "" : "s"} still to be
-                  approved
+                  {approvedCount} of {subjectStates.length} subject
+                  {subjectStates.length === 1 ? "" : "s"} ready
                 </p>
                 <p className="mt-1 text-sm text-n-500">
-                  Every subject this class takes must be approved before results can be
-                  published. {approvedCount} of {approvedCount + outstanding.length} are ready.
+                  Every subject this class <em>takes</em> needs an approved result — not only the
+                  ones with a teacher.
+                  {unstaffed > 0 && (
+                    <>
+                      {" "}
+                      {unstaffed} {unstaffed === 1 ? "has" : "have"} nobody assigned: either give{" "}
+                      {unstaffed === 1 ? "it a teacher" : "them teachers"} in{" "}
+                      <Link href="/teaching-assignments" className="text-primary hover:underline">
+                        Teaching Assignments
+                      </Link>
+                      , or remove {unstaffed === 1 ? "it" : "them"} from what this class takes.
+                    </>
+                  )}
                 </p>
                 <ul className="mt-3 flex flex-wrap gap-1.5">
-                  {outstanding.map((s) => (
+                  {outstanding.map(({ subject, reason }) => (
                     <li
-                      key={s.id}
-                      className="rounded-full border border-amber/40 bg-amber/10 px-2.5 py-1 text-xs text-ink"
+                      key={subject.id}
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs text-ink",
+                        reason === "No teacher assigned"
+                          ? "border-clay/40 bg-clay/10"
+                          : "border-amber/40 bg-amber/10",
+                      )}
                     >
-                      {s.subject_name}
-                      <span className="ml-1 text-n-500">
-                        · {s.status === "draft" ? "not submitted" : s.status}
-                      </span>
+                      {subject.name}
+                      <span className="ml-1 text-n-500">· {reason.toLowerCase()}</span>
                     </li>
                   ))}
                 </ul>
@@ -158,8 +247,9 @@ export function PublishResultsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-ink">Ready to publish</p>
                   <p className="mt-0.5 text-sm text-n-500">
-                    All {approvedCount} subject{approvedCount === 1 ? "" : "s"} approved. Locking
-                    computes positions and averages, then releases report cards.
+                    All {approvedCount} subject{approvedCount === 1 ? "" : "s"} this class takes
+                    are approved. Locking computes positions and averages, then releases report
+                    cards.
                   </p>
                 </div>
                 <Button
