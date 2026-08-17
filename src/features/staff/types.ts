@@ -17,6 +17,8 @@ export function canBeClassTeacher(teacher: { teacher_type: TeacherType }): boole
 export interface TeacherClassArm {
   id: string;
   name: string;
+  // See MeClassArm — the placeholder arm, hidden behind the class name.
+  is_default: boolean;
   class_id: string;
   class_name: string;
 }

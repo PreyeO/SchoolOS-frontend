@@ -23,6 +23,8 @@ export interface CurrentClass {
   class_arm_id: string;
   class_name: string;
   arm_name: string;
+  // See MeClassArm — the placeholder arm, hidden behind the class name.
+  is_default: boolean;
   session: string;
 }
 

@@ -1,21 +1,30 @@
-// The literal name the backend gives a placeholder arm, from
-// AcademicService.bulk_create_classes:
+// What to call an arm on teacher- and student-facing screens.
 //
-//   ClassArm.objects.create(klass=class_obj, name="Default", is_default=True)
+// A class created without arms gets a system placeholder literally named
+// "Default". The admin-side endpoints have always exposed is_default so
+// realArms() can filter it properly; the embedded shapes did not, so this used
+// to match on the name — which worked, but broke the moment that literal changed.
 //
-// Matching on it is not something to be pleased about, but it's the only signal
-// available on these surfaces: /me and the staff directory embed arms through
-// TeacherClassArmSerializer, which exposes only {id, name, class_id, class_name}
-// — no is_default. The admin-side endpoints do return the flag, which is why
-// realArms() can do this properly and this can't.
-//
-// Without the guard, a school that never named an arm shows its teachers a class
-// called "Default" — on their dashboard, in My Classes, and on the staff record.
-// The class name is the right answer there, and it's what the admin-side pickers
-// already display for the very same row (see buildArmOptions).
+// is_default now arrives on TeacherClassArmSerializer (teacher class_arms, staff
+// directory) and CurrentEnrollmentSerializer (a student's current_class), so
+// those are decided on the flag. SubjectAssignmentSerializer and
+// MeSubjectAssignmentSerializer still omit it, so their arm_name falls back to
+// the name check. Delete NAME fallback once those two carry the flag too.
 const PLACEHOLDER_ARM_NAME = "Default";
 
-export function armDisplayName(armName: string | null | undefined, className: string): string {
-  if (!armName || armName === PLACEHOLDER_ARM_NAME) return className;
-  return armName;
+interface ArmLike {
+  name: string | null | undefined;
+  // Absent on the two subject-assignment serializers; see above.
+  is_default?: boolean;
+}
+
+export function armDisplayName(arm: ArmLike, className: string): string {
+  if (!arm.name) return className;
+  // A real boolean is authoritative either way — an arm genuinely named
+  // "Default" by a school stays "Default" when the flag says it isn't the
+  // placeholder.
+  if (typeof arm.is_default === "boolean") {
+    return arm.is_default ? className : arm.name;
+  }
+  return arm.name === PLACEHOLDER_ARM_NAME ? className : arm.name;
 }

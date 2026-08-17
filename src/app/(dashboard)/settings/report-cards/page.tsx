@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/features/dashboard/components/coming-soon";
+import { ReportCardSettingsPage } from "@/features/results/components/report-card-settings-page";
 
-export const metadata: Metadata = { title: "Report Card Templates — SchoolOS" };
+export const metadata: Metadata = { title: "Report card design — SchoolOS" };
 
 export default function Page() {
-  return <ComingSoon href="/settings/report-cards" />;
+  return <ReportCardSettingsPage />;
 }

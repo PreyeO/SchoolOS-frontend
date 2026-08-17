@@ -45,7 +45,7 @@ export function StudentHome() {
             <p className="mt-1 text-sm text-n-400" role="status">Loading…</p>
           ) : currentClass ? (
             <p className="mt-0.5 text-lg font-semibold text-ink">
-              {armDisplayName(currentClass.arm_name, currentClass.class_name)}
+              {armDisplayName({ name: currentClass.arm_name, is_default: currentClass.is_default }, currentClass.class_name)}
               <span className="ml-2 text-sm font-normal text-n-400">{currentClass.session}</span>
             </p>
           ) : (

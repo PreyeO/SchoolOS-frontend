@@ -62,7 +62,31 @@ export const academicsGroup: NavGroup = {
       href: "/results",
       icon: GraduationCap,
       description: "Enter CA and exam scores, auto-compute positions, and publish branded report cards.",
-    }),
+    }, false),
+    teacherItem({
+      label: "Behaviour Ratings",
+      href: "/results/behaviour",
+      icon: ClipboardList,
+      description: "Rate your class on the affective and psychomotor traits.",
+    }, false),
+    adminItem({
+      label: "Publish Results",
+      href: "/results/publish",
+      icon: FileText,
+      description: "Lock a class's results to compute positions and release report cards.",
+    }, false),
+    adminItem({
+      label: "Principal's Remarks",
+      href: "/results/remarks",
+      icon: NotebookPen,
+      description: "Add the head's comment to each student's report card.",
+    }, false),
+    adminItem({
+      label: "Result Review",
+      href: "/results/review",
+      icon: FileText,
+      description: "Approve or send back the scores teachers have submitted.",
+    }, false),
     staffItem({
       label: "Exams & CBT",
       href: "/exams",

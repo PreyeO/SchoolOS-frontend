@@ -15,3 +15,16 @@ export function usePersonas(): string[] {
 export function useCanMarkAttendance(): boolean {
   return usePersonas().includes("teacher");
 }
+
+// Whether to offer an administrative fix at all.
+//
+// Several teacher screens explain a blocked state by naming the setting behind
+// it — no current term, no grading system. Linking a teacher to those pages
+// sends them somewhere they can't act and, until RouteAccessGuard, somewhere
+// they shouldn't even see. The explanation is still worth giving; the link isn't.
+//
+// "owner" always travels with "admin" in the token, so testing for admin alone
+// covers both.
+export function useIsSchoolAdmin(): boolean {
+  return usePersonas().includes("admin");
+}

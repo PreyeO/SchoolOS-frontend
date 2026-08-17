@@ -14,7 +14,7 @@ export function TeacherSubjectAssignments({ teacherProfileId }: { teacherProfile
   const groups = new Map<string, { label: string; subjects: string[] }>();
   (assignments ?? []).forEach((a) => {
     const existing = groups.get(a.class_arm_id);
-    const label = armDisplayName(a.arm_name, a.class_name);
+    const label = armDisplayName({ name: a.arm_name }, a.class_name);
     if (existing) existing.subjects.push(a.subject.name);
     else groups.set(a.class_arm_id, { label, subjects: [a.subject.name] });
   });
