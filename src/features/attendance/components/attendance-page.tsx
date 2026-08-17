@@ -22,7 +22,7 @@ import { useAttendance, useRoster } from "../hooks/use-register";
 import { useRegisterDraft } from "../hooks/use-register-draft";
 import { useLastSkippedReport, usePendingMarks } from "../hooks/use-sync-status";
 import { STATUS_META } from "../lib/status-meta";
-import { ATTENDANCE_STATUSES } from "../types";
+import { ATTENDANCE_STATUSES, type AttendanceRecord } from "../types";
 import { RegisterRow } from "./register-row";
 import { SkippedMarksPanel } from "./skipped-marks-panel";
 import { SyncStatusStrip } from "./sync-status-strip";
@@ -46,6 +46,10 @@ function armOptionsFromMyClasses(myClasses: MyClass[]): ArmOptionGroup[] {
     },
   ];
 }
+
+// Module scope so the identity is stable across renders — an inline [] would
+// invalidate the draft's memos on every pass.
+const NO_RECORDS: AttendanceRecord[] = [];
 
 // Local calendar date as YYYY-MM-DD. Not toISOString(), which converts to UTC
 // and hands back yesterday for anyone marking a register before ~1am WAT.
@@ -97,14 +101,33 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
     armId ?? initialArmId ?? myClasses[0]?.classArmId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
-  const { data: roster, isPending: rosterLoading, error: rosterError } = useRoster(selectedId);
+  const {
+    data: roster,
+    isPending: rosterLoading,
+    isPaused: rosterPaused,
+    error: rosterError,
+  } = useRoster(selectedId);
   const {
     data: saved,
     isPending: savedLoading,
+    isPaused: savedPaused,
     // Bumped on every successful fetch, whether or not the rows changed — which
     // is exactly what "the refetch has landed" needs.
     dataUpdatedAt: savedUpdatedAt,
   } = useAttendance(selectedId, date);
+
+  // Today with nothing cached is an *unmarked* register, not a missing one, and
+  // it has to stay markable — a teacher opening the app offline first thing in
+  // the morning has never fetched today's records, and that is precisely the
+  // case this whole feature exists for. Treating it as "no saved copy" would
+  // block the one thing offline attendance promises.
+  //
+  // Past dates deliberately don't get this. Assuming "empty" for a day that was
+  // in fact marked would show a blank register, invite re-marking, and
+  // last-write-wins would then commit those over the real records.
+  const todayUnmarkedOffline = savedPaused && !saved && date === todayLocal();
+  const savedRecords = saved ?? (todayUnmarkedOffline ? NO_RECORDS : undefined);
+
   const bulkMark = useBulkMark();
 
   // isPaused means "queued because there's no network", which is a finished
@@ -116,7 +139,7 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
 
   const students = roster?.students;
   const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount, movedOut } =
-    useRegisterDraft(selectedId, date, saved, students, {
+    useRegisterDraft(selectedId, date, savedRecords, students, {
       skippedReportId: lastSkipped?.id ?? null,
       savedUpdatedAt,
     });
@@ -164,7 +187,21 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
     }
   }
 
-  const loadingRegister = rosterLoading || savedLoading;
+  // Records are cached per date — the key is ["attendance","records",arm,date] —
+  // so offline a date resolves only if it was opened while online. Any other
+  // date pauses forever, which without this check rendered "Loading register…"
+  // indefinitely: the same trap the class list had, reachable just by nudging
+  // the date field back a day.
+  const unavailableOffline = (savedPaused && !savedRecords) || (rosterPaused && !roster);
+  const loadingRegister =
+    !unavailableOffline && (rosterLoading || (savedLoading && !savedRecords));
+
+  // A failed *background* refetch must not hide a roster we already hold.
+  // query-core's error reducer spreads the previous state, so `data` survives
+  // while `status` flips to "error" — meaning a cached, perfectly usable
+  // register would otherwise disappear behind "Couldn't load the class list.
+  // Check your network", which is exactly what a cold start offline produces.
+  const rosterUnavailable = !!rosterError && !roster;
 
   return (
     <div className="space-y-5">
@@ -245,9 +282,24 @@ export function AttendancePage({ initialArmId }: { initialArmId?: string }) {
           </div>
 
           <div className="rounded-xl border border-n-200 bg-white">
-            {loadingRegister ? (
+            {unavailableOffline ? (
+              // Deliberately not seeded from the dashboard's arm-history cache,
+              // which does hold several recent days: that query is capped at 100
+              // records, so a day near the cap arrives half-complete. Showing a
+              // partial register as if it were whole would invite a teacher to
+              // "fix" marks that were already correct, and last-write-wins would
+              // then overwrite the real ones.
+              <div className="p-5">
+                <p className="text-sm font-medium text-ink">No saved copy of this date</p>
+                <p className="mt-1 text-sm text-n-500">
+                  You&rsquo;re offline, and this register hasn&rsquo;t been opened on this
+                  device. Today&rsquo;s register and any date you&rsquo;ve already viewed
+                  still work — this one will load once you&rsquo;re back on the network.
+                </p>
+              </div>
+            ) : loadingRegister ? (
               <p className="p-5 text-sm text-n-400" role="status">Loading register…</p>
-            ) : rosterError ? (
+            ) : rosterUnavailable ? (
               // A failed roster fetch is not an empty class, and saying "no
               // students" for a 403 would send someone hunting for enrolments
               // that are actually there.
