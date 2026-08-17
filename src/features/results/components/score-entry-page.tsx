@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { useRoster } from "@/features/attendance/hooks/use-register";
+import { formatTimestamp } from "@/lib/text/format-timestamp";
 import { useIsSchoolAdmin } from "@/lib/auth/use-personas";
 import { SyncStatusStrip } from "@/features/attendance/components/sync-status-strip";
 import { cn } from "@/lib/utils";
@@ -288,10 +289,24 @@ export function ScoreEntryPage() {
             </p>
           )}
 
+          {/* Attributed, because a note without an author is an instruction from
+              nobody. Knowing which head of department sent it back is what tells
+              a teacher whether to just fix it or go and ask. */}
           {status === "rejected" && submission?.review_comment && (
-            <p className="rounded-lg border border-clay/30 bg-clay/5 px-3.5 py-2.5 text-sm text-ink">
-              <span className="font-medium">Sent back:</span> {submission.review_comment}
-            </p>
+            <div className="rounded-lg border border-clay/30 bg-clay/5 px-3.5 py-3">
+              <p className="flex flex-wrap items-baseline gap-x-2 text-xs">
+                <span className="font-medium text-ink">Sent back for correction</span>
+                {submission.reviewed_by && (
+                  <span className="text-n-500">
+                    by {submission.reviewed_by.first_name} {submission.reviewed_by.last_name}
+                  </span>
+                )}
+                {submission.reviewed_at && (
+                  <span className="text-n-400">{formatTimestamp(submission.reviewed_at)}</span>
+                )}
+              </p>
+              <p className="mt-1.5 text-sm text-ink">{submission.review_comment}</p>
+            </div>
           )}
 
           {components.length === 0 ? (

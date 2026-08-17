@@ -18,6 +18,7 @@ import { ErrorState } from "@/components/shared/error-state";
 
 import { useScores } from "../hooks/use-scores";
 import type { ResultSubmission } from "../types";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 
 interface Props {
   submission: ResultSubmission;
@@ -104,7 +105,7 @@ export function SubmissionScoresDialog({
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>
-            {submission.subject_name} — {submission.arm_name || submission.class_name}
+            {submission.subject_name} — {armDisplayName({ name: submission.arm_name }, submission.class_name)}
           </DialogTitle>
         </DialogHeader>
 

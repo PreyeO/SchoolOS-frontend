@@ -18,6 +18,7 @@ import {
 import type { ResultSubmission, SubmissionStatus } from "../types";
 import { ReviewActionDialog } from "./review-action-dialog";
 import { SubmissionScoresDialog } from "./submission-scores-dialog";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 
 const STATUS_META: Record<SubmissionStatus, { label: string; className: string }> = {
   draft: { label: "Not submitted", className: "bg-n-100 text-n-500" },
@@ -108,7 +109,7 @@ export function ReviewQueuePage() {
                     {s.subject_name}
                   </span>
                   <span className="block truncate text-xs text-n-400">
-                    {s.arm_name || s.class_name}
+                    {armDisplayName({ name: s.arm_name }, s.class_name)}
                     {s.submitted_at && s.submitted_by && (
                       <>
                         {" · "}
