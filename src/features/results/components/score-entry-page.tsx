@@ -62,13 +62,16 @@ export function ScoreEntryPage() {
     data: scoreData,
     isPending: scoresLoading,
     isPaused: scoresPaused,
+    // Bumped on every successful fetch, so the draft knows when a colleague's
+    // entry on another device has landed and the boxes need refreshing.
+    dataUpdatedAt: scoresUpdatedAt,
   } = useScores(filters);
   const { data: submission } = useSubmission(filters);
   const enterScores = useEnterScores();
 
   const students = roster?.students;
   const scores = scoreData?.scores;
-  const { draft, savedForComponent, queued, setScore, clearAll, totals } = useScoreDraft(
+  const { draft, queued, changed, setScore, clearAll, totals } = useScoreDraft(
     {
       classArmId: sheet?.classArmId,
       subjectId: sheet?.subjectId,
@@ -77,6 +80,8 @@ export function ScoreEntryPage() {
     },
     scores,
     students,
+    scoresUpdatedAt,
+    activeComponent?.max_obtainable ?? 0,
   );
   const rejection = useLastScoreRejection();
   const [dismissedRejectionId, setDismissedRejectionId] = useState<number | null>(null);
@@ -98,26 +103,6 @@ export function ScoreEntryPage() {
     });
     return counts;
   }, [scores]);
-
-  // Only what differs from what's stored. Re-sending an unchanged score is
-  // harmless (the backend upserts) but it inflates the payload and the "saved N"
-  // count, which should reflect real edits.
-  const changed = useMemo(() => {
-    if (!activeComponent) return [];
-    return Object.entries(draft).filter(([studentId, value]) => {
-      const trimmed = value.trim();
-      if (trimmed === "" || scoreError(trimmed, activeComponent.max_obtainable)) return false;
-      // A queued score counts as committed — it's on its way to the server, so
-      // it isn't "unsaved". Without this an offline save never takes: the server
-      // copy can't move with no network, so every queued score would stay in
-      // `changed` and the sheet would insist it had work outstanding forever.
-      const inFlight = queued[studentId];
-      if (inFlight !== undefined) return Number(inFlight) !== Number(trimmed);
-      const existing = savedForComponent.get(studentId);
-      if (!existing) return true;
-      return Number(existing.score_obtained) !== Number(trimmed);
-    });
-  }, [draft, savedForComponent, queued, activeComponent]);
 
   const invalidCount = useMemo(() => {
     if (!activeComponent) return 0;

@@ -24,22 +24,36 @@ export interface ScoreSheetKeys {
 // The working state of one score column: saved scores as the baseline, plus
 // whatever the teacher has typed since. Keyed by student id.
 //
-// Seeded during render rather than in an effect (React's "adjust state when data
-// arrives" pattern) so the first paint after a fetch already shows saved scores.
-// The seed key is arm+subject+term+component: changing any of them re-seeds from
-// scratch, because each names a different column of marks and carrying edits
-// across would write one assessment's scores onto another's.
+// Seeded during render (React's "adjust state when data arrives" pattern) so the
+// first paint after a fetch already shows saved scores. The seed key is
+// arm+subject+term+component: changing any of them re-seeds from scratch,
+// because each names a different column of marks.
 //
-// Unsaved edits are mirrored to the device under that same key, so a half-filled
-// column survives a reload, a discarded tab, or a walk to the next classroom.
+// It also re-seeds *within* a column when newer server data lands, which the
+// first version did not — it seeded once per key and never again. The tab counts
+// read `scores` directly so they updated, while the input boxes kept showing the
+// state from first load. Entering marks for the same column in two browsers made
+// that plain: the second browser's counts moved, its boxes didn't.
 export function useScoreDraft(
   keys: ScoreSheetKeys,
   scores: Score[] | undefined,
   students: StudentListItem[] | undefined,
+  // Bumped on every successful fetch, whether or not the rows changed — which is
+  // exactly what "newer server data has landed" needs.
+  scoresUpdatedAt: number,
+  // The active component's ceiling, so "unsaved" and "sendable" are decided once
+  // here rather than recomputed against a different rule by the caller.
+  componentMax: number,
 ) {
   const membershipId = useAuthStore((s) => s.claims?.membership_id ?? null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [seededKey, setSeededKey] = useState<string | null>(null);
+  const [seededAt, setSeededAt] = useState(0);
+  // The exact values the last seed produced. Comparing against this is what
+  // separates a genuine local edit from a value that merely predates a refetch —
+  // without it a re-seed either discards the teacher's typing or preserves stale
+  // numbers forever.
+  const [seededValues, setSeededValues] = useState<Record<string, string>>({});
 
   const { classArmId, subjectId, academicPeriodId, gradeComponentId } = keys;
   const key =
@@ -48,7 +62,6 @@ export function useScoreDraft(
       : null;
   const ready = !!key && !!scores && !!students;
 
-  // Saved scores for the selected component only, by student.
   const savedForComponent = useMemo(() => {
     const map = new Map<string, Score>();
     (scores ?? []).forEach((s) => {
@@ -59,8 +72,9 @@ export function useScoreDraft(
 
   const rosterIds = useMemo(() => new Set((students ?? []).map((s) => s.id)), [students]);
 
-  if (ready && seededKey !== key) {
-    const seed: Record<string, string> = {};
+  // What the server currently holds for this column, as input strings.
+  const serverValues = useMemo(() => {
+    const base: Record<string, string> = {};
     savedForComponent.forEach((score, studentId) => {
       // A score can outlive a student's membership of the arm — Score snapshots
       // class_arm at entry time — so a transfer leaves their mark behind. Those
@@ -68,35 +82,77 @@ export function useScoreDraft(
       if (!rosterIds.has(studentId)) return;
       // Trailing zeros off a DecimalField ("18.00") read as noise in a field the
       // teacher is about to retype, so normalise to the shortest form.
-      seed[studentId] = String(Number(score.score_obtained));
+      base[studentId] = String(Number(score.score_obtained));
     });
+    return base;
+  }, [savedForComponent, rosterIds]);
 
-    // Stored edits go on top of the server's copy: they are the teacher's later
-    // intent, made after this column was last loaded.
+  if (ready && seededKey !== key) {
+    // New column. Stored edits go on top of the server's copy — they're the
+    // teacher's later intent, made after this column was last loaded.
     const stored = readScoreDraft(membershipId, key);
+    const seed = { ...serverValues };
     if (stored) {
       Object.entries(stored).forEach(([studentId, value]) => {
         if (rosterIds.has(studentId)) seed[studentId] = value;
       });
     }
-
     setDraft(seed);
+    setSeededValues(serverValues);
     setSeededKey(key);
+    setSeededAt(scoresUpdatedAt);
+  } else if (ready && seededKey === key && scoresUpdatedAt > seededAt) {
+    // Same column, fresher data. Take the server's values wholesale, then put
+    // back only the cells this teacher has actually changed since the last seed.
+    // A colleague's entry on another device therefore appears, while typing in
+    // progress here is never overwritten by it.
+    const merged = { ...serverValues };
+    Object.entries(draft).forEach(([studentId, value]) => {
+      if (value !== (seededValues[studentId] ?? "")) merged[studentId] = value;
+    });
+    setDraft(merged);
+    setSeededValues(serverValues);
+    setSeededAt(scoresUpdatedAt);
   }
 
-  // Mirror after seeding only. Writing before the seed lands would persist an
-  // empty draft over real stored edits during the render where the column
-  // changes but its data hasn't arrived — silently wiping what's being restored.
+  // Scores handed to the queue but not yet accepted. A queued entry counts as
+  // committed — it's on its way, and resubmitting would duplicate the work. If
+  // the batch later errors it leaves this set and correctly reappears as unsaved.
+  const queued = usePendingScores(classArmId, subjectId, academicPeriodId, gradeComponentId);
+
+  // The single definition of "not yet with the server". Empty means cleared,
+  // which this payload can't express, so it's never sendable; out-of-range
+  // values are held in the draft but excluded here so a slip can't be submitted.
+  const changed = useMemo(
+    () =>
+      Object.entries(draft).filter(([studentId, value]) => {
+        const trimmed = value.trim();
+        if (trimmed === "") return false;
+        const parsed = Number(trimmed);
+        if (Number.isNaN(parsed) || parsed < 0 || parsed > componentMax) return false;
+        const inFlight = queued[studentId];
+        if (inFlight !== undefined) return Number(inFlight) !== parsed;
+        const existing = savedForComponent.get(studentId);
+        if (!existing) return true;
+        return Number(existing.score_obtained) !== parsed;
+      }),
+    [draft, queued, savedForComponent, componentMax],
+  );
+
   useEffect(() => {
     if (!ready || seededKey !== key || !key) return;
     writeScoreDraft(membershipId, key, draft);
   }, [draft, key, membershipId, ready, seededKey]);
 
-  // Scores already handed to the queue but not yet accepted by the server. A
-  // queued entry counts as committed — it's on its way, and resubmitting it
-  // would only duplicate the work. If the batch later errors it leaves this set
-  // and those scores correctly reappear as unsaved.
-  const queued = usePendingScores(classArmId, subjectId, academicPeriodId, gradeComponentId);
+  // Once nothing differs from the server there is no unsaved work to protect, so
+  // the stored copy is dropped. Without this the draft outlived its usefulness
+  // and, being applied on top of every later seed, kept reinstating stale numbers
+  // over fresher ones. Self-correcting: while a save is still queued offline the
+  // server copy hasn't moved, `changed` stays non-empty, and the draft is kept.
+  const isSynced = ready && changed.length === 0;
+  useEffect(() => {
+    if (isSynced && key) clearScoreDraft(membershipId, key);
+  }, [isSynced, key, membershipId]);
 
   function setScore(studentId: string, value: string) {
     setDraft((prev) => ({ ...prev, [studentId]: value }));
@@ -122,7 +178,7 @@ export function useScoreDraft(
     return byStudent;
   }, [scores, gradeComponentId, draft]);
 
-  return { draft, savedForComponent, queued, setScore, clearAll, totals, draftKey: key };
+  return { draft, savedForComponent, queued, changed, setScore, clearAll, totals, draftKey: key };
 }
 
 // A typed value is only sendable if it's a number within the component's

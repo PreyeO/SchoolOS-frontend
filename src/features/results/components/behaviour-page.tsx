@@ -52,6 +52,9 @@ export function BehaviourPage() {
     data: ratingData,
     isPending: ratingsLoading,
     isPaused: ratingsPaused,
+    // Same purpose as on the score sheet: tells the draft when fresher server
+    // data has landed so the buttons refresh instead of holding first-load state.
+    dataUpdatedAt: ratingsUpdatedAt,
   } = useTraitRatings(arm?.classArmId, currentTerm?.id);
   const bulkRate = useBulkRate();
   const isAdmin = useIsSchoolAdmin();
@@ -104,18 +107,40 @@ export function BehaviourPage() {
 
   const [draft, setDraft] = useState<Record<string, number>>({});
   const [seededKey, setSeededKey] = useState<string | null>(null);
+  const [seededAt, setSeededAt] = useState(0);
+  // The exact values the last seed produced — what separates a genuine local
+  // change from one that merely predates a refetch.
+  const [seededValues, setSeededValues] = useState<Record<string, number>>({});
   const seedKey = arm && currentTerm ? `${arm.classArmId}|${currentTerm.id}|${category}` : null;
 
-  // Seeded during render, like the register and the score column — so the first
-  // paint after a fetch already shows what's saved. Re-seeds when the arm, term
-  // or category changes, because each is a different set of judgements.
-  if (seedKey && ratings && students && seededKey !== seedKey) {
-    const seed: Record<string, number> = {};
-    saved.forEach((rating, key) => {
-      seed[key] = rating;
+  const serverValues = useMemo(() => {
+    const base: Record<string, number> = {};
+    saved.forEach((rating, k) => {
+      base[k] = rating;
     });
-    setDraft(seed);
+    return base;
+  }, [saved]);
+
+  // Seeded during render, like the register and the score column, so the first
+  // paint after a fetch already shows what's saved.
+  //
+  // The second branch is the one that was missing: seeding only on key change
+  // meant a rating made elsewhere never reached these buttons, even though the
+  // data behind them had updated. Server values are taken wholesale, then
+  // genuine local changes are put back on top.
+  if (seedKey && ratings && students && seededKey !== seedKey) {
+    setDraft(serverValues);
+    setSeededValues(serverValues);
     setSeededKey(seedKey);
+    setSeededAt(ratingsUpdatedAt);
+  } else if (seedKey && ratings && seededKey === seedKey && ratingsUpdatedAt > seededAt) {
+    const merged = { ...serverValues };
+    Object.entries(draft).forEach(([k, rating]) => {
+      if (rating !== seededValues[k]) merged[k] = rating;
+    });
+    setDraft(merged);
+    setSeededValues(serverValues);
+    setSeededAt(ratingsUpdatedAt);
   }
 
   const changed = useMemo(

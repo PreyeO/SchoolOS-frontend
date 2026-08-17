@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarRange, CheckCircle2, Undo2 } from "lucide-react";
+import { CalendarRange, CheckCircle2, Eye, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
@@ -17,6 +17,7 @@ import {
 } from "../hooks/use-submission-actions";
 import type { ResultSubmission, SubmissionStatus } from "../types";
 import { ReviewActionDialog } from "./review-action-dialog";
+import { SubmissionScoresDialog } from "./submission-scores-dialog";
 
 const STATUS_META: Record<SubmissionStatus, { label: string; className: string }> = {
   draft: { label: "Not submitted", className: "bg-n-100 text-n-500" },
@@ -38,6 +39,7 @@ export function ReviewQueuePage() {
   const reject = useRejectResult();
   const unlock = useUnlockResult();
   const [action, setAction] = useState<PendingAction>(null);
+  const [viewing, setViewing] = useState<ResultSubmission | null>(null);
 
   const submissions = useMemo(() => {
     return [...(data?.submissions ?? [])].sort((a, b) => {
@@ -126,8 +128,21 @@ export function ReviewQueuePage() {
                   {STATUS_META[s.status].label}
                 </span>
 
-                {/* Only what this row can actually do next. A draft has nothing
-                    for an admin to act on — it's the teacher's turn. */}
+                {/* On every row, not just submitted ones — a reviewer often
+                    wants to see what was approved last week, or why something is
+                    still a draft. The act-on-it buttons below stay conditional:
+                    a draft is the teacher's turn, not the admin's. */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewing(s)}
+                  className="h-8 shrink-0 text-xs text-primary"
+                >
+                  <Eye className="size-3.5 mr-1" />
+                  View scores
+                </Button>
+
                 {s.status === "submitted" && (
                   <span className="flex shrink-0 gap-1.5">
                     <Button
@@ -181,6 +196,25 @@ export function ReviewQueuePage() {
             </p>
           )}
         </>
+      )}
+
+      {viewing && (
+        <SubmissionScoresDialog
+          submission={viewing}
+          open={!!viewing}
+          onOpenChange={(next) => !next && setViewing(null)}
+          isApproving={approve.isPending}
+          onApprove={() => {
+            approve.mutate({ id: viewing.id });
+            setViewing(null);
+          }}
+          onSendBack={() => {
+            // Hand straight to the note dialog, so the reason can name the gap
+            // that was just spotted in the grid.
+            setAction({ kind: "reject", submission: viewing });
+            setViewing(null);
+          }}
+        />
       )}
 
       <ReviewActionDialog
