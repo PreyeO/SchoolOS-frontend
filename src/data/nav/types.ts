@@ -20,6 +20,13 @@ export interface NavItem {
   personas: Persona[];
   // Unbuilt modules get a "Soon" badge in the sidebar.
   soon?: boolean;
+  // A related cluster shown nested under this one and expanded in place,
+  // instead of every item sitting flat in the parent group. Present only on
+  // disclosure items built with groupedItem() — href on those is a shared
+  // route prefix used for active/open-group detection (see isNavActive in
+  // the sidebar), not a page of its own. getNavItemByHref and
+  // findNavItemForPath resolve to the nested leaf rather than this wrapper.
+  items?: NavItem[];
 }
 
 export interface NavGroup {
@@ -48,4 +55,18 @@ export function staffItem(item: Omit<NavItem, "personas" | "soon">, soon = true)
 // Scoped to the signed-in teacher's own work, so it has no meaning for an admin.
 export function teacherItem(item: Omit<NavItem, "personas" | "soon">, soon = true): NavItem {
   return { ...item, personas: TEACHER_ONLY, soon };
+}
+
+// A disclosure item: rendered as a toggle that expands its own nested items
+// in place rather than a link, so a cluster of related screens (e.g. every
+// results-related page) can sit under one row instead of five flat ones.
+// `personas` is the union of the nested items' own personas — it exists only
+// so a persona-filtered render can decide whether this row has anything left
+// to show, never to gate a route directly (each nested item still carries
+// its real, narrower personas for that).
+export function groupedItem(item: Omit<NavItem, "personas" | "soon"> & { items: NavItem[] }): NavItem {
+  return {
+    ...item,
+    personas: Array.from(new Set(item.items.flatMap((i) => i.personas))),
+  };
 }

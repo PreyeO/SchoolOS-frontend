@@ -22,9 +22,18 @@ export const NAV_GROUPS = [
   settingsGroup,
 ];
 
+// Expands any groupedItem() wrapper into its nested items, dropping the
+// wrapper itself — it shares its href with one of its own children (see
+// groupedItem in ./nav/types) and is never a distinct route, so leaving it in
+// would only add a spurious, over-broad candidate to an exact or
+// longest-prefix match below.
+function flattenLeaves(items: NavItem[]): NavItem[] {
+  return items.flatMap((item) => (item.items ? flattenLeaves(item.items) : [item]));
+}
+
 export function getNavItemByHref(href: string) {
   for (const group of NAV_GROUPS) {
-    const item = group.items.find((i) => i.href === href);
+    const item = flattenLeaves(group.items).find((i) => i.href === href);
     if (item) return item;
   }
   return undefined;
@@ -39,7 +48,7 @@ export function getNavItemByHref(href: string) {
 export function findNavItemForPath(pathname: string) {
   let best: NavItem | undefined;
   for (const group of NAV_GROUPS) {
-    for (const item of group.items) {
+    for (const item of flattenLeaves(group.items)) {
       const matches = item.href === pathname || pathname.startsWith(`${item.href}/`);
       if (matches && (!best || item.href.length > best.href.length)) best = item;
     }
@@ -58,12 +67,22 @@ export function canAccessPath(pathname: string, personas: Persona[]): boolean {
   return item.personas.some((p) => personas.includes(p));
 }
 
+// Recurses into a groupedItem()'s nested items rather than filtering by the
+// wrapper's own (unioned, and so over-permissive) personas — a nested item
+// survives only on its own narrower personas, same as a flat one, and the
+// wrapper survives only if at least one nested item still does.
+function filterItemsForPersonas(items: NavItem[], personas: Persona[]): NavItem[] {
+  return items
+    .map((item) => (item.items ? { ...item, items: filterItemsForPersonas(item.items, personas) } : item))
+    .filter((item) => (item.items ? item.items.length > 0 : item.personas.some((p) => personas.includes(p))));
+}
+
 // Personas are not exclusive — a user can be an admin and a teacher at the same
 // school, and should see what either can do rather than whichever the token
 // happened to list first. An item shows if any of the caller's personas match.
 export function getNavGroupsForPersonas(personas: Persona[]) {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => item.personas.some((p) => personas.includes(p))),
+    items: filterItemsForPersonas(group.items, personas),
   })).filter((group) => group.items.length > 0);
 }
