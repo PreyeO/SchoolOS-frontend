@@ -22,7 +22,7 @@ export interface MyClass {
 // in their own arm, which is exactly the case that used to show "no classes
 // assigned" when this was derived from subject assignments alone.
 export function useMyClasses() {
-  const { data: me, isPending, isError, error } = useMe();
+  const { data: me, isPending, isPaused, isError, error } = useMe();
   const teacher = me?.teacher;
 
   const byArm = new Map<string, MyClass>();
@@ -67,5 +67,16 @@ export function useMyClasses() {
     return a.label.localeCompare(b.label);
   });
 
-  return { classes, isPending, isError, error, isTeacher: !!teacher };
+  return {
+    classes,
+    isPending,
+    // Offline with /me never cached on this device. isPending stays true
+    // forever in that case (a paused query with no data never leaves status
+    // "pending"), so callers need this to tell "still loading" apart from
+    // "nothing will arrive until reconnected".
+    unavailableOffline: isPending && isPaused,
+    isError,
+    error,
+    isTeacher: !!teacher,
+  };
 }

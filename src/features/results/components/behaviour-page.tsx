@@ -34,8 +34,16 @@ const CATEGORY_LABEL: Record<TraitCategory, string> = {
 // the arm's assigned class teacher — so the picker offers only those arms, the
 // same rule the register list follows.
 export function BehaviourPage() {
-  const { currentTerm, isPending: termLoading } = useScoreSheets();
-  const { classes: myClasses, isPending: myClassesLoading } = useMyClasses();
+  const {
+    currentTerm,
+    isPending: termLoading,
+    unavailableOffline: termUnavailableOffline,
+  } = useScoreSheets();
+  const {
+    classes: myClasses,
+    isPending: myClassesLoading,
+    unavailableOffline: myClassesUnavailableOffline,
+  } = useMyClasses();
   const formClasses = useMemo(() => myClasses.filter((c) => c.isFormClass), [myClasses]);
 
   const [armId, setArmId] = useState<string | null>(null);
@@ -163,6 +171,10 @@ export function BehaviourPage() {
         return { student_id, trait_id, rating, marked_at: markedAt };
       }),
     });
+  }
+
+  if (termUnavailableOffline || myClassesUnavailableOffline) {
+    return <OfflineNotice resourceLabel="Your classes" />;
   }
 
   if (termLoading || myClassesLoading) {

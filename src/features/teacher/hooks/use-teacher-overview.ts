@@ -119,7 +119,13 @@ function buildAtRisk(records: AttendanceRecord[]): AbsenceEntry[] {
 // dependency list built from it would invalidate anyway, and these are linear
 // passes over a few hundred rows.
 export function useTeacherOverview() {
-  const { classes, isPending: classesLoading, isError, error } = useMyClasses();
+  const {
+    classes,
+    isPending: classesLoading,
+    unavailableOffline,
+    isError,
+    error,
+  } = useMyClasses();
   const today = todayLocal();
 
   // One request per arm the teacher touches — bounded by their own teaching
@@ -177,6 +183,11 @@ export function useTeacherOverview() {
 
   return {
     isPending,
+    // Offline with /me never cached on this device — the foundational query
+    // every figure here derives from. The per-arm attendance/roster queries
+    // below can be individually uncached too, but that degrades gracefully
+    // (an arm just shows as unmarked/empty); a missing class list can't.
+    unavailableOffline,
     // Surfaced rather than swallowed: a failed load leaves `classes` empty,
     // which is indistinguishable from a teacher who genuinely has none. Showing
     // "no classes assigned" for a 500 sends them to an admin over nothing.
