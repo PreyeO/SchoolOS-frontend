@@ -28,3 +28,12 @@ export function useCanMarkAttendance(): boolean {
 export function useIsSchoolAdmin(): boolean {
   return usePersonas().includes("admin");
 }
+
+// Holds a teacher profile at this school. Distinct from useCanMarkAttendance
+// only in intent: that one asks "may this person write a register", this one
+// asks "do the teacher-scoped endpoints apply at all" — several endpoints
+// (/subject-assignments/my-assignments among them) raise for a non-teacher
+// rather than returning nothing.
+export function useIsTeacher(): boolean {
+  return usePersonas().includes("teacher");
+}
