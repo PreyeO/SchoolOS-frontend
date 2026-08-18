@@ -21,13 +21,30 @@ src/hooks/  src/lib/{api,auth,tenant,validations,utils}  src/stores/  src/types/
 ```
 
 ## Hard conventions (apply to EVERY prompt)
-- **No file exceeds 150 lines.** Split along real seams (subcomponents, hooks) — never line-count theater. When a domain's `types.ts` or the endpoint registry outgrows it, split into a folder behind a barrel (`results/types/*` → `results/types.ts`, `lib/api/endpoints/*` → `lib/api/endpoints.ts`) so call sites don't change.
+- **No file exceeds 150 lines.** Split along real seams (subcomponents, hooks) — never line-count theater. When a domain's `types.ts` or the endpoint registry outgrows it, split into a folder behind a barrel (`results/types/*` → `results/types.ts`, `lib/api/endpoints/*` → `lib/api/endpoints.ts`) so call sites don't change. **Four known exceptions — see "Deliberate 150-line exceptions" below.**
 - **DRY + separation:** schema / types / api call / TanStack hook / UI are separate files. No inline `fetch` in components.
 - **Reach for the shared primitive before hand-rolling.** `components/ui/` has `Input`, `Select`, `Button`, `Dialog`, `Sheet`; `components/shared/` has `ErrorState`, `OfflineNotice`, `ArmPicker`, `PersonSearchSelect`, `PaginationControls`, `ConfirmDeleteDialog`; `features/staff/components/teacher-picker.tsx` is the load-once/filter-locally/hold-a-selection teacher chooser (distinct from `PersonSearchSelect`, which is server-search and fires on click). Form controls must go through `Input`/`Select` — both set `text-base md:text-sm`, because iOS Safari zooms the whole page when a focused control is under 16px.
 - **No hardcoded URLs/strings** in components — endpoints live in `lib/api/endpoints.ts`, colours/spacing come from design tokens, copy/config in `data/`/`config/`.
 - **Server components by default;** add `'use client'` only where interactivity lives.
 - **Import via the `@/` alias.** File naming: components `PascalCase.tsx`, hooks `use-thing.ts` → `useThing`, others `kebab-case.ts`.
 - **Preserve trailing slashes exactly** as the backend defines them (some endpoints have them, some don't).
+
+## Deliberate 150-line exceptions (reviewed 2026-08-18)
+
+Four files are knowingly over the limit. This is a decision, not an oversight — don't "fix" them casually.
+
+| File | Lines |
+|---|---|
+| `features/results/components/score-entry-page.tsx` | ~441 |
+| `features/attendance/components/attendance-page.tsx` | ~439 |
+| `features/results/components/publish-results-page.tsx` | ~391 |
+| `features/results/components/behaviour-page.tsx` | ~361 |
+
+**Why:** all four carry offline state — draft seeding *during render*, paused-mutation queues, and reconciliation against a query's `dataUpdatedAt`. The order of those render-time state updates is load-bearing (see the comments in `use-register-draft-sync.ts` and `use-score-draft-sync.ts`). **There are no tests in this repo**, and `tsc`/`eslint`/`build` cannot detect a broken seed ordering, a dropped border, or marks that silently stop restoring after a reconnect — a bulk-refactor pass through these files in Aug 2026 shipped exactly such a styling regression, caught only by chance. Splitting them is a real risk with no safety net, and they are already densely commented on *why* each ordering is what it is, which is the part that's hard to reconstruct.
+
+**When to revisit:** split them under cover of a feature change to that screen, when you're clicking through it to test anyway. If you want them compliant sooner, the honest prerequisite is a few tests around the draft hooks — seed on new column, re-seed on fresher server data, queued-counts-as-committed — after which the split is routine.
+
+**Also:** never bulk-rewrite JSX with a script. Two regex passes in that same sweep went wrong (one silently no-op'd on multi-line attributes, the other stripped Tailwind classes from elements it wasn't targeting). Hand-edit, or verify every hunk.
 
 ## Error & toast handling (uniform)
 - The backend returns `{ "detail": ... }` where `detail` is a **string OR an array of strings**, for both success and error.
