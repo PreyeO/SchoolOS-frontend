@@ -5,6 +5,7 @@ import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { cn } from "@/lib/utils";
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
@@ -58,18 +59,17 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
           aria-describedby={classErrors?.name ? `classes.${ci}.name-error` : undefined}
           {...register(`classes.${ci}.name`)}
         />
-        <select
+        <Select
           id={`classes.${ci}.level`}
           aria-label="Level"
           aria-invalid={!!classErrors?.level}
-          className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-          {...register(`classes.${ci}.level`)}
-        >
+
+          {...register(`classes.${ci}.level`)}>
           <option value="">Level…</option>
           {levelOptions.map((l) => (
             <option key={l.value} value={l.value}>{l.label}</option>
           ))}
-        </select>
+        </Select>
         {hasClassData ? (
           <ConfirmDeleteDialog
             trigger={<RemoveButton ariaLabel={`Remove class ${className || ""}`} />}

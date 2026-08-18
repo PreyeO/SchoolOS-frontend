@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import {
   Dialog,
   DialogClose,
@@ -74,18 +75,17 @@ export function GradingFormDialog({ trigger, title, initialValues, availableLeve
         <form onSubmit={handleSubmit(submit, onInvalid)} noValidate className="space-y-5">
           {isCreate ? (
             <FieldWrapper id="grading-level" label="School level" error={errors.level?.message}>
-              <select
+              <Select
                 id="grading-level"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                {...register("level")}
-              >
+                className="flex rounded-md px-3"
+                {...register("level")}>
                 <option value="">Choose a level…</option>
                 {availableLevels.map((value) => (
                   <option key={value} value={value}>
                     {SCHOOL_LEVELS.find((l) => l.value === value)?.label ?? value}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FieldWrapper>
           ) : null}
 

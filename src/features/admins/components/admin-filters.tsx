@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { useRoles } from "@/features/invitations/hooks/use-roles";
 
 interface Props {
@@ -22,7 +23,7 @@ export function AdminFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <select
+      <Select
         aria-label="Filter by role"
         value={roleId}
         onChange={(e) => onRoleIdChange(e.target.value)}
@@ -34,7 +35,7 @@ export function AdminFilters({
             {role.name}
           </option>
         ))}
-      </select>
+      </Select>
 
       <label className="flex items-center gap-1.5 text-sm text-n-500">
         <input

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarRange, Info, Lock, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { useRoster } from "@/features/attendance/hooks/use-register";
@@ -262,7 +263,7 @@ export function ScoreEntryPage() {
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <span className="text-n-500">Class &amp; subject</span>
-              <select
+              <Select
                 value={sheet?.key ?? ""}
                 onChange={(e) => {
                   setSheetKey(e.target.value);
@@ -277,7 +278,7 @@ export function ScoreEntryPage() {
                     {s.armLabel} — {s.subjectName}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <span

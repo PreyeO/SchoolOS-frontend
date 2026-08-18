@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
 import { enrollmentStatusLabel, genderLabel } from "../lib/labels";
 import type { EnrollmentStatus, Gender } from "../types";
@@ -37,7 +38,7 @@ export function StudentFilters({
     <div className="flex flex-wrap items-center gap-3">
       {/* Resolved server-side to each student's *current* enrolment, so a
           mid-session transfer shows up under the arm they're in now. */}
-      <select
+      <Select
         aria-label="Filter by class"
         value={classArmId}
         onChange={(e) => onClassArmChange(e.target.value)}
@@ -53,9 +54,9 @@ export function StudentFilters({
             ))}
           </optgroup>
         ))}
-      </select>
+      </Select>
 
-      <select
+      <Select
         aria-label="Filter by enrollment status"
         value={status}
         onChange={(e) => onStatusChange(e.target.value as EnrollmentStatus | "all")}
@@ -67,9 +68,9 @@ export function StudentFilters({
             {enrollmentStatusLabel(s)}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
+      <Select
         aria-label="Filter by gender"
         value={gender}
         onChange={(e) => onGenderChange(e.target.value as Gender | "all")}
@@ -81,7 +82,7 @@ export function StudentFilters({
             {genderLabel(g)}
           </option>
         ))}
-      </select>
+      </Select>
 
       <label className="flex items-center gap-1.5 text-sm text-n-500">
         <input

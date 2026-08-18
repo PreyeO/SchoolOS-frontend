@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 
 import { inviteAdminSchema, type InviteAdminFormValues } from "../schemas/invite-admin-schema";
@@ -55,19 +56,18 @@ export function InviteAdminForm() {
       </FieldWrapper>
 
       <FieldWrapper id="admin-role" label="Role" error={errors.role_id?.message} required>
-        <select
+        <Select
           id="admin-role"
           disabled={rolesLoading}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          {...register("role_id")}
-        >
+          className="flex rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
+          {...register("role_id")}>
           <option value="">{rolesLoading ? "Loading roles…" : "Select a role"}</option>
           {roles?.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
             </option>
           ))}
-        </select>
+        </Select>
       </FieldWrapper>
 
       <Button

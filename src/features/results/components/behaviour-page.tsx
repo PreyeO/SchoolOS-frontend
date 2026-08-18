@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarRange } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { SyncStatusStrip } from "@/features/attendance/components/sync-status-strip";
 import { useRoster } from "@/features/attendance/hooks/use-register";
@@ -223,7 +224,7 @@ export function BehaviourPage() {
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <span className="text-n-500">Class</span>
-              <select
+              <Select
                 value={arm?.classArmId ?? ""}
                 onChange={(e) => setArmId(e.target.value)}
                 className="h-9 min-w-44 rounded-lg border border-input bg-background px-2 text-sm text-ink"
@@ -233,7 +234,7 @@ export function BehaviourPage() {
                     {c.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <span className="flex gap-1.5">

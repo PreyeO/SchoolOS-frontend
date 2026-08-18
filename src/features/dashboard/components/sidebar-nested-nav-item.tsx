@@ -47,17 +47,22 @@ export function SidebarNestedNavItem({ item, pathname, onNavigate }: Props) {
         aria-expanded={isOpen}
         className={cn(
           "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-          hasActiveChild ? "text-foreground" : "text-foreground/60 hover:bg-muted/60 hover:text-foreground",
+          "focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none",
+          hasActiveChild
+            ? "text-foreground"
+            : "text-foreground/60 hover:bg-muted/60 hover:text-foreground",
         )}
       >
         {hasActiveChild && (
-          <span className="absolute left-0 top-1/2 h-4.5 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
+          <span className="absolute top-1/2 left-0 h-4.5 w-0.75 -translate-y-1/2 rounded-full bg-primary" />
         )}
         <Icon className="size-4 shrink-0" />
         <span className="flex-1 truncate text-left">{item.label}</span>
         <ChevronDown
-          className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-out", isOpen && "rotate-180")}
+          className={cn(
+            "size-3.5 shrink-0 transition-transform duration-200 ease-out",
+            isOpen && "rotate-180",
+          )}
         />
       </button>
       <div

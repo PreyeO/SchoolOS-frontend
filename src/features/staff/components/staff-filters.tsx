@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { teacherTypeLabel } from "../lib/teacher-type-label";
 import type { TeacherType } from "../types";
 
@@ -23,7 +24,7 @@ export function StaffFilters({
 }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <select
+      <Select
         aria-label="Filter by teacher type"
         value={teacherType}
         onChange={(e) => onTeacherTypeChange(e.target.value as TeacherType | "all")}
@@ -35,7 +36,7 @@ export function StaffFilters({
             {teacherTypeLabel(type)}
           </option>
         ))}
-      </select>
+      </Select>
 
       <label className="flex items-center gap-1.5 text-sm text-n-500">
         <input

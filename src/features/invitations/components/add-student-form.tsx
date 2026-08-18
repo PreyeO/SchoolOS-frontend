@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { ArmPicker } from "@/components/shared/arm-picker";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
@@ -97,15 +98,14 @@ export function AddStudentForm() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <FieldWrapper id="student-gender" label="Gender" error={errors.gender?.message} required>
-          <select
+          <Select
             id="student-gender"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            {...register("gender")}
-          >
+            className="flex rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            {...register("gender")}>
             <option value="male">Male</option>
             <option value="female">Female</option>
             <option value="other">Other</option>
-          </select>
+          </Select>
         </FieldWrapper>
         <FieldWrapper id="student-dob" label="Date of birth" error={errors.date_of_birth?.message} hint="Optional">
           <Input id="student-dob" type="date" {...register("date_of_birth")} />

@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { NIGERIAN_STATES } from "@/data/nigerian-states";
 
 interface Props {
@@ -20,7 +21,7 @@ export function ParentFilters({
 }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <select
+      <Select
         aria-label="Filter by state"
         value={state}
         onChange={(e) => onStateChange(e.target.value)}
@@ -32,7 +33,7 @@ export function ParentFilters({
             {s.label}
           </option>
         ))}
-      </select>
+      </Select>
 
       <label className="flex items-center gap-1.5 text-sm text-n-500">
         <input

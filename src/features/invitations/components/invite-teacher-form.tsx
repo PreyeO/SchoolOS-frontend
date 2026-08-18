@@ -92,7 +92,7 @@ export function InviteTeacherForm() {
         <Input id="teacher-phone" type="tel" placeholder="+234 800 000 0000" {...register("phone_number")} />
       </FieldWrapper>
 
-      {/* Radio cards rather than a <select>: this is the one field on the form
+      {/* Radio cards rather than a <Select>: this is the one field on the form
           whose consequences aren't obvious from its label — it decides whether
           the person can take a register at all — and an option list can't carry
           the explanation. A native radio group keeps keyboard and screen-reader

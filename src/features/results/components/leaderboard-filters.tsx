@@ -1,6 +1,7 @@
 "use client";
 
 import { ArmPicker } from "@/components/shared/arm-picker";
+import { Select } from "@/components/ui/select";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
 import type { ClassArmSubject } from "@/features/teaching-assignments/types";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,7 @@ export function LeaderboardFilters({
           <label className="flex items-center gap-2 text-sm">
             <span className="text-n-500">Subject</span>
             {/* text-base below md: under 16px iOS zooms the whole page on focus. */}
-            <select
+            <Select
               value={subjectId ?? ""}
               onChange={(e) => onSubjectChange(e.target.value)}
               className="h-9 min-w-48 rounded-lg border border-input bg-background px-2 text-base text-ink md:text-sm"
@@ -82,7 +83,7 @@ export function LeaderboardFilters({
                   {o.subject.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           {className && (
             <label className="flex cursor-pointer items-center gap-2 text-sm text-n-600">

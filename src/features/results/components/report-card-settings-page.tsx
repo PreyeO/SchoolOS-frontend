@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Select } from "@/components/ui/select";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
@@ -143,7 +144,7 @@ export function ReportCardSettingsPage() {
               {pickers.map((picker) => (
                 <label key={picker.field} className="block">
                   <span className="mb-1.5 block text-sm text-n-500">{picker.label}</span>
-                  <select
+                  <Select
                     value={String(settings[picker.field] ?? "")}
                     disabled={!canEdit || update.isPending}
                     onChange={(e) => patch({ [picker.field]: e.target.value })}
@@ -154,7 +155,7 @@ export function ReportCardSettingsPage() {
                         {c.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
               ))}
             </div>

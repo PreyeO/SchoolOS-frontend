@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import {
   Dialog,
   DialogClose,
@@ -53,7 +54,7 @@ export function AssignRoleDialog({ adminId, currentRoleId }: Props) {
         <DialogHeader>
           <DialogTitle>{currentRoleId ? "Change role" : "Assign a role"}</DialogTitle>
         </DialogHeader>
-        <select
+        <Select
           aria-label="Role"
           disabled={rolesLoading}
           value={roleId}
@@ -66,7 +67,7 @@ export function AssignRoleDialog({ adminId, currentRoleId }: Props) {
               {role.name}
             </option>
           ))}
-        </select>
+        </Select>
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">Cancel</Button>

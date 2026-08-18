@@ -15,11 +15,17 @@ export const apiClient = axios.create({
 // the store would otherwise be attached to signup/login and reject with 401.
 // The refresh endpoint is included so it never gets a *stale access* token
 // attached, and so its own 401s don't recurse into the refresh logic below.
+//
+// Every entry comes from ENDPOINTS rather than a literal. Four of these were
+// hardcoded copies of the same paths, which meant renaming an endpoint would
+// leave this list silently unmatched — and a stale token then rides along on
+// login or signup and 401s the request. The bug would look like "login is
+// broken", nowhere near the edit that caused it.
 const PUBLIC_PATHS = [
-  "/api/users/", // signup
-  "/api/auth/verify-email/",
-  "/api/auth/resend-verification/",
-  "/api/auth/login/",
+  ENDPOINTS.USERS, // signup
+  ENDPOINTS.VERIFY_EMAIL,
+  ENDPOINTS.RESEND_OTP,
+  ENDPOINTS.LOGIN,
   ENDPOINTS.PASSWORD_RESET_REQUEST,
   ENDPOINTS.PASSWORD_RESET_CONFIRM,
   ENDPOINTS.REFRESH,

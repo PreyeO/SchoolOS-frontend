@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   Dialog,
   DialogClose,
@@ -73,17 +74,16 @@ export function EditSubjectDialog({ trigger, initialValues, schoolLevels, isPend
             <label className="text-sm font-medium text-ink" htmlFor="subject-level">
               Level
             </label>
-            <select
+            <Select
               id="subject-level"
-              className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm"
-              {...register("level")}
-            >
+
+              {...register("level")}>
               {levelOptions.map((l) => (
                 <option key={l.value} value={l.value}>
                   {l.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <label className="flex items-center gap-2 text-sm text-ink">
             <input type="checkbox" className="accent-primary" {...register("is_core")} />
