@@ -15,13 +15,13 @@ import {
   OFFLINE_WINDOW_MS,
   guardedLocalStorage,
   persistKeyFor,
+  readPersistedMembershipId,
   shouldPersistQuery,
 } from "@/lib/api/query-persistence";
 import { installOnlineManager } from "@/lib/api/online-manager";
 import { registerBulkMarkDefaults } from "@/features/attendance/hooks/use-bulk-mark";
 import { registerScoreEntryDefaults } from "@/features/results/hooks/use-enter-scores";
 import { registerTraitRatingDefaults } from "@/features/results/hooks/use-traits";
-import { useAuthStore } from "@/stores/auth-store";
 
 // At module scope on purpose, not in an effect. Child effects run before the
 // parent's, so a query mounted below this provider would subscribe — and decide
@@ -30,11 +30,6 @@ import { useAuthStore } from "@/stores/auth-store";
 installOnlineManager();
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
-  // Scopes the persisted cache to the signed-in membership so a shared device
-  // never rehydrates one teacher's data for another. Membership, not school —
-  // two teachers at the same school would collide on a school-level key.
-  const membershipId = useAuthStore((s) => s.claims?.membership_id ?? null);
-
   const [queryClient] = useState(() => {
     const client = new QueryClient({
         defaultOptions: {
@@ -77,10 +72,18 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     return client;
   });
 
+  // Scopes the persisted cache to the signed-in membership so a shared device
+  // never rehydrates one teacher's data for another. Membership, not school —
+  // two teachers at the same school would collide on a school-level key.
+  //
+  // Read from localStorage, not from useAuthStore: this initializer runs once,
+  // during the hydration render, and zustand reports its pre-persist state
+  // there — so the store said `null` on every device and the key was always
+  // ":anonymous". See readPersistedMembershipId.
   const [persister] = useState(() =>
     createAsyncStoragePersister({
       storage: guardedLocalStorage,
-      key: persistKeyFor(membershipId),
+      key: persistKeyFor(readPersistedMembershipId()),
     }),
   );
 

@@ -1,6 +1,6 @@
 import type { Query } from "@tanstack/react-query";
 
-import { ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
+import { AUTH_STORAGE_KEY, ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
 
 // Anything cached here has to survive being closed and reopened offline, so it
 // outlives the session in localStorage. That makes scoping a correctness
@@ -40,6 +40,24 @@ const PERSISTED_KEYS: readonly (readonly string[])[] = [
 ];
 
 export function shouldPersistQuery(query: Query): boolean {
+  // Successful queries only, and this line is load-bearing.
+  //
+  // Passing this as dehydrateOptions.shouldDehydrateQuery *replaces*
+  // query-core's default, which is exactly `status === "success"`. Without the
+  // check we also dehydrated pending ones — and dehydrateQuery attaches a live
+  // `promise` field to those, which JSON.stringify writes out as `{}`. On the
+  // next start hydrate() calls tryResolveSync on that object, `{}.then` is not
+  // a function, and persistQueryClientRestore's catch responds by calling
+  // persister.removeClient() — deleting the whole cache — and rethrowing.
+  //
+  // Offline is precisely when queries sit at status "pending" (fetchStatus
+  // "paused"), and the persister saves on every cache event. So one offline
+  // session wrote a poisoned blob, every later start wiped the cache on
+  // restore, and the rethrow meant PersistQueryClientProvider's onSuccess —
+  // which is what calls resumePausedMutations — never ran. Queued registers
+  // and score batches were left unreplayed. Nothing offline worked twice.
+  if (query.state.status !== "success") return false;
+
   return PERSISTED_KEYS.some((prefix) =>
     prefix.every((segment, i) => query.queryKey[i] === segment),
   );
@@ -53,6 +71,31 @@ const PERSIST_KEY_PREFIX = "schoolos-query-cache";
 
 export function persistKeyFor(membershipId: string | null | undefined): string {
   return `${PERSIST_KEY_PREFIX}:${membershipId ?? "anonymous"}`;
+}
+
+// The signed-in membership, read straight out of auth-store's persisted blob
+// rather than through useAuthStore.
+//
+// It has to be correct synchronously, on the very first render, and the React
+// store cannot be: zustand serves getInitialState() as the hydration snapshot,
+// which is the state from *before* persist wrote into it, so `claims` is null
+// there. QueryProvider bakes the key into a useState initializer that never
+// re-runs, so reading it through the store pinned every device to
+// ":anonymous" — self-consistent, and therefore invisible, but it meant the
+// per-membership scoping this module promises above was never actually
+// happening. On a shared staffroom device that is the whole point of the key.
+export function readPersistedMembershipId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    const id = JSON.parse(raw)?.state?.claims?.membership_id;
+    return typeof id === "string" ? id : null;
+  } catch {
+    // Unparseable or storage unavailable. Falls back to the anonymous key,
+    // which is still self-consistent — just unscoped.
+    return null;
+  }
 }
 
 // Called on logout. Clears every scoped cache rather than just the current one —

@@ -70,11 +70,16 @@ export function useMyClasses() {
   return {
     classes,
     isPending,
-    // Offline with /me never cached on this device. isPending stays true
-    // forever in that case (a paused query with no data never leaves status
-    // "pending"), so callers need this to tell "still loading" apart from
-    // "nothing will arrive until reconnected".
-    unavailableOffline: isPending && isPaused,
+    // Offline with /me never cached on this device. A paused query with no data
+    // never leaves status "pending", so without this the caller spins forever
+    // on a request that cannot resolve.
+    //
+    // `isPaused && !me`, not `isPending && isPaused`: a *disabled* query is
+    // also pending, but with fetchStatus "idle" rather than "paused", so the
+    // conjunction silently never fired and My Classes stayed blank. This is the
+    // same shape every other offline gate here uses — use-score-sheets.ts,
+    // score-entry-page.tsx, attendance-page.tsx.
+    unavailableOffline: isPaused && !me,
     isError,
     error,
     isTeacher: !!teacher,

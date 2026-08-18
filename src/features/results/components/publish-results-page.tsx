@@ -2,7 +2,16 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarRange, Download, Eye, FileText, Lock, LockOpen } from "lucide-react";
+import {
+  CalendarRange,
+  Download,
+  Eye,
+  FileDown,
+  FileText,
+  FolderArchive,
+  Lock,
+  LockOpen,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
@@ -19,6 +28,7 @@ import { useArmAssignments } from "@/features/teaching-assignments/hooks/use-arm
 import { useReviewQueue } from "../hooks/use-review-queue";
 import {
   useClassArmResults,
+  useDownloadClassReportCards,
   useDownloadReportCard,
   useLockClassArmResult,
   useUnlockClassArmResult,
@@ -62,6 +72,7 @@ export function PublishResultsPage() {
   const lock = useLockClassArmResult();
   const unlock = useUnlockClassArmResult();
   const download = useDownloadReportCard();
+  const downloadAll = useDownloadClassReportCards();
 
   const batch = useMemo(
     () => (batches ?? []).find((b) => b.class_arm === selectedId) ?? null,
@@ -274,9 +285,59 @@ export function PublishResultsPage() {
           </div>
 
           <div className="rounded-xl border border-n-200 bg-white">
-            <p className="border-b border-n-100 px-5 py-3 text-xs text-n-500">
-              Report cards {isLocked ? "" : "— preview only until published"}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-n-100 px-5 py-3">
+              <p className="mr-auto text-xs text-n-500">
+                Report cards {isLocked ? "" : "— preview only until published"}
+              </p>
+              {/* Enrollment-scoped, not score-scoped: the backend builds the
+                  batch from who is currently enrolled in this arm for the
+                  session, so it stays available before publishing (staff can
+                  preview) and a transferred student simply isn't in it. */}
+              {students && students.length > 0 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={downloadAll.isPending}
+                    onClick={() =>
+                      currentTerm &&
+                      selectedId &&
+                      downloadAll.mutate({
+                        classArmId: selectedId,
+                        periodId: currentTerm.id,
+                        exportFormat: "pdf",
+                        armLabel: selected?.label ?? "class",
+                      })
+                    }
+                    className="h-8 shrink-0 text-xs"
+                  >
+                    <FileDown className="size-3.5 mr-1" />
+                    {downloadAll.isPending ? "Preparing…" : "All as one PDF"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={downloadAll.isPending}
+                    onClick={() =>
+                      currentTerm &&
+                      selectedId &&
+                      downloadAll.mutate({
+                        classArmId: selectedId,
+                        periodId: currentTerm.id,
+                        exportFormat: "zip",
+                        armLabel: selected?.label ?? "class",
+                      })
+                    }
+                    className="h-8 shrink-0 text-xs"
+                  >
+                    <FolderArchive className="size-3.5 mr-1" />
+                    ZIP of each
+                  </Button>
+                </>
+              )}
+            </div>
             {rosterLoading ? (
               <p className="p-5 text-sm text-n-400" role="status">Loading students…</p>
             ) : !students || students.length === 0 ? (
