@@ -13,6 +13,33 @@ export function ServiceWorkerProvider() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // Never in development, and actively tear down anything already installed.
+    //
+    // The worker's whole job is caching, and it is built for production's
+    // content-hashed, immutable assets: cacheFirst (sw.js) deliberately never
+    // revalidates /_next/static. In dev those URLs are NOT content-hashed and
+    // Turbopack regenerates them on every edit, so the worker pins a dead chunk
+    // forever, while networkFirst keeps serving an HTML document referencing
+    // chunks that no longer exist. The page then breaks in the browser with the
+    // dev server perfectly healthy and its log clean — which is a miserable
+    // thing to debug, and cost exactly that after a large refactor.
+    //
+    // Nothing is lost: offline behaviour can only be exercised meaningfully
+    // against a production build over HTTPS (`npm run build && npm start`).
+    // The unregister + cache purge means an already-broken machine self-heals
+    // on the next load rather than needing Application → Clear site data.
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      });
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          keys.filter((key) => key.startsWith("schoolos-")).forEach((key) => caches.delete(key));
+        });
+      }
+      return;
+    }
+
     // The ?v= build stamp is what versions the caches. A different script URL is
     // what makes the browser treat this as a new worker and run install/activate
     // again; the worker reads the same value back off its own location to name
