@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { NavGroup, NavItem } from "@/data/navigation";
-import { isNavActive } from "../lib/is-nav-active";
+import { isAnyNavActive, isNavActive } from "../lib/is-nav-active";
 import { SidebarNavItem } from "./sidebar-nav-item";
 import { SidebarNestedNavItem } from "./sidebar-nested-nav-item";
 import { SidebarGroupHeader } from "./sidebar-group-header";
@@ -49,7 +49,9 @@ function renderItem(item: NavItem, pathname: string, collapsed: boolean, onNavig
 }
 
 export function SidebarNavGroup({ group, pathname, collapsed, isOpen, onToggle, onNavigate }: Props) {
-  const hasActiveChild = group.items.some((item) => isNavActive(item.href, pathname));
+  // Recurses into grouped items — a wrapper's href is a prefix, not a page, so
+  // it never reads as active on its own.
+  const hasActiveChild = isAnyNavActive(group.items, pathname);
 
   // Single-item groups (Overview) are just a link — no accordion needed.
   if (group.items.length <= 1) {

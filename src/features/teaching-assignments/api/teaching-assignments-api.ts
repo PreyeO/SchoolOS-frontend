@@ -1,5 +1,9 @@
 import { apiClient } from "@/lib/api/client";
-import { CLASS_ARM_SUBJECT_ENDPOINTS, SUBJECT_ASSIGNMENT_ENDPOINTS } from "@/lib/api/endpoints";
+import {
+  CLASS_ARM_ENDPOINTS,
+  CLASS_ARM_SUBJECT_ENDPOINTS,
+  SUBJECT_ASSIGNMENT_ENDPOINTS,
+} from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 import type {
@@ -9,14 +13,21 @@ import type {
   SubjectAssignment,
 } from "../types";
 
-// The subjects an arm offers. Same page_size reasoning as assignments — a senior
-// arm can carry 20+ subjects and this screen has no pagination.
+// The subjects an arm offers.
+//
+// Reads the class-arm detail action rather than the flat
+// /api/class-arm-subjects/?class_arm= list. Identical serializer, but the list
+// requires manage_academic_structure while this inherits the viewset default,
+// which asks only for school membership. Confirmed live: the flat list 403s for
+// a teacher and this returns 200 — which broke the broadsheet's column set (a
+// teacher saw only subjects that already had scores, so the "nobody has entered
+// this subject" gap the screen exists to show was invisible to them), and would
+// equally have hit an admin holding view_results but not manage_academic_structure.
+//
+// Unpaginated, so no page_size to work around either.
 export async function getArmSubjects(classArmId: string): Promise<ClassArmSubject[]> {
-  const { data } = await apiClient.get<PaginatedResponse<ClassArmSubject>>(
-    CLASS_ARM_SUBJECT_ENDPOINTS.LIST(),
-    { params: { class_arm: classArmId, page_size: 100 } },
-  );
-  return data.results;
+  const { data } = await apiClient.get<ClassArmSubject[]>(CLASS_ARM_ENDPOINTS.SUBJECTS(classArmId));
+  return data;
 }
 
 // Takes an array and returns one offering per subject. All validation happens

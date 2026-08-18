@@ -206,6 +206,38 @@ export interface ClassArmResult {
   locked_at: string | null;
 }
 
+// A class arm's whole term on one grid: every student, every subject.
+//
+// Two things about `rows` that shape the UI. It's built server-side from the
+// StudentSubjectResult rows that exist, so a student with no scores at all is
+// absent from it entirely rather than present-and-empty — the screen
+// reconciles against the roster so those children still appear. And it carries
+// no ordering, so sorting is the client's job.
+export interface BroadsheetRow {
+  student: StudentListItem;
+  subjects: StudentSubjectResult[];
+  // Null until the arm is locked; positions and averages don't exist before.
+  summary: StudentResultSummary | null;
+}
+
+export interface Broadsheet {
+  class_arm_id: string;
+  academic_period_id: string;
+  is_locked: boolean;
+  rows: BroadsheetRow[];
+}
+
+// The leaderboard endpoints return the same two models as the report card, but
+// standalone rather than nested under a student — so each row carries its own
+// student, which the report-card shapes above omit as redundant.
+export interface LeaderboardOverallRow extends StudentResultSummary {
+  student: StudentListItem;
+}
+
+export interface LeaderboardSubjectRow extends StudentSubjectResult {
+  student: StudentListItem;
+}
+
 export interface ReportCardSettings {
   id: string;
   level: string;

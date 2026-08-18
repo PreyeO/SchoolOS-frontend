@@ -86,11 +86,29 @@ export const CLASS_ARM_ENDPOINTS = {
   // and is deliberately NOT called `format`, which DRF reserves for content
   // negotiation and which would 404 before the view runs.
   REPORT_CARDS: (id: string) => `/api/class-arms/${id}/report-cards/`,
+  // The whole arm's term on one grid. Takes ?academic_period_id=. Readable by
+  // admins with view_results and by any teacher, and deliberately available
+  // before the broadsheet is locked — reviewing it is what happens *before*
+  // publishing, so there's no lifecycle gate in the service.
+  BROADSHEET: (id: string) => `/api/class-arms/${id}/broadsheet/`,
+  // What this arm officially takes. Same ClassArmSubjectOfferingSerializer the
+  // flat /api/class-arm-subjects/ list returns, but this one inherits the
+  // viewset's default permission (none required for a custom read action) while
+  // the list demands manage_academic_structure. Verified live: the list 403s
+  // for a teacher, this returns 200. Unpaginated — a plain array, no `results`.
+  SUBJECTS: (id: string) => `/api/class-arms/${id}/subjects/`,
+  // Overall standing for the arm, by average descending. Returns [] until the
+  // broadsheet is locked — summaries are only written at lock time.
+  LEADERBOARD: (id: string) => `/api/class-arms/${id}/leaderboard/`,
 } as const;
 
 export const SUBJECT_ENDPOINTS = {
   LIST: () => `/api/subjects/`,
   DETAIL: (id: string) => `/api/subjects/${id}/`,
+  // Ranks one subject by total score. Needs ?academic_period_id= plus EXACTLY
+  // one of ?class_arm_id= (within that arm) or ?class_id= (across every arm
+  // under the class) — sending both or neither is a 400 either way.
+  LEADERBOARD: (id: string) => `/api/subjects/${id}/leaderboard/`,
 } as const;
 
 // list/create/destroy all require manage_academic_structure; MINE is open to any
