@@ -59,7 +59,7 @@ export function InviteAdminForm() {
         <Select
           id="admin-role"
           disabled={rolesLoading}
-          className="flex rounded-md px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
+          className="flex rounded-md px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
           {...register("role_id")}>
           <option value="">{rolesLoading ? "Loading roles…" : "Select a role"}</option>
           {roles?.map((r) => (

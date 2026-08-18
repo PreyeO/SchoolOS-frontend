@@ -287,7 +287,7 @@ export function ScoreEntryPage() {
             </span>
           </div>
           {locked && (
-            <p className="flex items-start gap-2 border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
+            <p className="flex items-start gap-2 rounded-lg border border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
               <Info className="mt-0.5 size-4 shrink-0 text-n-400" />
               <span>
                 These scores have been approved and can no longer be changed. An administrator
@@ -299,7 +299,7 @@ export function ScoreEntryPage() {
               nobody. Knowing which head of department sent it back is what tells
               a teacher whether to just fix it or go and ask. */}
           {status === "rejected" && submission?.review_comment && (
-            <div className="border-clay/30 bg-clay/5 px-3.5 py-3">
+            <div className="rounded-lg border border-clay/30 bg-clay/5 px-3.5 py-3">
               <p className="flex flex-wrap items-baseline gap-x-2 text-xs">
                 <span className="font-medium">Sent back for correction</span>
                 {submission.reviewed_by && (
@@ -339,7 +339,7 @@ export function ScoreEntryPage() {
                 enteredByComponent={enteredByComponent}
                 total={students?.length ?? 0}
               />
-              <div className="rounded-xl border-n-200 bg-white">
+              <div className="rounded-xl border border-n-200 bg-white">
                 {unavailableOffline ? (
                   <div className="p-5">
                     <OfflineNotice resourceLabel="This score sheet" />
