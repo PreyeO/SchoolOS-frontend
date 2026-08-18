@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarRange, Info, Lock, TriangleAlert, X } from "lucide-react";
+import { Info, Lock, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useEnterScores } from "../hooks/use-enter-scores";
 import { useScoreDraft, scoreError } from "../hooks/use-score-draft";
 import { useLastScoreRejection } from "../hooks/use-score-sync";
+import { TermBadge } from "./term-badge";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import { useScores, useSubmission } from "../hooks/use-scores";
 import type { SubmissionStatus } from "../types";
@@ -192,12 +193,7 @@ export function ScoreEntryPage() {
             Record scores for the subjects you teach. Each assessment is saved on its own.
           </p>
         </div>
-        {currentTerm && (
-          <span className="flex items-center gap-1.5 rounded-full border border-n-200 bg-white px-2.5 py-1 text-xs text-n-600">
-            <CalendarRange className="size-3.5 shrink-0 text-n-400" />
-            {currentTerm.label}
-          </span>
-        )}
+        {currentTerm && <TermBadge label={currentTerm.label} />}
       </div>
 
       <SyncStatusStrip />
@@ -271,7 +267,7 @@ export function ScoreEntryPage() {
                   // selected component can't carry over.
                   setComponentId(null);
                 }}
-                className="h-9 min-w-56 rounded-lg border border-input bg-background px-2 text-sm text-ink"
+                className="min-w-56"
               >
                 {sheets.map((s) => (
                   <option key={s.key} value={s.key}>
@@ -280,7 +276,6 @@ export function ScoreEntryPage() {
                 ))}
               </Select>
             </label>
-
             <span
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
@@ -291,9 +286,8 @@ export function ScoreEntryPage() {
               {STATUS_META[status].label}
             </span>
           </div>
-
           {locked && (
-            <p className="flex items-start gap-2 rounded-lg border border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
+            <p className="flex items-start gap-2 border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
               <Info className="mt-0.5 size-4 shrink-0 text-n-400" />
               <span>
                 These scores have been approved and can no longer be changed. An administrator
@@ -301,14 +295,13 @@ export function ScoreEntryPage() {
               </span>
             </p>
           )}
-
           {/* Attributed, because a note without an author is an instruction from
               nobody. Knowing which head of department sent it back is what tells
               a teacher whether to just fix it or go and ask. */}
           {status === "rejected" && submission?.review_comment && (
-            <div className="rounded-lg border border-clay/30 bg-clay/5 px-3.5 py-3">
+            <div className="border-clay/30 bg-clay/5 px-3.5 py-3">
               <p className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                <span className="font-medium text-ink">Sent back for correction</span>
+                <span className="font-medium">Sent back for correction</span>
                 {submission.reviewed_by && (
                   <span className="text-n-500">
                     by {submission.reviewed_by.first_name} {submission.reviewed_by.last_name}
@@ -318,12 +311,11 @@ export function ScoreEntryPage() {
                   <span className="text-n-400">{formatTimestamp(submission.reviewed_at)}</span>
                 )}
               </p>
-              <p className="mt-1.5 text-sm text-ink">{submission.review_comment}</p>
+              <p className="mt-1.5">{submission.review_comment}</p>
             </div>
           )}
-
           {components.length === 0 ? (
-            <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
+            <p className="border-amber/40 bg-amber/10 px-3.5 py-2.5">
               No grading system is set up for this level, so there are no assessments to score
               against.{" "}
               {isAdmin ? (
@@ -347,16 +339,15 @@ export function ScoreEntryPage() {
                 enteredByComponent={enteredByComponent}
                 total={students?.length ?? 0}
               />
-
-              <div className="rounded-xl border border-n-200 bg-white">
+              <div className="rounded-xl border-n-200 bg-white">
                 {unavailableOffline ? (
                   <div className="p-5">
                     <OfflineNotice resourceLabel="This score sheet" />
                   </div>
                 ) : rosterLoading || scoresLoading ? (
-                  <p className="p-5 text-sm text-n-400" role="status">Loading students…</p>
+                  <p className="p-5 text-n-400" role="status">Loading students…</p>
                 ) : !students || students.length === 0 ? (
-                  <p className="p-5 text-sm text-n-400 italic">
+                  <p className="p-5 text-n-400 italic">
                     No students are enrolled in {sheet?.armLabel} for this term.
                   </p>
                 ) : (
@@ -383,7 +374,6 @@ export function ScoreEntryPage() {
                         </Button>
                       )}
                     </div>
-
                     <ul className="divide-y divide-n-100 px-5">
                       {students.map((student, index) => (
                         <ScoreRow
@@ -399,7 +389,6 @@ export function ScoreEntryPage() {
                         />
                       ))}
                     </ul>
-
                     {roster && roster.total > students.length && (
                       <p className="border-t border-n-100 px-5 py-3 text-xs text-clay">
                         Showing {students.length} of {roster.total} students — this class exceeds
@@ -407,7 +396,6 @@ export function ScoreEntryPage() {
                         before entering scores.
                       </p>
                     )}
-
                     {!locked && (
                       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-n-100 px-5 py-3">
                         <span className="mr-auto text-xs text-n-400">

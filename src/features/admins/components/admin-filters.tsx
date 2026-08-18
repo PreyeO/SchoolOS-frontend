@@ -27,7 +27,6 @@ export function AdminFilters({
         aria-label="Filter by role"
         value={roleId}
         onChange={(e) => onRoleIdChange(e.target.value)}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="">All roles</option>
         {roles?.map((role) => (

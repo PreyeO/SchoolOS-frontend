@@ -76,7 +76,6 @@ export function EditSubjectDialog({ trigger, initialValues, schoolLevels, isPend
             </label>
             <Select
               id="subject-level"
-
               {...register("level")}>
               {levelOptions.map((l) => (
                 <option key={l.value} value={l.value}>

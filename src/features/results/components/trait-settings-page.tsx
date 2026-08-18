@@ -1,17 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { ErrorState } from "@/components/shared/error-state";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
 import { useSchoolLevels } from "@/lib/school/use-school-levels";
 import { cn } from "@/lib/utils";
 
 import { useCreateTraits, useDeleteTrait, useTraits } from "../hooks/use-traits";
+import { TraitCategoryCard } from "./trait-category-card";
 import { TRAIT_CATEGORIES, type BehavioralTrait, type TraitCategory } from "../types";
 
 const CATEGORY_META: Record<TraitCategory, { label: string; hint: string }> = {
@@ -114,76 +111,21 @@ export function TraitSettingsPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            {TRAIT_CATEGORIES.map((category) => {
-              const items = byCategory.get(category) ?? [];
-              return (
-                <section key={category} className="rounded-xl border border-n-200 bg-white p-5">
-                  <h2 className="font-display text-base font-semibold text-ink">
-                    {CATEGORY_META[category].label}
-                  </h2>
-                  <p className="mt-0.5 text-xs text-n-400">{CATEGORY_META[category].hint}</p>
-
-                  {items.length === 0 ? (
-                    <p className="mt-4 text-sm text-n-400 italic">
-                      Nothing here yet — teachers will see no {CATEGORY_META[category].label.toLowerCase()}{" "}
-                      section until you add one.
-                    </p>
-                  ) : (
-                    <ul className="mt-3 divide-y divide-n-100">
-                      {items.map((trait) => (
-                        <li key={trait.id} className="flex items-center gap-3 py-2">
-                          <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                            {trait.name}
-                          </span>
-                          <ConfirmDeleteDialog
-                            title={`Remove ${trait.name}?`}
-                            description="If any student has already been rated on it, it's kept on their past report cards and simply stops appearing for new ones."
-                            isPending={deleteTrait.isPending}
-                            onConfirm={() => deleteTrait.mutate(trait.id)}
-                            trigger={
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`Remove ${trait.name}`}
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            }
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div className="mt-3 flex gap-2">
-                    <Input
-                      value={drafts[category]}
-                      onChange={(e) =>
-                        setDrafts((prev) => ({ ...prev, [category]: e.target.value }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addTrait(category);
-                        }
-                      }}
-                      placeholder={category === "affective" ? "e.g. Punctuality" : "e.g. Handwriting"}
-                      aria-label={`New ${CATEGORY_META[category].label} trait`}
-                      className="h-9"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => addTrait(category)}
-                      disabled={!drafts[category].trim() || createTraits.isPending}
-                      className="h-9 shrink-0"
-                    >
-                      <Plus className="size-4 mr-1" /> Add
-                    </Button>
-                  </div>
-                </section>
-              );
-            })}
+            {TRAIT_CATEGORIES.map((category) => (
+              <TraitCategoryCard
+                key={category}
+                label={CATEGORY_META[category].label}
+                hint={CATEGORY_META[category].hint}
+                traits={byCategory.get(category) ?? []}
+                draft={drafts[category]}
+                onDraftChange={(value) => setDrafts((prev) => ({ ...prev, [category]: value }))}
+                onAdd={() => addTrait(category)}
+                onDelete={(id) => deleteTrait.mutate(id)}
+                isAdding={createTraits.isPending}
+                isDeleting={deleteTrait.isPending}
+                placeholder={category === "affective" ? "e.g. Punctuality" : "e.g. Handwriting"}
+              />
+            ))}
           </div>
         </>
       )}

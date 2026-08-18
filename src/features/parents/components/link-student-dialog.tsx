@@ -98,7 +98,7 @@ export function LinkStudentDialog({ parentId }: { parentId: string }) {
                 <Select
                   value={relationship}
                   onChange={(e) => setRelationship(e.target.value as RelationshipType)}
-                  className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm capitalize"
+                  className="capitalize"
                 >
                   {RELATIONSHIPS.map((r) => (
                     <option key={r} value={r} className="capitalize">

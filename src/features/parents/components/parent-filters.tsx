@@ -25,7 +25,6 @@ export function ParentFilters({
         aria-label="Filter by state"
         value={state}
         onChange={(e) => onStateChange(e.target.value)}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="">All states</option>
         {NIGERIAN_STATES.map((s) => (

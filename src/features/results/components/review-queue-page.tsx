@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarRange, CheckCircle2, Eye, Undo2 } from "lucide-react";
+import { CheckCircle2, Eye, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
@@ -9,6 +9,8 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 import { cn } from "@/lib/utils";
 
 import { useReviewQueue } from "../hooks/use-review-queue";
+import { NoCurrentTermNotice } from "./no-current-term-notice";
+import { TermBadge } from "./term-badge";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import {
   useApproveResult,
@@ -70,18 +72,11 @@ export function ReviewQueuePage() {
             Approve the scores teachers have submitted, or send them back with a note.
           </p>
         </div>
-        {currentTerm && (
-          <span className="flex items-center gap-1.5 rounded-full border border-n-200 bg-white px-2.5 py-1 text-xs text-n-600">
-            <CalendarRange className="size-3.5 shrink-0 text-n-400" />
-            {currentTerm.label}
-          </span>
-        )}
+        {currentTerm && <TermBadge label={currentTerm.label} />}
       </div>
 
       {!currentTerm ? (
-        <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
-          No term is marked current, so there are no results to review.
-        </p>
+        <NoCurrentTermNotice consequence="there are no results to review" />
       ) : submissions.length === 0 ? (
         <div className="rounded-xl border border-n-200 bg-white p-8 text-center">
           <p className="text-sm font-medium text-ink">Nothing submitted yet</p>

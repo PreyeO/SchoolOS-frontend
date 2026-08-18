@@ -59,7 +59,6 @@ export function PendingInvitesFilters({
         aria-label="Filter by persona"
         value={persona}
         onChange={(e) => onPersonaChange(e.target.value as InvitePersona | "all")}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="all">All roles</option>
         {PERSONAS.map((p) => (

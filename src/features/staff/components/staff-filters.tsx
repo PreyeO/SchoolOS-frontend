@@ -28,7 +28,6 @@ export function StaffFilters({
         aria-label="Filter by teacher type"
         value={teacherType}
         onChange={(e) => onTeacherTypeChange(e.target.value as TeacherType | "all")}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="all">All types</option>
         {TEACHER_TYPES.map((type) => (

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarRange } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { ArmPicker } from "@/components/shared/arm-picker";
@@ -10,10 +9,12 @@ import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 
+import { NoCurrentTermNotice } from "./no-current-term-notice";
+import { TermBadge } from "./term-badge";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import { useRemarks, useSetPrincipalRemark } from "../hooks/use-traits";
 import type { StudentResultRemark } from "../types";
-import { RemarkField } from "./remark-field";
+import { PrincipalRemarkRow } from "./principal-remark-row";
 
 // The principal's half of the report card. Separate from the form teacher's
 // screen because it's a different person doing a different job at a different
@@ -67,12 +68,7 @@ export function PrincipalRemarksPage() {
             Add the head&rsquo;s comment to each student&rsquo;s report card.
           </p>
         </div>
-        {currentTerm && (
-          <span className="flex items-center gap-1.5 rounded-full border border-n-200 bg-white px-2.5 py-1 text-xs text-n-600">
-            <CalendarRange className="size-3.5 shrink-0 text-n-400" />
-            {currentTerm.label}
-          </span>
-        )}
+        {currentTerm && <TermBadge label={currentTerm.label} />}
       </div>
 
       {!canWrite ? (
@@ -81,9 +77,7 @@ export function PrincipalRemarksPage() {
           administrator can grant it under Roles &amp; Permissions.
         </p>
       ) : !currentTerm ? (
-        <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
-          No term is marked current, so there are no report cards to remark on.
-        </p>
+        <NoCurrentTermNotice consequence="there are no report cards to remark on" />
       ) : allOptions.length === 0 ? (
         <p className="text-sm text-n-400 italic">No classes yet.</p>
       ) : (
@@ -99,54 +93,23 @@ export function PrincipalRemarksPage() {
               </p>
             ) : (
               <ul className="divide-y divide-n-100">
-                {students.map((student) => {
-                  const remark = byStudent.get(student.id);
-                  return (
-                    <li key={student.id} className="space-y-3 px-5 py-4">
-                      <div>
-                        <p className="text-sm font-medium text-ink">
-                          {student.user.first_name} {student.user.last_name}
-                        </p>
-                        <p className="font-mono text-[11px] text-n-400">
-                          {student.admission_number}
-                        </p>
-                      </div>
-
-                      <RemarkField
-                        label="Form teacher's remark"
-                        placeholder=""
-                        saved={remark?.class_teacher_remark}
-                        savedByName={
-                          remark?.class_teacher_remark_by
-                            ? `${remark.class_teacher_remark_by.first_name} ${remark.class_teacher_remark_by.last_name}`
-                            : null
-                        }
-                        savedAt={remark?.class_teacher_remark_at}
-                        isPending={false}
-                        onSave={() => {}}
-                        readOnly
-                      />
-
-                      <RemarkField
-                        label="Your remark"
-                        placeholder="e.g. A commendable result. Keep it up next term."
-                        saved={remark?.principal_remark}
-                        savedByName={null}
-                        savedAt={remark?.principal_remark_at}
-                        isPending={setRemark.isPending}
-                        onSave={(text) => {
-                          if (!selectedId || !currentTerm) return;
-                          setRemark.mutate({
-                            student_id: student.id,
-                            class_arm_id: selectedId,
-                            academic_period_id: currentTerm.id,
-                            remark: text,
-                          });
-                        }}
-                      />
-                    </li>
-                  );
-                })}
+                {students.map((student) => (
+                  <PrincipalRemarkRow
+                    key={student.id}
+                    student={student}
+                    remark={byStudent.get(student.id)}
+                    isSaving={setRemark.isPending}
+                    onSave={(text) => {
+                      if (!selectedId || !currentTerm) return;
+                      setRemark.mutate({
+                        student_id: student.id,
+                        class_arm_id: selectedId,
+                        academic_period_id: currentTerm.id,
+                        remark: text,
+                      });
+                    }}
+                  />
+                ))}
               </ul>
             )}
           </div>

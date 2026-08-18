@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import { useRoster } from "@/features/attendance/hooks/use-register";
 import { useGradingSystems } from "@/features/settings/hooks/use-grading-systems";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { ErrorState } from "@/components/shared/error-state";
+import { SubmissionScoresTable } from "./submission-scores-table";
 
 import { useScores } from "../hooks/use-scores";
 import type { ResultSubmission } from "../types";
@@ -98,8 +98,6 @@ export function SubmissionScoresDialog({
     [students, components, byCell],
   );
 
-  const incomplete = rows.filter((r) => !r.complete).length;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -118,63 +116,7 @@ export function SubmissionScoresDialog({
             No scores have been entered for this subject.
           </p>
         ) : (
-          <div className="space-y-3">
-            {incomplete > 0 && (
-              <p className="flex items-start gap-2 rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
-                <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber" />
-                <span>
-                  {incomplete} of {rows.length} student{rows.length === 1 ? "" : "s"} {incomplete === 1 ? "is" : "are"} missing
-                  at least one score. Worth checking before you approve.
-                </span>
-              </p>
-            )}
-
-            <div className="max-h-[26rem] overflow-auto rounded-lg border border-n-200">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-n-50">
-                  <tr className="text-left">
-                    <th className="px-3 py-2 font-medium text-n-500">Student</th>
-                    {components.map((c) => (
-                      <th key={c.id} className="px-3 py-2 text-right font-medium text-n-500">
-                        {c.name}
-                        <span className="block font-mono text-[10px] font-normal text-n-400">
-                          /{c.max_obtainable}
-                        </span>
-                      </th>
-                    ))}
-                    <th className="px-3 py-2 text-right font-medium text-n-500">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-n-100">
-                  {rows.map(({ student, cells, total, complete }) => (
-                    <tr key={student.id} className={complete ? undefined : "bg-amber/5"}>
-                      <td className="px-3 py-2">
-                        <span className="block truncate text-ink">
-                          {student.user.first_name} {student.user.last_name}
-                        </span>
-                        <span className="block font-mono text-[10px] text-n-400">
-                          {student.admission_number}
-                        </span>
-                      </td>
-                      {cells.map((value, i) => (
-                        <td
-                          key={components[i].id}
-                          className="px-3 py-2 text-right tabular-nums text-ink"
-                        >
-                          {/* A dash, not a zero: no mark and a mark of nought are
-                              different facts, and only one of them is a problem. */}
-                          {value === undefined ? <span className="text-clay">—</span> : value}
-                        </td>
-                      ))}
-                      <td className="px-3 py-2 text-right font-medium tabular-nums text-ink">
-                        {Number(total.toFixed(2))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <SubmissionScoresTable components={components} rows={rows} />
         )}
 
         {/* The decision lives with the evidence. Sending it back from here means

@@ -63,7 +63,6 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
           id={`classes.${ci}.level`}
           aria-label="Level"
           aria-invalid={!!classErrors?.level}
-
           {...register(`classes.${ci}.level`)}>
           <option value="">Level…</option>
           {levelOptions.map((l) => (

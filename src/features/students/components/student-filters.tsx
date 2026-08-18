@@ -42,7 +42,6 @@ export function StudentFilters({
         aria-label="Filter by class"
         value={classArmId}
         onChange={(e) => onClassArmChange(e.target.value)}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="all">All classes</option>
         {armGroups.map((group) => (
@@ -60,7 +59,6 @@ export function StudentFilters({
         aria-label="Filter by enrollment status"
         value={status}
         onChange={(e) => onStatusChange(e.target.value as EnrollmentStatus | "all")}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="all">All statuses</option>
         {STATUSES.map((s) => (
@@ -74,7 +72,6 @@ export function StudentFilters({
         aria-label="Filter by gender"
         value={gender}
         onChange={(e) => onGenderChange(e.target.value as Gender | "all")}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="all">All genders</option>
         {GENDERS.map((g) => (

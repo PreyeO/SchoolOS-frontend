@@ -76,7 +76,7 @@ export function LeaderboardFilters({
             <Select
               value={subjectId ?? ""}
               onChange={(e) => onSubjectChange(e.target.value)}
-              className="h-9 min-w-48 rounded-lg border border-input bg-background px-2 text-base text-ink md:text-sm"
+              className="min-w-48"
             >
               {offerings.map((o) => (
                 <option key={o.subject.id} value={o.subject.id}>
