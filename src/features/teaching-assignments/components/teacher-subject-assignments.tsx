@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { ErrorState } from "@/components/shared/error-state";
 import { useTeacherAssignments } from "../hooks/use-teacher-assignments";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 
@@ -9,7 +10,7 @@ import { armDisplayName } from "@/lib/school/arm-display-name";
 // Grouped by class arm rather than listed flat: "JSS 1 A — Maths, Basic Science"
 // is how a head of school thinks about a teacher's load.
 export function TeacherSubjectAssignments({ teacherProfileId }: { teacherProfileId: string }) {
-  const { data: assignments, isPending, isError } = useTeacherAssignments(teacherProfileId);
+  const { data: assignments, isPending, isError, error } = useTeacherAssignments(teacherProfileId);
 
   const groups = new Map<string, { label: string; subjects: string[] }>();
   (assignments ?? []).forEach((a) => {
@@ -33,7 +34,7 @@ export function TeacherSubjectAssignments({ teacherProfileId }: { teacherProfile
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading assignments…</p>
       ) : isError ? (
-        <p className="text-sm text-clay">Couldn&rsquo;t load teaching assignments.</p>
+        <ErrorState error={error} resourceLabel="teaching assignments" />
       ) : groups.size === 0 ? (
         <p className="text-sm text-n-400 italic">Not assigned to teach any subject yet.</p>
       ) : (

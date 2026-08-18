@@ -1,14 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarRange, CheckCircle2, Eye, Undo2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
-import { formatTimestamp } from "@/lib/text/format-timestamp";
-import { cn } from "@/lib/utils";
 
 import { useReviewQueue } from "../hooks/use-review-queue";
+import { NoCurrentTermNotice } from "./no-current-term-notice";
+import { ReviewQueueRow } from "./review-queue-row";
+import { TermBadge } from "./term-badge";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import {
   useApproveResult,
@@ -16,22 +15,12 @@ import {
   useUnlockResult,
 } from "../hooks/use-submission-actions";
 import type { ResultSubmission, SubmissionStatus } from "../types";
-import { ReviewActionDialog } from "./review-action-dialog";
+import { ReviewActionDialogs, type ReviewAction } from "./review-action-dialogs";
 import { SubmissionScoresDialog } from "./submission-scores-dialog";
-import { armDisplayName } from "@/lib/school/arm-display-name";
-
-const STATUS_META: Record<SubmissionStatus, { label: string; className: string }> = {
-  draft: { label: "Not submitted", className: "bg-n-100 text-n-500" },
-  submitted: { label: "Awaiting review", className: "bg-amber/15 text-amber" },
-  approved: { label: "Approved", className: "bg-grass/10 text-grass" },
-  rejected: { label: "Sent back", className: "bg-clay/10 text-clay" },
-};
 
 // Ordered by what needs doing, not alphabetically. Anything waiting on the admin
 // comes first; approved work sinks to the bottom because it needs nothing.
 const STATUS_ORDER: SubmissionStatus[] = ["submitted", "rejected", "draft", "approved"];
-
-type PendingAction = { kind: "reject" | "unlock"; submission: ResultSubmission } | null;
 
 export function ReviewQueuePage() {
   const { currentTerm, isPending: termLoading } = useScoreSheets();
@@ -39,7 +28,7 @@ export function ReviewQueuePage() {
   const approve = useApproveResult();
   const reject = useRejectResult();
   const unlock = useUnlockResult();
-  const [action, setAction] = useState<PendingAction>(null);
+  const [action, setAction] = useState<ReviewAction | null>(null);
   const [viewing, setViewing] = useState<ResultSubmission | null>(null);
 
   const submissions = useMemo(() => {
@@ -70,18 +59,11 @@ export function ReviewQueuePage() {
             Approve the scores teachers have submitted, or send them back with a note.
           </p>
         </div>
-        {currentTerm && (
-          <span className="flex items-center gap-1.5 rounded-full border border-n-200 bg-white px-2.5 py-1 text-xs text-n-600">
-            <CalendarRange className="size-3.5 shrink-0 text-n-400" />
-            {currentTerm.label}
-          </span>
-        )}
+        {currentTerm && <TermBadge label={currentTerm.label} />}
       </div>
 
       {!currentTerm ? (
-        <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
-          No term is marked current, so there are no results to review.
-        </p>
+        <NoCurrentTermNotice consequence="there are no results to review" />
       ) : submissions.length === 0 ? (
         <div className="rounded-xl border border-n-200 bg-white p-8 text-center">
           <p className="text-sm font-medium text-ink">Nothing submitted yet</p>
@@ -103,90 +85,15 @@ export function ReviewQueuePage() {
 
           <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
             {submissions.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3.5">
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-ink">
-                    {s.subject_name}
-                  </span>
-                  <span className="block truncate text-xs text-n-400">
-                    {armDisplayName({ name: s.arm_name }, s.class_name)}
-                    {s.submitted_at && s.submitted_by && (
-                      <>
-                        {" · "}
-                        {s.submitted_by.first_name} {s.submitted_by.last_name},{" "}
-                        {formatTimestamp(s.submitted_at)}
-                      </>
-                    )}
-                  </span>
-                </span>
-
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full px-2.5 py-1 text-xs font-medium",
-                    STATUS_META[s.status].className,
-                  )}
-                >
-                  {STATUS_META[s.status].label}
-                </span>
-
-                {/* On every row, not just submitted ones — a reviewer often
-                    wants to see what was approved last week, or why something is
-                    still a draft. The act-on-it buttons below stay conditional:
-                    a draft is the teacher's turn, not the admin's. */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewing(s)}
-                  className="h-8 shrink-0 text-xs text-primary"
-                >
-                  <Eye className="size-3.5 mr-1" />
-                  View scores
-                </Button>
-
-                {s.status === "submitted" && (
-                  <span className="flex shrink-0 gap-1.5">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAction({ kind: "reject", submission: s })}
-                      className="h-8 text-xs text-clay hover:bg-clay/10 hover:text-clay"
-                    >
-                      Send back
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => approve.mutate({ id: s.id })}
-                      disabled={approve.isPending}
-                      className="h-8 text-xs"
-                    >
-                      <CheckCircle2 className="size-3.5 mr-1" />
-                      Approve
-                    </Button>
-                  </span>
-                )}
-
-                {s.status === "approved" && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setAction({ kind: "unlock", submission: s })}
-                    className="h-8 shrink-0 text-xs text-n-500"
-                  >
-                    <Undo2 className="size-3.5 mr-1" />
-                    Unlock
-                  </Button>
-                )}
-
-                {s.status === "rejected" && s.review_comment && (
-                  <span className="w-full text-xs text-n-500">
-                    <span className="font-medium">Sent back:</span> {s.review_comment}
-                  </span>
-                )}
-              </li>
+              <ReviewQueueRow
+                key={s.id}
+                submission={s}
+                isApproving={approve.isPending}
+                onView={() => setViewing(s)}
+                onApprove={() => approve.mutate({ id: s.id })}
+                onSendBack={() => setAction({ kind: "reject", submission: s })}
+                onUnlock={() => setAction({ kind: "unlock", submission: s })}
+              />
             ))}
           </ul>
 
@@ -218,35 +125,13 @@ export function ReviewQueuePage() {
         />
       )}
 
-      <ReviewActionDialog
-        open={action?.kind === "reject"}
-        onOpenChange={(next) => !next && setAction(null)}
-        title={`Send ${action?.submission.subject_name ?? ""} back?`}
-        description="The teacher can edit and re-submit. Your note is what they'll see, so say what needs changing."
-        label="What needs fixing"
-        placeholder="e.g. Exam scores for three students are missing."
-        confirmLabel="Send back"
-        required
-        destructive
-        isPending={reject.isPending}
-        onConfirm={(comment) =>
-          reject.mutateAsync({ id: action!.submission.id, body: { comment } })
-        }
-      />
-
-      <ReviewActionDialog
-        open={action?.kind === "unlock"}
-        onOpenChange={(next) => !next && setAction(null)}
-        title={`Unlock ${action?.submission.subject_name ?? ""}?`}
-        description="This reopens the subject for editing and returns it to awaiting review. The reason is recorded in the audit log."
-        label="Reason for unlocking"
-        placeholder="e.g. Two scores were transposed and need correcting."
-        confirmLabel="Unlock"
-        required
-        isPending={unlock.isPending}
-        onConfirm={(reason) =>
-          unlock.mutateAsync({ id: action!.submission.id, body: { reason } })
-        }
+      <ReviewActionDialogs
+        action={action}
+        onClose={() => setAction(null)}
+        isRejecting={reject.isPending}
+        isUnlocking={unlock.isPending}
+        onReject={(comment) => reject.mutateAsync({ id: action!.submission.id, body: { comment } })}
+        onUnlock={(reason) => unlock.mutateAsync({ id: action!.submission.id, body: { reason } })}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { InvitePersona, InviteStatus } from "../../types";
 import { personaLabel } from "../../lib/persona-label";
@@ -54,11 +55,10 @@ export function PendingInvitesFilters({
         ))}
       </div>
 
-      <select
+      <Select
         aria-label="Filter by persona"
         value={persona}
         onChange={(e) => onPersonaChange(e.target.value as InvitePersona | "all")}
-        className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
       >
         <option value="all">All roles</option>
         {PERSONAS.map((p) => (
@@ -66,7 +66,7 @@ export function PendingInvitesFilters({
             {personaLabel(p)}
           </option>
         ))}
-      </select>
+      </Select>
 
       <Input
         placeholder="Search by email…"

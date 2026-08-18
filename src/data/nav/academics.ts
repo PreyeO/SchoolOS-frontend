@@ -9,6 +9,8 @@ import {
   NotebookPen,
   FileText,
   BookMarked,
+  Table,
+  Trophy,
   UsersRound,
   School,
 } from "lucide-react";
@@ -82,6 +84,22 @@ export const academicsGroup: NavGroup = {
           href: "/results/behaviour",
           icon: ClipboardList,
           description: "Rate your class on the affective and psychomotor traits.",
+        }, false),
+        // staffItem, not adminItem: the backend gates the broadsheet on
+        // CanViewResults, which any teacher satisfies — it's the sheet a form
+        // teacher checks before results go out, not an admin-only control.
+        staffItem({
+          label: "Broadsheet",
+          href: "/results/broadsheet",
+          icon: Table,
+          description: "The whole class on one sheet — every student, every subject.",
+        }, false),
+        // Same CanViewResults gate as the broadsheet, so teachers too.
+        staffItem({
+          label: "Leaderboard",
+          href: "/results/leaderboard",
+          icon: Trophy,
+          description: "Who's top of the class this term, overall or in one subject.",
         }, false),
         adminItem({
           label: "Publish Results",

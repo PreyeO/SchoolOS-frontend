@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import type { StudentListItem } from "@/features/students/types";
-import { useAuthStore } from "@/stores/auth-store";
 
-import {
-  clearScoreDraft,
-  readScoreDraft,
-  writeScoreDraft,
-  scoreDraftKey,
-} from "../lib/score-draft-storage";
+import { clearScoreDraft } from "../lib/score-draft-storage";
+import { useScoreDraftSync } from "./use-score-draft-sync";
 import { usePendingScores } from "./use-score-sync";
 import type { Score } from "../types";
 
@@ -24,96 +19,25 @@ export interface ScoreSheetKeys {
 // The working state of one score column: saved scores as the baseline, plus
 // whatever the teacher has typed since. Keyed by student id.
 //
-// Seeded during render (React's "adjust state when data arrives" pattern) so the
-// first paint after a fetch already shows saved scores. The seed key is
-// arm+subject+term+component: changing any of them re-seeds from scratch,
-// because each names a different column of marks.
-//
-// It also re-seeds *within* a column when newer server data lands, which the
-// first version did not — it seeded once per key and never again. The tab counts
-// read `scores` directly so they updated, while the input boxes kept showing the
-// state from first load. Entering marks for the same column in two browsers made
-// that plain: the second browser's counts moved, its boxes didn't.
+// Seeding, re-seeding when newer server data lands, and mirroring to device
+// storage all live in useScoreDraftSync — see there for why those run during
+// render. This hook owns editing, what counts as unsaved, and the running total.
 export function useScoreDraft(
   keys: ScoreSheetKeys,
   scores: Score[] | undefined,
   students: StudentListItem[] | undefined,
-  // Bumped on every successful fetch, whether or not the rows changed — which is
-  // exactly what "newer server data has landed" needs.
   scoresUpdatedAt: number,
   // The active component's ceiling, so "unsaved" and "sendable" are decided once
   // here rather than recomputed against a different rule by the caller.
   componentMax: number,
 ) {
-  const membershipId = useAuthStore((s) => s.claims?.membership_id ?? null);
-  const [draft, setDraft] = useState<Record<string, string>>({});
-  const [seededKey, setSeededKey] = useState<string | null>(null);
-  const [seededAt, setSeededAt] = useState(0);
-  // The exact values the last seed produced. Comparing against this is what
-  // separates a genuine local edit from a value that merely predates a refetch —
-  // without it a re-seed either discards the teacher's typing or preserves stale
-  // numbers forever.
-  const [seededValues, setSeededValues] = useState<Record<string, string>>({});
-
+  const { draft, setDraft, ready, key, membershipId, savedForComponent } = useScoreDraftSync(
+    keys,
+    scores,
+    students,
+    scoresUpdatedAt,
+  );
   const { classArmId, subjectId, academicPeriodId, gradeComponentId } = keys;
-  const key =
-    classArmId && subjectId && academicPeriodId && gradeComponentId
-      ? scoreDraftKey(classArmId, subjectId, academicPeriodId, gradeComponentId)
-      : null;
-  const ready = !!key && !!scores && !!students;
-
-  const savedForComponent = useMemo(() => {
-    const map = new Map<string, Score>();
-    (scores ?? []).forEach((s) => {
-      if (s.grade_component === gradeComponentId) map.set(s.student.id, s);
-    });
-    return map;
-  }, [scores, gradeComponentId]);
-
-  const rosterIds = useMemo(() => new Set((students ?? []).map((s) => s.id)), [students]);
-
-  // What the server currently holds for this column, as input strings.
-  const serverValues = useMemo(() => {
-    const base: Record<string, string> = {};
-    savedForComponent.forEach((score, studentId) => {
-      // A score can outlive a student's membership of the arm — Score snapshots
-      // class_arm at entry time — so a transfer leaves their mark behind. Those
-      // rows are history, not part of this column.
-      if (!rosterIds.has(studentId)) return;
-      // Trailing zeros off a DecimalField ("18.00") read as noise in a field the
-      // teacher is about to retype, so normalise to the shortest form.
-      base[studentId] = String(Number(score.score_obtained));
-    });
-    return base;
-  }, [savedForComponent, rosterIds]);
-
-  if (ready && seededKey !== key) {
-    // New column. Stored edits go on top of the server's copy — they're the
-    // teacher's later intent, made after this column was last loaded.
-    const stored = readScoreDraft(membershipId, key);
-    const seed = { ...serverValues };
-    if (stored) {
-      Object.entries(stored).forEach(([studentId, value]) => {
-        if (rosterIds.has(studentId)) seed[studentId] = value;
-      });
-    }
-    setDraft(seed);
-    setSeededValues(serverValues);
-    setSeededKey(key);
-    setSeededAt(scoresUpdatedAt);
-  } else if (ready && seededKey === key && scoresUpdatedAt > seededAt) {
-    // Same column, fresher data. Take the server's values wholesale, then put
-    // back only the cells this teacher has actually changed since the last seed.
-    // A colleague's entry on another device therefore appears, while typing in
-    // progress here is never overwritten by it.
-    const merged = { ...serverValues };
-    Object.entries(draft).forEach(([studentId, value]) => {
-      if (value !== (seededValues[studentId] ?? "")) merged[studentId] = value;
-    });
-    setDraft(merged);
-    setSeededValues(serverValues);
-    setSeededAt(scoresUpdatedAt);
-  }
 
   // Scores handed to the queue but not yet accepted. A queued entry counts as
   // committed — it's on its way, and resubmitting would duplicate the work. If
@@ -138,11 +62,6 @@ export function useScoreDraft(
       }),
     [draft, queued, savedForComponent, componentMax],
   );
-
-  useEffect(() => {
-    if (!ready || seededKey !== key || !key) return;
-    writeScoreDraft(membershipId, key, draft);
-  }, [draft, key, membershipId, ready, seededKey]);
 
   // Once nothing differs from the server there is no unsaved work to protect, so
   // the stored copy is dropped. Without this the draft outlived its usefulness

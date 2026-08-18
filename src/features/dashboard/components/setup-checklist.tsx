@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowRight, CheckCircle2, ChevronDown, Circle, PartyPopper, X } from "lucide-react";
+import { ChevronDown, PartyPopper, X } from "lucide-react";
 
 import { canDoOnboarding } from "@/lib/auth/can-do-onboarding";
 import { cn } from "@/lib/utils";
@@ -11,8 +10,8 @@ import { useOnboardingStage } from "@/features/onboarding/hooks/use-onboarding-s
 
 import { useChecklistDismissed } from "../hooks/use-checklist-dismissed";
 import { useSetupStatus } from "../hooks/use-setup-status";
-import { SETUP_STAGES, resolveStepText, type SetupStep, type SetupStepKey } from "../lib/setup-steps";
-import type { TeachingUnitWords } from "@/lib/school/teaching-unit";
+import { SetupStageGroup } from "./setup-stage-group";
+import { SETUP_STAGES, type SetupStepKey } from "../lib/setup-steps";
 
 export function SetupChecklist() {
   const claims = useAuthStore((s) => s.claims);
@@ -104,112 +103,21 @@ export function SetupChecklist() {
 
       {expanded && (
         <div className="space-y-1 px-2 pb-3">
-          {SETUP_STAGES.map((group) => {
-            const done = group.steps.filter((s) => setupStatus[s.key]).length;
-            const stageComplete = done === group.steps.length;
-            const isOpen = openStage === group.label;
-
-            return (
-              <div key={group.label}>
-                <button
-                  type="button"
-                  onClick={() => setOpenStage(isOpen ? null : group.label)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-n-50"
-                >
-                  {stageComplete ? (
-                    <CheckCircle2 className="size-4 shrink-0 text-grass" />
-                  ) : (
-                    <Circle className="size-4 shrink-0 text-n-300" />
-                  )}
-                  <span className={cn("text-sm font-medium", stageComplete ? "text-n-400" : "text-ink")}>
-                    {group.label}
-                  </span>
-                  <span className="text-xs text-n-400">
-                    {done}/{group.steps.length}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "ml-auto size-3.5 text-n-400 transition-transform",
-                      isOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-
-                {isOpen && (
-                  <ul className="space-y-0.5 pb-1 pl-8 pr-2">
-                    {group.steps.map((step) => (
-                      <StepRow
-                        key={step.key}
-                        step={step}
-                        done={setupStatus[step.key]}
-                        progress={stepProgress[step.key]}
-                        unitWords={unitWords}
-                        wizardUnfinished={wizardUnfinished}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
+          {SETUP_STAGES.map((group) => (
+            <SetupStageGroup
+              key={group.label}
+              group={group}
+              status={setupStatus}
+              progress={stepProgress}
+              unitWords={unitWords}
+              wizardUnfinished={wizardUnfinished}
+              isOpen={openStage === group.label}
+              onToggle={() => setOpenStage(openStage === group.label ? null : group.label)}
+            />
+          ))}
         </div>
       )}
     </div>
-  );
-}
-
-function StepRow({
-  step,
-  done,
-  progress,
-  unitWords,
-  wizardUnfinished,
-}: {
-  step: SetupStep;
-  done: boolean;
-  // Set only for steps completed per-item, so partial work is visible.
-  progress?: { done: number; total: number };
-  unitWords: TeachingUnitWords;
-  wizardUnfinished: boolean;
-}) {
-  const label = resolveStepText(step.label, unitWords);
-
-  if (done) {
-    return (
-      <li className="flex items-center gap-2 py-1">
-        <CheckCircle2 className="size-3.5 shrink-0 text-grass" />
-        <span className="text-sm text-n-400 line-through">{label}</span>
-      </li>
-    );
-  }
-
-  return (
-    <li className="py-1.5">
-      <div className="flex items-start gap-2">
-        <Circle className="mt-0.5 size-3.5 shrink-0 text-n-300" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm text-ink">
-            {label}
-            {progress && progress.total > 0 && (
-              <span className="ml-1.5 text-xs text-n-400">
-                {progress.done} of {progress.total}
-              </span>
-            )}
-          </p>
-          {/* Why it matters, not a restatement of the label — this is where the
-              admin learns the model instead of discovering it via a 400. */}
-          <p className="mt-0.5 text-xs text-n-400">{resolveStepText(step.consequence, unitWords)}</p>
-          <Link
-            href={wizardUnfinished ? "/onboarding" : step.href}
-            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
-            {wizardUnfinished ? "Continue setup" : step.cta}
-            <ArrowRight className="size-3" />
-          </Link>
-        </div>
-      </div>
-    </li>
   );
 }
 

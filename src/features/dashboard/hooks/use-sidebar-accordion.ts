@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 import type { NavGroup } from "@/data/navigation";
-import { isNavActive } from "../lib/is-nav-active";
+import { isAnyNavActive } from "../lib/is-nav-active";
 
 function findActiveGroupLabel(groups: NavGroup[], pathname: string): string | null {
-  const group = groups.find((g) => g.items.some((item) => isNavActive(item.href, pathname)));
+  const group = groups.find((g) => isAnyNavActive(g.items, pathname));
   return group?.label ?? null;
 }
 

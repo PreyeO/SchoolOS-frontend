@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarRange } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { SyncStatusStrip } from "@/features/attendance/components/sync-status-strip";
 import { useRoster } from "@/features/attendance/hooks/use-register";
@@ -13,6 +13,7 @@ import { useMyClasses } from "@/features/teacher/hooks/use-my-classes";
 import { useIsSchoolAdmin } from "@/lib/auth/use-personas";
 import { cn } from "@/lib/utils";
 
+import { TermBadge } from "./term-badge";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import {
   useBulkRate,
@@ -191,12 +192,7 @@ export function BehaviourPage() {
             report-card remark.
           </p>
         </div>
-        {currentTerm && (
-          <span className="flex items-center gap-1.5 rounded-full border border-n-200 bg-white px-2.5 py-1 text-xs text-n-600">
-            <CalendarRange className="size-3.5 shrink-0 text-n-400" />
-            {currentTerm.label}
-          </span>
-        )}
+        {currentTerm && <TermBadge label={currentTerm.label} />}
       </div>
 
       <SyncStatusStrip />
@@ -223,17 +219,17 @@ export function BehaviourPage() {
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <span className="text-n-500">Class</span>
-              <select
+              <Select
                 value={arm?.classArmId ?? ""}
                 onChange={(e) => setArmId(e.target.value)}
-                className="h-9 min-w-44 rounded-lg border border-input bg-background px-2 text-sm text-ink"
+                className="min-w-44"
               >
                 {formClasses.map((c) => (
                   <option key={c.classArmId} value={c.classArmId}>
                     {c.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <span className="flex gap-1.5">

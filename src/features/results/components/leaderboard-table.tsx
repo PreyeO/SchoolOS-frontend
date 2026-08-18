@@ -1,0 +1,52 @@
+import { cn } from "@/lib/utils";
+
+import type { RankedRow } from "../hooks/use-leaderboard";
+
+interface Props {
+  rows: RankedRow[];
+  // "%" for an overall average, "" for a raw subject total.
+  unit: string;
+  showArm: boolean;
+}
+
+// Ranked list rather than a table: one line per student, read top-down.
+//
+// The top three get a filled primary badge and everything else a plain one —
+// deliberately not gold/silver/bronze, which would be the only place in the app
+// introducing colours outside the school's own palette.
+export function LeaderboardTable({ rows, unit, showArm }: Props) {
+  return (
+    <ul className="divide-y divide-n-100">
+      {rows.map((row) => (
+        <li key={row.studentId} className="flex items-center gap-3 px-5 py-2.5">
+          <span
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums",
+              row.rank <= 3 ? "bg-primary text-white" : "bg-n-100 text-n-500",
+            )}
+          >
+            {row.rank}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm text-ink">
+              {row.student.user.first_name} {row.student.user.last_name}
+            </span>
+            <span className="block truncate font-mono text-[11px] text-n-400">
+              {row.student.admission_number}
+              {showArm && row.armLabel && <span className="ml-1.5">· {row.armLabel}</span>}
+            </span>
+          </span>
+          {row.grade && (
+            <span className="shrink-0 rounded-full border border-n-200 px-2 py-0.5 text-[11px] text-n-600">
+              {row.grade}
+            </span>
+          )}
+          <span className="shrink-0 text-sm font-medium tabular-nums text-ink">
+            {row.score}
+            {unit}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}

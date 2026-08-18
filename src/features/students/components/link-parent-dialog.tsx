@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import {
   Dialog,
   DialogClose,
@@ -94,17 +95,17 @@ export function LinkParentDialog({ studentId }: { studentId: string }) {
             <>
               <div>
                 <p className="mb-1.5 text-sm font-medium text-ink">Relationship</p>
-                <select
+                <Select
                   value={relationship}
                   onChange={(e) => setRelationship(e.target.value as RelationshipType)}
-                  className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm capitalize"
+                  className="capitalize"
                 >
                   {RELATIONSHIPS.map((r) => (
                     <option key={r} value={r} className="capitalize">
                       {r}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <label className="flex items-center gap-2 text-sm text-ink">
                 <input

@@ -8,6 +8,8 @@ import { useSchoolLevels } from "@/lib/school/use-school-levels";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { cn } from "@/lib/utils";
 
+import { ReportCardAppearance } from "./report-card-appearance";
+import { ReportCardSectionToggles } from "./report-card-section-toggles";
 import {
   useReportCardOptions,
   useReportCardSettings,
@@ -105,78 +107,21 @@ export function ReportCardSettingsPage() {
             ))}
           </div>
 
-          <section className="rounded-xl border border-n-200 bg-white p-5">
-            <h2 className="font-display text-base font-semibold text-ink">Sections</h2>
-            <p className="mt-0.5 text-xs text-n-400">
-              Turn off anything your school doesn&rsquo;t report. The school name, logo and motto
-              always print.
-            </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {(options?.sections ?? []).map((section) => {
-                const enabled = settings.enabled_sections.includes(section.key);
-                return (
-                  <label
-                    key={section.key}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-2.5 rounded-lg border p-3 transition-colors",
-                      enabled ? "border-primary/40 bg-primary/5" : "border-n-200 hover:border-n-300",
-                      !canEdit && "cursor-not-allowed opacity-60",
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={enabled}
-                      disabled={!canEdit || update.isPending}
-                      onChange={() => toggleSection(section.key)}
-                      className="size-4 shrink-0 accent-primary"
-                    />
-                    <span className="min-w-0 truncate text-sm text-ink">{section.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </section>
+          <ReportCardSectionToggles
+            sections={options?.sections ?? []}
+            enabled={settings.enabled_sections}
+            canEdit={canEdit}
+            isSaving={update.isPending}
+            onToggle={toggleSection}
+          />
 
-          <section className="rounded-xl border border-n-200 bg-white p-5">
-            <h2 className="font-display text-base font-semibold text-ink">Appearance</h2>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              {pickers.map((picker) => (
-                <label key={picker.field} className="block">
-                  <span className="mb-1.5 block text-sm text-n-500">{picker.label}</span>
-                  <select
-                    value={String(settings[picker.field] ?? "")}
-                    disabled={!canEdit || update.isPending}
-                    onChange={(e) => patch({ [picker.field]: e.target.value })}
-                    className="h-9 w-full rounded-lg border border-input bg-background px-2 text-sm text-ink disabled:opacity-60"
-                  >
-                    {picker.choices.map((c) => (
-                      <option key={c.key} value={c.key}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ))}
-            </div>
-
-            <label
-              className={cn(
-                "mt-4 flex items-center gap-2.5",
-                canEdit ? "cursor-pointer" : "cursor-not-allowed opacity-60",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={settings.show_watermark}
-                disabled={!canEdit || update.isPending}
-                onChange={(e) => patch({ show_watermark: e.target.checked })}
-                className="size-4 shrink-0 accent-primary"
-              />
-              <span className="text-sm text-ink">
-                Show a faint school watermark behind the card
-              </span>
-            </label>
-          </section>
+          <ReportCardAppearance
+            pickers={pickers}
+            settings={settings}
+            canEdit={canEdit}
+            isSaving={update.isPending}
+            onPatch={patch}
+          />
 
           {/* No preview here on purpose: the preview endpoint renders one real
               student's card, so it belongs on Publish Results where a student is

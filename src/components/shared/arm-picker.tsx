@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/select";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
 
 interface Props {
@@ -18,13 +19,13 @@ interface Props {
 // system placeholder). Grouped by level in school order.
 export function ArmPicker({ groups, value, onChange, label = "Class arm", id, placeholder, hasError }: Props) {
   const select = (
-    <select
+    <Select
       id={id}
       aria-label={id ? undefined : label}
       aria-invalid={hasError || undefined}
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
-      className="h-9 min-w-52 rounded-lg border border-input bg-background px-2 text-sm text-ink aria-invalid:border-red-500"
+      className="min-w-52 aria-invalid:border-destructive"
     >
       {placeholder && <option value="">{placeholder}</option>}
       {groups.map((group) => (
@@ -36,7 +37,7 @@ export function ArmPicker({ groups, value, onChange, label = "Class arm", id, pl
           ))}
         </optgroup>
       ))}
-    </select>
+    </Select>
   );
 
   // With an id the caller owns the label (e.g. FieldWrapper); without one this
