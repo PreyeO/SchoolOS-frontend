@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
 import {
+  getClassArmReportCards,
   getClassArmResults,
   getReportCard,
   getReportCardOptions,
@@ -16,6 +17,7 @@ import {
   unlockClassArmResult,
   updateReportCardSettings,
 } from "../api/report-card-api";
+import { saveBlob } from "../lib/save-blob";
 import type { ReportCardSettings } from "../types";
 
 export const REPORT_CARD_QUERY_KEY = ["results", "report-card"];
@@ -128,9 +130,7 @@ export function useReportCardOptions() {
   });
 }
 
-// Downloads rather than renders. The endpoint needs the bearer token, so it
-// can't be a plain link — the blob is fetched, handed to the browser as a
-// temporary object URL, and revoked immediately after.
+// Downloads rather than renders — see saveBlob for why it can't be a link.
 export function useDownloadReportCard() {
   return useMutation({
     mutationFn: async ({
@@ -143,14 +143,48 @@ export function useDownloadReportCard() {
       admissionNumber: string;
     }) => {
       const blob = await getReportCardPdf(studentId, periodId);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${admissionNumber}_report_card.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+      saveBlob(blob, `${admissionNumber}_report_card.pdf`);
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+// The whole arm in one go: a merged PDF, or a zip of one file per student.
+//
+// The skipped list is the important half. Candidates are everyone *currently
+// enrolled* in the arm for that session, and the backend soft-skips anyone with
+// no results rather than failing — so a silent success can be missing children,
+// and staff would have no way to know. Naming them is the difference between
+// "printed the class" and "printed most of the class".
+export function useDownloadClassReportCards() {
+  return useMutation({
+    mutationFn: async ({
+      classArmId,
+      periodId,
+      exportFormat,
+      armLabel,
+    }: {
+      classArmId: string;
+      periodId: string;
+      exportFormat: "pdf" | "zip";
+      armLabel: string;
+    }) => {
+      const { blob, skipped } = await getClassArmReportCards(classArmId, periodId, exportFormat);
+      // Mirrors the server's own {Class}_{Arm}_report_cards.{ext} rather than
+      // reading Content-Disposition, which is not exposed cross-origin either.
+      const safeLabel = armLabel.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_");
+      saveBlob(blob, `${safeLabel || "class"}_report_cards.${exportFormat}`);
+      return skipped;
+    },
+    onSuccess: (skipped) => {
+      if (skipped.length === 0) {
+        toast.success("Report cards downloaded");
+        return;
+      }
+      toast.warning(
+        `Downloaded, without ${skipped.length} student${skipped.length === 1 ? "" : "s"}: ${skipped.join(", ")}. They have no results for this term.`,
+        { duration: 10000 },
+      );
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });

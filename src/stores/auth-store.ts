@@ -7,7 +7,7 @@ import type { AuthClaims } from "@/lib/auth/decode-token";
 import { clearPersistedQueryCaches } from "@/lib/api/query-persistence";
 import { clearAllRegisterDrafts } from "@/features/attendance/lib/draft-storage";
 import { clearAllScoreDrafts } from "@/features/results/lib/score-draft-storage";
-import { ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
+import { AUTH_STORAGE_KEY, ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
 
 export interface AuthTokens {
   access: string;
@@ -59,7 +59,9 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {
-      name: "schoolos-auth",
+      // Shared with query-persistence, which reads membership_id straight out
+      // of this blob to scope the offline cache — see readPersistedMembershipId.
+      name: AUTH_STORAGE_KEY,
       storage: createJSONStorage(() => ssrSafeLocalStorage),
       partialize: (state) => ({
         pendingVerificationEmail: state.pendingVerificationEmail,

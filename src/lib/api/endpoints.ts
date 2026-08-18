@@ -81,6 +81,11 @@ export const CLASS_ARM_ENDPOINTS = {
   DETAIL: (id: string) => `/api/class-arms/${id}/`,
   ASSIGN_CLASS_TEACHER: (id: string) => `/api/class-arms/${id}/assign-class-teacher/`,
   UNASSIGN_CLASS_TEACHER: (id: string) => `/api/class-arms/${id}/unassign-class-teacher/`,
+  // Bulk report cards for everyone currently enrolled in the arm. Needs both
+  // ?academic_period_id= and ?export_format=pdf|zip — the latter has no default
+  // and is deliberately NOT called `format`, which DRF reserves for content
+  // negotiation and which would 404 before the view runs.
+  REPORT_CARDS: (id: string) => `/api/class-arms/${id}/report-cards/`,
 } as const;
 
 export const SUBJECT_ENDPOINTS = {

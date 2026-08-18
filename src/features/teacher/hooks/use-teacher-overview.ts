@@ -146,7 +146,12 @@ export function useTeacherOverview() {
     })),
   });
 
-  const isPending = classesLoading || results.some((r) => r.isPending);
+  // A paused arm query never resolves, so folding it in raw hung the whole
+  // dashboard offline even when /me had restored. Excluded rather than waited
+  // on: an arm with no cached history degrades to "not marked" and an empty
+  // trend, which is honest and still leaves the rest of the page usable. Only
+  // a missing class list is fatal, and that's `unavailableOffline` below.
+  const isPending = classesLoading || results.some((r) => r.isPending && !r.isPaused);
   const recordsByArm = results.map((r) => r.data ?? []);
   const allRecords = recordsByArm.flat();
 

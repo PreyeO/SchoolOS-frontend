@@ -1,9 +1,11 @@
 import { apiClient } from "@/lib/api/client";
 import {
+  CLASS_ARM_ENDPOINTS,
   CLASS_ARM_RESULT_ENDPOINTS,
   REPORT_CARD_SETTINGS_ENDPOINTS,
   STUDENT_ENDPOINTS,
 } from "@/lib/api/endpoints";
+import { readBlobError } from "@/lib/api/read-blob-error";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 import type {
@@ -44,11 +46,56 @@ export async function getReportCardPdf(
   studentId: string,
   academicPeriodId: string,
 ): Promise<Blob> {
-  const { data } = await apiClient.get<Blob>(STUDENT_ENDPOINTS.REPORT_CARD_PDF(studentId), {
-    params: { academic_period_id: academicPeriodId },
-    responseType: "blob",
-  });
-  return data;
+  try {
+    const { data } = await apiClient.get<Blob>(STUDENT_ENDPOINTS.REPORT_CARD_PDF(studentId), {
+      params: { academic_period_id: academicPeriodId },
+      responseType: "blob",
+    });
+    return data;
+  } catch (error) {
+    // Without this the student-level refusals ("This student has no results or
+    // current enrollment for this period — nothing to render") arrive as an
+    // unreadable Blob and surface as a generic failure.
+    throw await readBlobError(error);
+  }
+}
+
+// Every currently-enrolled student in the arm, as one merged PDF or a zip of
+// one PDF each. Enrollment-scoped on purpose: a student who has scores in this
+// arm but has since transferred is not in the file and not in `skipped` either
+// — they're simply never attempted, and staff who want their card need the
+// single-student endpoint.
+//
+// `skipped` carries the admission numbers the backend soft-skipped, which in
+// practice means "enrolled but has no results for this period". The backend
+// only sets the header when the list is non-empty.
+export async function getClassArmReportCards(
+  classArmId: string,
+  academicPeriodId: string,
+  exportFormat: "pdf" | "zip",
+): Promise<{ blob: Blob; skipped: string[] }> {
+  let response;
+  try {
+    response = await apiClient.get<Blob>(CLASS_ARM_ENDPOINTS.REPORT_CARDS(classArmId), {
+      params: { academic_period_id: academicPeriodId, export_format: exportFormat },
+      responseType: "blob",
+    });
+  } catch (error) {
+    // The all-failed case is a 400 whose detail ("No students with renderable
+    // results found…") is the actionable part — fix enrollments or enter
+    // scores. Unparsed it would read as a broken download.
+    throw await readBlobError(error);
+  }
+
+  // Cross-origin, this is only readable if the backend lists it in
+  // CORS_EXPOSE_HEADERS — it currently does not, so this is null in the browser
+  // today and the caller degrades to not reporting skips. Harmless when it
+  // lands; no frontend change needed then.
+  const header = response.headers["x-skipped-students"];
+  const skipped =
+    typeof header === "string" && header.length > 0 ? header.split(",").filter(Boolean) : [];
+
+  return { blob: response.data, skipped };
 }
 
 export async function getClassArmResults(academicPeriodId: string): Promise<ClassArmResult[]> {
