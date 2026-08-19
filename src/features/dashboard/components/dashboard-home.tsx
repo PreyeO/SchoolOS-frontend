@@ -11,6 +11,7 @@ import { DashboardContextHeader } from "./dashboard-context-header";
 import { SetupChecklist } from "./setup-checklist";
 import { KpiCards } from "./kpi-cards";
 import { QuickActions } from "./quick-actions";
+import { ResultsProgressCard } from "./results-progress-card";
 import { OverviewCharts } from "./overview-charts";
 import { ActivityFeed } from "./activity-feed";
 import { UpcomingEvents } from "./upcoming-events";
@@ -94,6 +95,7 @@ export function DashboardHome() {
       <SetupChecklist />
       <KpiCards />
       <QuickActions />
+      <ResultsProgressCard />
       <OverviewCharts />
       <div className="grid lg:grid-cols-2 gap-4">
         <ActivityFeed />

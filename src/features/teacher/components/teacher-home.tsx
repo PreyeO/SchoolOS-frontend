@@ -11,6 +11,7 @@ import { useSchoolStore } from "@/stores/school-store";
 
 import { useTeacherOverview } from "../hooks/use-teacher-overview";
 import { AttendanceTrendCard } from "./attendance-trend-card";
+import { MyResultsCard } from "./my-results-card";
 import { NeedsAttentionList } from "./needs-attention-list";
 import { RegisterStatusList } from "./register-status-list";
 import { OfflineActions } from "./offline-actions";
@@ -130,8 +131,16 @@ export function TeacherHome() {
               </div>
             </section>
 
-            <AttendanceTrendCard trend={trend} hasAnyRecords={hasAnyRecords} />
+            {/* Results take the second slot beside today's registers. Score
+                entry, submission and corrections are half a teacher's term and
+                had no presence on this screen at all, while attendance had
+                three of the four blocks. The trend keeps its place below —
+                it's real, measured data, unlike the admin charts, so it's
+                demoted rather than dropped. */}
+            <MyResultsCard />
           </div>
+
+          <AttendanceTrendCard trend={trend} hasAnyRecords={hasAnyRecords} />
 
           {needsAttention.length > 0 && <NeedsAttentionList entries={needsAttention} />}
         </>
