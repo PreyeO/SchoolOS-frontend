@@ -43,9 +43,10 @@ export function PrincipalRemarkRow({
           {student.user.first_name} {student.user.last_name}
         </p>
         <p className="font-mono text-[11px] text-n-400">{student.admission_number}</p>
+        <div className="mt-1">
+          <StudentResultContext row={resultRow} columns={resultColumns} />
+        </div>
       </div>
-
-      <StudentResultContext row={resultRow} columns={resultColumns} />
 
       {/* Labelled with the same words the report card uses for each section, so
           the head is reading the two in the shape they'll print. */}

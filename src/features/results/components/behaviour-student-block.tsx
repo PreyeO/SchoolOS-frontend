@@ -47,8 +47,9 @@ export function BehaviourStudentBlock({
         {student.user.first_name} {student.user.last_name}
       </p>
       <p className="font-mono text-[11px] text-n-400">{student.admission_number}</p>
-
-      <div className="mt-2.5">
+      {/* A third line of the student's header rather than a block of its own:
+          it's one line, and the detail behind it lives on the broadsheet. */}
+      <div className="mt-1">
         <StudentResultContext row={resultRow} columns={resultColumns} />
       </div>
 

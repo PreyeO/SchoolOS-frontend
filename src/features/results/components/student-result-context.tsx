@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { BroadsheetColumn, BroadsheetGridRow } from "../hooks/use-broadsheet";
 
 interface Props {
@@ -5,25 +7,23 @@ interface Props {
   columns: BroadsheetColumn[];
 }
 
-// What a student actually scored, shown beside the field where someone writes
-// their remark.
+// A one-line read on the student, above the field where someone remarks on them.
 //
-// Both remarks on a report card are about the term's *result*, so writing one
-// without the result in view means commenting blind — which is what happened
-// before this existed: the form teacher wrote theirs next to behaviour ratings,
-// and the principal then responded to that comment with nothing in front of
-// them either.
+// Deliberately not the subject-by-subject breakdown: that's the broadsheet's
+// job, it's one click away, and repeating it under all forty students turned
+// both remark screens into a wall of chips. What's needed here is enough to
+// judge the term at a glance and to know whether the picture is complete.
 //
-// Position and average are deliberately absent until the class is published:
-// _compute_student_summaries only runs at lock time, so before then they don't
-// exist. Nor are they derivable here — the backend divides the total by the
+// Total, average and position appear only once the class is published —
+// _compute_student_summaries runs at lock time, so before that they don't
+// exist. They're also not derivable here: the backend divides the total by the
 // number of subjects the arm *offers*, not the number scored, so an average
-// computed from these chips would read high for any student missing a subject
+// worked out from the parts would read high for any student missing a subject
 // and contradict the printed card.
 export function StudentResultContext({ row, columns }: Props) {
-  const scored = columns.filter((c) => row?.bySubject.has(c.subjectId));
+  const scored = columns.filter((c) => row?.bySubject.has(c.subjectId)).length;
 
-  if (!row || scored.length === 0) {
+  if (!row || scored === 0) {
     return (
       <p className="text-xs text-amber">
         No scores entered for this student yet — there&rsquo;s nothing to base a remark on.
@@ -32,37 +32,24 @@ export function StudentResultContext({ row, columns }: Props) {
   }
 
   return (
-    <div className="space-y-1.5">
-      <ul className="flex flex-wrap gap-1.5">
-        {scored.map((column) => {
-          const result = row.bySubject.get(column.subjectId)!;
-          return (
-            <li
-              key={column.subjectId}
-              className="rounded-full border border-n-200 px-2.5 py-1 text-xs text-n-600"
-            >
-              {column.name}{" "}
-              <span className="font-medium tabular-nums text-ink">
-                {Number(result.total_score)}
-              </span>
-              {result.grade && <span className="ml-1 text-n-400">{result.grade}</span>}
-            </li>
-          );
-        })}
-      </ul>
-
-      <p className="text-xs text-n-400">
-        {scored.length} of {columns.length} subject{columns.length === 1 ? "" : "s"} scored
-        {row.average !== null && (
-          <>
-            {" · "}
-            <span className="text-n-600">
-              {row.total} total, {row.average}% average
-            </span>
-            {row.position !== null && <span className="text-n-600">, {row.position} in class</span>}
-          </>
-        )}
-      </p>
-    </div>
+    <p className="text-xs text-n-400">
+      <span className={scored < columns.length ? "text-amber" : undefined}>
+        {scored} of {columns.length} subject{columns.length === 1 ? "" : "s"} scored
+      </span>
+      {row.average !== null ? (
+        <span className="text-n-600">
+          {" · "}
+          {row.total} total, {row.average}% average
+          {row.position !== null && <>, {row.position} in class</>}
+        </span>
+      ) : (
+        <>
+          {" · "}
+          <Link href="/results/broadsheet" className="text-primary hover:underline">
+            see the breakdown
+          </Link>
+        </>
+      )}
+    </p>
   );
 }
