@@ -8,6 +8,12 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 interface Props {
   label: string;
+  // What this remark is and where it ends up. Worth stating: both remarks are
+  // their own top-level report card sections (ReportCardSection.
+  // CLASS_TEACHER_REMARK / PRINCIPAL_REMARK), independently togglable from the
+  // behaviour ratings — so neither is a comment on conduct, even though the
+  // form teacher writes theirs on the same screen as the trait scales.
+  hint?: string;
   placeholder: string;
   saved: string | null | undefined;
   savedByName: string | null;
@@ -28,6 +34,7 @@ interface Props {
 // something that could be.
 export function RemarkField({
   label,
+  hint,
   placeholder,
   saved,
   savedByName,
@@ -64,13 +71,16 @@ export function RemarkField({
   return (
     <div>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-n-500">{label}</span>
+        <span className="block text-xs font-medium text-n-500">{label}</span>
+        {hint && <span className="mb-1 block text-[11px] text-n-400">{hint}</span>}
+        {/* text-base below md: under 16px iOS zooms the page on focus, and a
+            teacher writing forty of these on a phone would fight it every time. */}
         <textarea
           value={current}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
           rows={2}
-          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
         />
       </label>
       <div className="mt-1.5 flex items-center gap-2">

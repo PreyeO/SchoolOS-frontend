@@ -79,11 +79,16 @@ export const academicsGroup: NavGroup = {
           icon: GraduationCap,
           description: "Enter CA and exam scores for the subjects you teach.",
         }, false),
+        // Names both jobs. It said "Behaviour Ratings" while the page said
+        // "Behaviour & remarks", so a form teacher looking for where to write
+        // their report card remark had no reason to click it — the one task the
+        // nav didn't mention was the one they were hunting for.
         teacherItem({
-          label: "Behaviour Ratings",
+          label: "Behaviour & Remarks",
           href: "/results/behaviour",
           icon: ClipboardList,
-          description: "Rate your class on the affective and psychomotor traits.",
+          description:
+            "Rate your class on the affective and psychomotor traits, and write each student's report card remark.",
         }, false),
         // staffItem, not adminItem: the backend gates the broadsheet on
         // CanViewResults, which any teacher satisfies — it's the sheet a form

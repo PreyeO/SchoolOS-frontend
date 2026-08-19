@@ -14,6 +14,7 @@ import { TermBadge } from "./term-badge";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import { useRemarks, useSetPrincipalRemark } from "../hooks/use-traits";
 import type { StudentResultRemark } from "../types";
+import { useBroadsheet, type BroadsheetGridRow } from "../hooks/use-broadsheet";
 import { PrincipalRemarkRow } from "./principal-remark-row";
 
 // The principal's half of the report card. Separate from the form teacher's
@@ -35,6 +36,15 @@ export function PrincipalRemarksPage() {
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
   const { data: roster, isPending: rosterLoading } = useRoster(selectedId);
+  // The term's scores, so the head writes their remark against the result
+  // rather than against the teacher's sentence alone. Same source the
+  // broadsheet uses — one request per arm, roster-reconciled.
+  const { rows: resultRows, columns: resultColumns } = useBroadsheet(selectedId, currentTerm?.id);
+  const resultByStudent = useMemo(() => {
+    const map = new Map<string, BroadsheetGridRow>();
+    resultRows.forEach((r) => map.set(r.studentId, r));
+    return map;
+  }, [resultRows]);
   const { data: remarks } = useRemarks(selectedId, currentTerm?.id);
   const setRemark = useSetPrincipalRemark();
 
@@ -98,6 +108,8 @@ export function PrincipalRemarksPage() {
                     key={student.id}
                     student={student}
                     remark={byStudent.get(student.id)}
+                    resultRow={resultByStudent.get(student.id)}
+                    resultColumns={resultColumns}
                     isSaving={setRemark.isPending}
                     onSave={(text) => {
                       if (!selectedId || !currentTerm) return;
