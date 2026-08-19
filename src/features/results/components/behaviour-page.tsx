@@ -14,6 +14,7 @@ import { useIsSchoolAdmin } from "@/lib/auth/use-personas";
 import { cn } from "@/lib/utils";
 
 import { TermBadge } from "./term-badge";
+import { useBroadsheet, type BroadsheetGridRow } from "../hooks/use-broadsheet";
 import { useScoreSheets } from "../hooks/use-score-sheets";
 import {
   useBulkRate,
@@ -23,8 +24,7 @@ import {
   useTraits,
 } from "../hooks/use-traits";
 import { TRAIT_CATEGORIES, type StudentResultRemark, type TraitCategory } from "../types";
-import { RatingScale } from "./rating-scale";
-import { RemarkField } from "./remark-field";
+import { BehaviourStudentBlock } from "./behaviour-student-block";
 
 const CATEGORY_LABEL: Record<TraitCategory, string> = {
   affective: "Affective",
@@ -68,10 +68,14 @@ export function BehaviourPage() {
   const bulkRate = useBulkRate();
   const isAdmin = useIsSchoolAdmin();
 
-  // Remarks share this screen's exact context — same student, same arm, same
-  // term, written by the same person right after judging their conduct. That is
-  // how a report card is actually filled in, so splitting them onto another page
-  // would mean picking the class twice.
+  // The remark stays on this screen rather than moving to a results-only one.
+  //
+  // A form teacher's report-card remark comments on performance *and* conduct
+  // ("hardworking, but should be more punctual"), so it needs both in view.
+  // Moving it beside the scores alone would have swapped one blind spot for
+  // another — and splitting the two would mean picking the class twice for what
+  // is a single term-end job. What was actually missing was the result, which
+  // now sits above the ratings in each block.
   const { data: remarks } = useRemarks(arm?.classArmId, currentTerm?.id);
   const setRemark = useSetClassTeacherRemark();
   const remarkByStudent = useMemo(() => {
@@ -82,6 +86,20 @@ export function BehaviourPage() {
 
   const students = roster?.students;
   const ratings = ratingData?.ratings;
+
+  // The term's scores, so the remark below each student is written with the
+  // result in view rather than blind. Reuses the broadsheet — one request gives
+  // every student's subjects, already reconciled against the roster — and is
+  // gated on CanViewResults, which any teacher satisfies.
+  const { rows: resultRows, columns: resultColumns } = useBroadsheet(
+    arm?.classArmId,
+    currentTerm?.id,
+  );
+  const resultByStudent = useMemo(() => {
+    const map = new Map<string, BroadsheetGridRow>();
+    resultRows.forEach((r) => map.set(r.studentId, r));
+    return map;
+  }, [resultRows]);
 
   // Traits are scoped by school, level AND category, so filtering on category
   // alone would show a Primary form teacher the JSS traits too. The level comes
@@ -186,10 +204,10 @@ export function BehaviourPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">Behaviour &amp; remarks</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">Behaviour &amp; Remarks</h1>
           <p className="mt-1 text-sm text-n-500">
-            Rate each student 1–5 on the traits your school reports on, and write their
-            report-card remark.
+            Your part of each student&rsquo;s report card: rate them 1–5 on the traits your
+            school reports on, and write their remark. Both print as their own sections.
           </p>
         </div>
         {currentTerm && <TermBadge label={currentTerm.label} />}
@@ -276,64 +294,28 @@ export function BehaviourPage() {
               </p>
             ) : (
               <>
-                {/* One student per block rather than a students x traits grid.
-                    A grid of five-button scales is unreadable on a phone, and
-                    rating is done per child — you think about Ada, then move on. */}
                 <ul className="divide-y divide-n-100">
                   {students.map((student) => (
-                    <li key={student.id} className="px-5 py-3.5">
-                      <p className="text-sm font-medium text-ink">
-                        {student.user.first_name} {student.user.last_name}
-                      </p>
-                      <p className="font-mono text-[11px] text-n-400">
-                        {student.admission_number}
-                      </p>
-                      <ul className="mt-2.5 space-y-2">
-                        {visibleTraits.map((trait) => {
-                          const key = `${student.id}|${trait.id}`;
-                          return (
-                            <li
-                              key={trait.id}
-                              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5"
-                            >
-                              <span className="min-w-0 flex-1 truncate text-sm text-n-600">
-                                {trait.name}
-                              </span>
-                              <RatingScale
-                                label={`${trait.name} for ${student.user.first_name}`}
-                                value={draft[key]}
-                                onChange={(rating) =>
-                                  setDraft((prev) => ({ ...prev, [key]: rating }))
-                                }
-                              />
-                            </li>
-                          );
-                        })}
-                      </ul>
-
-                      {/* Saved on its own, not with the ratings batch — see
-                          RemarkField: remarks have no marked_at and so can't be
-                          queued or replayed the way ratings can. */}
-                      <div className="mt-3 border-t border-n-100 pt-3">
-                        <RemarkField
-                          label="Your remark for this student"
-                          placeholder="e.g. A steady term. Ada should speak up more in class."
-                          saved={remarkByStudent.get(student.id)?.class_teacher_remark}
-                          savedByName={null}
-                          savedAt={remarkByStudent.get(student.id)?.class_teacher_remark_at}
-                          isPending={setRemark.isPending}
-                          onSave={(remark) => {
-                            if (!arm || !currentTerm) return;
-                            setRemark.mutate({
-                              student_id: student.id,
-                              class_arm_id: arm.classArmId,
-                              academic_period_id: currentTerm.id,
-                              remark,
-                            });
-                          }}
-                        />
-                      </div>
-                    </li>
+                    <BehaviourStudentBlock
+                      key={student.id}
+                      student={student}
+                      traits={visibleTraits}
+                      draft={draft}
+                      onRate={(key, rating) => setDraft((prev) => ({ ...prev, [key]: rating }))}
+                      remark={remarkByStudent.get(student.id)}
+                      isSavingRemark={setRemark.isPending}
+                      onSaveRemark={(remark) => {
+                        if (!arm || !currentTerm) return;
+                        setRemark.mutate({
+                          student_id: student.id,
+                          class_arm_id: arm.classArmId,
+                          academic_period_id: currentTerm.id,
+                          remark,
+                        });
+                      }}
+                      resultRow={resultByStudent.get(student.id)}
+                      resultColumns={resultColumns}
+                    />
                   ))}
                 </ul>
 
