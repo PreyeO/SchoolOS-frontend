@@ -1,4 +1,24 @@
-// MOCK — replace with real API calls when the backend endpoints are ready.
+// Placeholders for three charts that are not wired yet. Each returns an empty
+// series so OverviewCharts renders its own "not available" state — the cards
+// stay so the layout is right when the data lands, but they no longer invent
+// figures an owner could act on.
+//
+// This file used to return hardcoded numbers (enrolment climbing 402 → 486, fee
+// collection at 82%). They rendered identically to the real KPI tiles directly
+// above them, so nothing on screen distinguished measured data from fiction.
+//
+// What each one needs before it can be real:
+//
+//   enrollment    — no endpoint aggregates enrolment over time. Every student
+//                   carries date_of_admission, so the data exists; nothing
+//                   groups it by month.
+//   feeCollection — the fees app is still a 3-line stub. The KPI card for this
+//                   already shows "—" honestly; this matches it.
+//   attendance    — AttendanceRecordFilter takes class_arm_id and an *exact*
+//                   date, with no range. A school-wide five-day trend would be
+//                   five requests, each paginated 25-at-a-time across every
+//                   student. Needs a date-range filter or a daily-summary
+//                   endpoint.
 
 export interface EnrollmentPoint {
   month: string;
@@ -22,32 +42,6 @@ export interface OverviewCharts {
   attendance: AttendancePoint[];
 }
 
-function delay(ms = 600): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function getOverviewCharts(): Promise<OverviewCharts> {
-  await delay();
-  return {
-    enrollment: [
-      { month: "Feb", students: 402 },
-      { month: "Mar", students: 418 },
-      { month: "Apr", students: 431 },
-      { month: "May", students: 447 },
-      { month: "Jun", students: 463 },
-      { month: "Jul", students: 486 },
-    ],
-    feeCollection: [
-      { term: "First Term", collected: 82, outstanding: 18 },
-      { term: "Second Term", collected: 74, outstanding: 26 },
-      { term: "Third Term", collected: 78, outstanding: 22 },
-    ],
-    attendance: [
-      { day: "Mon", rate: 96 },
-      { day: "Tue", rate: 95 },
-      { day: "Wed", rate: 93 },
-      { day: "Thu", rate: 97 },
-      { day: "Fri", rate: 94 },
-    ],
-  };
+  return { enrollment: [], feeCollection: [], attendance: [] };
 }

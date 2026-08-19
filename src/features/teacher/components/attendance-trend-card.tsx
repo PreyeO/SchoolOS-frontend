@@ -14,7 +14,7 @@ interface Props {
 // implies a line that was never measured.
 export function AttendanceTrendCard({ trend, hasAnyRecords }: Props) {
   return (
-    <section className="rounded-xl border border-n-200 bg-white p-5 lg:col-span-2">
+    <section className="rounded-xl border border-n-200 bg-white p-5">
       <h2 className="font-display text-base font-semibold text-ink">
         Attendance across your classes
       </h2>
