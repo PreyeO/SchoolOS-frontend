@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ErrorState } from "@/components/shared/error-state";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useArmSubjects } from "@/features/teaching-assignments/hooks/use-arm-subjects";
+import { useCanAccess } from "@/lib/auth/use-can-access";
 import { buildArmOptions } from "@/lib/school/arm-options";
 
 import { useOverallLeaderboard, useSubjectLeaderboard } from "../hooks/use-leaderboard";
@@ -29,6 +30,7 @@ export function LeaderboardPage() {
   const [armId, setArmId] = useState<string | null>(null);
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [acrossClass, setAcrossClass] = useState(false);
+  const canPublish = useCanAccess("/results/publish");
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
@@ -110,11 +112,24 @@ export function LeaderboardPage() {
                 {mode === "overall" ? (
                   <>
                     Overall positions are computed when a class is published, so there&rsquo;s
-                    nothing to rank yet. Publish {selected?.label ?? "this class"} in{" "}
-                    <Link href="/results/publish" className="text-primary hover:underline">
-                      Publish Results
-                    </Link>
-                    , or switch to <em>By subject</em>, which works from entered scores.
+                    nothing to rank yet.{" "}
+                    {/* Publish Results is admin-only. A teacher is pointed at
+                        By subject instead, which they can actually use — it
+                        reads entered scores rather than the lock. */}
+                    {canPublish ? (
+                      <>
+                        Publish {selected?.label ?? "this class"} in{" "}
+                        <Link href="/results/publish" className="text-primary hover:underline">
+                          Publish Results
+                        </Link>
+                        , or switch to <em>By subject</em>, which works from entered scores.
+                      </>
+                    ) : (
+                      <>
+                        Switch to <em>By subject</em>, which works from entered scores — or ask
+                        an administrator to publish the class.
+                      </>
+                    )}
                   </>
                 ) : (
                   "No scores have been entered for this subject yet."

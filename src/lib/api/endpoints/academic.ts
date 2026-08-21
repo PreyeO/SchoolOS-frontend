@@ -49,6 +49,15 @@ export const CLASS_ARM_ENDPOINTS = {
   // Overall standing for the arm, by average descending. Returns [] until the
   // broadsheet is locked — summaries are only written at lock time.
   LEADERBOARD: (id: string) => `/api/class-arms/${id}/leaderboard/`,
+  // Session rollover, scoped to one source arm — there is no school-wide
+  // "promote everyone" call. Preview suggests a destination per student;
+  // promote commits explicit ones. Both need edit_students.
+  //
+  // Preview takes ?target_session_id= (required) and ?source_session_id=
+  // (optional — falls back to the school's current session, and 400s if there
+  // isn't one). Promote requires both in the body, and they must differ.
+  PROMOTE_PREVIEW: (id: string) => `/api/class-arms/${id}/promote/preview/`,
+  PROMOTE: (id: string) => `/api/class-arms/${id}/promote/`,
 } as const;
 
 export const SUBJECT_ENDPOINTS = {
