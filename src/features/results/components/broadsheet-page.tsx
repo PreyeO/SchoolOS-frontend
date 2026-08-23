@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
 import { ErrorState } from "@/components/shared/error-state";
 import { useClasses } from "@/features/settings/hooks/use-classes";
+import { useCanAccess } from "@/lib/auth/use-can-access";
 import { buildArmOptions } from "@/lib/school/arm-options";
 
 import { useBroadsheet } from "../hooks/use-broadsheet";
@@ -28,6 +29,7 @@ export function BroadsheetPage() {
   const { currentTerm, isPending: termLoading } = useScoreSheets();
   const { data: classes, isPending: classesLoading, isError, error } = useClasses();
   const [armId, setArmId] = useState<string | null>(null);
+  const canManageSubjects = useCanAccess("/teaching-assignments");
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
@@ -108,12 +110,21 @@ export function BroadsheetPage() {
                 <p className="text-sm font-medium text-ink">
                   {selected?.label ?? "This class"} takes no subjects yet
                 </p>
+                {/* Teaching Assignments is admin-only, so a teacher gets told
+                    what's wrong without being sent to a screen that would
+                    refuse them. */}
                 <p className="mt-1 text-sm text-n-500">
-                  Add them in{" "}
-                  <Link href="/teaching-assignments" className="text-primary hover:underline">
-                    Teaching Assignments
-                  </Link>{" "}
-                  and scores can start going in.
+                  {canManageSubjects ? (
+                    <>
+                      Add them in{" "}
+                      <Link href="/teaching-assignments" className="text-primary hover:underline">
+                        Teaching Assignments
+                      </Link>{" "}
+                      and scores can start going in.
+                    </>
+                  ) : (
+                    "An administrator adds the subjects a class takes before scores can go in."
+                  )}
                 </p>
               </div>
             ) : (

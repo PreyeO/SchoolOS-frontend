@@ -7,6 +7,7 @@ import { PanelLeftClose, PanelLeftOpen, Settings, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { useSchoolStore } from "@/stores/school-store";
 import { useTrialStatus } from "../hooks/use-overview-stats";
+import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useNavGroups } from "../hooks/use-nav-groups";
 import { useSidebarAccordion } from "../hooks/use-sidebar-accordion";
 import { SidebarNavGroup } from "./sidebar-nav-group";
@@ -23,6 +24,9 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
   const navGroups = useNavGroups();
   const { openGroup, toggleGroup } = useSidebarAccordion(navGroups, pathname);
   const { data: trial } = useTrialStatus();
+  // Every settings page is admin-only, so this footer link dead-ended for
+  // every teacher who clicked it.
+  const canOpenSettings = useCanAccess("/settings/school");
 
   return (
     <aside
@@ -61,6 +65,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
             <span className="flex-1">Trial: {trial.daysLeft} days left</span>
           </div>
         )}
+        {canOpenSettings && (
         <Link
           href="/settings/school"
           title={collapsed ? "Settings" : undefined}
@@ -72,6 +77,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
           <Settings className="size-4 shrink-0" />
           {!collapsed && "Settings"}
         </Link>
+        )}
         <button
           type="button"
           onClick={onToggleCollapse}

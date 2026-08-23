@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { useRoster } from "@/features/attendance/hooks/use-register";
 import { useArmSubjects } from "@/features/teaching-assignments/hooks/use-arm-subjects";
 
 import { getBroadsheet } from "../api/report-card-api";
@@ -29,25 +28,22 @@ export interface BroadsheetGridRow {
   total: number | null;
   average: number | null;
   position: number | null;
-  // True when the student has no subject results at all. The API omits these
-  // students entirely; they're recovered from the roster so a gap is visible
-  // rather than invisible.
   isEmpty: boolean;
 }
 
 // The arm's term as a grid.
 //
-// Three sources, because the endpoint alone can't describe the gaps:
+// Rows come straight from the server, in its order. It builds one row per
+// *currently enrolled* student — including those with no scores at all, whose
+// `subjects` is simply empty — and sorts by admission number, which is also the
+// order the bulk report-card PDF prints in. This used to be reconciled here
+// against a separate roster request and re-sorted client-side; the backend took
+// both jobs on, so that's gone: one request fewer per screen, no 100-student
+// page cap, and the sheet on screen matches the sheet that prints.
 //
-//   broadsheet  — the scores that exist
-//   offerings   — every subject the arm *takes*, which is what the lock
-//                 validates against, so a subject with no scores anywhere still
-//                 needs a column
-//   roster      — every enrolled student, so one with no scores at all still
-//                 needs a row
-//
-// Reading only the broadsheet would quietly hide both kinds of gap, which are
-// the two questions this screen exists to answer.
+// Columns still need the offerings, though. A subject nobody has scored appears
+// in no student's `subjects`, so it would have no column at all — and a subject
+// with no marks is exactly what an admin is looking for before publishing.
 export function useBroadsheet(
   classArmId: string | null | undefined,
   academicPeriodId: string | null | undefined,
@@ -59,13 +55,10 @@ export function useBroadsheet(
   });
 
   const { data: offerings } = useArmSubjects(classArmId ?? null);
-  const { data: roster } = useRoster(classArmId ?? null);
 
   const columns: BroadsheetColumn[] = useMemo(() => {
     const scored = new Set<string>();
-    (query.data?.rows ?? []).forEach((row) =>
-      row.subjects.forEach((s) => scored.add(s.subject)),
-    );
+    (query.data?.rows ?? []).forEach((row) => row.subjects.forEach((s) => scored.add(s.subject)));
 
     const byId = new Map<string, BroadsheetColumn>();
     // Offerings first — the authoritative list, in its own order.
@@ -90,50 +83,29 @@ export function useBroadsheet(
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [query.data, offerings]);
 
-  const rows: BroadsheetGridRow[] = useMemo(() => {
-    const byStudent = new Map<string, BroadsheetGridRow>();
-
-    (query.data?.rows ?? []).forEach((row) => {
-      const bySubject = new Map<string, StudentSubjectResult>();
-      row.subjects.forEach((s) => bySubject.set(s.subject, s));
-      byStudent.set(row.student.id, {
-        studentId: row.student.id,
-        name: `${row.student.user.first_name} ${row.student.user.last_name}`,
-        admissionNumber: row.student.admission_number,
-        bySubject,
-        // Server-computed and only present after the lock. Deliberately not
-        // recomputed client-side from the subject scores — an average the
-        // school hasn't published yet would be a number nobody can defend.
-        total: row.summary ? Number(row.summary.total_score) : null,
-        average: row.summary ? Number(row.summary.average_score) : null,
-        position: row.summary?.position_in_arm ?? null,
-        isEmpty: row.subjects.length === 0,
-      });
-    });
-
-    (roster?.students ?? []).forEach((student) => {
-      if (byStudent.has(student.id)) return;
-      byStudent.set(student.id, {
-        studentId: student.id,
-        name: `${student.user.first_name} ${student.user.last_name}`,
-        admissionNumber: student.admission_number,
-        bySubject: new Map(),
-        total: null,
-        average: null,
-        position: null,
-        isEmpty: true,
-      });
-    });
-
-    // Ranked once published, alphabetical before — the API returns rows in no
-    // particular order either way.
-    return [...byStudent.values()].sort((a, b) => {
-      if (a.position !== null && b.position !== null) return a.position - b.position;
-      if (a.position !== null) return -1;
-      if (b.position !== null) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }, [query.data, roster]);
+  const rows: BroadsheetGridRow[] = useMemo(
+    () =>
+      (query.data?.rows ?? []).map((row) => {
+        const bySubject = new Map<string, StudentSubjectResult>();
+        row.subjects.forEach((s) => bySubject.set(s.subject, s));
+        return {
+          studentId: row.student.id,
+          name: `${row.student.user.first_name} ${row.student.user.last_name}`,
+          admissionNumber: row.student.admission_number,
+          bySubject,
+          // Server-computed and only present after the lock. Deliberately not
+          // recomputed client-side from the subject scores — the backend divides
+          // by the number of subjects the arm *offers*, not the number scored,
+          // so a locally derived average would read high for anyone missing a
+          // subject and contradict the printed card.
+          total: row.summary ? Number(row.summary.total_score) : null,
+          average: row.summary ? Number(row.summary.average_score) : null,
+          position: row.summary?.position_in_arm ?? null,
+          isEmpty: row.subjects.length === 0,
+        };
+      }),
+    [query.data],
+  );
 
   const missingScores = useMemo(() => rows.filter((r) => r.isEmpty).length, [rows]);
 

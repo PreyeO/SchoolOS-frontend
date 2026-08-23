@@ -45,12 +45,27 @@ export async function removeArmSubject(id: string): Promise<void> {
 // a senior arm can carry 20+ subjects and several teachers share some of them,
 // and this screen has no pagination UI. The read filter is `class_arm`, not
 // `class_arm_id` — it's a plain filterset_fields entry on the FK.
+// Who teaches what in one arm.
+//
+// Reads the class-arm detail action rather than the flat
+// /api/subject-assignments/?class_arm= list — the same swap already made for
+// getArmSubjects, and for the same reason. Identical serializer, but the flat
+// list requires manage_academic_structure while this inherits the viewset
+// default and asks for nothing. Confirmed live with a teacher token: the list
+// 403s, this returns 200.
+//
+// Only Publish Results reads this today and that screen is admin-only, so
+// nothing was visibly broken — but an admin holding view_results without
+// manage_academic_structure would have hit the same wall, and it's the exact
+// trap that left the broadsheet's columns silently empty for teachers before
+// we caught it.
+//
+// Unpaginated, so the page_size=100 cap is gone too.
 export async function getArmAssignments(classArmId: string): Promise<SubjectAssignment[]> {
-  const { data } = await apiClient.get<PaginatedResponse<SubjectAssignment>>(
-    SUBJECT_ASSIGNMENT_ENDPOINTS.LIST(),
-    { params: { class_arm: classArmId, page_size: 100 } },
+  const { data } = await apiClient.get<SubjectAssignment[]>(
+    CLASS_ARM_ENDPOINTS.SUBJECT_ASSIGNMENTS(classArmId),
   );
-  return data.results;
+  return data;
 }
 
 // Everything one teacher teaches, across every arm. Same endpoint, `teacher`

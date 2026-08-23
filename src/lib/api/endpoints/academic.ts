@@ -46,9 +46,24 @@ export const CLASS_ARM_ENDPOINTS = {
   // the list demands manage_academic_structure. Verified live: the list 403s
   // for a teacher, this returns 200. Unpaginated — a plain array, no `results`.
   SUBJECTS: (id: string) => `/api/class-arms/${id}/subjects/`,
+  // Same story as SUBJECTS above, one endpoint over: identical
+  // SubjectAssignmentSerializer to the flat /api/subject-assignments/?class_arm=
+  // list, but that list requires manage_academic_structure while this inherits
+  // the viewset default and requires nothing. Verified live with a teacher
+  // token — the flat list 403s, this returns 200.
+  SUBJECT_ASSIGNMENTS: (id: string) => `/api/class-arms/${id}/subject-assignments/`,
   // Overall standing for the arm, by average descending. Returns [] until the
   // broadsheet is locked — summaries are only written at lock time.
   LEADERBOARD: (id: string) => `/api/class-arms/${id}/leaderboard/`,
+  // Session rollover, scoped to one source arm — there is no school-wide
+  // "promote everyone" call. Preview suggests a destination per student;
+  // promote commits explicit ones. Both need edit_students.
+  //
+  // Preview takes ?target_session_id= (required) and ?source_session_id=
+  // (optional — falls back to the school's current session, and 400s if there
+  // isn't one). Promote requires both in the body, and they must differ.
+  PROMOTE_PREVIEW: (id: string) => `/api/class-arms/${id}/promote/preview/`,
+  PROMOTE: (id: string) => `/api/class-arms/${id}/promote/`,
 } as const;
 
 export const SUBJECT_ENDPOINTS = {

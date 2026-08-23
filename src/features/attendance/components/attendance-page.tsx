@@ -15,6 +15,7 @@ import { getErrorMessage, isPermissionDeniedError } from "@/lib/api/get-error-me
 import { armlessClasses, buildArmOptions, type ArmOptionGroup } from "@/lib/school/arm-options";
 import { teachingUnitWords } from "@/lib/school/teaching-unit";
 import { useClasses } from "@/features/settings/hooks/use-classes";
+import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useMyClasses, type MyClass } from "@/features/teacher/hooks/use-my-classes";
 import { useSchoolStore } from "@/stores/school-store";
 
@@ -78,6 +79,8 @@ export function AttendancePage({
   initialArmId?: string;
   initialDate?: string;
 }) {
+  const canManageClasses = useCanAccess("/classes");
+  const canManageSessions = useCanAccess("/settings/sessions");
   const router = useRouter();
   const pathname = usePathname();
   const canMark = useCanMarkAttendance();
@@ -276,22 +279,39 @@ export function AttendancePage({
       {!sessionName && (
         <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
           No academic term is marked current, so students have no enrollments to build a
-          register from. Set one in{" "}
-          <Link href="/settings/sessions" className="text-primary hover:underline">
-            Sessions &amp; Terms
-          </Link>
-          .
+          register from.{" "}
+          {/* Sessions & Terms is admin-only, and this screen is staff-wide. */}
+          {canManageSessions ? (
+            <>
+              Set one in{" "}
+              <Link href="/settings/sessions" className="text-primary hover:underline">
+                Sessions &amp; Terms
+              </Link>
+              .
+            </>
+          ) : (
+            "Ask an administrator to mark the current term."
+          )}
         </p>
       )}
 
       {skipped.length > 0 && (
         <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
           {skipped.length} {skipped.length === 1 ? "class has" : "classes have"} no arm and
-          can&rsquo;t take a register: {skipped.map((k) => k.name).join(", ")}. Add an arm in{" "}
-          <Link href="/classes" className="text-primary hover:underline">
-            Classes &amp; Arms
-          </Link>
-          .
+          can&rsquo;t take a register: {skipped.map((k) => k.name).join(", ")}.{" "}
+          {/* Classes & Arms is admin-only — a teacher is told what's wrong
+              without being pointed at a screen that would refuse them. */}
+          {canManageClasses ? (
+            <>
+              Add an arm in{" "}
+              <Link href="/classes" className="text-primary hover:underline">
+                Classes &amp; Arms
+              </Link>
+              .
+            </>
+          ) : (
+            "An administrator needs to add an arm before they can be marked."
+          )}
         </p>
       )}
 
