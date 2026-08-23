@@ -25,19 +25,14 @@ export function usePromotionDraft(
 ) {
   const [destinations, setDestinations] = useState<Record<string, string | null>>({});
   const [deselected, setDeselected] = useState<Set<string>>(new Set());
-  // Students already promoted during this sitting.
+  // Students promoted during *this* sitting.
   //
-  // The preview is scoped to *source*-session enrollment, so promoting a student
-  // doesn't remove them from it — a re-preview returns them again, and sending
-  // them a second time inserts a second target-session enrollment rather than
-  // erroring. There is no way to detect this from the API: the preview's
-  // student.current_class describes the current session, not the target, and
-  // nothing lists a session's enrollments. So committed ids are tracked here
-  // and those rows are locked.
-  //
-  // This is per-sitting only. A page reload loses it, and the same students
-  // could then be promoted twice — flagged to the backend as a gap worth a
-  // per-row "already enrolled in target session" flag.
+  // Only covers the window between a successful POST and the next refetch —
+  // the durable answer is the row's own already_in_target_session, which the
+  // backend added for exactly this. Preview is scoped to source-session
+  // enrolment, so promoting someone doesn't drop them from the list, and a
+  // second send would insert a second target-session row rather than erroring.
+  // Between the two, a reload no longer unlocks anything.
   const [committed, setCommitted] = useState<Set<string>>(new Set());
   const [seededKey, setSeededKey] = useState<string | null>(null);
 
@@ -57,7 +52,9 @@ export function usePromotionDraft(
   const rows: PromotionDraftRow[] = useMemo(
     () =>
       (items ?? []).map((item) => {
-        const isCommitted = committed.has(item.student.id);
+        // Either the server says they're already in the target session, or we
+        // sent them a moment ago and the list hasn't refetched yet.
+        const isCommitted = item.already_in_target_session || committed.has(item.student.id);
         const destinationArmId = destinations[item.student.id] ?? null;
         return {
           item,
@@ -119,6 +116,6 @@ export function usePromotionDraft(
     markCommitted,
     // Rows the backend gave no destination for and nobody has filled in.
     unresolved: rows.filter((r) => !r.isCommitted && !r.destinationArmId).length,
-    committedCount: committed.size,
+    committedCount: rows.filter((r) => r.isCommitted).length,
   };
 }

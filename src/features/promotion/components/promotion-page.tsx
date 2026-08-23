@@ -112,10 +112,9 @@ export function PromotionPage() {
             <>
               {draft.committedCount > 0 && (
                 <p className="rounded-lg border border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
-                  {draft.committedCount} already promoted in this session of work. They stay
-                  listed because the preview reads the class they&rsquo;re leaving — but
-                  they&rsquo;re locked here so they can&rsquo;t be sent twice. Reloading the
-                  page clears that lock, so finish an arm in one go where you can.
+                  {draft.committedCount} already enrolled in the session they&rsquo;re joining.
+                  They stay listed because the preview reads the class they&rsquo;re leaving,
+                  but they&rsquo;re locked here so they can&rsquo;t be sent twice.
                 </p>
               )}
 

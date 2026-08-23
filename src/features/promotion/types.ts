@@ -23,6 +23,11 @@ export interface PromotionPreviewItem {
   suggested_class_name: string | null;
   suggested_class_arm_id: string | null;
   suggested_arm_name: string | null;
+  // True when the student already holds any Enrollment row for the target
+  // session. Preview is scoped to *source*-session enrolment, so promoting
+  // someone doesn't drop them from it — without this the only way to know they
+  // were already sent was to remember it, which a page reload lost.
+  already_in_target_session: boolean;
 }
 
 export interface PromotionAssignment {
