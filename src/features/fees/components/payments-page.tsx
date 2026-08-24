@@ -1,12 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
-import { buildPeriodOptions, currentPeriodId, periodLabel } from "@/lib/school/period-options";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 
 import { ArrearsTab } from "./arrears-tab";
 import { PaymentLogTab } from "./payment-log-tab";
@@ -17,19 +14,15 @@ import { PaymentLogTab } from "./payment-log-tab";
 // than letting two tabs 403 separately — an admin without it would otherwise see
 // a working set of pickers above a permission error.
 export function PaymentsPage() {
-  const { data: sessions, isPending: sessionsLoading, isPaused: sessionsPaused } = useAcademicSessions();
+  const term = useTermSelection();
   const canViewFees = useHasSchoolPermission("view_fees");
-  const [periodId, setPeriodId] = useState<string | null>(null);
 
-  const termGroups = useMemo(() => buildPeriodOptions(sessions ?? []), [sessions]);
-  const selectedPeriod =
-    periodId ?? currentPeriodId(sessions ?? []) ?? termGroups[0]?.options[0]?.periodId ?? null;
-  const termName = periodLabel(sessions ?? [], selectedPeriod) ?? "this term";
+  const termName = term.label ?? "this term";
 
-  if (sessionsPaused && !sessions) {
+  if (term.isPaused && !term.hasTerms) {
     return <OfflineNotice resourceLabel="Payment records" />;
   }
-  if (sessionsLoading) {
+  if (term.isPending) {
     return <p className="text-sm text-n-400" role="status">Loading terms…</p>;
   }
 
@@ -46,7 +39,7 @@ export function PaymentsPage() {
         <p className="text-sm text-clay" role="alert">
           You don&rsquo;t have permission to view payments.
         </p>
-      ) : termGroups.length === 0 ? (
+      ) : !term.hasTerms ? (
         <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
           Fees are charged per term, and this school has no terms yet.
         </p>
@@ -59,9 +52,9 @@ export function PaymentsPage() {
 
           <TabsContent value="arrears">
             <ArrearsTab
-              termGroups={termGroups}
-              periodId={selectedPeriod}
-              onPeriodChange={setPeriodId}
+              termGroups={term.groups}
+              periodId={term.periodId}
+              onPeriodChange={term.setPeriodId}
               termName={termName}
             />
           </TabsContent>

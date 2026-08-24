@@ -1,8 +1,10 @@
 "use client";
 
 import { ArmPicker } from "@/components/shared/arm-picker";
+import { TermPicker } from "@/components/shared/term-picker";
 import { Select } from "@/components/ui/select";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
+import type { PeriodOptionGroup } from "@/lib/school/period-options";
 import type { ClassArmSubject } from "@/features/teaching-assignments/types";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,9 @@ interface Props {
   className: string | null;
   acrossClass: boolean;
   onAcrossClassChange: (value: boolean) => void;
+  termGroups: PeriodOptionGroup[];
+  periodId: string | null;
+  onPeriodChange: (id: string) => void;
 }
 
 // What's being ranked. Lifted out of the page because it's a self-contained
@@ -43,6 +48,9 @@ export function LeaderboardFilters({
   className,
   acrossClass,
   onAcrossClassChange,
+  termGroups,
+  periodId,
+  onPeriodChange,
 }: Props) {
   return (
     <>
@@ -66,6 +74,9 @@ export function LeaderboardFilters({
           ))}
         </span>
         <ArmPicker groups={groups} value={armId} onChange={onArmChange} label="Class" />
+        {/* Both modes take a period, so the picker sits with the mode toggle
+            rather than inside the by-subject block. */}
+        <TermPicker groups={termGroups} value={periodId} onChange={onPeriodChange} label="Term" />
       </div>
 
       {mode === "subject" && (

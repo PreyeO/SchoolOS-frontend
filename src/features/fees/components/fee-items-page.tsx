@@ -6,11 +6,10 @@ import { Plus } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { Button } from "@/components/ui/button";
-import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 import { buildClassOptions } from "@/lib/school/class-options";
-import { buildPeriodOptions, currentPeriodId, periodLabel } from "@/lib/school/period-options";
 
 import { useCreateFeeItem } from "../hooks/use-fee-item-mutations";
 import { useFeeItems } from "../hooks/use-fee-items";
@@ -34,24 +33,21 @@ export function FeeItemsPage() {
     isError: classesError,
     error: classesErr,
   } = useClasses();
-  const { data: sessions, isPending: sessionsLoading, isPaused: sessionsPaused } = useAcademicSessions();
+  const term = useTermSelection();
   const canEdit = useHasSchoolPermission("edit_fees");
 
   const [classId, setClassId] = useState<string | null>(null);
-  const [periodId, setPeriodId] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
 
   const classGroups = useMemo(() => buildClassOptions(classes ?? []), [classes]);
   const classOptions = useMemo(() => classGroups.flatMap((g) => g.options), [classGroups]);
-  const termGroups = useMemo(() => buildPeriodOptions(sessions ?? []), [sessions]);
 
   // Both default rather than being forced: the current term is where a bursar
   // usually starts, but setting next term's fees before it opens is the other
   // half of this screen's job, so neither picker locks.
   const selectedClass = classId ?? classOptions[0]?.classId ?? null;
-  const selectedPeriod = periodId ?? currentPeriodId(sessions ?? []) ?? termGroups[0]?.options[0]?.periodId ?? null;
 
-  const items = useFeeItems(selectedClass, selectedPeriod);
+  const items = useFeeItems(selectedClass, term.periodId);
   const createItem = useCreateFeeItem();
 
   const inactiveCount = (items.data ?? []).filter((i) => !i.is_active).length;
@@ -61,7 +57,7 @@ export function FeeItemsPage() {
   // picker for either, and a fee created against the wrong term is invisible —
   // nobody's balance moves and nothing errors.
   const className = classOptions.find((o) => o.classId === selectedClass)?.label ?? "";
-  const termName = periodLabel(sessions ?? [], selectedPeriod) ?? "";
+  const termName = term.label ?? "";
   const context = className && termName ? `${className} · ${termName}` : "";
 
   // Offline with nothing cached. `isPaused && !data` rather than
@@ -69,17 +65,17 @@ export function FeeItemsPage() {
   // fetchStatus "idle", so the conjunction silently never fires. Fee queries are
   // never persisted (see PERSISTED_KEYS), so offline always lands here rather
   // than on a spinner that can't resolve.
-  if ((classesPaused && !classes) || (sessionsPaused && !sessions)) {
+  if ((classesPaused && !classes) || (term.isPaused && !term.hasTerms)) {
     return <OfflineNotice resourceLabel="Your fee structure" />;
   }
-  if (classesLoading || sessionsLoading) {
+  if (classesLoading || term.isPending) {
     return <p className="text-sm text-n-400" role="status">Loading classes…</p>;
   }
   if (classesError) {
     return <ErrorState error={classesErr} resourceLabel="your classes" />;
   }
 
-  const ready = classOptions.length > 0 && termGroups.length > 0;
+  const ready = classOptions.length > 0 && term.hasTerms;
 
   return (
     <div className="space-y-5">
@@ -105,7 +101,7 @@ export function FeeItemsPage() {
             onSave={(values) =>
               createItem.mutateAsync({
                 klass_id: selectedClass as string,
-                academic_period_id: selectedPeriod as string,
+                academic_period_id: term.periodId as string,
                 ...values,
               })
             }
@@ -113,7 +109,7 @@ export function FeeItemsPage() {
         )}
       </div>
 
-      <FeeItemsBlockers hasClasses={classOptions.length > 0} hasTerms={termGroups.length > 0} />
+      <FeeItemsBlockers hasClasses={classOptions.length > 0} hasTerms={term.hasTerms} />
 
       {ready && (
         <>
@@ -121,9 +117,9 @@ export function FeeItemsPage() {
             classGroups={classGroups}
             classId={selectedClass}
             onClassChange={setClassId}
-            termGroups={termGroups}
-            periodId={selectedPeriod}
-            onPeriodChange={setPeriodId}
+            termGroups={term.groups}
+            periodId={term.periodId}
+            onPeriodChange={term.setPeriodId}
             showInactive={showInactive}
             onShowInactiveChange={setShowInactive}
             inactiveCount={inactiveCount}

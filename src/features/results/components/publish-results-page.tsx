@@ -6,10 +6,12 @@ import { Download, Eye, FileText, Lock, LockOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
+import { TermPicker } from "@/components/shared/term-picker";
 import { ErrorState } from "@/components/shared/error-state";
 import { useRoster } from "@/features/attendance/hooks/use-register";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 import { cn } from "@/lib/utils";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
@@ -24,9 +26,8 @@ import {
 } from "../hooks/use-report-card";
 import { useDownloadReportCard } from "../hooks/use-report-card-export";
 import { BulkExportButtons } from "./bulk-export-buttons";
-import { useScoreSheets } from "../hooks/use-score-sheets";
 import type { ResultSubmission } from "../types";
-import { NoCurrentTermNotice } from "./no-current-term-notice";
+import { NoTermsNotice } from "./no-terms-notice";
 import { ReportCardDialog } from "./report-card-dialog";
 import { ReportCardPreviewDialog } from "./report-card-preview-dialog";
 import { ReviewActionDialog } from "./review-action-dialog";
@@ -40,7 +41,11 @@ import { TermBadge } from "./term-badge";
 // the backend refuses until every offered subject is APPROVED, and an admin's
 // actual question is "who am I waiting on".
 export function PublishResultsPage() {
-  const { currentTerm, isPending: termLoading } = useScoreSheets();
+  // Publishing a past term is legitimate — a school that fell behind still has
+  // to lock last term before report cards go out. The badge turns amber when the
+  // selected term isn't the current one, because locking the wrong term is not a
+  // mistake you want to make quietly.
+  const term = useTermSelection();
   const { data: classes, isPending: classesLoading, isError, error } = useClasses();
   const [armId, setArmId] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
@@ -54,9 +59,9 @@ export function PublishResultsPage() {
   const selectedId = armId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
-  const { data: submissionData } = useReviewQueue(currentTerm?.id);
+  const { data: submissionData } = useReviewQueue(term.periodId);
   const submissions = submissionData?.submissions;
-  const { data: batches } = useClassArmResults(currentTerm?.id);
+  const { data: batches } = useClassArmResults(term.periodId);
   const { data: roster, isPending: rosterLoading } = useRoster(selectedId);
   // The definitive list the backend locks against.
   const { data: offerings } = useArmSubjects(selectedId);
@@ -137,7 +142,7 @@ export function PublishResultsPage() {
 
   const students = roster?.students;
 
-  if (termLoading || classesLoading) {
+  if (term.isPending || classesLoading) {
     return <p className="text-sm text-n-400" role="status">Loading classes…</p>;
   }
 
@@ -155,16 +160,24 @@ export function PublishResultsPage() {
             parents and students.
           </p>
         </div>
-        {currentTerm && <TermBadge label={currentTerm.label} />}
+        {term.label && <TermBadge label={term.label} isCurrent={term.isViewingCurrentTerm} />}
       </div>
 
-      {!currentTerm ? (
-        <NoCurrentTermNotice consequence="there are no results to publish" />
+      {!term.hasTerms ? (
+        <NoTermsNotice consequence="there are no results to publish" />
       ) : allOptions.length === 0 ? (
         <p className="text-sm text-n-400 italic">No classes yet.</p>
       ) : (
         <>
-          <ArmPicker groups={groups} value={selectedId} onChange={setArmId} label="Class" />
+          <div className="flex flex-wrap items-end gap-3">
+            <ArmPicker groups={groups} value={selectedId} onChange={setArmId} label="Class" />
+            <TermPicker
+              groups={term.groups}
+              value={term.periodId}
+              onChange={term.setPeriodId}
+              label="Term"
+            />
+          </div>
 
           <div className="rounded-xl border border-n-200 bg-white p-5">
             {isLocked ? (
@@ -257,8 +270,8 @@ export function PublishResultsPage() {
                   disabled={approvedCount === 0 || lock.isPending}
                   onClick={() =>
                     selectedId &&
-                    currentTerm &&
-                    lock.mutate({ classArmId: selectedId, periodId: currentTerm.id })
+                    term.periodId &&
+                    lock.mutate({ classArmId: selectedId, periodId: term.periodId })
                   }
                   className="shrink-0"
                 >
@@ -274,10 +287,10 @@ export function PublishResultsPage() {
               <p className="mr-auto text-xs text-n-500">
                 Report cards {isLocked ? "" : "— preview only until published"}
               </p>
-              {students && students.length > 0 && currentTerm && selectedId && (
+              {students && students.length > 0 && term.periodId && selectedId && (
                 <BulkExportButtons
                   classArmId={selectedId}
-                  periodId={currentTerm.id}
+                  periodId={term.periodId}
                   armLabel={selected?.label ?? "class"}
                 />
               )}
@@ -326,10 +339,10 @@ export function PublishResultsPage() {
                         size="sm"
                         disabled={download.isPending}
                         onClick={() =>
-                          currentTerm &&
+                          term.periodId &&
                           download.mutate({
                             studentId: student.id,
-                            periodId: currentTerm.id,
+                            periodId: term.periodId,
                             admissionNumber: student.admission_number,
                           })
                         }
@@ -361,29 +374,29 @@ export function PublishResultsPage() {
         onConfirm={(reason) =>
           unlock.mutateAsync({
             classArmId: selectedId as string,
-            periodId: currentTerm!.id,
+            periodId: term.periodId!,
             reason,
           })
         }
       />
 
-      {viewingStudent && currentTerm && (
+      {viewingStudent && term.periodId && (
         <ReportCardDialog
           open={!!viewingStudent}
           onOpenChange={(next) => !next && setViewingStudent(null)}
           studentId={viewingStudent.id}
           studentName={viewingStudent.name}
-          academicPeriodId={currentTerm.id}
+          academicPeriodId={term.periodId}
         />
       )}
 
-      {previewingStudent && currentTerm && (
+      {previewingStudent && term.periodId && (
         <ReportCardPreviewDialog
           open={!!previewingStudent}
           onOpenChange={(next) => !next && setPreviewingStudent(null)}
           studentId={previewingStudent.id}
           studentName={previewingStudent.name}
-          academicPeriodId={currentTerm.id}
+          academicPeriodId={term.periodId}
         />
       )}
     </div>
