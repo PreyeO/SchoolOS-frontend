@@ -6,6 +6,11 @@ import type { UserMinimal } from "@/lib/api/profile-summary";
 // type, which also carries "bursar"; sending that here would be a 400.
 export type AnnouncementAudience = "admin" | "teacher" | "parent" | "student";
 
+// What kind of notice this is, so a birthday doesn't render like a fee
+// deadline. `general` is the default and is deliberately the plain one — only
+// the other three carry any styling. See lib/categories.ts.
+export type AnnouncementCategory = "general" | "celebration" | "urgent" | "event";
+
 // AnnouncementSerializer.
 //
 // body_html arrives already sanitized — the service runs bleach on every create
@@ -19,6 +24,7 @@ export interface Announcement {
   title: string;
   body_html: string;
   audience_personas: AnnouncementAudience[];
+  category: AnnouncementCategory;
   created_by: UserMinimal | null;
   created_at: string;
   updated_at: string;
@@ -30,6 +36,9 @@ export interface CreateAnnouncementPayload {
   title: string;
   body_html: string;
   audience_personas: AnnouncementAudience[];
+  // Optional on the wire — the create serializer defaults it to "general" — but
+  // the compose form always has a value, so it's always sent.
+  category?: AnnouncementCategory;
 }
 
 // AnnouncementUpdateSerializer — every field optional. audience_personas, when
@@ -39,4 +48,8 @@ export interface UpdateAnnouncementPayload {
   title?: string;
   body_html?: string;
   audience_personas?: AnnouncementAudience[];
+  // Unlike create, the update serializer carries NO default here — omitting it
+  // leaves the stored category alone rather than resetting it to "general".
+  // Verified live: PATCHing only the title kept a "celebration" tag intact.
+  category?: AnnouncementCategory;
 }

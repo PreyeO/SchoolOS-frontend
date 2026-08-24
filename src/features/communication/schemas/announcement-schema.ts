@@ -22,6 +22,11 @@ export const announcementSchema = z.object({
   audience_personas: z
     .array(z.enum(["admin", "teacher", "parent", "student"]))
     .min(1, "Choose at least one audience"),
+  // Always present in the form (the composer defaults it to "general"), even
+  // though the create serializer would default it for us. Sending it explicitly
+  // keeps create and update symmetrical — update carries no default, so an
+  // omitted category there means "leave it alone", not "reset to general".
+  category: z.enum(["general", "celebration", "urgent", "event"]),
 });
 
 export type AnnouncementFormValues = z.infer<typeof announcementSchema>;

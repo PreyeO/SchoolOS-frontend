@@ -1,16 +1,12 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
-
-import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { PersonAvatar } from "@/components/shared/person-avatar";
-import { Button } from "@/components/ui/button";
 import { formatTimeOfDay } from "@/lib/text/format-time-of-day";
 
-import { useDeleteAnnouncement, useUpdateAnnouncement } from "../hooks/use-announcements";
 import { audienceLabel } from "../lib/audiences";
+import { categoryMeta } from "../lib/categories";
 import type { Announcement } from "../types";
-import { AnnouncementDialog } from "./announcement-dialog";
+import { AnnouncementActions } from "./announcement-actions";
 
 interface Props {
   announcement: Announcement;
@@ -28,17 +24,23 @@ interface Props {
 // sections, so the header carries it and the card only needs the time. Same
 // division the audit log uses.
 export function AnnouncementCard({ announcement, canManage, reachesMe }: Props) {
-  const updateAnnouncement = useUpdateAnnouncement();
-  const deleteAnnouncement = useDeleteAnnouncement();
-
   const author = announcement.created_by;
-  // Null once the author's user record is removed. Fall back to the school
-  // rather than rendering "undefined undefined" or an empty avatar.
+  // Null once the author's user record is removed. Fall back to a label rather
+  // than rendering "undefined undefined" or an empty avatar.
   const byline = author ? `${author.first_name} ${author.last_name}` : "Removed user";
   const edited = announcement.updated_at !== announcement.created_at;
+  const kind = categoryMeta(announcement.category);
+  const KindIcon = kind.icon;
 
   return (
-    <article className="rounded-xl border border-n-200 bg-white p-4 transition-colors hover:border-n-300 sm:p-5">
+    // `general` contributes nothing here, so a routine notice keeps exactly the
+    // card it had before categories existed. Only `urgent` changes the card
+    // itself — the rest earn a badge and no more.
+    <article
+      className={`rounded-xl border p-4 transition-colors sm:p-5 ${
+        kind.card || "border-n-200 bg-white hover:border-n-300"
+      }`}
+    >
       <div className="flex gap-3.5">
         <PersonAvatar
           firstName={author?.first_name ?? "?"}
@@ -56,56 +58,22 @@ export function AnnouncementCard({ announcement, canManage, reachesMe }: Props) 
                 {formatTimeOfDay(announcement.created_at)}
                 {edited && <> · edited</>}
               </p>
-              <h2 className="mt-0.5 font-display text-lg font-bold leading-tight text-ink">
+              <h2 className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-lg font-bold leading-tight text-ink">
                 {announcement.title}
+                {KindIcon && (
+                  <span
+                    // font-sans resets the display face inherited from the h2 —
+                    // there is no `font-body` utility in this project.
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-sans text-[11px] font-medium ${kind.badge}`}
+                  >
+                    <KindIcon className="size-3" />
+                    {kind.label}
+                  </span>
+                )}
               </h2>
             </div>
 
-            {canManage && (
-              <span className="inline-flex shrink-0 items-center gap-1">
-                <AnnouncementDialog
-                  trigger={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Edit ${announcement.title}`}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                  }
-                  title="Edit notice"
-                  submitLabel="Save"
-                  initialValues={{
-                    title: announcement.title,
-                    body_html: announcement.body_html,
-                    audience_personas: announcement.audience_personas,
-                  }}
-                  isPending={updateAnnouncement.isPending}
-                  onSave={(values) =>
-                    updateAnnouncement.mutateAsync({ id: announcement.id, payload: values })
-                  }
-                />
-                <ConfirmDeleteDialog
-                  trigger={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Delete ${announcement.title}`}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  }
-                  title={`Delete "${announcement.title}"?`}
-                  description="This can't be undone — there's no archive to restore it from, and it disappears for everyone who could see it."
-                  isPending={deleteAnnouncement.isPending}
-                  onConfirm={() =>
-                    deleteAnnouncement.mutate({ id: announcement.id, title: announcement.title })
-                  }
-                />
-              </span>
-            )}
+            {canManage && <AnnouncementActions announcement={announcement} />}
           </div>
 
           {/* Server-side bleach is the trust boundary: body_html has already
