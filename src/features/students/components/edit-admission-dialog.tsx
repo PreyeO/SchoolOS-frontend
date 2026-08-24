@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { COUNTRIES } from "@/data/countries";
+
 import { useUpdateStudent } from "../hooks/use-update-student";
 import { ENROLLMENT_STATUS_OPTIONS, GENDER_OPTIONS } from "../lib/labels";
 import { admissionSchema, toPayload, type AdmissionFormValues } from "../schemas/student-edit-schema";
@@ -87,9 +89,13 @@ export function EditAdmissionDialog({ student }: { student: StudentDetail }) {
           error={errors.date_of_admission}
           registration={register("date_of_admission")}
         />
-        <TextField
+        {/* A dropdown, not free text: the backend stores a 2-letter country
+            code and rejects anything else, so a typed "Nigeria" would 400. */}
+        <SelectField
           id="edit-nationality"
           label="Nationality"
+          options={COUNTRIES}
+          placeholder="Not recorded"
           error={errors.nationality}
           registration={register("nationality")}
         />

@@ -49,6 +49,8 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 
 **Also:** never bulk-rewrite JSX with a script. Two regex passes in that same sweep went wrong (one silently no-op'd on multi-line attributes, the other stripped Tailwind classes from elements it wasn't targeting). Hand-edit, or verify every hunk.
 
+**A fifth exception, of a different kind: `data/countries.ts` (~265 lines).** A flat ISO 3166-1 lookup table (249 entries), generated 2026-08-24 by pulling `django_countries.countries` directly off the running backend — not hand-typed — so it can't drift from what `StudentProfileUpdateSerializer` accepts for `nationality`. This is data, not logic, same class as `nigerian-states.ts`; it's only long because there are 249 countries rather than 37 states. Splitting a flat lookup table alphabetically would be line-count theater with no readability gain — there's no real seam to split along. If it needs regenerating, re-run the same `django_countries.countries` pull against the live backend rather than hand-editing entries.
+
 ## Error & toast handling (uniform)
 - The backend returns `{ "detail": ... }` where `detail` is a **string OR an array of strings**, for both success and error.
 - Route EVERY error through the shared normalizer in `lib/api/get-error-message.ts` — never read `error.response.data.detail` directly in a component/hook. Toast via sonner.

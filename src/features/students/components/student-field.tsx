@@ -54,7 +54,13 @@ export function SelectField({
   options,
   placeholder,
   ...props
-}: BaseProps & { options: { value: string; label: string }[]; placeholder?: string }) {
+}: BaseProps & {
+  // readonly so an `as const` option list (e.g. the country dropdown) can be
+  // passed straight through without a defensive spread at every call site —
+  // this only ever reads the array.
+  options: readonly { value: string; label: string }[];
+  placeholder?: string;
+}) {
   return (
     <Wrapper {...props}>
       <Select id={props.id} aria-invalid={!!props.error || undefined} {...props.registration}>
