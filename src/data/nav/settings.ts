@@ -47,7 +47,7 @@ export const settingsGroup: NavGroup = {
       href: "/settings/fees",
       icon: Coins,
       description: "Configure fee items, amounts, and class-based fee plans.",
-    }),
+    }, false),
     adminItem({
       label: "Payment Integrations",
       href: "/settings/payments",
