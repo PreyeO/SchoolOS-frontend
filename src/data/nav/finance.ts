@@ -11,13 +11,13 @@ export const financeGroup: NavGroup = {
       href: "/fees",
       icon: Receipt,
       description: "Set up fee structures and generate termly invoices for every student.",
-    }),
+    }, false),
     adminItem({
       label: "Payments",
       href: "/payments",
       icon: CreditCard,
       description: "Track fee payments, balances, and send automated payment reminders.",
-    }),
+    }, false),
     adminItem({
       label: "Expenses",
       href: "/expenses",

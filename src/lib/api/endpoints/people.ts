@@ -61,6 +61,17 @@ export const STUDENT_ENDPOINTS = {
   // immediately. Deliberately not pixel-identical to the PDF — WeasyPrint's
   // paged-media rules don't apply in a browser.
   REPORT_CARD_PREVIEW: (id: string) => `/api/students/${id}/report-card/preview/`,
+  // This student's live fee ledger for ?academic_period_id= (required — omitting
+  // it is a 400, not a default to the current term).
+  //
+  // The one fees endpoint NOT gated on a permission string: the view sets
+  // required_permission = None and FeesService._assert_ledger_visible decides
+  // instead — an admin with view_fees, ANY teacher, the student themself, or a
+  // linked parent. So a teacher can read this while 403ing on /api/payments/,
+  // and the two must be gated separately in the UI.
+  //
+  // There is no broadsheet-style lock here; balances are always live.
+  FEES: (id: string) => `/api/students/${id}/fees/`,
 } as const;
 
 export const PARENT_ENDPOINTS = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { hasFeeData } from "../api/dashboard-charts-api";
 import { useOverviewCharts } from "../hooks/use-overview-charts";
 import { EnrollmentChart } from "./charts/enrollment-chart";
 import { FeeCollectionChart } from "./charts/fee-collection-chart";
@@ -58,8 +59,8 @@ export function OverviewCharts() {
       <ChartCard
         title="Fee collection vs outstanding"
         isPending={isPending}
-        isEmpty={!data?.feeCollection.length}
-        emptyMessage="Available once fees are set up."
+        isEmpty={!data || !hasFeeData(data.feeCollection)}
+        emptyMessage="Available once fees are set up and payments start coming in."
       >
         {data && <FeeCollectionChart data={data.feeCollection} />}
       </ChartCard>

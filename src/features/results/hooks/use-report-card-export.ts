@@ -4,9 +4,9 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { getErrorMessage } from "@/lib/api/get-error-message";
+import { saveBlob } from "@/lib/api/save-blob";
 
 import { getClassArmReportCards, getReportCardPdf } from "../api/report-card-export-api";
-import { saveBlob } from "../lib/save-blob";
 
 // Downloads rather than renders — see saveBlob for why these can't be links.
 

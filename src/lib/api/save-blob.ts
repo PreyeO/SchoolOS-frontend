@@ -1,6 +1,10 @@
 // Hands a fetched blob to the browser as a download.
 //
-// Report card endpoints can't be plain <a href> links: they're bearer-token
+// Lives beside read-blob-error, its partner on every binary endpoint: report
+// cards and fee receipts both need one to save the bytes and the other to make
+// a rejection legible.
+//
+// These endpoints can't be plain <a href> links: they're bearer-token
 // authenticated and an anchor carries cookies, not an Authorization header. So
 // the bytes are fetched through apiClient, wrapped in a temporary object URL,
 // and revoked immediately after the click — otherwise the blob is pinned in

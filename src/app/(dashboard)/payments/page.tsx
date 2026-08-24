@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/features/dashboard/components/coming-soon";
+import { PaymentsPage } from "@/features/fees/components/payments-page";
 
 export const metadata: Metadata = { title: "Payments — SchoolOS" };
 
 export default function Page() {
-  return <ComingSoon href="/payments" />;
+  return <PaymentsPage />;
 }
