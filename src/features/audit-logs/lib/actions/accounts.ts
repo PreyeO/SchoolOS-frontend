@@ -32,12 +32,14 @@ export const ACCOUNTS_ACTIONS: Record<string, ActionMeta> = {
   // rather than repeating the word. Fires both when a student is first added and
   // on every later transfer — Enrollment rows are history and are never mutated.
   "enrollment.created": { category: "enrollment", rest: (t) => `recorded the ${t}` },
-  // Written in bulk by promotion. The repr is
-  // "Name (ADM): JSS 1 JSS 1 A → JSS 2 JSS 2 A (2026/2027)", and cleanTargetRepr
-  // cuts at the last ": " — so the student's name is already gone by the time
-  // this renders and only the move survives. The sentence is written around
-  // what's left rather than pretending otherwise.
-  "enrollment.updated": { category: "enrollment", rest: (t) => `moved a student ${t}` },
+  // Written in bulk by promotion. Explicit repr, e.g. "Martha Suku
+  // (ANU/001223139): JSS 1 JSS 1 A → JSS 2 JSS 2 A (2026/2027)" — shown whole.
+  // Carries its own colon with no "@ SchoolName" beside it, so this is exactly
+  // the shape cleanTargetRepr's school-strip gate exists to leave alone: before
+  // that gate existed, the blind "cut at the last colon" step this repr never
+  // needed took the student's name off with it, leaving only the move. Fixed
+  // 2026-08-24 — see format-audit-entry.ts.
+  "enrollment.updated": { category: "enrollment", rest: (t) => `moved ${t}` },
 
   "parent_student_link.created": { category: "links", rest: (t) => `linked ${t}` },
   "parent_student_link.deleted": { category: "links", rest: (t) => `unlinked ${t}` },

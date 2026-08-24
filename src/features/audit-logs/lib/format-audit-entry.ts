@@ -5,28 +5,51 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// AuditService.log defaults target_repr to Python str(target), so what arrives
-// is a model's __str__ output, not display copy. Three passes turn it into
-// something readable in a single-school log — all verified against real
-// responses from the running backend:
+// Most actions pass an explicit target_repr built for the audit log
+// specifically — a finished, human-readable string that should reach the
+// screen untouched. Actions that DON'T pass one fall back to AuditService.log
+// defaulting target_repr to Python str(target), which is a model's __str__
+// output, not display copy, and needs cleaning up. Two passes turn the
+// latter into something readable in a single-school log — verified against
+// every model's __str__ and every explicit target_repr/target_repr_fn call
+// site across accounts/academic/attendance/results/fees/announcements'
+// services.py, 2026-08-24:
 //
-//  1. Drop the " @ SchoolName" / " @ (SchoolName)" segment every model appends.
-//     It can appear mid-string, not just at the end (SchoolAdminProfile's repr
-//     is "School Admin @ SchoolName: email"), so this isn't end-anchored.
-//  2. These reprs follow "<Type> @ <School>: <identifier>" — once the school is
-//     gone, the part after ": " is the bit that actually identifies the record,
-//     and the type prefix is noise the sentence already implies.
-//  3. Strip SchoolAdminRole's trailing literal "role", and the "(persona)" tail
-//     on invite reprs, since the catalog's own sentences already say both.
+//  1. Drop the " @ SchoolName" / " @ (SchoolName)" segment every such __str__
+//     appends. It can appear mid-string, not just at the end
+//     (SchoolAdminProfile's repr is "School Admin @ SchoolName: email"), so
+//     this isn't end-anchored.
+//  2. Model reprs needing this follow "<Type> @ <School>: <identifier>" —
+//     once the school is gone, the part after the last ": " is what actually
+//     identifies the record, and the type prefix is noise the catalog
+//     sentence already implies. This step ONLY runs when step 1 actually
+//     matched something — an explicit repr never contains "@ SchoolName" (a
+//     handoff-crafted string has no reason to), so this is the signal that
+//     distinguishes "needs untangling" from "already finished". Skipping it
+//     otherwise matters: enrollment.updated's repr is
+//     "Name (ADM): oldClass oldArm → newClass newArm (session)" — no
+//     "@ School" anywhere, but very much a "<label>: <content>" shape — and
+//     blindly cutting at the last ": " there discarded the student's name,
+//     which is the one thing that record needs. Confirmed live: an unrelated
+//     repr with its own legitimate colon is the one shape this whole function
+//     exists to protect once the @ check gates it.
 function cleanTargetRepr(repr: string, schoolName: string | null, action: string): string {
   let cleaned = repr;
+  let strippedSchool = false;
 
   if (schoolName) {
-    cleaned = cleaned.replace(new RegExp(`\\s*@\\s*\\(?${escapeRegExp(schoolName)}\\)?`), "");
+    const withoutSchool = cleaned.replace(
+      new RegExp(`\\s*@\\s*\\(?${escapeRegExp(schoolName)}\\)?`),
+      "",
+    );
+    strippedSchool = withoutSchool !== cleaned;
+    cleaned = withoutSchool;
   }
 
-  const separator = cleaned.lastIndexOf(": ");
-  if (separator !== -1) cleaned = cleaned.slice(separator + 2);
+  if (strippedSchool) {
+    const separator = cleaned.lastIndexOf(": ");
+    if (separator !== -1) cleaned = cleaned.slice(separator + 2);
+  }
 
   if (action.startsWith("invite.")) {
     cleaned = cleaned.replace(/\s*\((?:admin|teacher|parent|student)\)$/i, "");

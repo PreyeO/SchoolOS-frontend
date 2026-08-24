@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import type { StudentListItem } from "@/features/students/types";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
@@ -14,10 +12,8 @@ import {
   useStudentPayments,
   useStudentWaivers,
 } from "../hooks/use-student-ledger";
-import { LedgerSummary } from "./ledger-summary";
-import { LedgerTable } from "./ledger-table";
-import { NotBilledNotice } from "./not-billed-notice";
-import { PaymentHistory } from "./payment-history";
+import { useStudentFeesSelection } from "../hooks/use-student-fees-selection";
+import { LedgerPanel } from "./ledger-panel";
 import { StudentFeesContextBar } from "./student-fees-context-bar";
 
 // The bursar's desk: one student, one term, what they owe, and taking money.
@@ -25,7 +21,19 @@ import { StudentFeesContextBar } from "./student-fees-context-bar";
 // Balances are live — computed per request from the student's current class, not
 // snapshotted — so there is no lock or publish step here, unlike results. What's
 // on screen is what's owed right now.
-export function StudentFeesPage() {
+//
+// initialStudentId/initialPeriodId arrive from ?student=&period= — set by the
+// Payments arrears list's "click a name" link (see arrears-table.tsx). The URL
+// is then kept in sync with whoever is actually selected (mirrors
+// attendance-page.tsx's own arm/date sync), so a refresh lands back on the
+// same student rather than snapping to a blank search box.
+export function StudentFeesPage({
+  initialStudentId,
+  initialPeriodId,
+}: {
+  initialStudentId?: string;
+  initialPeriodId?: string;
+}) {
   const term = useTermSelection();
   // view_fees is strictly more than the ledger needs: a teacher can read a
   // ledger but 403s on the payment and waiver lists, so those are gated here
@@ -34,7 +42,11 @@ export function StudentFeesPage() {
   const canRecord = useHasSchoolPermission("record_fees");
   const canWaive = useHasSchoolPermission("edit_fees");
 
-  const [student, setStudent] = useState<StudentListItem | null>(null);
+  const { student, setStudent, isResolvingStudent } = useStudentFeesSelection(
+    initialStudentId,
+    initialPeriodId,
+    term,
+  );
 
   const ledger = useStudentLedger(student?.id ?? null, term.periodId);
   const payments = useStudentPayments(student?.id ?? null, canViewFees);
@@ -78,6 +90,7 @@ export function StudentFeesPage() {
         <>
           <StudentFeesContextBar
             student={student}
+            isResolvingStudent={isResolvingStudent}
             onStudentChange={setStudent}
             termGroups={term.groups}
             periodId={term.periodId}
@@ -97,42 +110,16 @@ export function StudentFeesPage() {
           ) : ledger.isError ? (
             <ErrorState error={ledger.error} resourceLabel="this student's fees" />
           ) : (
-            <div className="space-y-5">
-              <LedgerSummary
-                student={ledger.data.student}
-                termLabel={termName}
-                totalBalance={ledger.data.total_balance}
-                isBilled={ledger.data.is_billed}
-              />
-
-              {!ledger.data.is_billed ? (
-                <NotBilledNotice studentName={studentName} termLabel={termName} />
-              ) : ledger.data.items.length === 0 ? (
-                <p className="text-sm text-n-400 italic">
-                  This student&rsquo;s class has no fees set for {termName}.
-                </p>
-              ) : (
-                <LedgerTable
-                  ledger={ledger.data}
-                  studentName={studentName}
-                  waiverIds={waiverIds}
-                  canRecord={canRecord}
-                  canWaive={canWaive}
-                />
-              )}
-
-              {canViewFees && (
-                <section className="space-y-2.5">
-                  <SectionLabel>Payment history</SectionLabel>
-                  <PaymentHistory
-                    payments={payments.data}
-                    isPending={payments.isPending}
-                    isError={payments.isError}
-                    error={payments.error}
-                  />
-                </section>
-              )}
-            </div>
+            <LedgerPanel
+              ledger={ledger.data}
+              termName={termName}
+              studentName={studentName}
+              waiverIds={waiverIds}
+              canRecord={canRecord}
+              canWaive={canWaive}
+              canViewFees={canViewFees}
+              payments={payments}
+            />
           )}
         </>
       )}

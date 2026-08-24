@@ -69,7 +69,7 @@ export function ArrearsTab({ termGroups, periodId, onPeriodChange, termName }: P
           </p>
         </div>
       ) : (
-        <ArrearsTable defaulters={defaulters.data} />
+        <ArrearsTable defaulters={defaulters.data} periodId={periodId} />
       )}
     </div>
   );

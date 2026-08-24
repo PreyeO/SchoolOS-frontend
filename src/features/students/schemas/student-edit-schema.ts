@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { COUNTRIES } from "@/data/countries";
+
 // Mirrors StudentProfileUpdateSerializer's whitelist. admission_number and
 // membership are excluded server-side and so are absent here — an admission
 // number is the student's identity across the school and is deliberately fixed
@@ -15,6 +17,18 @@ import { z } from "zod";
 const optionalText = z.string().trim().max(255, "Keep this under 255 characters");
 const optionalLongText = z.string().trim().max(1000, "Keep this under 1000 characters");
 
+// nationality is a django_countries CountryField — the model stores a 2-letter
+// ISO 3166-1 code, and StudentProfileUpdateSerializer rejects anything else.
+// Confirmed live: sending the full name ("Nigeria") 400s, only the code ("NG")
+// is accepted. Validated against the same COUNTRIES list the select is built
+// from (a Set membership check rather than z.enum, since the 249-entry tuple
+// gains nothing from zod's literal-union typing here) so a stray value can
+// never reach the request.
+const COUNTRY_CODES: ReadonlySet<string> = new Set(COUNTRIES.map((c) => c.value));
+const nationalityCode = z
+  .string()
+  .refine((v) => v === "" || COUNTRY_CODES.has(v), "Choose a country from the list");
+
 export const admissionSchema = z.object({
   gender: z.enum(["male", "female", "other"]),
   enrollment_status: z.enum([
@@ -27,7 +41,7 @@ export const admissionSchema = z.object({
   ]),
   date_of_birth: z.string(),
   date_of_admission: z.string(),
-  nationality: optionalText,
+  nationality: nationalityCode,
   previous_school: optionalText,
 });
 

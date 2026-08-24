@@ -15,6 +15,11 @@ interface Props {
   termGroups: PeriodOptionGroup[];
   periodId: string | null;
   onPeriodChange: (id: string) => void;
+  // True for the one-render window between arriving via a deep link (?student=)
+  // and that id resolving to a full record. Without it the search box flashes
+  // before flipping to "Showing fees for X", which reads as the link failing
+  // rather than loading.
+  isResolvingStudent?: boolean;
 }
 
 // Which child, which term. The student is searched rather than picked from a
@@ -27,10 +32,15 @@ export function StudentFeesContextBar({
   termGroups,
   periodId,
   onPeriodChange,
+  isResolvingStudent,
 }: Props) {
   return (
     <div className="space-y-3 rounded-xl border border-n-200 bg-white p-4">
-      {student ? (
+      {isResolvingStudent ? (
+        <p className="text-sm text-n-400" role="status">
+          Loading student…
+        </p>
+      ) : student ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-n-500">
             Showing fees for{" "}
