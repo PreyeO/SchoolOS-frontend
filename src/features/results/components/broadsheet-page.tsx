@@ -1,21 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
 import { ErrorState } from "@/components/shared/error-state";
+import { TermPicker } from "@/components/shared/term-picker";
 import { useClasses } from "@/features/settings/hooks/use-classes";
-import { useCanAccess } from "@/lib/auth/use-can-access";
 import { buildArmOptions } from "@/lib/school/arm-options";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 
 import { useBroadsheet } from "../hooks/use-broadsheet";
-import { useScoreSheets } from "../hooks/use-score-sheets";
+import { NoStudentsRow, NoSubjectsRow } from "./broadsheet-empty";
 import { BroadsheetNotices } from "./broadsheet-notices";
 import { BroadsheetTable } from "./broadsheet-table";
-import { NoCurrentTermNotice } from "./no-current-term-notice";
+import { NoTermsNotice } from "./no-terms-notice";
 import { TermBadge } from "./term-badge";
 
 // The one sheet a school actually runs a term on: every student down the side,
@@ -26,19 +26,20 @@ import { TermBadge } from "./term-badge";
 // point. Reviewing the whole grid is what happens *before* you lock, so this is
 // where the gaps show up rather than in the lock's refusal.
 export function BroadsheetPage() {
-  const { currentTerm, isPending: termLoading } = useScoreSheets();
+  // A picker, not the current term alone: reviewing a past term's broadsheet is
+  // routine — it's what a school does when a parent queries last term's report.
+  const term = useTermSelection();
   const { data: classes, isPending: classesLoading, isError, error } = useClasses();
   const [armId, setArmId] = useState<string | null>(null);
-  const canManageSubjects = useCanAccess("/teaching-assignments");
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
   const selectedId = armId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
-  const sheet = useBroadsheet(selectedId, currentTerm?.id);
+  const sheet = useBroadsheet(selectedId, term.periodId);
 
-  if (termLoading || classesLoading) {
+  if (term.isPending || classesLoading) {
     return <p className="text-sm text-n-400" role="status">Loading classes…</p>;
   }
 
@@ -55,17 +56,25 @@ export function BroadsheetPage() {
             The whole class on one sheet — every student, every subject, for the term.
           </p>
         </div>
-        {currentTerm && <TermBadge label={currentTerm.label} />}
+        {term.label && <TermBadge label={term.label} isCurrent={term.isViewingCurrentTerm} />}
       </div>
 
-      {!currentTerm ? (
-        <NoCurrentTermNotice consequence="there's no broadsheet to show" />
+      {!term.hasTerms ? (
+        <NoTermsNotice consequence="there's no broadsheet to show" />
       ) : allOptions.length === 0 ? (
         <p className="text-sm text-n-400 italic">No classes yet.</p>
       ) : (
         <>
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <ArmPicker groups={groups} value={selectedId} onChange={setArmId} label="Class" />
+            <div className="flex flex-wrap items-end gap-3">
+              <ArmPicker groups={groups} value={selectedId} onChange={setArmId} label="Class" />
+              <TermPicker
+                groups={term.groups}
+                value={term.periodId}
+                onChange={term.setPeriodId}
+                label="Term"
+              />
+            </div>
             {sheet.rows.length > 0 && (
               <Button
                 type="button"
@@ -92,7 +101,7 @@ export function BroadsheetPage() {
             {/* The picker and term badge sit outside the print area, so without
                 this the printed sheet carries no clue which class or term. */}
             <p className="hidden print:block print:mb-3 print:text-base print:font-semibold">
-              {selected?.label} — {currentTerm.label}
+              {selected?.label} — {term.label}
             </p>
 
             {sheet.isPending ? (
@@ -102,31 +111,12 @@ export function BroadsheetPage() {
                 <ErrorState error={sheet.error} resourceLabel="this broadsheet" />
               </div>
             ) : sheet.rows.length === 0 ? (
-              <p className="p-5 text-sm text-n-400 italic">
-                No students are enrolled in {selected?.label ?? "this class"} for this term.
-              </p>
+              <NoStudentsRow
+                armLabel={selected?.label ?? "this class"}
+                termLabel={term.label ?? "this term"}
+              />
             ) : sheet.columns.length === 0 ? (
-              <div className="p-5">
-                <p className="text-sm font-medium text-ink">
-                  {selected?.label ?? "This class"} takes no subjects yet
-                </p>
-                {/* Teaching Assignments is admin-only, so a teacher gets told
-                    what's wrong without being sent to a screen that would
-                    refuse them. */}
-                <p className="mt-1 text-sm text-n-500">
-                  {canManageSubjects ? (
-                    <>
-                      Add them in{" "}
-                      <Link href="/teaching-assignments" className="text-primary hover:underline">
-                        Teaching Assignments
-                      </Link>{" "}
-                      and scores can start going in.
-                    </>
-                  ) : (
-                    "An administrator adds the subjects a class takes before scores can go in."
-                  )}
-                </p>
-              </div>
+              <NoSubjectsRow armLabel={selected?.label ?? "This class"} />
             ) : (
               <BroadsheetTable columns={sheet.columns} rows={sheet.rows} />
             )}

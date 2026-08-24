@@ -5,10 +5,9 @@ import { useMemo, useState } from "react";
 import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import type { StudentListItem } from "@/features/students/types";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
-import { buildPeriodOptions, currentPeriodId, periodLabel } from "@/lib/school/period-options";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 
 import {
   useStudentLedger,
@@ -27,7 +26,7 @@ import { StudentFeesContextBar } from "./student-fees-context-bar";
 // snapshotted — so there is no lock or publish step here, unlike results. What's
 // on screen is what's owed right now.
 export function StudentFeesPage() {
-  const { data: sessions, isPending: sessionsLoading, isPaused: sessionsPaused } = useAcademicSessions();
+  const term = useTermSelection();
   // view_fees is strictly more than the ledger needs: a teacher can read a
   // ledger but 403s on the payment and waiver lists, so those are gated here
   // rather than allowed to fail.
@@ -36,13 +35,8 @@ export function StudentFeesPage() {
   const canWaive = useHasSchoolPermission("edit_fees");
 
   const [student, setStudent] = useState<StudentListItem | null>(null);
-  const [periodId, setPeriodId] = useState<string | null>(null);
 
-  const termGroups = useMemo(() => buildPeriodOptions(sessions ?? []), [sessions]);
-  const selectedPeriod =
-    periodId ?? currentPeriodId(sessions ?? []) ?? termGroups[0]?.options[0]?.periodId ?? null;
-
-  const ledger = useStudentLedger(student?.id ?? null, selectedPeriod);
+  const ledger = useStudentLedger(student?.id ?? null, term.periodId);
   const payments = useStudentPayments(student?.id ?? null, canViewFees);
   const waivers = useStudentWaivers(student?.id ?? null, canViewFees && canWaive);
 
@@ -53,14 +47,18 @@ export function StudentFeesPage() {
     [waivers.data],
   );
 
-  const termName = periodLabel(sessions ?? [], selectedPeriod) ?? "";
+  const termName = term.label ?? "";
   const studentName = student ? `${student.user.first_name} ${student.user.last_name}` : "";
 
-  if (sessionsPaused && !sessions) {
+  if (term.isPaused && !term.hasTerms) {
     return <OfflineNotice resourceLabel="Fee records" />;
   }
-  if (sessionsLoading) {
-    return <p className="text-sm text-n-400" role="status">Loading terms…</p>;
+  if (term.isPending) {
+    return (
+      <p className="text-sm text-n-400" role="status">
+        Loading terms…
+      </p>
+    );
   }
 
   return (
@@ -72,7 +70,7 @@ export function StudentFeesPage() {
         </p>
       </div>
 
-      {termGroups.length === 0 ? (
+      {!term.hasTerms ? (
         <p className="rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
           Fees are charged per term, and this school has no terms yet.
         </p>
@@ -81,9 +79,9 @@ export function StudentFeesPage() {
           <StudentFeesContextBar
             student={student}
             onStudentChange={setStudent}
-            termGroups={termGroups}
-            periodId={selectedPeriod}
-            onPeriodChange={setPeriodId}
+            termGroups={term.groups}
+            periodId={term.periodId}
+            onPeriodChange={term.setPeriodId}
           />
 
           {!student ? (
@@ -93,7 +91,9 @@ export function StudentFeesPage() {
           ) : ledger.isPaused && !ledger.data ? (
             <OfflineNotice resourceLabel="This student's fees" />
           ) : ledger.isPending ? (
-            <p className="text-sm text-n-400" role="status">Loading fees…</p>
+            <p className="text-sm text-n-400" role="status">
+              Loading fees…
+            </p>
           ) : ledger.isError ? (
             <ErrorState error={ledger.error} resourceLabel="this student's fees" />
           ) : (
