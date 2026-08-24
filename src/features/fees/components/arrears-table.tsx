@@ -1,18 +1,25 @@
 "use client";
 
+import Link from "next/link";
+
 import { formatNaira } from "@/lib/text/format-naira";
 
 import type { FeeDefaulter } from "../types";
 
 interface Props {
   defaulters: FeeDefaulter[];
+  // Carried into the link so the ledger a bursar lands on shows the same
+  // balance they just saw here — the arrears list can be viewing a past term,
+  // and defaulting the destination back to "current" would land on a different
+  // (and inconsistent) figure than the one that prompted the click.
+  periodId: string | null;
 }
 
 // Who in this arm still owes, worst first is NOT the order — the backend sorts
 // by admission number, and re-sorting client-side would break the register-style
 // reading a class teacher does down the list. The total at the foot is what
 // answers "how much is this class carrying".
-export function ArrearsTable({ defaulters }: Props) {
+export function ArrearsTable({ defaulters, periodId }: Props) {
   const owed = defaulters.reduce((sum, d) => sum + d.total_balance, 0);
 
   return (
@@ -30,8 +37,22 @@ export function ArrearsTable({ defaulters }: Props) {
         <tbody>
           {defaulters.map((row) => (
             <tr key={row.student.id} className="border-b border-n-100 last:border-0">
-              <td className="px-3 py-2.5 text-sm text-ink">
-                {row.student.user.first_name} {row.student.user.last_name}
+              <td className="px-3 py-2.5 text-sm">
+                {/* Drills into the same student's fee breakdown on /fees. Only
+                    a link when the arm has a resolved period — the guard is
+                    defensive; ArrearsTab never renders this table without one. */}
+                {periodId ? (
+                  <Link
+                    href={`/fees?student=${row.student.id}&period=${periodId}`}
+                    className="text-ink hover:underline"
+                  >
+                    {row.student.user.first_name} {row.student.user.last_name}
+                  </Link>
+                ) : (
+                  <span className="text-ink">
+                    {row.student.user.first_name} {row.student.user.last_name}
+                  </span>
+                )}
               </td>
               <td className="px-3 py-2.5 font-mono text-xs text-n-500">
                 {row.student.admission_number}
