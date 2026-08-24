@@ -10,8 +10,12 @@ import { PersonAvatar } from "@/components/shared/person-avatar";
 import { formatDate } from "@/lib/text/format-date";
 
 import { useStudentDetail } from "../hooks/use-student-detail";
+import { useCanEditStudent } from "../hooks/use-update-student";
 import { isSyntheticEmail } from "../lib/is-synthetic-email";
 import { bloodGroupLabel, genderLabel, genotypeLabel, religionLabel } from "../lib/labels";
+import { EditAboutDialog } from "./edit-about-dialog";
+import { EditAdmissionDialog } from "./edit-admission-dialog";
+import { EditPersonalDialog } from "./edit-personal-dialog";
 import { EnrollmentCard } from "./enrollment-card";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
@@ -20,6 +24,11 @@ import { StudentParentLinks } from "./student-parent-links";
 
 export function StudentDetailPage({ id }: { id: string }) {
   const { data: student, isPending, isError, error } = useStudentDetail(id);
+  // Admins with edit_students, or any teacher — mirroring the backend's
+  // CanEditStudentProfile. Each card carries its own Edit, because the whitelist
+  // is eighteen fields and PATCH is partial: nobody should have to open a
+  // full-profile form to correct one allergy.
+  const canEdit = useCanEditStudent();
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading student profile…</p>;
@@ -65,7 +74,10 @@ export function StudentDetailPage({ id }: { id: string }) {
       />
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Admission</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink">Admission</h2>
+          {canEdit && <EditAdmissionDialog student={student} />}
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <DetailField label="Admission no." value={student.admission_number} />
           <DetailField label="Gender" value={genderLabel(student.gender)} />
@@ -80,7 +92,10 @@ export function StudentDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">Personal & medical</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink">Personal & medical</h2>
+          {canEdit && <EditPersonalDialog student={student} />}
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <DetailField label="State of origin" value={student.state_of_origin} />
           <DetailField label="Religion" value={student.religion ? religionLabel(student.religion) : null} />
@@ -94,7 +109,10 @@ export function StudentDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-ink">About</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink">About</h2>
+          {canEdit && <EditAboutDialog student={student} />}
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <DetailField label="Favourite food" value={student.favourite_food} />
           <DetailField label="Hobbies" value={student.hobbies} />

@@ -5,9 +5,12 @@ import {
   ClipboardCheck,
   FileCheck2,
   GraduationCap,
+  HandCoins,
   LayoutGrid,
   Link2,
   Mail,
+  Megaphone,
+  Receipt,
   ShieldCheck,
   SlidersHorizontal,
   SquarePen,
@@ -34,7 +37,10 @@ export type AuditCategoryKey =
   | "results"
   | "traits"
   | "grading"
-  | "school";
+  | "school"
+  | "fees"
+  | "payments"
+  | "announcements";
 
 // Purely presentational: gives each entry in the timeline an icon and a
 // hover label so the log can be scanned by kind of change. Filtering is done
@@ -63,6 +69,11 @@ export const AUDIT_CATEGORIES: AuditCategory[] = [
   { key: "traits", label: "Behaviour ratings", icon: Star },
   { key: "grading", label: "Grading", icon: SlidersHorizontal },
   { key: "school", label: "School profile", icon: Building2 },
+  // Fee structure and money taken are split: an owner scanning the log for a
+  // billing change is asking a different question from one checking receipts.
+  { key: "fees", label: "Fee structure", icon: Receipt },
+  { key: "payments", label: "Payments & waivers", icon: HandCoins },
+  { key: "announcements", label: "Announcements", icon: Megaphone },
 ];
 
 export function categoryByKey(key: AuditCategoryKey | undefined): AuditCategory | undefined {

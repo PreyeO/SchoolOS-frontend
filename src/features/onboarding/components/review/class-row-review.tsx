@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,16 @@ import { EditNameDialog } from "./edit-name-dialog";
 import { ArmRowReview } from "./arm-row-review";
 import { ClassTeacherCell } from "./class-teacher-cell";
 
-export function ClassRowReview({ klass }: { klass: ClassResponse }) {
+// `linkArms` is off by default: this row is shared with the onboarding Review
+// step, and a link out to a roster would drop someone out of the wizard. Only
+// Settings › Classes turns it on.
+export function ClassRowReview({
+  klass,
+  linkArms = false,
+}: {
+  klass: ClassResponse;
+  linkArms?: boolean;
+}) {
   const updateClass = useUpdateClass();
   const deleteClass = useDeleteClass();
   const addArm = useAddArm();
@@ -60,7 +70,18 @@ export function ClassRowReview({ klass }: { klass: ClassResponse }) {
           teacher cell in the same column as it sits in on real arm rows. */}
       {systemArm && (
         <div className="flex items-center gap-3 border-t border-n-100 py-1.5">
-          <span className="min-w-0 flex-1 truncate text-sm text-n-400">Whole class</span>
+          {/* The placeholder arm still holds this class's roster, so it links
+              like a real one — only its name stays hidden. */}
+          {linkArms ? (
+            <Link
+              href={`/classes/${systemArm.id}`}
+              className="min-w-0 flex-1 truncate text-sm text-n-500 hover:underline"
+            >
+              Whole class
+            </Link>
+          ) : (
+            <span className="min-w-0 flex-1 truncate text-sm text-n-400">Whole class</span>
+          )}
           <ClassTeacherCell arm={systemArm} label={klass.name} />
         </div>
       )}
@@ -68,7 +89,11 @@ export function ClassRowReview({ klass }: { klass: ClassResponse }) {
       {arms.length > 0 && (
         <ul className="divide-y divide-n-100 border-t border-n-100">
           {arms.map((arm) => (
-            <ArmRowReview key={arm.id} arm={arm} />
+            <ArmRowReview
+              key={arm.id}
+              arm={arm}
+              href={linkArms ? `/classes/${arm.id}` : undefined}
+            />
           ))}
         </ul>
       )}

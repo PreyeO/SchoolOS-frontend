@@ -5,15 +5,15 @@ import { Megaphone, Plus } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { groupByDay } from "@/lib/text/group-by-day";
 import { useAuthStore } from "@/stores/auth-store";
 
 import { useAnnouncements, useCreateAnnouncement } from "../hooks/use-announcements";
-import { ANNOUNCEMENT_AUDIENCES, reachesViewer } from "../lib/audiences";
+import { reachesViewer } from "../lib/audiences";
 import { AnnouncementCard } from "./announcement-card";
 import { AnnouncementDialog } from "./announcement-dialog";
+import { AnnouncementFilters } from "./announcement-filters";
 
 // One screen serving two jobs, because the API serves two lists from one route.
 //
@@ -28,20 +28,35 @@ export function AnnouncementsPage() {
   const createAnnouncement = useCreateAnnouncement();
   const claims = useAuthStore((s) => s.claims);
   const [audienceFilter, setAudienceFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const personas = useMemo(() => claims?.personas ?? [], [claims]);
 
-  // Client-side because the endpoint takes no filter params at all. Only worth
-  // offering to a manager: everyone else's list is already narrowed to them.
+  // Both filters run client-side. The endpoint does now support ?category=,
+  // but the whole list is already fetched in one page_size=100 request for the
+  // audience filter — which has no server equivalent — so filtering the same
+  // array twice is one request instead of two and both toggles stay instant.
+  // Switch category to the server filter if this ever needs real pagination.
+  //
+  // Only worth offering to a manager: everyone else's list is already narrowed
+  // to notices aimed at them.
   const visible = useMemo(() => {
     if (!announcements) return [];
-    if (!audienceFilter) return announcements;
-    return announcements.filter((a) => a.audience_personas.includes(audienceFilter as never));
-  }, [announcements, audienceFilter]);
+    return announcements.filter(
+      (a) =>
+        (!audienceFilter || a.audience_personas.includes(audienceFilter as never)) &&
+        (!categoryFilter || a.category === categoryFilter),
+    );
+  }, [announcements, audienceFilter, categoryFilter]);
 
   // Safe to group in a single pass: the backend orders by -created_at and the
-  // audience filter above only removes items, so the run order is preserved.
+  // filters above only remove items, so the run order is preserved.
   const days = useMemo(() => groupByDay(visible), [visible]);
+
+  // Distinguishes "this school has posted nothing" from "your filters hid
+  // everything" — the two need opposite advice, and a compose CTA under the
+  // second one would be wrong.
+  const filtered = !!audienceFilter || !!categoryFilter;
 
   const composeButton = (
     <AnnouncementDialog
@@ -72,22 +87,12 @@ export function AnnouncementsPage() {
       </div>
 
       {canManage && (announcements?.length ?? 0) > 0 && (
-        <label className="flex items-center gap-2 text-sm">
-          <span className="text-n-500">Audience</span>
-          <Select
-            value={audienceFilter}
-            onChange={(e) => setAudienceFilter(e.target.value)}
-            aria-label="Filter by audience"
-            className="min-w-40"
-          >
-            <option value="">All notices</option>
-            {ANNOUNCEMENT_AUDIENCES.map((a) => (
-              <option key={a.value} value={a.value}>
-                {a.label}
-              </option>
-            ))}
-          </Select>
-        </label>
+        <AnnouncementFilters
+          audience={audienceFilter}
+          onAudienceChange={setAudienceFilter}
+          category={categoryFilter}
+          onCategoryChange={setCategoryFilter}
+        />
       )}
 
       {isPending ? (
@@ -98,16 +103,16 @@ export function AnnouncementsPage() {
         <div className="rounded-xl border border-n-200 bg-white px-6 py-12 text-center">
           <Megaphone className="mx-auto size-6 text-n-300" />
           <p className="mt-3 text-sm font-medium text-ink">
-            {audienceFilter ? "No notices for that audience" : "No announcements yet"}
+            {filtered ? "Nothing matches those filters" : "No announcements yet"}
           </p>
           <p className="mx-auto mt-1 max-w-md text-sm text-n-500">
-            {audienceFilter
-              ? "Nothing has been posted to them yet."
+            {filtered
+              ? "Try widening the audience or the kind of notice."
               : canManage
                 ? "Post one to tell staff, parents or students what's happening."
                 : "When your school posts a notice for you, it shows up here."}
           </p>
-          {canManage && !audienceFilter && <div className="mt-4">{composeButton}</div>}
+          {canManage && !filtered && <div className="mt-4">{composeButton}</div>}
         </div>
       ) : (
         <div className="space-y-6">

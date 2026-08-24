@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,22 @@ import { EditNameDialog } from "./edit-name-dialog";
 // actions, which is more than a chip can hold legibly once real names are in it.
 // Rows also put the teachers in a single scannable column, so "which arms still
 // have nobody" is answerable at a glance instead of by reading every pill.
-export function ArmRowReview({ arm }: { arm: ArmResponse }) {
+// `href` turns the name into a link to the arm's detail screen. Optional because
+// this row is shared with the onboarding Review step, where sending someone off
+// to a roster mid-wizard would drop them out of it.
+export function ArmRowReview({ arm, href }: { arm: ArmResponse; href?: string }) {
   const updateArm = useUpdateArm();
   const deleteArm = useDeleteArm();
 
   return (
     <li className="flex items-center gap-3 py-1.5">
-      <span className="min-w-0 flex-1 truncate text-sm text-ink">{arm.name}</span>
+      {href ? (
+        <Link href={href} className="min-w-0 flex-1 truncate text-sm text-ink hover:underline">
+          {arm.name}
+        </Link>
+      ) : (
+        <span className="min-w-0 flex-1 truncate text-sm text-ink">{arm.name}</span>
+      )}
 
       <ClassTeacherCell arm={arm} />
 

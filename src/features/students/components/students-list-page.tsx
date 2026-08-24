@@ -25,6 +25,8 @@ export function StudentsListPage() {
   const [status, setStatus] = useState<EnrollmentStatus | "all">("all");
   const [classArmId, setClassArmId] = useState<string | "all">("all");
   const [showInactive, setShowInactive] = useState(false);
+  const [admittedAfter, setAdmittedAfter] = useState("");
+  const [admittedBefore, setAdmittedBefore] = useState("");
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -38,6 +40,10 @@ export function StudentsListPage() {
     ...(status !== "all" ? { enrollment_status: status } : {}),
     ...(classArmId !== "all" ? { class_arm_id: classArmId } : {}),
     ...(showInactive ? {} : { is_active: true }),
+    // Either bound works alone — "admitted since September" is as useful a
+    // question as a closed range.
+    ...(admittedAfter ? { date_of_admission_after: admittedAfter } : {}),
+    ...(admittedBefore ? { date_of_admission_before: admittedBefore } : {}),
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
   };
 
@@ -71,6 +77,10 @@ export function StudentsListPage() {
         onClassArmChange={(v) => { setClassArmId(v); resetPage(); }}
         showInactive={showInactive}
         onShowInactiveChange={(v) => { setShowInactive(v); resetPage(); }}
+        admittedAfter={admittedAfter}
+        onAdmittedAfterChange={(v) => { setAdmittedAfter(v); resetPage(); }}
+        admittedBefore={admittedBefore}
+        onAdmittedBeforeChange={(v) => { setAdmittedBefore(v); resetPage(); }}
       />
 
       {/* The class filter resolves against the current session, so with no term

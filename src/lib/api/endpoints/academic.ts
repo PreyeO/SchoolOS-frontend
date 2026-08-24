@@ -27,6 +27,12 @@ export const CLASS_ENDPOINTS = {
 // teacher whose teacher_type isn't 'class' or 'both' — the picker filters to
 // those, so a rejection here means the teacher's type changed under us.
 export const CLASS_ARM_ENDPOINTS = {
+  // One path, three very different jobs:
+  //   GET    — full detail: class context, class teacher, offered subjects AND
+  //            the currently-enrolled roster, in a single call. A hand-written
+  //            retrieve action, not a mixin. Needs no permission string.
+  //   PATCH  — renames the arm. Needs manage_academic_structure.
+  //   DELETE — removes it. Same permission.
   DETAIL: (id: string) => `/api/class-arms/${id}/`,
   ASSIGN_CLASS_TEACHER: (id: string) => `/api/class-arms/${id}/assign-class-teacher/`,
   UNASSIGN_CLASS_TEACHER: (id: string) => `/api/class-arms/${id}/unassign-class-teacher/`,

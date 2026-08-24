@@ -16,6 +16,25 @@ export async function getStudentDetail(id: string): Promise<StudentDetail> {
   return data;
 }
 
+// Edits the whitelisted profile fields. PATCH, so only what's sent changes —
+// which is what lets the detail page offer one Edit per card instead of a single
+// eighteen-field form.
+//
+// Gated on CanEditStudentProfile: admins with edit_students, OR any teacher.
+// The teacher branch is deliberate — a teacher may need to record a medical note
+// for a student they don't formally teach — so don't gate the UI on the
+// permission string alone.
+//
+// admission_number is NOT editable and isn't in the whitelist; it's the
+// student's identity across the school.
+export async function updateStudent(
+  id: string,
+  payload: Record<string, unknown>,
+): Promise<StudentDetail> {
+  const { data } = await apiClient.patch<StudentDetail>(STUDENT_ENDPOINTS.DETAIL(id), payload);
+  return data;
+}
+
 export async function reissueStudentPassword(id: string, password: string): Promise<void> {
   await apiClient.post(STUDENT_ENDPOINTS.REISSUE_PASSWORD(id), { password });
 }

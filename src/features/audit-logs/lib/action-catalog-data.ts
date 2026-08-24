@@ -32,7 +32,9 @@ export function withoutStatusTag(repr: string): string {
 // out truncated rather than merely ugly.
 import { ACCOUNTS_ACTIONS } from "./actions/accounts";
 import { ACADEMIC_ACTIONS } from "./actions/academic";
+import { ANNOUNCEMENTS_ACTIONS } from "./actions/announcements";
 import { ATTENDANCE_ACTIONS } from "./actions/attendance";
+import { FEES_ACTIONS } from "./actions/fees";
 import { RESULTS_ACTIONS } from "./actions/results";
 
 export const ACTION_CATALOG: Record<string, ActionMeta> = {
@@ -40,4 +42,6 @@ export const ACTION_CATALOG: Record<string, ActionMeta> = {
   ...ACADEMIC_ACTIONS,
   ...ATTENDANCE_ACTIONS,
   ...RESULTS_ACTIONS,
+  ...FEES_ACTIONS,
+  ...ANNOUNCEMENTS_ACTIONS,
 };

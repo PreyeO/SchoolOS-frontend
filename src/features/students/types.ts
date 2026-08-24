@@ -97,6 +97,12 @@ export interface StudentFilters {
   // latest enrollment in the current session, so mid-session transfers land in
   // the right register. Returns nothing when no period is marked is_current.
   class_arm_id?: string;
+  // Admission date range, "YYYY-MM-DD". Filters on date_of_admission, which is
+  // when the student joined the SCHOOL — not their enrolment into a class for a
+  // given session, which is a separate record entirely. Answers "who did we take
+  // on this term/year".
+  date_of_admission_after?: string;
+  date_of_admission_before?: string;
   page?: number;
   page_size?: number;
 }
