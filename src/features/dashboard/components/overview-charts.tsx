@@ -13,11 +13,10 @@ function ChartCard({
   isEmpty,
   // Why this chart is empty, in the school's terms.
   //
-  // It used to say "No data yet" for all three, which blames the school — an
-  // owner reads that as "nobody has marked a register" and goes looking for
-  // work they've already done. None of these are empty because of anything the
-  // school did or didn't do; they're empty because the figures aren't wired
-  // yet. See dashboard-charts-api for what each one needs.
+  // All three are wired to real endpoints now, so an empty card genuinely does
+  // mean "no data yet" — but it still has to say WHICH data, and never imply
+  // the school failed to do something. "No registers marked in the last week"
+  // is actionable; "no data" sends an owner hunting for work they've done.
   emptyMessage,
   children,
 }: {
@@ -52,7 +51,7 @@ export function OverviewCharts() {
         title="Enrollment trend"
         isPending={isPending}
         isEmpty={!data?.enrollment.length}
-        emptyMessage="Enrolment isn't tracked over time yet."
+        emptyMessage="Nothing to chart yet — this fills in as students are admitted."
       >
         {data && <EnrollmentChart data={data.enrollment} />}
       </ChartCard>
@@ -68,7 +67,7 @@ export function OverviewCharts() {
         title="Attendance trend"
         isPending={isPending}
         isEmpty={!data?.attendance.length}
-        emptyMessage="Daily figures aren't totalled school-wide yet — today's rate is in the cards above."
+        emptyMessage="No registers marked in the last week — today's rate is in the cards above."
       >
         {data && <AttendanceChart data={data.attendance} />}
       </ChartCard>

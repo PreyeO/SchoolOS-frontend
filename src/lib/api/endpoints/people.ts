@@ -3,8 +3,22 @@
 // Trailing slashes are preserved exactly as the backend defines them.
 
 export const ATTENDANCE_ENDPOINTS = {
+  // Takes ?class_arm_id=, ?date= (exact) and — added later — ?date_after=/
+  // ?date_before= for a range. The register screen still uses the exact date;
+  // anything wanting a span should prefer DAILY_SUMMARY below, which totals
+  // server-side instead of paginating every record.
   LIST: () => `/api/attendance/`,
   BULK_MARK: () => `/api/attendance/bulk-mark/`,
+  // One row per date: { date, present, total }. ?date_after=/?date_before=
+  // default to the trailing 7 days; ?class_arm_id= narrows to one arm.
+  //
+  // Same visibility as the list — admins with view_attendance, or ANY teacher.
+  // Note that's a different gate from students/enrollment-summary, which needs
+  // view_analytics, even though both feed the same dashboard row.
+  //
+  // Returns a bare array. A day with total 0 is possible (nobody marked), so
+  // any rate derived from this must guard the divide.
+  DAILY_SUMMARY: () => `/api/attendance/daily-summary/`,
 } as const;
 
 export const GRADING_SYSTEM_ENDPOINTS = {
@@ -72,6 +86,10 @@ export const STUDENT_ENDPOINTS = {
   //
   // There is no broadsheet-style lock here; balances are always live.
   FEES: (id: string) => `/api/students/${id}/fees/`,
+  // Cumulative headcount by month: { month, students }. Requires view_analytics
+  // — the same gate as fee-items/collection-summary, and NOT the one the
+  // attendance summary uses. Returns a bare array.
+  ENROLLMENT_SUMMARY: () => `/api/students/enrollment-summary/`,
 } as const;
 
 export const PARENT_ENDPOINTS = {

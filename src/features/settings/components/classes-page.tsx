@@ -115,7 +115,7 @@ export function ClassesPage() {
               <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.15em] text-n-400">{level.label}</p>
               <ul className="space-y-2">
                 {items.map((klass) => (
-                  <ClassRowReview key={klass.id} klass={klass} />
+                  <ClassRowReview key={klass.id} klass={klass} linkArms />
                 ))}
               </ul>
             </div>

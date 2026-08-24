@@ -55,4 +55,11 @@ export const RESULTS_ACTIONS: Record<string, ActionMeta> = {
   "student_trait_rating.rated": { category: "traits", rest: (t) => `rated ${t}` },
   "student_trait_rating.updated": { category: "traits", rest: (t) => `changed a rating: ${t}` },
 
+  // Explicit repr: "Report card settings (senior_secondary)" — the level is
+  // already in the target, so the sentence just supplies the verb. Carries a
+  // before/after diff of whichever toggles moved.
+  "report_card_settings.updated": {
+    category: "results",
+    rest: (t) => `changed ${t.toLowerCase()}`,
+  },
 };

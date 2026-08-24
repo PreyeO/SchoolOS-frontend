@@ -19,6 +19,10 @@ interface Props {
   onClassArmChange: (value: string | "all") => void;
   showInactive: boolean;
   onShowInactiveChange: (value: boolean) => void;
+  admittedAfter: string;
+  onAdmittedAfterChange: (value: string) => void;
+  admittedBefore: string;
+  onAdmittedBeforeChange: (value: string) => void;
 }
 
 export function StudentFilters({
@@ -33,6 +37,10 @@ export function StudentFilters({
   onClassArmChange,
   showInactive,
   onShowInactiveChange,
+  admittedAfter,
+  onAdmittedAfterChange,
+  admittedBefore,
+  onAdmittedBeforeChange,
 }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -80,6 +88,30 @@ export function StudentFilters({
           </option>
         ))}
       </Select>
+
+      {/* Admitted-between, not enrolled-between: this is when they joined the
+          school, which is what an intake report asks about. A student admitted
+          in 2023 is still "admitted 2023" whatever class they're in now. */}
+      <label className="flex items-center gap-1.5 text-sm text-n-500">
+        Admitted
+        <Input
+          type="date"
+          aria-label="Admitted on or after"
+          value={admittedAfter}
+          onChange={(e) => onAdmittedAfterChange(e.target.value)}
+          className="h-9 w-38"
+        />
+      </label>
+      <label className="flex items-center gap-1.5 text-sm text-n-500">
+        to
+        <Input
+          type="date"
+          aria-label="Admitted on or before"
+          value={admittedBefore}
+          onChange={(e) => onAdmittedBeforeChange(e.target.value)}
+          className="h-9 w-38"
+        />
+      </label>
 
       <label className="flex items-center gap-1.5 text-sm text-n-500">
         <input

@@ -1,0 +1,79 @@
+import { z } from "zod";
+
+// Mirrors StudentProfileUpdateSerializer's whitelist. admission_number and
+// membership are excluded server-side and so are absent here — an admission
+// number is the student's identity across the school and is deliberately fixed
+// after creation.
+//
+// Every optional text field is nullable on the model, and the API treats "" and
+// null differently on read (an empty string renders as a blank value, null as
+// "not recorded"). Blank inputs are therefore normalised to null on submit —
+// see toPayload — rather than writing empty strings into the record.
+//
+// Dates are plain "YYYY-MM-DD" from <input type="date">, which is exactly what
+// the backend's DateField expects, so no conversion is needed.
+const optionalText = z.string().trim().max(255, "Keep this under 255 characters");
+const optionalLongText = z.string().trim().max(1000, "Keep this under 1000 characters");
+
+export const admissionSchema = z.object({
+  gender: z.enum(["male", "female", "other"]),
+  enrollment_status: z.enum([
+    "active",
+    "graduated",
+    "transferred",
+    "withdrawn",
+    "suspended",
+    "expelled",
+  ]),
+  date_of_birth: z.string(),
+  date_of_admission: z.string(),
+  nationality: optionalText,
+  previous_school: optionalText,
+});
+
+export const personalSchema = z.object({
+  state_of_origin: optionalText,
+  religion: z.union([z.enum(["christian", "islam", "other"]), z.literal("")]),
+  blood_group: z.union([
+    z.enum([
+      "a_positive",
+      "a_negative",
+      "b_positive",
+      "b_negative",
+      "ab_positive",
+      "ab_negative",
+      "o_positive",
+      "o_negative",
+      "unknown",
+    ]),
+    z.literal(""),
+  ]),
+  genotype: z.union([z.enum(["aa", "bb", "ab", "oo", "unknown"]), z.literal("")]),
+  allergies: optionalLongText,
+  chronic_conditions: optionalLongText,
+  disabilities: optionalLongText,
+  emergency_medications: optionalLongText,
+});
+
+export const aboutSchema = z.object({
+  favourite_food: optionalText,
+  hobbies: optionalLongText,
+  ambitions: optionalLongText,
+  // A plain URLField on the model, not an upload — there is no multipart path
+  // for student photos, so this is a link to an image hosted elsewhere.
+  photo: z.union([z.string().trim().url("Enter a full URL, starting with https://"), z.literal("")]),
+});
+
+export type AdmissionFormValues = z.infer<typeof admissionSchema>;
+export type PersonalFormValues = z.infer<typeof personalSchema>;
+export type AboutFormValues = z.infer<typeof aboutSchema>;
+export type StudentEditValues = AdmissionFormValues | PersonalFormValues | AboutFormValues;
+
+// Empty string means "clear this", which the API expresses as null. Sending ""
+// would store a blank rather than an absent value, and the detail page renders
+// those differently.
+export function toPayload(values: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(values).map(([key, value]) => [key, value === "" ? null : value]),
+  );
+}

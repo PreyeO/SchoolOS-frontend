@@ -1,25 +1,20 @@
 import { getCollectionSummary } from "@/features/fees/api/arrears-api";
 import type { FeeCollectionPoint } from "@/features/fees/types";
 
-// Fee collection is real now (see getCollectionSummary). The other two are still
-// placeholders returning an empty series, so OverviewCharts renders its own "not
-// available" state — the cards stay so the layout is right when the data lands,
-// but they no longer invent figures an owner could act on.
+import { getAttendanceTrend, getEnrollmentTrend } from "./dashboard-trends-api";
+
+// All three dashboard trend cards, fetched together.
 //
-// This file used to return hardcoded numbers (enrolment climbing 402 → 486, fee
-// collection at 82%). They rendered identically to the real KPI tiles directly
-// above them, so nothing on screen distinguished measured data from fiction.
+// Every one of them used to be a hardcoded invention here (enrolment climbing
+// 402 → 486, fee collection at 82%), rendering identically to the real KPI tiles
+// directly above and so indistinguishable from measured data. They were then
+// emptied out and left with an honest "not available yet" state until the
+// backend could answer for real. All three now can.
 //
-// What the remaining two need before they can be real:
-//
-//   enrollment    — no endpoint aggregates enrolment over time. Every student
-//                   carries date_of_admission, so the data exists; nothing
-//                   groups it by month.
-//   attendance    — AttendanceRecordFilter takes class_arm_id and an *exact*
-//                   date, with no range. A school-wide five-day trend would be
-//                   five requests, each paginated 25-at-a-time across every
-//                   student. Needs a date-range filter or a daily-summary
-//                   endpoint.
+// Each source swallows its own 403 and returns an empty series, because they
+// share this one query and are gated differently: fees and enrolment need
+// view_analytics, attendance needs view_attendance-or-teacher. Without that, an
+// admin missing one permission would lose all three cards.
 
 export interface EnrollmentPoint {
   month: string;
@@ -48,6 +43,10 @@ export function hasFeeData(points: FeeCollectionPoint[]): boolean {
 }
 
 export async function getOverviewCharts(): Promise<OverviewCharts> {
-  const feeCollection = await getCollectionSummary();
-  return { enrollment: [], feeCollection, attendance: [] };
+  const [enrollment, feeCollection, attendance] = await Promise.all([
+    getEnrollmentTrend(),
+    getCollectionSummary(),
+    getAttendanceTrend(),
+  ]);
+  return { enrollment, feeCollection, attendance };
 }
