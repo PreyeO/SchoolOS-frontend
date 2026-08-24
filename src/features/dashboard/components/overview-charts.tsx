@@ -30,9 +30,9 @@ function ChartCard({
     <div className="rounded-xl border border-n-200 bg-white p-4">
       <p className="mb-2 text-sm font-semibold text-ink">{title}</p>
       {isPending ? (
-        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-50 w-full" />
       ) : isEmpty ? (
-        <div className="flex h-[200px] items-center justify-center px-4 text-center text-sm text-n-400">
+        <div className="flex h-50 items-center justify-center px-4 text-center text-sm text-n-400">
           {emptyMessage}
         </div>
       ) : (
@@ -46,7 +46,7 @@ export function OverviewCharts() {
   const { data, isPending } = useOverviewCharts();
 
   return (
-    <div className="grid lg:grid-cols-3 gap-4">
+    <div className="grid gap-4 lg:grid-cols-3">
       <ChartCard
         title="Enrollment trend"
         isPending={isPending}
