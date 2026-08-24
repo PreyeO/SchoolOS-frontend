@@ -11,7 +11,7 @@ export const communicationGroup: NavGroup = {
       href: "/announcements",
       icon: Megaphone,
       description: "Broadcast announcements to staff, parents, and students in one place.",
-    }),
+    }, false),
     staffItem({
       label: "Messages",
       href: "/messages",

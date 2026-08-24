@@ -64,6 +64,15 @@ export const CLASS_ARM_ENDPOINTS = {
   // isn't one). Promote requires both in the body, and they must differ.
   PROMOTE_PREVIEW: (id: string) => `/api/class-arms/${id}/promote/preview/`,
   PROMOTE: (id: string) => `/api/class-arms/${id}/promote/`,
+  // Who in this arm still owes, for ?academic_period_id= (required — omitting it
+  // is a 400, not a default to the current term). Requires view_fees.
+  //
+  // Only students with a balance above zero are returned, ordered by admission
+  // number, so an empty array means the arm is fully settled rather than
+  // unbilled. Roster is current enrollment for that period's session — the same
+  // latest-Enrollment-row rule attendance and results use. A bare array, not
+  // paginated.
+  FEE_DEFAULTERS: (id: string) => `/api/class-arms/${id}/fees/defaulters/`,
 } as const;
 
 export const SUBJECT_ENDPOINTS = {

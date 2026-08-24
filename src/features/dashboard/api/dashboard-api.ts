@@ -2,6 +2,8 @@ import { apiClient } from "@/lib/api/client";
 import { ATTENDANCE_ENDPOINTS, STUDENT_ENDPOINTS, TEACHER_ENDPOINTS } from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 import type { AttendanceRecord } from "@/features/attendance/types";
+import { getCollectionSummary } from "@/features/fees/api/arrears-api";
+import type { FeeCollectionPoint } from "@/features/fees/types";
 import { toLocalIsoDate } from "@/lib/text/format-date";
 
 export interface KpiStat {
@@ -37,10 +39,39 @@ async function countOf(url: string, params: Record<string, unknown> = {}): Promi
 // No trend deltas: comparing against last term needs history the API doesn't
 // expose yet, and a fabricated "+12 this term" is the same lie in smaller type.
 // The trend slot carries a plain descriptor instead.
+// The share of one term's bill that has actually been collected.
+//
+// The summary carries no id or is_current flag per point, so a point can't be
+// matched back to a specific AcademicPeriod — the last element is simply the
+// most recent by start_date. That's the best available proxy for "the term the
+// school is on", and it can legitimately be a term that has only just opened, so
+// the tile names the term in its descriptor rather than leaving the figure to be
+// read as school-wide or all-time.
+//
+// hasData is false when nothing is billed at all: 0% against a zero bill is
+// arithmetic, not a fact about collection.
+function feeCollectionStat(summary: FeeCollectionPoint[]): KpiStat {
+  const latest = summary[summary.length - 1];
+  const billed = latest ? latest.collected + latest.outstanding : 0;
+
+  if (!latest || billed === 0) {
+    return { label: "Fee Collection", value: "—", trend: { direction: "flat", label: "" }, hasData: false };
+  }
+
+  return {
+    label: "Fee Collection",
+    value: `${Math.round((latest.collected / billed) * 100)}%`,
+    // No delta against the previous term: the two are different bills against
+    // different rosters, so "+6% on last term" would compare unlike things.
+    trend: { direction: "flat", label: latest.term },
+    hasData: true,
+  };
+}
+
 export async function getOverviewStats(): Promise<OverviewStats> {
   const today = toLocalIsoDate();
 
-  const [students, staff, todaysAttendance] = await Promise.all([
+  const [students, staff, todaysAttendance, feeSummary] = await Promise.all([
     countOf(STUDENT_ENDPOINTS.LIST(), { is_active: true }),
     countOf(TEACHER_ENDPOINTS.LIST(), { is_active: true }),
     apiClient
@@ -48,6 +79,9 @@ export async function getOverviewStats(): Promise<OverviewStats> {
         params: { date: today, page_size: 100 },
       })
       .then((r) => r.data.results),
+    // Returns [] rather than throwing on a 403 (view_analytics, which this
+    // caller may not hold), so the whole KPI row doesn't fail over one tile.
+    getCollectionSummary(),
   ]);
 
   // "Late" still means present for the day.
@@ -70,13 +104,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       trend: { direction: "flat", label: "teachers" },
       hasData: staff > 0,
     },
-    // The fees module doesn't exist yet, so there is genuinely nothing to show.
-    feeCollectionPct: {
-      label: "Fee Collection",
-      value: "—",
-      trend: { direction: "flat", label: "" },
-      hasData: false,
-    },
+    feeCollectionPct: feeCollectionStat(feeSummary),
     attendanceTodayPct: {
       label: "Attendance Today",
       value: `${attendancePct}%`,
