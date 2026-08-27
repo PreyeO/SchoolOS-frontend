@@ -1,11 +1,18 @@
 "use client";
 
-import { Construction, Users2 } from "lucide-react";
+import { Users2 } from "lucide-react";
 
+import { ErrorState } from "@/components/shared/error-state";
+import { OfflineNotice } from "@/components/shared/offline-notice";
+import { RecentNotices } from "@/features/communication/components/recent-notices";
+import { TermBadge } from "@/features/results/components/term-badge";
 import { useMe } from "@/features/me/hooks/use-me";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 import { useSchoolStore } from "@/stores/school-store";
 
+import { useChildrenOverview } from "../hooks/use-children-overview";
 import { ChildCard } from "./child-card";
+import { ChildCardSkeleton } from "./child-card-skeleton";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -14,44 +21,48 @@ function greeting(): string {
   return "Good evening";
 }
 
-// What's still genuinely unbuilt. Results and fees came off this list when they
-// landed on the child detail page; announcements came off when the notice board
-// opened to parents. Each remaining line needs backend that doesn't exist yet —
-// attendance has no parent-visible endpoint (attendance/views.py returns an
-// empty queryset for any non-staff caller), online payment has no gateway
-// integration at all, and there's no messaging app. Don't re-add a line here
-// without checking the backend actually supports it.
-const UPCOMING = [
-  "Get notified when your child is marked absent",
-  "Pay fees online",
-  "Message your child's teachers",
-];
-
+// A parent's landing screen: how each child's term is going, what's owed, and
+// what the school has said lately.
+//
+// Fixed to the current term with no picker — this is a snapshot, and the child
+// detail page is where a past term gets looked up. That's the same split the
+// teacher home uses against My Classes.
 export function ParentHome() {
-  const { data: me, isPending } = useMe();
+  const { data: me } = useMe();
   const school = useSchoolStore((s) => s.currentSchool);
-  const children = me?.parent?.student_links ?? [];
+  const term = useTermSelection();
+  const { overviews, isPending, unavailableOffline, isError, error } = useChildrenOverview(
+    term.periodId,
+  );
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 py-2">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-ink">
-          {greeting()}
-          {me?.user.first_name ? `, ${me.user.first_name}` : ""}
-        </h1>
-        <p className="mt-1 text-sm text-n-500">
-          {school?.name ?? me?.school.name}
-        </p>
+    <div className="mx-auto max-w-3xl space-y-6 py-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">
+            {greeting()}
+            {me?.user.first_name ? `, ${me.user.first_name}` : ""}
+          </h1>
+          <p className="mt-1 text-sm text-n-500">{school?.name ?? me?.school.name}</p>
+        </div>
+        {term.label && <TermBadge label={term.label} isCurrent={term.isViewingCurrentTerm} />}
       </div>
 
       <section className="space-y-3">
         <h2 className="font-display text-base font-semibold text-ink">
-          {children.length === 1 ? "Your child" : "Your children"}
+          {overviews.length === 1 ? "Your child" : "Your children"}
         </h2>
 
-        {isPending ? (
-          <p className="text-sm text-n-400" role="status">Loading…</p>
-        ) : children.length === 0 ? (
+        {unavailableOffline ? (
+          <OfflineNotice resourceLabel="Your children" />
+        ) : isError ? (
+          <ErrorState error={error} resourceLabel="your children" />
+        ) : isPending ? (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            <ChildCardSkeleton />
+            <ChildCardSkeleton />
+          </ul>
+        ) : overviews.length === 0 ? (
           <div className="rounded-xl border border-n-200 bg-white p-6 text-center">
             <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-n-100">
               <Users2 className="size-5 text-n-400" />
@@ -63,30 +74,14 @@ export function ParentHome() {
           </div>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {children.map((child) => (
-              <ChildCard key={child.id} child={child} />
+            {overviews.map((overview) => (
+              <ChildCard key={overview.link.id} overview={overview} />
             ))}
           </ul>
         )}
       </section>
 
-      <section className="rounded-xl border border-n-200 bg-white p-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-n-400">
-          What&rsquo;s coming
-        </p>
-        <ul className="mt-3 space-y-2">
-          {UPCOMING.map((item) => (
-            <li key={item} className="flex items-start gap-2.5 text-sm text-ink">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber/30 bg-amber/10 px-3 py-1 text-xs font-medium text-ink">
-          <Construction className="size-3.5 text-amber" />
-          In development
-        </span>
-      </section>
+      <RecentNotices />
     </div>
   );
 }
