@@ -1,4 +1,5 @@
 import { overviewGroup } from "./nav/overview";
+import { myChildGroup } from "./nav/my-child";
 import { academicsGroup } from "./nav/academics";
 import { peopleGroup } from "./nav/people";
 import { financeGroup } from "./nav/finance";
@@ -13,6 +14,10 @@ export { isPersona } from "./nav/types";
 
 export const NAV_GROUPS = [
   overviewGroup,
+  // Directly after Overview: for a parent these are the only other screens they
+  // have, so burying them below the admin-only groups would leave their sidebar
+  // looking empty at the top.
+  myChildGroup,
   academicsGroup,
   peopleGroup,
   financeGroup,

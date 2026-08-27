@@ -1,18 +1,22 @@
 "use client";
 
-import { Users2 } from "lucide-react";
-
-import { ErrorState } from "@/components/shared/error-state";
-import { OfflineNotice } from "@/components/shared/offline-notice";
 import { RecentNotices } from "@/features/communication/components/recent-notices";
-import { TermBadge } from "@/features/results/components/term-badge";
+import { useStudentLedger } from "@/features/fees/hooks/use-student-ledger";
 import { useMe } from "@/features/me/hooks/use-me";
+import { TermBadge } from "@/features/results/components/term-badge";
+import { useReportCard } from "@/features/results/hooks/use-report-card";
+import { isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 import { useSchoolStore } from "@/stores/school-store";
 
-import { useChildrenOverview } from "../hooks/use-children-overview";
-import { ChildCard } from "./child-card";
-import { ChildCardSkeleton } from "./child-card-skeleton";
+import { useChildPerformance } from "../hooks/use-child-performance";
+import { useChildStudent } from "../hooks/use-child-student";
+import { useSelectedChild } from "../hooks/use-selected-child";
+import { ChildContextBar } from "./child-context-bar";
+import { ChildSnapshot } from "./child-snapshot";
+import { childScreenGuard } from "./child-screen-guard";
+import { FeeProgress } from "./fee-progress";
+import { PerformanceCard } from "./performance-card";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -21,67 +25,70 @@ function greeting(): string {
   return "Good evening";
 }
 
-// A parent's landing screen: how each child's term is going, what's owed, and
+// A parent's landing screen, scoped to whichever child the switcher has
+// selected: this term's standing, how the year is trending, what's owed, and
 // what the school has said lately.
 //
-// Fixed to the current term with no picker — this is a snapshot, and the child
-// detail page is where a past term gets looked up. That's the same split the
-// teacher home uses against My Classes.
+// Fixed to the current term with no picker — the trend chart supplies the
+// history, and a picker on a summary screen would compete with it. Looking a
+// past term up in detail is what /child/results and /child/fees are for. Same
+// split as the teacher home against My Classes.
 export function ParentHome() {
   const { data: me } = useMe();
   const school = useSchoolStore((s) => s.currentSchool);
   const term = useTermSelection();
-  const { overviews, isPending, unavailableOffline, isError, error } = useChildrenOverview(
-    term.periodId,
-  );
+  const selected = useSelectedChild();
+
+  const childId = selected.child?.student_id;
+  const { student } = useChildStudent(childId, term.periodId);
+  const ledger = useStudentLedger(childId ?? null, term.periodId);
+  const reportCard = useReportCard(childId, term.periodId);
+  const performance = useChildPerformance(childId, term.periodId);
+
+  const guard = childScreenGuard(selected);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 py-2">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-ink">
-            {greeting()}
-            {me?.user.first_name ? `, ${me.user.first_name}` : ""}
-          </h1>
-          <p className="mt-1 text-sm text-n-500">{school?.name ?? me?.school.name}</p>
-        </div>
-        {term.label && <TermBadge label={term.label} isCurrent={term.isViewingCurrentTerm} />}
+      <div>
+        <h1 className="font-display text-2xl font-bold text-ink">
+          {greeting()}
+          {me?.user.first_name ? `, ${me.user.first_name}` : ""}
+        </h1>
+        <p className="mt-1 text-sm text-n-500">{school?.name ?? me?.school.name}</p>
       </div>
 
-      <section className="space-y-3">
-        <h2 className="font-display text-base font-semibold text-ink">
-          {overviews.length === 1 ? "Your child" : "Your children"}
-        </h2>
+      {guard ?? (
+        <>
+          <ChildContextBar
+            child={selected.child!}
+            childrenLinks={selected.children}
+            onSelect={selected.selectChild}
+            student={student}
+            trailing={
+              term.label && (
+                <TermBadge label={term.label} isCurrent={term.isViewingCurrentTerm} />
+              )
+            }
+          />
 
-        {unavailableOffline ? (
-          <OfflineNotice resourceLabel="Your children" />
-        ) : isError ? (
-          <ErrorState error={error} resourceLabel="your children" />
-        ) : isPending ? (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            <ChildCardSkeleton />
-            <ChildCardSkeleton />
-          </ul>
-        ) : overviews.length === 0 ? (
-          <div className="rounded-xl border border-n-200 bg-white p-6 text-center">
-            <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-n-100">
-              <Users2 className="size-5 text-n-400" />
-            </div>
-            <p className="mt-3 text-sm font-medium text-ink">No children linked yet</p>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-n-500">
-              Ask the school office to link your account to your child&rsquo;s record.
-            </p>
-          </div>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {overviews.map((overview) => (
-              <ChildCard key={overview.link.id} overview={overview} />
-            ))}
-          </ul>
-        )}
-      </section>
+          <ChildSnapshot
+            ledger={ledger.data}
+            reportCard={reportCard.data}
+            awaitingResults={isPermissionDeniedError(reportCard.error)}
+          />
 
-      <RecentNotices />
+          <PerformanceCard
+            points={performance.points}
+            sessionName={performance.sessionName}
+            termCount={performance.termCount}
+            isPending={performance.isPending}
+          />
+
+          {ledger.data && <FeeProgress ledger={ledger.data} />}
+
+          <RecentNotices />
+        </>
+      )}
     </div>
   );
 }
