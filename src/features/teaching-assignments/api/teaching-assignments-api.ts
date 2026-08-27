@@ -41,10 +41,6 @@ export async function removeArmSubject(id: string): Promise<void> {
   await apiClient.delete(CLASS_ARM_SUBJECT_ENDPOINTS.DETAIL(id));
 }
 
-// One arm's assignments across all its subjects. page_size=100 (backend max) —
-// a senior arm can carry 20+ subjects and several teachers share some of them,
-// and this screen has no pagination UI. The read filter is `class_arm`, not
-// `class_arm_id` — it's a plain filterset_fields entry on the FK.
 // Who teaches what in one arm.
 //
 // Reads the class-arm detail action rather than the flat
@@ -68,12 +64,23 @@ export async function getArmAssignments(classArmId: string): Promise<SubjectAssi
   return data;
 }
 
-// Everything one teacher teaches, across every arm. Same endpoint, `teacher`
-// filter instead of `class_arm` — needs manage_academic_structure, unlike MINE.
+// Everything one teacher teaches, across every arm — needs
+// manage_academic_structure, unlike MINE.
+//
+// The query param is `teacher_id`, not the bare `teacher`. Unlike every other
+// filterset in this backend, SubjectAssignmentViewSet declares
+// filterset_fields with the FK's attname (`class_arm_id`/`teacher_id`/
+// `subject_id`) rather than the field name — both are valid django-filter
+// declarations, but they expose different param names, and this endpoint
+// previously sent the bare one. django-filter drops an unrecognized param
+// rather than erroring, so this silently returned the WHOLE SCHOOL's
+// assignments instead of one teacher's — confirmed by reproducing
+// DjangoFilterBackend's filterset construction locally against a model
+// shaped like SubjectAssignment (Docker was unreachable for a live check).
 export async function getTeacherAssignments(teacherProfileId: string): Promise<SubjectAssignment[]> {
   const { data } = await apiClient.get<PaginatedResponse<SubjectAssignment>>(
     SUBJECT_ASSIGNMENT_ENDPOINTS.LIST(),
-    { params: { teacher: teacherProfileId, page_size: 100 } },
+    { params: { teacher_id: teacherProfileId, page_size: 100 } },
   );
   return data.results;
 }
