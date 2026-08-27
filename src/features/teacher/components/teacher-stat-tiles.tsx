@@ -34,11 +34,18 @@ export function TeacherStatTiles({
     {
       label: "Classes",
       value: String(classCount),
-      // Not "class arm", and not "you teach". "Arm" is admin-side vocabulary for
-      // how a class is split — a teacher just has classes, which is why the nav
-      // item is My Classes. And this counts form classes too, where the teacher
-      // may take no subject at all, so "teach" was wrong for the commonest case.
-      hint: classCount === 1 ? "class you're assigned to" : "classes you're assigned to",
+      // Explicitly names both ways a class ends up in this count: leading it as
+      // form/class teacher (isFormClass on MyClass), or teaching a subject in
+      // it — neither implies the other, and a form teacher who also takes a
+      // subject in their own arm counts once, under both. "Assigned to" was
+      // accurate but vague enough that a teacher couldn't tell which applied
+      // without opening My Classes. If this ever needs to be two numbers
+      // instead of one sentence, useMyClasses already carries isFormClass per
+      // class, so splitting is a filter away — no new data required.
+      hint:
+        classCount === 1
+          ? "class arm you teach and/or lead"
+          : "class arms you teach and/or lead",
       icon: School,
     },
     {

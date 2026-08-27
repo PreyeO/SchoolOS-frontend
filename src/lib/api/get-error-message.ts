@@ -7,6 +7,18 @@ export function isPermissionDeniedError(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 403;
 }
 
+// A 400: the request reached the server and was specifically rejected as
+// invalid, as opposed to a load merely failing. The distinction matters
+// wherever the message itself is the point — a validation refusal like
+// "Source and target session must be different." tells the user exactly what
+// to change, and showing it behind a generic "couldn't load, try again" (the
+// shared ErrorState's fallback for anything that isn't a 403 or unreachable
+// server) throws away the one thing worth reading, then offers a retry that
+// can never succeed against the same input.
+export function isValidationError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 400;
+}
+
 // The server was never reached — offline, DNS failure, or the 15s timeout — as
 // opposed to the server answering with a rejection. The distinction matters
 // wherever a failure would otherwise be read as "the backend said no": most

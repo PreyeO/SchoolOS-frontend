@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,18 +19,32 @@ import { NoTermsNotice } from "./no-terms-notice";
 import { TermBadge } from "./term-badge";
 
 // The one sheet a school actually runs a term on: every student down the side,
-// every subject across the top.
+// every subject across the top. Open to teachers as well as admins (the
+// backend gates it on CanViewResults) and readable before publishing — that's
+// the point, since reviewing the grid is what happens *before* you lock.
 //
-// Open to teachers as well as admins — the backend gates it on CanViewResults,
-// which any teacher satisfies — and readable before publishing, which is the
-// point. Reviewing the whole grid is what happens *before* you lock, so this is
-// where the gaps show up rather than in the lock's refusal.
-export function BroadsheetPage() {
+// initialArmId/initialPeriodId are set by "View broadsheet" links elsewhere
+// (Publish Results is the first) — the arm and term the caller was already
+// looking at, rather than making them re-pick both. The arm seeds
+// synchronously (no fetch needed, unlike fees' deep link); the term is applied
+// once via effect, same as student-fees-page.tsx's own seeding.
+export function BroadsheetPage({
+  initialArmId,
+  initialPeriodId,
+}: {
+  initialArmId?: string;
+  initialPeriodId?: string;
+} = {}) {
   // A picker, not the current term alone: reviewing a past term's broadsheet is
   // routine — it's what a school does when a parent queries last term's report.
   const term = useTermSelection();
   const { data: classes, isPending: classesLoading, isError, error } = useClasses();
-  const [armId, setArmId] = useState<string | null>(null);
+  const [armId, setArmId] = useState<string | null>(initialArmId ?? null);
+
+  useEffect(() => {
+    if (initialPeriodId) term.setPeriodId(initialPeriodId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- consume once on mount
+  }, []);
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
@@ -98,8 +112,8 @@ export function BroadsheetPage() {
           )}
 
           <div className="rounded-xl border border-n-200 bg-white" data-print-area>
-            {/* The picker and term badge sit outside the print area, so without
-                this the printed sheet carries no clue which class or term. */}
+            {/* The picker/badge sit outside the print area, so this is the only
+                clue on the printed sheet of which class and term it is. */}
             <p className="hidden print:block print:mb-3 print:text-base print:font-semibold">
               {selected?.label} — {term.label}
             </p>

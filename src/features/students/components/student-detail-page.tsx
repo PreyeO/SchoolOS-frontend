@@ -21,6 +21,7 @@ import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
 import { ReissuePasswordDialog } from "./reissue-password-dialog";
 import { StudentParentLinks } from "./student-parent-links";
+import { StudentResultsSection } from "./student-results-section";
 
 export function StudentDetailPage({ id }: { id: string }) {
   const { data: student, isPending, isError, error } = useStudentDetail(id);
@@ -72,6 +73,11 @@ export function StudentDetailPage({ id }: { id: string }) {
         studentName={`${user.first_name} ${user.last_name}`}
         currentClass={student.current_class}
       />
+
+      <div className="rounded-xl border border-n-200 bg-white p-5">
+        <h2 className="mb-4 text-sm font-semibold text-ink">Results</h2>
+        <StudentResultsSection studentId={student.id} />
+      </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
