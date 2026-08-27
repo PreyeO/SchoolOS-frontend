@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import { ENDPOINTS, INVITE_ENDPOINTS, ROLE_ENDPOINTS } from "@/lib/api/endpoints";
+import { ENDPOINTS, INVITE_ENDPOINTS, ROLE_ENDPOINTS, STUDENT_ENDPOINTS } from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 import type { InviteAdminFormValues } from "../schemas/invite-admin-schema";
@@ -9,6 +9,7 @@ import type { AddStudentFormValues } from "../schemas/add-student-schema";
 import type {
   AcceptInvitePayload,
   AddStudentPayload,
+  BulkImportResult,
   DetailResponse,
   InviteAdminPayload,
   InviteDetailResponse,
@@ -69,6 +70,33 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
     ...(values.email?.trim() ? { email: values.email } : {}),
   };
   const { data } = await apiClient.post<StudentCreatedResponse>(ENDPOINTS.INVITE_STUDENT, payload);
+  return data;
+}
+
+// The instance default (client.ts) is Content-Type: application/json — left
+// as-is, axios's own transformRequest would JSON.stringify the FormData
+// instead of sending it, since it only skips that when the resolved header
+// does NOT already look like JSON. Overriding it here to "multipart/form-data"
+// avoids that branch; axios then deletes it again downstream and lets the
+// browser set the real header with its boundary, exactly like an uncontrolled
+// FormData post would. Both bulk-import routes need this, so it's shared.
+function postCsv(url: string, file: File): Promise<{ data: BulkImportResult }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiClient.post<BulkImportResult>(url, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+}
+
+// Identical shape to bulkImportStudents; writes nothing (commit=False
+// server-side) so it's safe to call on every file selection.
+export async function previewBulkImportStudents(file: File): Promise<BulkImportResult> {
+  const { data } = await postCsv(STUDENT_ENDPOINTS.BULK_IMPORT_PREVIEW(), file);
+  return data;
+}
+
+export async function bulkImportStudents(file: File): Promise<BulkImportResult> {
+  const { data } = await postCsv(STUDENT_ENDPOINTS.BULK_IMPORT(), file);
   return data;
 }
 

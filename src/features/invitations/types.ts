@@ -76,6 +76,37 @@ export interface StudentCreatedResponse {
   password_note: string | null;
 }
 
+// --- Bulk student import (POST /api/students/bulk-import/preview/, /bulk-import/) ---
+// Both routes return the identical shape — preview just never writes anything
+// (commit=False server-side). password is null unless this row created a
+// brand-new account; password_note explains why when it's null but the row
+// still succeeded (an existing account was reused, mirroring add-student's
+// own password_note field).
+export interface BulkImportAppliedRow {
+  row: number;
+  first_name: string;
+  last_name: string;
+  admission_number: string;
+  gender: Gender;
+  date_of_birth: string | null;
+  email: string;
+  class_name: string;
+  arm_name: string;
+  class_arm_id: string;
+  password: string | null;
+  password_note: string | null;
+}
+
+export interface BulkImportSkippedRow {
+  row: number;
+  reason: string;
+}
+
+export interface BulkImportResult {
+  applied: BulkImportAppliedRow[];
+  skipped: BulkImportSkippedRow[];
+}
+
 // --- Pending invites (GET /api/invites/, POST /api/invites/:id/resend/) ---
 export type InvitePersona = "admin" | "teacher" | "parent" | "student";
 // "expired" is derived server-side (pending + past expires_at, not stored);

@@ -90,6 +90,11 @@ export const STUDENT_ENDPOINTS = {
   // — the same gate as fee-items/collection-summary, and NOT the one the
   // attendance summary uses. Returns a bare array.
   ENROLLMENT_SUMMARY: () => `/api/students/enrollment-summary/`,
+  // Both take a CSV `file` (multipart). Preview runs identical validation and
+  // writes nothing (commit=False server-side); the plain route creates for
+  // real. Gated the same as add-students (add_students school-side).
+  BULK_IMPORT_PREVIEW: () => `/api/students/bulk-import/preview/`,
+  BULK_IMPORT: () => `/api/students/bulk-import/`,
 } as const;
 
 export const PARENT_ENDPOINTS = {
