@@ -17,6 +17,11 @@ interface Props {
 export function LedgerTable({ ledger, studentName, waiverIds, canRecord, canWaive }: Props) {
   const billed = ledger.items.reduce((sum, row) => sum + row.amount, 0);
   const paid = ledger.items.reduce((sum, row) => sum + row.paid, 0);
+  // A viewer with neither capability (a parent, or an admin with view_fees but
+  // not record/edit) gets no buttons in the last column — so it stops claiming
+  // to hold actions and carries each row's state instead. Dropping the column
+  // outright would lose the "Paid" marker, which is worth keeping.
+  const readOnly = !canRecord && !canWaive;
 
   return (
     <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
@@ -27,7 +32,9 @@ export function LedgerTable({ ledger, studentName, waiverIds, canRecord, canWaiv
             <th className="px-3 py-2.5 font-medium text-right">Billed</th>
             <th className="px-3 py-2.5 font-medium text-right">Paid</th>
             <th className="px-3 py-2.5 font-medium text-right">Balance</th>
-            <th className="px-3 py-2.5 font-medium text-right">Actions</th>
+            <th className="px-3 py-2.5 font-medium text-right">
+              {readOnly ? "Status" : "Actions"}
+            </th>
           </tr>
         </thead>
         <tbody>
