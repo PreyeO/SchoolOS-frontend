@@ -16,7 +16,7 @@ import { useChildStudent } from "../hooks/use-child-student";
 import { useSelectedChild } from "../hooks/use-selected-child";
 import { ChildContextBar } from "./child-context-bar";
 import { childScreenGuard } from "./child-screen-guard";
-import { SubjectScoresChart } from "./charts/subject-scores-chart";
+import { DownloadResultButton } from "./download-result-button";
 
 // A parent reads the report card straight from the endpoint, with no
 // client-side permission check first.
@@ -73,7 +73,13 @@ export function ChildResultsPage() {
                 onChange={term.setPeriodId}
                 label="Term"
               />
-              <ResultsBody report={report} termLabel={term.label ?? "This term"} />
+              <ResultsBody
+                report={report}
+                termLabel={term.label ?? "This term"}
+                studentId={childId!}
+                periodId={term.periodId}
+                admissionNumber={selected.child!.admission_number}
+              />
             </>
           )}
         </>
@@ -85,9 +91,15 @@ export function ChildResultsPage() {
 function ResultsBody({
   report,
   termLabel,
+  studentId,
+  periodId,
+  admissionNumber,
 }: {
   report: ReturnType<typeof useReportCard>;
   termLabel: string;
+  studentId: string;
+  periodId: string | null;
+  admissionNumber: string;
 }) {
   if (report.isPaused && !report.data) {
     return <OfflineNotice resourceLabel="This result" />;
@@ -120,17 +132,14 @@ function ResultsBody({
   }
 
   return (
-    <div className="space-y-4">
-      {report.data.subjects.length > 0 && (
-        <div className="rounded-xl border border-n-200 bg-white p-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-n-400">
-            Subject scores
-          </p>
-          <div className="mt-2">
-            <SubjectScoresChart subjects={report.data.subjects} />
-          </div>
-        </div>
-      )}
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <DownloadResultButton
+          studentId={studentId}
+          periodId={periodId}
+          admissionNumber={admissionNumber}
+        />
+      </div>
       <div className="rounded-xl border border-n-200 bg-white p-4 sm:p-5">
         <ReportCardBody data={report.data} />
       </div>

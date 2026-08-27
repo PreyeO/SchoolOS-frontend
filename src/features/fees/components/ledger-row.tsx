@@ -71,6 +71,11 @@ export function LedgerRow({ row, studentId, studentName, waiverId, canRecord, ca
             <span className="inline-flex items-center gap-1 text-xs font-medium text-grass">
               <BadgeCheck className="size-3.5" /> Paid
             </span>
+          ) : !canRecord && !canWaive ? (
+            // Read-only viewer (a parent, or a view-only admin): no buttons
+            // belong here, but a blank cell reads as missing data. The row's
+            // own state is the useful thing to show instead.
+            <span className="text-xs font-medium text-amber">Outstanding</span>
           ) : (
             <>
               {canRecord && (

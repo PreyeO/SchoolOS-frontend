@@ -17,6 +17,7 @@ import { ChildSnapshot } from "./child-snapshot";
 import { childScreenGuard } from "./child-screen-guard";
 import { FeeProgress } from "./fee-progress";
 import { PerformanceCard } from "./performance-card";
+import { SubjectPerformanceCard } from "./subject-performance-card";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -82,6 +83,13 @@ export function ParentHome() {
             sessionName={performance.sessionName}
             termCount={performance.termCount}
             isPending={performance.isPending}
+          />
+
+          <SubjectPerformanceCard
+            reportCard={reportCard.data}
+            awaitingResults={isPermissionDeniedError(reportCard.error)}
+            isPending={reportCard.isPending}
+            termLabel={term.label ?? "This term"}
           />
 
           {ledger.data && <FeeProgress ledger={ledger.data} />}
