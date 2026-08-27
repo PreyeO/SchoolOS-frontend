@@ -40,6 +40,7 @@ export interface NavGroup {
 const ADMIN_ONLY: Persona[] = ["admin"];
 const ADMIN_AND_TEACHER: Persona[] = ["admin", "teacher"];
 const TEACHER_ONLY: Persona[] = ["teacher"];
+const PARENT_ONLY: Persona[] = ["parent"];
 
 // `soon` defaults true (unbuilt module). Pass false for a live, built route.
 export function adminItem(item: Omit<NavItem, "personas" | "soon">, soon = true): NavItem {
@@ -55,6 +56,12 @@ export function staffItem(item: Omit<NavItem, "personas" | "soon">, soon = true)
 // Scoped to the signed-in teacher's own work, so it has no meaning for an admin.
 export function teacherItem(item: Omit<NavItem, "personas" | "soon">, soon = true): NavItem {
   return { ...item, personas: TEACHER_ONLY, soon };
+}
+
+// Scoped to the signed-in parent's own children. An admin reaches the same
+// records through the Students directory, so this would be a duplicate for them.
+export function parentItem(item: Omit<NavItem, "personas" | "soon">, soon = true): NavItem {
+  return { ...item, personas: PARENT_ONLY, soon };
 }
 
 // A disclosure item: rendered as a toggle that expands its own nested items

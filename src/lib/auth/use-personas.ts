@@ -37,3 +37,11 @@ export function useIsSchoolAdmin(): boolean {
 export function useIsTeacher(): boolean {
   return usePersonas().includes("teacher");
 }
+
+export function useIsParent(): boolean {
+  return usePersonas().includes("parent");
+}
+
+export function useIsStudent(): boolean {
+  return usePersonas().includes("student");
+}
