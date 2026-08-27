@@ -17,7 +17,10 @@ interface Props {
   canRecord: boolean;
   canWaive: boolean;
   canViewFees: boolean;
-  payments: UseQueryResult<Payment[]>;
+  // Only read when canViewFees — the history section is absent otherwise, so a
+  // caller who can't view it (a parent reading their own child's ledger) has no
+  // query to hand over and shouldn't have to invent one.
+  payments?: UseQueryResult<Payment[]>;
 }
 
 // The loaded half of the bursar's desk — summary, the line-by-line table (or
@@ -59,7 +62,7 @@ export function LedgerPanel({
         />
       )}
 
-      {canViewFees && (
+      {canViewFees && payments && (
         <section className="space-y-2.5">
           <SectionLabel>Payment history</SectionLabel>
           <PaymentHistory

@@ -1,17 +1,26 @@
 import { Radio, Megaphone, MessageSquare, MessageCircle, CalendarDays } from "lucide-react";
 
-import { adminItem, staffItem, type NavGroup } from "./types";
+import { adminItem, staffItem, type NavGroup, type Persona } from "./types";
+
+// The one nav audience no factory covers: everyone a notice can be addressed to.
+// AnnouncementsPage already serves both halves from this single route — manage
+// plus read for a post_notices holder, and a server-filtered inbox for everyone
+// else (announcements/services.py filters by audience_personas overlap), so a
+// parent or student opening it gets only what was aimed at them.
+const NOTICE_AUDIENCE: Persona[] = ["admin", "teacher", "parent", "student"];
 
 export const communicationGroup: NavGroup = {
   label: "Communication",
   icon: Radio,
   items: [
-    staffItem({
+    {
       label: "Announcements",
       href: "/announcements",
       icon: Megaphone,
       description: "Broadcast announcements to staff, parents, and students in one place.",
-    }, false),
+      personas: NOTICE_AUDIENCE,
+      soon: false,
+    },
     staffItem({
       label: "Messages",
       href: "/messages",

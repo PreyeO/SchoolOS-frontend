@@ -1,9 +1,11 @@
 "use client";
 
-import { Construction, UserRound, Users2 } from "lucide-react";
+import { Construction, Users2 } from "lucide-react";
 
 import { useMe } from "@/features/me/hooks/use-me";
 import { useSchoolStore } from "@/stores/school-store";
+
+import { ChildCard } from "./child-card";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -12,12 +14,16 @@ function greeting(): string {
   return "Good evening";
 }
 
-// What a parent will be able to do, named concretely rather than left as a bare
-// "coming soon" — the children below are real, so the wait has a shape.
+// What's still genuinely unbuilt. Results and fees came off this list when they
+// landed on the child detail page; announcements came off when the notice board
+// opened to parents. Each remaining line needs backend that doesn't exist yet —
+// attendance has no parent-visible endpoint (attendance/views.py returns an
+// empty queryset for any non-staff caller), online payment has no gateway
+// integration at all, and there's no messaging app. Don't re-add a line here
+// without checking the backend actually supports it.
 const UPCOMING = [
-  "See attendance and results for each child",
-  "Get notified about absences and announcements",
-  "View and pay fees online",
+  "Get notified when your child is marked absent",
+  "Pay fees online",
   "Message your child's teachers",
 ];
 
@@ -58,26 +64,7 @@ export function ParentHome() {
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {children.map((child) => (
-              <li
-                key={child.id}
-                className="flex items-center gap-3 rounded-xl border border-n-200 bg-white p-4"
-              >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                  <UserRound className="size-5 text-primary" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-ink">
-                    {child.student_name}
-                  </span>
-                  <span className="block truncate font-mono text-[11px] text-n-400">
-                    {child.admission_number}
-                  </span>
-                  <span className="block truncate text-xs text-n-500 capitalize">
-                    {child.relationship}
-                    {child.is_primary_contact && " · Primary contact"}
-                  </span>
-                </span>
-              </li>
+              <ChildCard key={child.id} child={child} />
             ))}
           </ul>
         )}
