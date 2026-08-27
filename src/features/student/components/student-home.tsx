@@ -1,7 +1,9 @@
 "use client";
 
-import { Construction, School, UserRound } from "lucide-react";
+import { Construction, School } from "lucide-react";
 
+import { PersonAvatar } from "@/components/shared/person-avatar";
+import { RecentNotices } from "@/features/communication/components/recent-notices";
 import { useMe } from "@/features/me/hooks/use-me";
 import { useSchoolStore } from "@/stores/school-store";
 import { armDisplayName } from "@/lib/school/arm-display-name";
@@ -13,6 +15,12 @@ function greeting(): string {
   return "Good evening";
 }
 
+// Results and attendance are absent here for a backend reason, not an oversight:
+// /me's student block carries no StudentProfile id, so a student has no id to
+// call /api/students/<id>/report-card/ or /fees/ with — even though both
+// endpoints already allow a student to read their own. See docs/PROJECT.md's
+// backend-gap list. Don't build those screens until that id is exposed; they
+// would 403 on every request.
 const UPCOMING = [
   "Check your timetable and assignments",
   "See your results and attendance record",
@@ -59,6 +67,8 @@ export function StudentHome() {
         </div>
       </div>
 
+      <RecentNotices />
+
       {guardians.length > 0 && (
         <section className="space-y-3">
           <h2 className="font-display text-base font-semibold text-ink">
@@ -70,9 +80,14 @@ export function StudentHome() {
                 key={guardian.id}
                 className="flex items-center gap-3 rounded-xl border border-n-200 bg-white p-4"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-n-100">
-                  <UserRound className="size-5 text-n-400" />
-                </span>
+                {/* parent_name is one string from the serializer, not split
+                    first/last — so the initials fallback gets the two words it
+                    needs by splitting on the first space. */}
+                <PersonAvatar
+                  firstName={guardian.parent_name.split(" ")[0] ?? guardian.parent_name}
+                  lastName={guardian.parent_name.split(" ").slice(1).join(" ")}
+                  className="size-10 shrink-0"
+                />
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-ink">
                     {guardian.parent_name}
@@ -81,6 +96,7 @@ export function StudentHome() {
                     {guardian.relationship}
                     {guardian.is_primary_contact && " · Primary contact"}
                   </span>
+                  <span className="block truncate text-[11px] text-n-400">{guardian.email}</span>
                 </span>
               </li>
             ))}

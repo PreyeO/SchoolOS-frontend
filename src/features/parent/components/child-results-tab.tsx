@@ -1,7 +1,10 @@
 "use client";
 
+import { Hourglass } from "lucide-react";
+
+import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
-import { getErrorMessage, isPermissionDeniedError } from "@/lib/api/get-error-message";
+import { isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { ReportCardBody } from "@/features/results/components/report-card-body";
 import { useReportCard } from "@/features/results/hooks/use-report-card";
 
@@ -19,10 +22,11 @@ interface Props {
 // permission at all, so gating that way would hide the screen from the only
 // person it's for. ResultsService.get_report_card already decides: it allows a
 // linked parent (re-checking ParentStudentLink live on every request) but only
-// once the arm's broadsheet is locked, and 403s before that. So here a 403 is
-// the ordinary pre-publish state, not a permission problem — hence the specific
-// copy rather than the shared ErrorState, whose "you don't have permission"
-// wording would misread as something being wrong with the account.
+// once the arm's broadsheet is locked, and 403s before that.
+//
+// So a 403 here is the ordinary pre-publish state, not a permission problem —
+// it gets its own waiting state rather than ErrorState, whose "you don't have
+// permission" wording would read as something wrong with the account.
 export function ChildResultsTab({ studentId, periodId, termLabel }: Props) {
   const { data, isPending, isPaused, isError, error } = useReportCard(studentId, periodId);
 
@@ -31,18 +35,36 @@ export function ChildResultsTab({ studentId, periodId, termLabel }: Props) {
   }
 
   if (isPending) {
-    return <p className="text-sm text-n-400" role="status">Loading result…</p>;
-  }
-
-  if (isError) {
     return (
-      <p className="rounded-xl border border-n-200 bg-white p-6 text-center text-sm text-n-500">
-        {isPermissionDeniedError(error)
-          ? `${termLabel}'s result isn't published yet. It appears here once the school releases it.`
-          : getErrorMessage(error)}
+      <p className="py-8 text-center text-sm text-n-400" role="status">
+        Loading result…
       </p>
     );
   }
 
-  return <ReportCardBody data={data} />;
+  if (isError) {
+    if (!isPermissionDeniedError(error)) {
+      return <ErrorState error={error} resourceLabel="this result" />;
+    }
+    return (
+      <div className="rounded-xl border border-n-200 bg-white p-8 text-center">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-n-100">
+          <Hourglass className="size-5 text-n-400" />
+        </div>
+        <h3 className="mt-4 font-display text-lg font-semibold text-ink">
+          {termLabel} isn&rsquo;t published yet
+        </h3>
+        <p className="mx-auto mt-1.5 max-w-sm text-sm text-n-500">
+          Results appear here as soon as the school releases them for the class.
+          Nothing is missing on your side.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-n-200 bg-white p-4 sm:p-5">
+      <ReportCardBody data={data} />
+    </div>
+  );
 }
