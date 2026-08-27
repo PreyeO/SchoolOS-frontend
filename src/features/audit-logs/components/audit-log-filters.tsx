@@ -1,5 +1,8 @@
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { toLocalIsoDate } from "@/lib/text/format-date";
+
+import { ACTION_FILTER_GROUPS } from "../lib/action-options";
 
 interface Props {
   action: string;
@@ -29,16 +32,28 @@ export function AuditLogFilters({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-3">
-        {/* Plain free text: the backend matches ?action= with icontains, so a
-            partial like "deleted" spans every category while an exact
-            "grade_range.created" narrows to one. */}
-        <Input
+        {/* A grouped picker of the exact 82 action strings the catalog knows
+            about (see action-options.ts), rather than free text — an admin
+            was never going to type "grade_range.created" from memory. Still
+            sends one exact string through the backend's ?action= icontains
+            filter, so no backend change was needed. */}
+        <Select
           aria-label="Filter by action"
-          placeholder="Filter by action, e.g. grade_range.created"
           value={action}
           onChange={(e) => onActionChange(e.target.value)}
-          className="h-9 w-full sm:w-72"
-        />
+          className="h-9 w-full sm:w-64"
+        >
+          <option value="">All actions</option>
+          {ACTION_FILTER_GROUPS.map((group) => (
+            <optgroup key={group.key} label={group.label}>
+              {group.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </Select>
 
         <div className="flex items-center gap-1.5">
           <label htmlFor="audit-date-from" className="text-sm text-n-500">From</label>

@@ -101,9 +101,16 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
         />
 
         {arm.class_teacher && (
+          // NOT an attendance claim — any teacher at the school can mark any
+          // arm's register regardless of who (if anyone) is its class teacher
+          // (see attendance/views.py's AttendanceRecordViewSet docstring).
+          // The real, identity-gated consequence is the class-teacher remark on
+          // report cards: RemarkService.set_class_teacher_remark raises
+          // PermissionDenied for anyone whose teacher_profile.id doesn't match
+          // class_arm.class_teacher_id — with nobody assigned, that's everyone.
           <p className="text-xs text-n-400">
             Removing the form teacher leaves {label ?? arm.name} without one — nobody can
-            mark its attendance until another is assigned.
+            write its class teacher&rsquo;s remark on report cards until another is assigned.
           </p>
         )}
 

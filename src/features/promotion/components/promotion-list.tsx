@@ -3,6 +3,7 @@
 import { ArmPicker } from "@/components/shared/arm-picker";
 import { ErrorState } from "@/components/shared/error-state";
 import { Button } from "@/components/ui/button";
+import { getErrorMessage, isValidationError } from "@/lib/api/get-error-message";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
 
 import type { PromotionDraftRow } from "../hooks/use-promotion-draft";
@@ -41,6 +42,20 @@ export function PromotionList({
     return <p className="text-sm text-n-400" role="status">Loading students…</p>;
   }
   if (isError) {
+    // get_promotion_preview's own 400s ("Source and target session must be
+    // different.", "No current academic session is set…") are specific,
+    // actionable refusals, not a load failure — ErrorState's generic
+    // "couldn't load" fallback would swallow the exact text that tells the
+    // admin what to change, and its retry button could never fix a rejection
+    // caused by the input itself. 403s and unreachable-server cases are
+    // unaffected and still fall through to ErrorState's own handling of those.
+    if (isValidationError(error)) {
+      return (
+        <p role="alert" className="rounded-xl border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-sm text-ink">
+          {getErrorMessage(error)}
+        </p>
+      );
+    }
     return <ErrorState error={error} resourceLabel="this promotion preview" />;
   }
   if (rows.length === 0) {

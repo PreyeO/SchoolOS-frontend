@@ -22,12 +22,13 @@ export function AuditLogPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const debouncedAction = useDebouncedValue(action, 300);
+  // action is a discrete pick from a dropdown now, not typed text, so it needs
+  // no debounce — only the free-text actor search still does.
   const debouncedSearch = useDebouncedValue(search, 300);
 
   const filters: Filters = {
     page,
-    ...(debouncedAction.trim() ? { action: debouncedAction.trim() } : {}),
+    ...(action ? { action } : {}),
     ...(dateFrom ? { created_at_after: dateFrom } : {}),
     ...(dateTo ? { created_at_before: dateTo } : {}),
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
@@ -35,7 +36,7 @@ export function AuditLogPage() {
 
   const { data, isPending, isError, error } = useAuditLogs(filters);
 
-  const isFiltered = !!debouncedAction.trim() || !!dateFrom || !!dateTo || !!debouncedSearch.trim();
+  const isFiltered = !!action || !!dateFrom || !!dateTo || !!debouncedSearch.trim();
 
   function resetPage() {
     setPage(1);

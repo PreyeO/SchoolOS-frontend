@@ -9,6 +9,7 @@ import { InviteAdminForm } from "./invite-admin-form";
 import { InviteTeacherForm } from "./invite-teacher-form";
 import { InviteParentForm } from "./invite-parent-form";
 import { AddStudentForm } from "./add-student-form";
+import { BulkImportPanel } from "./bulk-import-panel";
 
 const ROLE_OPTIONS: { value: InvitePersona; label: string; description: string; icon: LucideIcon }[] = [
   { value: "admin", label: "Admin", description: "Invite by email", icon: ShieldCheck },
@@ -23,6 +24,9 @@ const ROLE_OPTIONS: { value: InvitePersona; label: string; description: string; 
 // hand doesn't need to write back to the URL.
 export function InvitePeoplePanel({ initialPersona = "admin" }: { initialPersona?: InvitePersona }) {
   const [role, setRole] = useState<InvitePersona>(initialPersona);
+  // Only meaningful for role === "student" — the other three personas are
+  // invite-by-email with no bulk equivalent on the backend.
+  const [studentMode, setStudentMode] = useState<"single" | "bulk">("single");
 
   return (
     <div className="space-y-6">
@@ -58,11 +62,39 @@ export function InvitePeoplePanel({ initialPersona = "admin" }: { initialPersona
         })}
       </div>
 
-      <div className="rounded-xl border border-n-200 bg-white p-5 max-w-xl">
+      {role === "student" && (
+        <div className="inline-flex rounded-lg border border-n-200 bg-n-50 p-1 text-sm">
+          {(["single", "bulk"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setStudentMode(mode)}
+              aria-pressed={studentMode === mode}
+              className={cn(
+                "rounded-md px-3 py-1.5 font-medium transition-colors",
+                studentMode === mode ? "bg-white text-ink shadow-sm" : "text-n-500 hover:text-ink",
+              )}
+            >
+              {mode === "single" ? "One at a time" : "Bulk import (CSV)"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Bulk import's preview/result tables need real width for six columns
+          of data — the max-w-xl that suits every other form here would force
+          them into constant horizontal scrolling. */}
+      <div
+        className={cn(
+          "rounded-xl border border-n-200 bg-white p-5",
+          role === "student" && studentMode === "bulk" ? "max-w-3xl" : "max-w-xl",
+        )}
+      >
         {role === "admin" && <InviteAdminForm />}
         {role === "teacher" && <InviteTeacherForm />}
         {role === "parent" && <InviteParentForm />}
-        {role === "student" && <AddStudentForm />}
+        {role === "student" && studentMode === "single" && <AddStudentForm />}
+        {role === "student" && studentMode === "bulk" && <BulkImportPanel />}
       </div>
     </div>
   );

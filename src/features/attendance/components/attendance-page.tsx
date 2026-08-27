@@ -251,17 +251,20 @@ export function AttendancePage({
       </div>
 
       {/* Only teachers can write. Say so up front rather than showing controls
-          that 403 — the backend has no admin override by design. */}
+          that 403 — the backend has no admin override by design.
+          Deliberately doesn't point at assigning a form teacher: any teacher
+          at the school can mark any arm's register regardless of who (if
+          anyone) is its class teacher — see
+          AttendanceRecordViewSet's docstring, attendance/views.py. Naming that
+          as "the fix" would misdiagnose why an admin can't mark it — the
+          reason is simply that admins never can, not that this arm is missing
+          something. */}
       {!canMark && (
         <p className="flex items-start gap-2 rounded-lg border border-n-200 bg-n-50 px-3.5 py-2.5 text-xs text-n-600">
           <Info className="mt-0.5 size-4 shrink-0 text-n-400" />
           <span>
             You&rsquo;re viewing this as an admin, so the register is read-only. Attendance
-            can only be recorded by a teacher — assign a form teacher to each {unit.one} in{" "}
-            <Link href="/classes" className="text-primary hover:underline">
-              Classes &amp; Arms
-            </Link>
-            .
+            can only be recorded by a teacher — there&rsquo;s no admin override.
           </span>
         </p>
       )}

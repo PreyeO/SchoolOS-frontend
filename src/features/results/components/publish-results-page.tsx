@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, Eye, FileText, Lock, LockOpen } from "lucide-react";
+import { Download, Eye, FileText, Lock, LockOpen, Table2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
@@ -169,14 +169,28 @@ export function PublishResultsPage() {
         <p className="text-sm text-n-400 italic">No classes yet.</p>
       ) : (
         <>
-          <div className="flex flex-wrap items-end gap-3">
-            <ArmPicker groups={groups} value={selectedId} onChange={setArmId} label="Class" />
-            <TermPicker
-              groups={term.groups}
-              value={term.periodId}
-              onChange={term.setPeriodId}
-              label="Term"
-            />
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <ArmPicker groups={groups} value={selectedId} onChange={setArmId} label="Class" />
+              <TermPicker
+                groups={term.groups}
+                value={term.periodId}
+                onChange={term.setPeriodId}
+                label="Term"
+              />
+            </div>
+            {/* The subject-by-subject state above answers "is this ready to
+                publish"; the broadsheet is the actual grid of scores behind
+                that answer, for the same arm and term — legitimately useful
+                whether or not this class has been locked yet. */}
+            {selectedId && term.periodId && (
+              <Button type="button" variant="outline" size="sm" asChild className="h-8 shrink-0 text-xs">
+                <Link href={`/results/broadsheet?arm=${selectedId}&period=${term.periodId}`}>
+                  <Table2 className="size-3.5 mr-1" />
+                  View broadsheet
+                </Link>
+              </Button>
+            )}
           </div>
 
           <div className="rounded-xl border border-n-200 bg-white p-5">
