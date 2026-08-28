@@ -1,44 +1,26 @@
 "use client";
 
-import { useClassArmDetail } from "@/features/settings/hooks/use-class-arm-detail";
 import { useMe } from "@/features/me/hooks/use-me";
 
-// A student's own StudentProfile id — which nothing hands them directly.
+// A student's own StudentProfile id, straight from /auth/me/.
 //
-// /auth/me/'s `student` block carries only current_class and parent_links (no
-// id), the JWT carries user_id/membership_id but no profile id, and
-// GET /api/students/<id>/ is gated on CanViewStudents so they can't look
-// themselves up. Yet /students/<id>/fees/ and /report-card/ both have working
-// self-access branches — they just need an id to be called with.
+// This used to derive the id by fetching the student's whole class arm and
+// finding the row whose user.id matched theirs — /me carried no id, the JWT
+// carries none, and GET /api/students/<id>/ is CanViewStudents-gated, so the
+// roster was the only route to it. That worked, but meant downloading every
+// classmate's name and email to answer a question about one student.
 //
-// So it's derived: /me gives the caller's user.id and their current class arm,
-// and GET /api/class-arms/<arm>/ (which a student MAY read — verified live,
-// 200) returns the arm's roster with each student's profile id beside their
-// user id. Matching on user.id yields the caller's own profile id. The roster
-// is neither capped nor paginated (AcademicService.get_class_arm_detail), so
-// this holds for a class of any size.
+// The backend added `id` to /me's student block on 2026-08-29, so the roster
+// fetch is gone and with it that incidental exposure of classmate PII.
 //
-// The cost is real and worth stating: finding yourself means fetching every
-// classmate's name and email. Nothing is shown from that list — only the
-// caller's own row is read — but the request happens, and it is the reason
-// "add `id` to /me's student block" is worth doing on the backend. See
-// docs/asks/parent-portal-gaps.md.
-//
-// Returns undefined for a student with no current enrolment: there's no arm to
-// look in, and nothing downstream can be fetched for them anyway.
+// Returns undefined for a caller with no student block (any non-student
+// persona), which is the same signal the class-arm version gave for a student
+// with no enrolment — callers already handle it.
 export function useMyStudentId(): { studentId: string | undefined; isPending: boolean } {
-  const { data: me, isPending: meLoading } = useMe();
-
-  const myUserId = me?.user.id;
-  const armId = me?.student?.current_class?.class_arm_id ?? null;
-  const { data: arm, isPending: armLoading } = useClassArmDetail(armId);
-
-  const studentId = arm?.students.find((s) => s.user.id === myUserId)?.id;
+  const { data: me, isPending } = useMe();
 
   return {
-    studentId,
-    // Not pending once we know there's no arm to search — that's a settled
-    // answer (unenrolled), not a load still in flight.
-    isPending: meLoading || (!!armId && armLoading),
+    studentId: me?.student?.id,
+    isPending,
   };
 }

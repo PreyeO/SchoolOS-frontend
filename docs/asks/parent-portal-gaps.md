@@ -1,3 +1,13 @@
+> **CLOSED 2026-08-29.** Every ask below shipped, and the frontend now consumes
+> all of it — attendance screens for both personas, payment history and receipt
+> downloads, and `useMyStudentId` reading `/me.student.id` instead of scanning
+> the class roster. Two "smaller/optional" items also landed (`enrollment-history`
+> and the full `students/{id}/` profile for parents/students); those are open but
+> not yet consumed. Kept as the record of what was asked and why.
+>
+> Still outstanding from §4: **online fee payment** (no gateway, no webhook) —
+> genuinely unbuilt, and its own project.
+
 # Backend asks — Parent & Student portals
 
 Both portals are built and live on the frontend:

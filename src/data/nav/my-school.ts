@@ -26,16 +26,11 @@ export const mySchoolGroup: NavGroup = {
       icon: Receipt,
       description: "What you were billed this term, and what's left to pay.",
     }, false),
-    // Same backend gap as the parent's attendance item: AttendanceRecordViewSet
-    // returns an empty queryset to anyone who isn't an admin with
-    // view_attendance or a teacher, and there's no per-student filter — so a
-    // student sees a silent empty 200, not a 403. Verified live.
-    // See docs/asks/parent-portal-gaps.md.
     studentItem({
       label: "My attendance",
       href: "/my/attendance",
       icon: CalendarCheck,
       description: "Your day-by-day attendance record.",
-    }),
+    }, false),
   ],
 };

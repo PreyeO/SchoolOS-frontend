@@ -21,18 +21,12 @@ export const myChildGroup: NavGroup = {
       icon: Receipt,
       description: "What your child was billed this term, and what's left to pay.",
     }, false),
-    // Marked `soon` because there is genuinely nothing to show yet, not because
-    // the screen is unbuilt: attendance/views.py's get_queryset grants rows only
-    // to an admin with view_attendance or a teacher, and returns an empty
-    // queryset to everyone else — a silent 200, not a 403. There's also no
-    // student filter in attendance/filters.py. Both need to land before this
-    // can become a real screen; see docs/PROJECT.md's backend-gap list.
     parentItem({
       label: "Attendance",
       href: "/child/attendance",
       icon: CalendarCheck,
       description: "Your child's day-by-day attendance record.",
-    }),
+    }, false),
     parentItem({
       label: "Child profile",
       href: "/child/profile",
