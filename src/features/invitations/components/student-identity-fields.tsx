@@ -18,7 +18,7 @@ interface Props {
 // two server-side blockers live and needs the class list.
 //
 // Email is optional because the backend mints a synthetic internal address
-// (student.{admission}.{school}@internal.schoolos.com) when it's blank — most
+// (student.{admission}.{school}@internal.myschoolos.io) when it's blank — most
 // primary pupils have no email of their own, and demanding one would push
 // admins into inventing them.
 export function StudentIdentityFields({ register, errors }: Props) {
