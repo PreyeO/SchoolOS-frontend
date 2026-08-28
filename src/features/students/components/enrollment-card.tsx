@@ -8,6 +8,8 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useEnrollmentHistory } from "../hooks/use-enrollment";
 import type { CurrentClass } from "../types";
+import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
+
 import { EnrollStudentDialog } from "./enroll-student-dialog";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 
@@ -18,6 +20,13 @@ interface Props {
 }
 
 export function EnrollmentCard({ studentId, studentName, currentClass }: Props) {
+  // Enrolling and moving a class both hit POST /students/<id>/enroll/, which
+  // requires edit_students through HasSchoolPermission — and that permission
+  // class hard-requires is_admin. So a teacher 403s on it (verified live) even
+  // though they may edit the profile itself via CanEditStudentProfile. The two
+  // are genuinely different rights, and the button is hidden rather than left
+  // to fail. Enrollment HISTORY below stays visible: a teacher gets 200 on it.
+  const canEnroll = useHasSchoolPermission("edit_students");
   const [showHistory, setShowHistory] = useState(false);
   const { data: history, isPending } = useEnrollmentHistory(studentId);
 
@@ -46,16 +55,18 @@ export function EnrollmentCard({ studentId, studentName, currentClass }: Props) 
           )}
         </div>
 
-        <EnrollStudentDialog
-          studentId={studentId}
-          studentName={studentName}
-          currentClass={currentClass}
-          trigger={
-            <Button type="button" variant="outline" size="sm">
-              {currentClass ? "Move class" : "Enrol"}
-            </Button>
-          }
-        />
+        {canEnroll && (
+          <EnrollStudentDialog
+            studentId={studentId}
+            studentName={studentName}
+            currentClass={currentClass}
+            trigger={
+              <Button type="button" variant="outline" size="sm">
+                {currentClass ? "Move class" : "Enrol"}
+              </Button>
+            }
+          />
+        )}
       </div>
 
       {!currentClass && (
