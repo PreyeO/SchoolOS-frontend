@@ -19,6 +19,7 @@ import { EditPersonalDialog } from "./edit-personal-dialog";
 import { EnrollmentCard } from "./enrollment-card";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
+import { MedicalAlerts } from "./medical-alerts";
 import { ReissuePasswordDialog } from "./reissue-password-dialog";
 import { StudentParentLinks } from "./student-parent-links";
 import { StudentResultsSection } from "./student-results-section";
@@ -67,6 +68,8 @@ export function StudentDetailPage({ id }: { id: string }) {
         </div>
         {isSyntheticEmail(user.email) && <ReissuePasswordDialog studentId={student.id} />}
       </div>
+
+      <MedicalAlerts student={student} />
 
       <EnrollmentCard
         studentId={student.id}

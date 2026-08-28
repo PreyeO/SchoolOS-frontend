@@ -1,7 +1,14 @@
 import type { StudentListItem } from "../types";
 import { StudentTableRow } from "./student-table-row";
 
-export function StudentsTable({ students }: { students: StudentListItem[] }) {
+export function StudentsTable({
+  students,
+  basePath,
+}: {
+  students: StudentListItem[];
+  // Passed through to each row — see StudentTableRow.
+  basePath?: string;
+}) {
   if (students.length === 0) {
     return (
       <div className="rounded-xl border border-n-200 bg-white py-10 text-center">
@@ -23,7 +30,7 @@ export function StudentsTable({ students }: { students: StudentListItem[] }) {
         </thead>
         <tbody>
           {students.map((student) => (
-            <StudentTableRow key={student.id} student={student} />
+            <StudentTableRow key={student.id} student={student} basePath={basePath} />
           ))}
         </tbody>
       </table>
