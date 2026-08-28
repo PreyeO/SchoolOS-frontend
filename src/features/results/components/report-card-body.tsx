@@ -38,7 +38,9 @@ export function ReportCardBody({ data }: { data: ReportCard }) {
               <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-n-400">
                 {tile.label}
               </p>
-              <p className="mt-1 font-display text-lg font-bold text-ink">{tile.value}</p>
+              <p className="mt-1 font-display text-lg font-bold tabular-nums text-ink">
+                {tile.value}
+              </p>
             </div>
           ))}
         </div>
@@ -58,24 +60,45 @@ export function ReportCardBody({ data }: { data: ReportCard }) {
         </p>
       ) : (
         <div className="overflow-x-auto">
+          {/* Fixed widths on the value columns, not auto layout: auto sizing
+              stretched each to fit its own header ("Position" is far wider than
+              the "3" under it), leaving short right-aligned values floating away
+              from their label and reading as misalignment. Subject takes the
+              rest. Header and cell padding must stay mirrored per column. */}
           <table className="w-full text-sm">
+            <colgroup>
+              <col />
+              <col className="w-16" />
+              <col className="w-16" />
+              <col className="w-20" />
+            </colgroup>
             <thead>
-              <tr className="border-b border-n-200 text-left">
-                <th scope="col" className="py-2 pr-3 font-medium text-n-500">Subject</th>
-                <th scope="col" className="py-2 pr-3 text-right font-medium text-n-500">Score</th>
-                <th scope="col" className="py-2 pr-3 text-right font-medium text-n-500">Grade</th>
-                <th scope="col" className="py-2 text-right font-medium text-n-500">Position</th>
+              <tr className="border-b border-n-200">
+                <th scope="col" className="py-2 pr-3 text-left font-medium text-n-500">
+                  Subject
+                </th>
+                <th scope="col" className="py-2 px-2 text-right font-medium text-n-500">
+                  Score
+                </th>
+                <th scope="col" className="py-2 px-2 text-right font-medium text-n-500">
+                  Grade
+                </th>
+                <th scope="col" className="py-2 pl-2 text-right font-medium text-n-500">
+                  Position
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-n-100">
               {data.subjects.map((s) => (
                 <tr key={s.id}>
                   <td className="py-2 pr-3 text-ink">{s.subject_name}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums text-ink">
+                  <td className="py-2 px-2 text-right tabular-nums text-ink">
                     {Number(s.total_score)}
                   </td>
-                  <td className="py-2 pr-3 text-right text-ink">{s.grade ?? "—"}</td>
-                  <td className="py-2 text-right tabular-nums text-n-500">
+                  <td className="py-2 px-2 text-right tabular-nums text-ink">
+                    {s.grade ?? "—"}
+                  </td>
+                  <td className="py-2 pl-2 text-right tabular-nums text-n-500">
                     {s.subject_position_in_arm ?? "—"}
                   </td>
                 </tr>

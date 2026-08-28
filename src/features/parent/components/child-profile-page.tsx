@@ -97,9 +97,9 @@ export function ChildProfilePage() {
                     }
                   />
                   {/* A student with no real address gets a synthetic internal
-                      one (student.<adm>.<school>@internal.schoolos.com). Showing
-                      that to a parent invites them to email it, so it's hidden
-                      rather than displayed as a contact. */}
+                      one (…@internal.myschoolos.io). Showing that to a parent
+                      invites them to email it, so it's hidden rather than
+                      displayed as a contact. */}
                   <DetailField
                     label="Email"
                     value={
