@@ -70,6 +70,11 @@ export interface MeGuardianLink {
 }
 
 export interface MeStudentBlock {
+  // The caller's own StudentProfile id — added 2026-08-29. Everything
+  // student-facing keys off it (/students/<id>/fees/, /report-card/,
+  // attendance), and before it existed the frontend had to find it by
+  // scanning the class roster. See use-my-student-id.
+  id: string;
   current_class: CurrentClass | null;
   parent_links: MeGuardianLink[];
 }

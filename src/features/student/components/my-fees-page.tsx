@@ -5,7 +5,7 @@ import { OfflineNotice } from "@/components/shared/offline-notice";
 import { TermPicker } from "@/components/shared/term-picker";
 import { FeeProgress } from "@/features/academic-record/components/fee-progress";
 import { LedgerPanel } from "@/features/fees/components/ledger-panel";
-import { useStudentLedger } from "@/features/fees/hooks/use-student-ledger";
+import { useStudentLedger, useStudentPayments } from "@/features/fees/hooks/use-student-ledger";
 import { useMe } from "@/features/me/hooks/use-me";
 import { NoTermsNotice } from "@/features/results/components/no-terms-notice";
 import { TermBadge } from "@/features/results/components/term-badge";
@@ -29,6 +29,9 @@ export function MyFeesPage() {
   const { data: me } = useMe();
   const { studentId, isPending } = useMyStudentId();
   const ledger = useStudentLedger(studentId ?? null, term.periodId);
+  // See child-fees-page: payments and receipts opened to self/linked-parent
+  // callers on 2026-08-29.
+  const payments = useStudentPayments(studentId ?? null, !!studentId);
 
   const guard = studentScreenGuard(studentId, isPending || term.isPending);
   const myName = me ? `${me.user.first_name} ${me.user.last_name}` : "";
@@ -78,7 +81,8 @@ export function MyFeesPage() {
                     waiverIds={NO_WAIVERS}
                     canRecord={false}
                     canWaive={false}
-                    canViewFees={false}
+                    canViewFees
+                    payments={payments}
                   />
                 </div>
               )}

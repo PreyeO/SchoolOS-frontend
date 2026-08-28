@@ -4,7 +4,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { TermPicker } from "@/components/shared/term-picker";
 import { LedgerPanel } from "@/features/fees/components/ledger-panel";
-import { useStudentLedger } from "@/features/fees/hooks/use-student-ledger";
+import { useStudentLedger, useStudentPayments } from "@/features/fees/hooks/use-student-ledger";
 import { NoTermsNotice } from "@/features/results/components/no-terms-notice";
 import { TermBadge } from "@/features/results/components/term-badge";
 import { useTermSelection } from "@/lib/school/use-term-selection";
@@ -38,6 +38,10 @@ export function ChildFeesPage() {
   const childId = selected.child?.student_id;
   const { student } = useChildStudent(childId, term.periodId);
   const ledger = useStudentLedger(childId ?? null, term.periodId);
+  // Opened to linked parents on 2026-08-29 — PaymentViewSet used to require
+  // view_fees (admin-only), so a parent could see a fee was settled but never
+  // when it was paid or download a receipt for it.
+  const payments = useStudentPayments(childId ?? null, !!childId);
 
   const guard = childScreenGuard(selected);
   const termName = term.label ?? "";
@@ -94,7 +98,8 @@ export function ChildFeesPage() {
                     waiverIds={NO_WAIVERS}
                     canRecord={false}
                     canWaive={false}
-                    canViewFees={false}
+                    canViewFees
+                    payments={payments}
                   />
                 </div>
               )}
