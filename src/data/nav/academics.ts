@@ -1,4 +1,5 @@
 import {
+  Users2,
   BookOpenCheck,
   LayoutGrid,
   BookOpen,
@@ -27,6 +28,17 @@ export const academicsGroup: NavGroup = {
       href: "/my-classes",
       icon: School,
       description: "The classes and subjects you teach.",
+    }, false),
+    // Sits beside My Classes rather than under People: a teacher's roster is
+    // scoped to their own arms, and People is the admin's school-wide
+    // directory. Governs /my-students/<id> too via longest-prefix match, which
+    // is how a teacher reaches the student detail page at all — /students is
+    // admin-only and that item governs /students/<id>.
+    teacherItem({
+      label: "My Students",
+      href: "/my-students",
+      icon: Users2,
+      description: "Everyone in the classes you teach or lead, with their medical and personal details.",
     }, false),
     adminItem({
       label: "Classes & Arms",

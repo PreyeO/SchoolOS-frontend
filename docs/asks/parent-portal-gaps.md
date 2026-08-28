@@ -1,19 +1,30 @@
-# Backend asks — Parent & Student portal
+# Backend asks — Parent & Student portals
 
-The parent portal is built and live on the frontend: dashboard (term average,
-position, subject breakdown, fee progress, performance trend across terms),
-Results, Fees, and Child profile, all scoped by a child switcher. Everything
-below is a capability the **frontend is ready to consume the moment the endpoint
-allows it** — no frontend redesign needed, just wiring.
+Both portals are built and live on the frontend:
 
-Ordered by value-to-effort. (1) and (2) are small and unblock whole screens.
+- **Parent** — dashboard (term average, position, subject breakdown, fee progress,
+  performance trend across terms), Results, Fees, Child profile, all scoped by a
+  child switcher.
+- **Student** — dashboard, My results, My subjects (with the teacher for each),
+  My fees.
+
+Everything below is a capability the **frontend is ready to consume the moment
+the endpoint allows it** — no redesign needed, just wiring.
+
+Every status claim here was checked against the running dev server with a real
+parent-only and a real student-only token, not read off the source. Where
+something is quoted as returning 403 or an empty list, that's an observed
+response.
+
+Ordered by value-to-effort.
 
 ---
 
-## 1. Attendance for parents & students — currently returns an empty list, silently
+## 1. Attendance for parents and students — returns an empty list, silently
 
-**The single biggest hole in the parent portal.** A parent cannot see whether
-their child was in school today, which is the thing parents ask about most.
+**The biggest hole in both portals.** A parent can't see whether their child was
+in school today, and a student can't see their own record. It's the thing
+parents ask about most.
 
 `attendance/views.py`, `AttendanceRecordViewSet.get_queryset()` (~line 30-52):
 
@@ -29,12 +40,13 @@ else:
 
 Two problems:
 
-- **No parent/student branch.** A parent gets `200 OK` with an empty list, not a
-  `403` — so it fails *silently*. Nothing distinguishes "no records exist" from
+- **No parent/student branch.** Observed: `GET /api/attendance/` returns
+  `200 {"count":0,...,"results":[]}` for both a parent and a student token — not
+  a `403`. It fails *silently*; nothing distinguishes "no records exist" from
   "you're not allowed", on either side of the wire.
 - **No `student` filter.** `attendance/filters.py` exposes only `class_arm_id`,
-  `date`, `date_after`, `date_before`. Even with visibility granted there's no way
-  to scope to one child.
+  `date`, `date_after`, `date_before`. Even with visibility granted there's no
+  way to scope to one student.
 
 **Ask:** add a persona branch mirroring what fees and results already do —
 self-scoped for a student, `ParentStudentLink`-scoped for a parent — plus a
@@ -44,31 +56,65 @@ is `FeesService._assert_ledger_visible` (`fees/services.py:280-306`).
 Ideally `daily-summary` too (it derives from the same queryset), so we can draw
 an attendance-rate trend rather than just a list of days.
 
-**Until this lands** the nav item is badged "Soon" and points at a placeholder —
-we deliberately did not build a screen that would always be blank.
+**Until this lands** both nav items (`/child/attendance`, `/my/attendance`) are
+badged "Soon" and point at a placeholder. We deliberately did not build screens
+that would always be blank.
 
 ---
 
-## 2. A student cannot discover their own `StudentProfile.id` — so we over-fetch classmate PII to find it
+## 2. Payments and receipts — closed to both parents and students
 
-**Correction to an earlier draft of this doc:** this is no longer a blocker. The
-student portal is built and working. But the workaround it forced is worth
-closing, because it has a privacy cost.
+They can see **what is owed** but not **what has been paid** — no transaction
+record, and no receipt to keep.
+
+`fees/views.py`, `PaymentViewSet.get_required_permission()`:
+
+```python
+'list': 'view_fees',
+'retrieve': 'view_fees',
+'receipt': 'view_fees',
+```
+
+`view_fees` runs through `HasSchoolPermission`, which hard-requires
+`membership.is_admin` (`accounts/permissions.py`). Observed: `GET /api/payments/`
+returns `403 {"detail":"You do not have permission to perform this action."}` for
+both a parent and a student token — including the receipt for a payment made
+against their own account.
+
+**The odd half-position:** `GET /api/students/{id}/fees/` already admits a parent
+and a student (verified 200). So they can see a fee is fully paid, but not when
+it was paid, by whom, or with any proof of it.
+
+**Ask:** let a parent (and student) read payments and receipts **for a student
+they're linked to, or themselves**. The cleanest shape matching this codebase is
+what the ledger already does: set `required_permission = None` for
+`list`/`retrieve`/`receipt`, filter the queryset to permitted students for
+non-privileged callers, and reuse `_assert_ledger_visible` for the receipt's
+object check.
+
+**Frontend is ready:** `PaymentHistory` and the receipt-download button are built
+and working on the bursar screen. Both portals pass `canViewFees={false}` purely
+because of this gate — flipping it is a one-line change on each screen.
+
+---
+
+## 3. A student cannot discover their own `StudentProfile.id`
+
+**Not a blocker** — the student portal ships without this. But the workaround it
+forces has a privacy cost worth closing.
 
 **What we do now.** `/auth/me/` gives the student their `user.id` and their
 `current_class.class_arm_id`. `GET /api/class-arms/{arm}/` is readable by a
-student (verified live, 200) and returns the arm's full roster, each entry
-carrying both `id` (the StudentProfile id) and `user.id`. So we fetch the whole
-class and find the one row whose `user.id` matches the caller's.
+student (verified 200) and returns the arm's full roster, each entry carrying
+both `id` (the StudentProfile id) and `user.id`. So we fetch the whole class and
+find the one row whose `user.id` matches the caller's.
 
 **The cost:** to learn its own id, a student's app downloads **every classmate's
 name and email**. We display none of it — only the caller's own row is read —
 but the request happens and that data crosses the wire to a student's device.
 `AcademicService.get_class_arm_detail` neither caps nor paginates the roster, so
-in a class of sixty that's sixty students' PII fetched to answer a question
-about one.
-
-Adding the id to `/me` removes that request entirely.
+in a class of sixty that's sixty students' PII fetched to answer a question about
+one.
 
 `accounts/services.py`, `get_me()` (~line 616-634):
 
@@ -85,84 +131,65 @@ if membership.is_student and hasattr(membership, 'student_profile'):
 
 The id isn't in the JWT either (`accounts/tokens.py` carries `school_id`,
 `membership_id`, `personas` only), and `GET /api/students/{id}/` is gated on
-`CanViewStudents`, so a student can't look themselves up directly.
+`CanViewStudents` (verified 403 for a student on their own record).
 
-**Ask:** one line — `"id": str(student_profile.id)` in that dict. It's a value
-already in scope on the line above, it exposes nothing the student can't already
-reach, and it lets the frontend stop pulling the class roster on every load.
-
-(Confirmed the rest of the chain already works: with an id in hand,
-`GET /students/{self}/fees/` returns 200 and `report-card/` + `report-card/pdf/`
-return the correct pre-publish 403 for a student token — the `is_self` branches
-in `fees/services.py:280-306` and `results/services.py:829-884` do their job.)
-
----
-
-## 3. Parents cannot see payment history or download receipts
-
-A parent can see **what they owe** but not **what they've paid** — so there's no
-record of their own transactions and no receipt to keep.
-
-`fees/views.py`, `PaymentViewSet.get_required_permission()`:
-
-```python
-'list': 'view_fees',
-'retrieve': 'view_fees',
-'receipt': 'view_fees',
-```
-
-`view_fees` runs through `HasSchoolPermission`, which hard-requires
-`membership.is_admin` (`accounts/permissions.py`) — so a parent 403s on all three,
-including the receipt for a payment made against their own child.
-
-**Ask:** let a parent (and student) read payments and receipts **for a student
-they're linked to**. The cleanest shape matching this codebase is what the ledger
-already does: set `required_permission = None` for `list`/`retrieve`/`receipt`,
-filter the queryset to linked students for non-privileged callers, and reuse
-`_assert_ledger_visible` for the receipt's object check.
-
-Note `GET /api/students/{id}/fees/` already admits parents — so a parent can see
-a fee is fully paid but cannot see *when it was paid or by whom*, which is an odd
-half-position to leave them in.
-
-**Frontend is ready:** `PaymentHistory` and the receipt-download button are built
-and working on the bursar screen; they're passed `canViewFees={false}` on the
-parent screen purely because of this gate. Flipping it is a one-line change here.
+**Ask:** one line — `"id": str(student_profile.id)` in that dict. The value is
+already in scope, it exposes nothing the student can't already reach, and it lets
+the frontend stop pulling the class roster on every load.
 
 ---
 
 ## 4. Smaller / optional
 
 - **Enrollment history** (`students/{id}/enrollment-history/`) is on
-  `CanViewStudents`, so a parent can't see which classes their child has been
-  through. Nice-to-have for a profile page; same link-scoped treatment.
-- **Fuller child profile.** A parent only gets the `StudentListItem` nested in the
-  ledger/report-card responses (name, photo, admission no., current class, gender,
-  enrolment status). Reasonable, but worth a deliberate decision on whether a
-  parent should see e.g. medical/emergency fields for their own child, which today
-  only `GET /api/students/{id}/` carries.
+  `CanViewStudents` — verified 403 for a parent and a student. Neither can see
+  which classes they've been through. Nice-to-have; same link-scoped treatment.
+- **Fuller profile.** A parent/student only gets the `StudentListItem` nested in
+  the ledger and report-card responses (name, photo, admission no., current
+  class, gender, enrolment status). Reasonable — but worth a deliberate decision
+  on whether a parent should see e.g. medical/emergency fields for their own
+  child, which today only `GET /api/students/{id}/` carries.
 - **Online fee payment** — genuinely unbuilt, not just gated:
-  `PaymentSource.PAYSTACK`/`FLUTTERWAVE` are unused enum values, `gateway_reference`
-  is written by nothing, `PaymentViewSet.create` requires `record_fees`
-  unconditionally, and there's no webhook route anywhere. Real gateway work
-  (initiate → verify → idempotent webhook), worth scoping on its own rather than
-  bundling with the above.
+  `PaymentSource.PAYSTACK`/`FLUTTERWAVE` are unused enum values,
+  `gateway_reference` is written by nothing, `PaymentViewSet.create` requires
+  `record_fees` unconditionally, and there's no webhook route anywhere. Real
+  gateway work (initiate → verify → idempotent webhook); scope it on its own
+  rather than bundling with the above.
 
 ---
 
 ## Already working — no change needed
 
-For completeness, these already admit a linked parent correctly and are live:
+Verified live with parent-only and student-only tokens:
 
-- `GET /api/students/{id}/report-card/` — full result. Correctly withheld until
-  the arm's broadsheet is locked, with the live `ParentStudentLink` check.
-- `GET /api/students/{id}/report-card/pdf/` — renders in the school's own
-  configured template (`ReportCardSettings` per level). Parents download the exact
-  document the admin designed.
-- `GET /api/students/{id}/fees/` — live ledger, itemised.
-- `GET /api/announcements/` — correctly scoped by `audience_personas` overlap.
+| Endpoint | Parent | Student |
+|---|---|---|
+| `students/{id}/fees/` | 200 | 200 (self) |
+| `students/{id}/report-card/` | correct pre-publish 403 | correct pre-publish 403 |
+| `students/{id}/report-card/pdf/` | correct pre-publish 403 | correct pre-publish 403 |
+| `announcements/` | 200, audience-scoped | 200, audience-scoped |
+| `academic-sessions/` | 200 | 200 |
+| `class-arms/{arm}/` + `/subject-assignments/` | — | 200 |
 
-The live-link re-check on every request (rather than a cached grant) is the right
-call and we're relying on it — unlinking a parent revokes access on their next
-request, and the frontend resolves the selected child against `/me` each load so a
-stale selection can't linger.
+Two things worth calling out as *right*, so they don't get "fixed":
+
+- **The pre-publish 403 message is doing real work.** Both report-card endpoints
+  return `{"detail":"This report card is not yet available."}` rather than a
+  generic permission error, which is what lets the UI say "not published yet —
+  nothing is missing on your side" instead of alarming a parent. Please keep that
+  distinct from the `HasSchoolPermission` wording.
+- **The live `ParentStudentLink` re-check on every request** (rather than a
+  cached grant) is the right call and we rely on it: unlinking a parent revokes
+  access on their very next request, and the frontend re-resolves the selected
+  child against `/me` on each load so a stale selection can't linger.
+
+---
+
+## One thing we could not test
+
+There are **no published results in the dev database** — every `ClassArmResult`
+has `locked_at = NULL`. So we've confirmed the report card and its PDF are
+correctly *withheld* pre-publish, but never seen either succeed. If you publish
+one arm, both portals light up end-to-end (report card, PDF download in the
+school's configured template, and the multi-term performance trend) and we can
+close that last gap.

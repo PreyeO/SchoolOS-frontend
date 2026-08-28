@@ -18,9 +18,15 @@ export const ENDPOINTS = {
   PASSWORD_RESET_CONFIRM: "/api/auth/password-reset/confirm/",
   ACADEMIC_SESSIONS_WITH_PERIODS: "/api/academic-sessions/with-periods/",
   CLASSES_BULK: "/api/classes/bulk/",
-  // No trailing slash — per the confirmed backend contract.
-  CLASSES_TEMPLATES: "/api/classes/templates",
-  SUBJECTS_TEMPLATES: "/api/subjects/templates",
+  // Both DO take a trailing slash. These were declared without one under a
+  // comment claiming that was the confirmed contract; the live URL resolver
+  // says otherwise, and each call was silently costing a 301 round trip
+  // (APPEND_SLASH=True quietly redirected and axios followed, so it "worked").
+  // It would have broken outright the moment APPEND_SLASH was turned off —
+  // a common production hardening — taking onboarding's class and subject
+  // template steps with it. Verified against the router, not assumed.
+  CLASSES_TEMPLATES: "/api/classes/templates/",
+  SUBJECTS_TEMPLATES: "/api/subjects/templates/",
   SUBJECTS_BULK: "/api/subjects/bulk/",
   INVITE_ADMIN: "/api/invites/invite-admin/",
   INVITE_TEACHER: "/api/invites/invite-teacher/",
