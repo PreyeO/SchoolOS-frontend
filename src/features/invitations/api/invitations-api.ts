@@ -80,11 +80,30 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
 // avoids that branch; axios then deletes it again downstream and lets the
 // browser set the real header with its boundary, exactly like an uncontrolled
 // FormData post would. Both bulk-import routes need this, so it's shared.
+// Per-call override of the client's 15s default, which a real import blows
+// straight through: commit hashes one password per new student, and PBKDF2
+// costs ~810ms each on the dev container (measured) — so 300 rows is ~4 minutes
+// of hashing alone. Without this, axios aborts at 15s while the server carries
+// on writing, which is the worst outcome available: the students get created
+// and the admin sees a network error with no credentials for any of them.
+//
+// Deliberately scoped to these two calls rather than raised globally. 15s is
+// right everywhere else, and a long global timeout turns an unreachable server
+// into a multi-minute hang on every screen.
+//
+// Set ABOVE the server's own worker timeout (200s was the figure agreed with
+// the backend), not equal to it. Matching them exactly is a race: whichever
+// fires first wins, and the client winning means we discard a response the
+// server was about to send. Letting the server always answer first means a
+// real failure arrives as a real error instead of an ambiguous abort.
+const BULK_IMPORT_TIMEOUT_MS = 210_000;
+
 function postCsv(url: string, file: File): Promise<{ data: BulkImportResult }> {
   const formData = new FormData();
   formData.append("file", file);
   return apiClient.post<BulkImportResult>(url, formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: BULK_IMPORT_TIMEOUT_MS,
   });
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -43,13 +43,40 @@ export function BulkImportPreviewStep({ result, isPending, onConfirm, onCancel }
         </p>
       ) : null}
 
+      {/* Commit hashes a password per new student, so a few hundred rows takes
+          30-90+ seconds. A spinning button alone reads as a hang at that
+          length, and an admin who reloads or navigates away mid-write has no
+          way to recover the generated passwords — so the wait is named, and
+          leaving is explicitly warned against. */}
+      {isPending && (
+        <p
+          role="status"
+          className="flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-3 text-sm text-ink"
+        >
+          <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
+          <span>
+            Creating {applied.length} student{applied.length === 1 ? "" : "s"}. This can take a
+            minute or two for a large file — <strong>keep this page open</strong> so you can
+            save the passwords when it finishes.
+          </span>
+        </p>
+      )}
+
       <div className="flex gap-3">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isPending}
+          className="flex-1"
+        >
           Choose a different file
         </Button>
         {applied.length > 0 && (
           <Button type="button" onClick={onConfirm} disabled={isPending} className="flex-1 font-semibold">
-            {isPending ? "Importing…" : `Create ${applied.length} student${applied.length === 1 ? "" : "s"}`}
+            {isPending
+              ? "Importing…"
+              : `Create ${applied.length} student${applied.length === 1 ? "" : "s"}`}
           </Button>
         )}
       </div>

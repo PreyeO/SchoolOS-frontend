@@ -75,6 +75,17 @@ export function BulkImportUploadStep({ onFileSelected, isPending }: Props) {
       >
         {isPending ? "Checking file…" : "Preview import"}
       </Button>
+
+      {/* Preview writes nothing, but it still parses and validates every row
+          against the school's classes and existing admission numbers, so a
+          large file is not instant either. Said once here rather than left as
+          a button that looks stuck. */}
+      {isPending && (
+        <p role="status" className="text-center text-xs text-n-500">
+          Checking every row against your classes and existing students. A large
+          file can take a moment.
+        </p>
+      )}
     </div>
   );
 }
