@@ -19,6 +19,18 @@ export function isValidationError(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 400;
 }
 
+// The request was aborted by OUR OWN timeout, not refused by the server.
+//
+// Distinct from isNetworkError, which this would otherwise be folded into:
+// both leave `error.response` undefined, so "couldn't reach the server" is the
+// message a timeout gets by default. That's fine for a read, and actively
+// wrong for a long-running write — a bulk import that times out client-side
+// may well have completed server-side, and telling the admin their connection
+// failed invites them to retry a job that already ran.
+export function isTimeoutError(error: unknown): boolean {
+  return isAxiosError(error) && !error.response && error.code === "ECONNABORTED";
+}
+
 // The server was never reached — offline, DNS failure, or the 15s timeout — as
 // opposed to the server answering with a rejection. The distinction matters
 // wherever a failure would otherwise be read as "the backend said no": most
