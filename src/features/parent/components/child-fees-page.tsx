@@ -13,7 +13,7 @@ import { useChildStudent } from "../hooks/use-child-student";
 import { useSelectedChild } from "../hooks/use-selected-child";
 import { ChildContextBar } from "./child-context-bar";
 import { childScreenGuard } from "./child-screen-guard";
-import { FeeProgress } from "./fee-progress";
+import { FeeProgress } from "@/features/academic-record/components/fee-progress";
 
 // Module-level so the reference is stable across renders. Waivers are an admin
 // action, so a parent never has ids to supply.

@@ -49,10 +49,26 @@ we deliberately did not build a screen that would always be blank.
 
 ---
 
-## 2. A student cannot discover their own `StudentProfile.id`
+## 2. A student cannot discover their own `StudentProfile.id` — so we over-fetch classmate PII to find it
 
-**This blocks the entire student portal.** A logged-in student currently has no
-way to call any `/api/students/{id}/...` endpoint about themselves.
+**Correction to an earlier draft of this doc:** this is no longer a blocker. The
+student portal is built and working. But the workaround it forced is worth
+closing, because it has a privacy cost.
+
+**What we do now.** `/auth/me/` gives the student their `user.id` and their
+`current_class.class_arm_id`. `GET /api/class-arms/{arm}/` is readable by a
+student (verified live, 200) and returns the arm's full roster, each entry
+carrying both `id` (the StudentProfile id) and `user.id`. So we fetch the whole
+class and find the one row whose `user.id` matches the caller's.
+
+**The cost:** to learn its own id, a student's app downloads **every classmate's
+name and email**. We display none of it — only the caller's own row is read —
+but the request happens and that data crosses the wire to a student's device.
+`AcademicService.get_class_arm_detail` neither caps nor paginates the roster, so
+in a class of sixty that's sixty students' PII fetched to answer a question
+about one.
+
+Adding the id to `/me` removes that request entirely.
 
 `accounts/services.py`, `get_me()` (~line 616-634):
 
@@ -69,16 +85,16 @@ if membership.is_student and hasattr(membership, 'student_profile'):
 
 The id isn't in the JWT either (`accounts/tokens.py` carries `school_id`,
 `membership_id`, `personas` only), and `GET /api/students/{id}/` is gated on
-`CanViewStudents`, so a student can't look themselves up.
+`CanViewStudents`, so a student can't look themselves up directly.
 
-**The irony:** `results/services.py:829-884` and `fees/services.py:280-306`
-*already* have working `is_self` branches. The permission logic is done — students
-just have no id to call it with.
+**Ask:** one line — `"id": str(student_profile.id)` in that dict. It's a value
+already in scope on the line above, it exposes nothing the student can't already
+reach, and it lets the frontend stop pulling the class roster on every load.
 
-**Ask:** one line — `"id": str(student_profile.id)` in that dict.
-
-That alone lets us give students their own Results and Fees screens, reusing
-everything already built for parents.
+(Confirmed the rest of the chain already works: with an id in hand,
+`GET /students/{self}/fees/` returns 200 and `report-card/` + `report-card/pdf/`
+return the correct pre-publish 403 for a student token — the `is_self` branches
+in `fees/services.py:280-306` and `results/services.py:829-884` do their job.)
 
 ---
 

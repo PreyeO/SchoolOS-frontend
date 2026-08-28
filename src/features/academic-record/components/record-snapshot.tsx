@@ -18,7 +18,7 @@ interface Props {
 // locks — so each tile states which of those it is instead of showing a zero.
 // A zero here would be read as a fact ("no fees owed", "scored 0"), and both
 // would be wrong.
-export function ChildSnapshot({ ledger, reportCard, awaitingResults }: Props) {
+export function RecordSnapshot({ ledger, reportCard, awaitingResults }: Props) {
   const summary = reportCard?.summary;
   const subjectCount = reportCard?.subjects.length ?? 0;
   const owing = ledger?.is_billed ? ledger.total_balance : null;

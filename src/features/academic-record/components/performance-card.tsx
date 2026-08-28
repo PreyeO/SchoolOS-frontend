@@ -4,8 +4,8 @@ import { TrendingUp } from "lucide-react";
 
 import { ordinal } from "@/lib/text/ordinal";
 
-import type { TermPoint } from "../hooks/use-child-performance";
-import { PerformanceTrendChart } from "./charts/performance-trend-chart";
+import type { TermPoint } from "../hooks/use-performance-trend";
+import { PerformanceTrendChart } from "./performance-trend-chart";
 
 interface Props {
   points: TermPoint[];

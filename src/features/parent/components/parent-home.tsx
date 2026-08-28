@@ -9,15 +9,15 @@ import { isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 import { useSchoolStore } from "@/stores/school-store";
 
-import { useChildPerformance } from "../hooks/use-child-performance";
+import { usePerformanceTrend } from "@/features/academic-record/hooks/use-performance-trend";
 import { useChildStudent } from "../hooks/use-child-student";
 import { useSelectedChild } from "../hooks/use-selected-child";
 import { ChildContextBar } from "./child-context-bar";
-import { ChildSnapshot } from "./child-snapshot";
+import { RecordSnapshot } from "@/features/academic-record/components/record-snapshot";
 import { childScreenGuard } from "./child-screen-guard";
-import { FeeProgress } from "./fee-progress";
-import { PerformanceCard } from "./performance-card";
-import { SubjectPerformanceCard } from "./subject-performance-card";
+import { FeeProgress } from "@/features/academic-record/components/fee-progress";
+import { PerformanceCard } from "@/features/academic-record/components/performance-card";
+import { SubjectPerformanceCard } from "@/features/academic-record/components/subject-performance-card";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -44,7 +44,7 @@ export function ParentHome() {
   const { student } = useChildStudent(childId, term.periodId);
   const ledger = useStudentLedger(childId ?? null, term.periodId);
   const reportCard = useReportCard(childId, term.periodId);
-  const performance = useChildPerformance(childId, term.periodId);
+  const performance = usePerformanceTrend(childId, term.periodId);
 
   const guard = childScreenGuard(selected);
 
@@ -72,7 +72,7 @@ export function ParentHome() {
             }
           />
 
-          <ChildSnapshot
+          <RecordSnapshot
             ledger={ledger.data}
             reportCard={reportCard.data}
             awaitingResults={isPermissionDeniedError(reportCard.error)}
@@ -90,6 +90,7 @@ export function ParentHome() {
             awaitingResults={isPermissionDeniedError(reportCard.error)}
             isPending={reportCard.isPending}
             termLabel={term.label ?? "This term"}
+            href="/child/results"
           />
 
           {ledger.data && <FeeProgress ledger={ledger.data} />}

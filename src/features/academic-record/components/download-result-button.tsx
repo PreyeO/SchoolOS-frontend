@@ -9,6 +9,9 @@ interface Props {
   studentId: string;
   periodId: string | null;
   admissionNumber: string;
+  // "Download result" for a parent looking at their child, "Download my
+  // result" for a student looking at themselves.
+  label?: string;
 }
 
 // The printable report card, in the school's own template.
@@ -22,7 +25,12 @@ interface Props {
 // bare studentId, and the endpoint applies the same visibility rule as the
 // JSON report card (linked parent, published term only). By the time this
 // renders, the JSON call has already succeeded, so the PDF will too.
-export function DownloadResultButton({ studentId, periodId, admissionNumber }: Props) {
+export function DownloadResultButton({
+  studentId,
+  periodId,
+  admissionNumber,
+  label = "Download result",
+}: Props) {
   const download = useDownloadReportCard();
 
   return (
@@ -37,7 +45,7 @@ export function DownloadResultButton({ studentId, periodId, admissionNumber }: P
       className="h-8 text-xs"
     >
       <FileDown className="size-3.5 mr-1" />
-      {download.isPending ? "Preparing…" : "Download result"}
+      {download.isPending ? "Preparing…" : label}
     </Button>
   );
 }
