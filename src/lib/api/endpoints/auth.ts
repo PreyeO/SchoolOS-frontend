@@ -47,6 +47,13 @@ export const SCHOOL_ENDPOINTS = {
   // this same resource. Do NOT use the school-list endpoint for levels — its
   // summary omits them and only has school_type.
   DETAIL: (id: string) => `/api/schools/${id}/`,
+  // Self-service capacity change, gated on manage_school_settings. Refuses to
+  // go below the school's current ACTIVE student headcount, and returns a
+  // capacity_adjustment record (prorated charge) when the change is an increase
+  // on an already-subscribed school. Not the same as PATCH DETAIL — capacity is
+  // excluded from SchoolBrandingUpdateSerializer precisely so it can't be
+  // changed without going through this billing path.
+  UPDATE_CAPACITY: (id: string) => `/api/schools/${id}/update-capacity/`,
   // Public (AllowAny) name search, ?q= must be >= 2 chars or it 400s. Exists
   // specifically to warn a would-be owner about duplicate schools at
   // create-school time — school NAMES have no uniqueness constraint (only slug

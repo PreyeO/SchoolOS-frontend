@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { ComingSoon } from "@/features/dashboard/components/coming-soon";
+import { SubscriptionPage } from "@/features/settings/components/subscription-page";
 
 export const metadata: Metadata = { title: "Subscription & Billing — SchoolOS" };
 
 export default function Page() {
-  return <ComingSoon href="/settings/subscription" />;
+  return <SubscriptionPage />;
 }

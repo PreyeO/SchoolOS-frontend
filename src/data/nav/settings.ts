@@ -76,8 +76,12 @@ export const settingsGroup: NavGroup = {
       label: "Subscription & Billing",
       href: "/settings/subscription",
       icon: BadgeDollarSign,
-      description: "Manage your SchoolOS plan, billing details, and invoices.",
-    }),
+      // Names only what exists. There's no gateway, no plan-change flow and no
+      // invoice list on the backend — capacity is the one thing a school can
+      // actually change here, so promising "plans and invoices" would send
+      // admins looking for screens that aren't there.
+      description: "Your school's access status and student capacity.",
+    }, false),
     adminItem({
       label: "Data & Privacy (NDPA)",
       href: "/settings/privacy",
