@@ -1,5 +1,6 @@
 import { overviewGroup } from "./nav/overview";
 import { myChildGroup } from "./nav/my-child";
+import { mySchoolGroup } from "./nav/my-school";
 import { academicsGroup } from "./nav/academics";
 import { peopleGroup } from "./nav/people";
 import { financeGroup } from "./nav/finance";
@@ -18,6 +19,7 @@ export const NAV_GROUPS = [
   // have, so burying them below the admin-only groups would leave their sidebar
   // looking empty at the top.
   myChildGroup,
+  mySchoolGroup,
   academicsGroup,
   peopleGroup,
   financeGroup,

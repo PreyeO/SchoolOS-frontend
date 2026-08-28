@@ -24,7 +24,7 @@ export interface TermPoint {
 // a term nobody has released is not a term the child scored nothing in. That
 // also means the line can be shorter than the session, which the caller states
 // rather than hides.
-export function useChildPerformance(studentId: string | undefined, periodId: string | null) {
+export function usePerformanceTrend(studentId: string | undefined, periodId: string | null) {
   const { data: sessions } = useAcademicSessions();
 
   // The session the selected term belongs to, so the trend follows the term

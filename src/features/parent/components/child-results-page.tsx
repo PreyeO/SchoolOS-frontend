@@ -16,7 +16,7 @@ import { useChildStudent } from "../hooks/use-child-student";
 import { useSelectedChild } from "../hooks/use-selected-child";
 import { ChildContextBar } from "./child-context-bar";
 import { childScreenGuard } from "./child-screen-guard";
-import { DownloadResultButton } from "./download-result-button";
+import { DownloadResultButton } from "@/features/academic-record/components/download-result-button";
 
 // A parent reads the report card straight from the endpoint, with no
 // client-side permission check first.

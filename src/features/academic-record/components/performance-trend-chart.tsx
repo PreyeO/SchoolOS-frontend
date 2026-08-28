@@ -5,7 +5,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { useSchoolColors } from "@/lib/school/use-school-colors";
 import { ordinal } from "@/lib/text/ordinal";
 
-import type { TermPoint } from "../../hooks/use-child-performance";
+import type { TermPoint } from "../hooks/use-performance-trend";
 
 interface TooltipPayload {
   active?: boolean;

@@ -12,6 +12,9 @@ interface Props {
   awaitingResults: boolean;
   isPending: boolean;
   termLabel: string;
+  // Where "Full result" goes — the parent and student portals have their own
+  // results screens.
+  href: string;
 }
 
 // The dashboard's subject block. Silent when there's nothing published — the
@@ -22,6 +25,7 @@ export function SubjectPerformanceCard({
   awaitingResults,
   isPending,
   termLabel,
+  href,
 }: Props) {
   if (isPending || awaitingResults || !reportCard || reportCard.subjects.length === 0) {
     return null;
@@ -35,7 +39,7 @@ export function SubjectPerformanceCard({
           Subjects
         </h2>
         <Link
-          href="/child/results"
+          href={href}
           className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
           Full result
