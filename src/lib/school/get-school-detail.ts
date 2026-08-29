@@ -12,6 +12,12 @@ export interface SchoolDetailResponse {
   id: string;
   name: string;
   slug: string;
+  // Computed server-side as {slug}.myschoolos.io — the school's real address.
+  // Present on every response; it was simply never typed until the platform
+  // panel needed to show it. (The payload also carries state, country,
+  // is_active, is_verified, created_at and updated_at, still untyped because
+  // nothing reads them yet.)
+  subdomain: string;
   school_type: SchoolType;
   levels: SchoolLevelValue[];
   logo: string | null;

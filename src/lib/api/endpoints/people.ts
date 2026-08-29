@@ -108,6 +108,15 @@ export const STUDENT_ENDPOINTS = {
   BULK_IMPORT: () => `/api/students/bulk-import/`,
 } as const;
 
+// SchoolOS's own staff, not a school's. Platform-admin only
+// (view_platform_users). Read-only by necessity as well as design: POST
+// returns 405 — creating platform admins is a manage.py createsuperuser job,
+// not an API one.
+export const PLATFORM_ADMIN_ENDPOINTS = {
+  LIST: () => `/api/platform-admins/`,
+  DETAIL: (id: string) => `/api/platform-admins/${id}/`,
+} as const;
+
 export const PARENT_ENDPOINTS = {
   LIST: () => `/api/parents/`,
   DETAIL: (id: string) => `/api/parents/${id}/`,

@@ -18,6 +18,7 @@ import type { SchoolSummary } from "../types";
 export function LoginView() {
   const router = useRouter();
   const tokens = useAuthStore((s) => s.tokens);
+  const isPlatformAdmin = useAuthStore((s) => s.claims?.is_platform_admin) ?? false;
 
   const [creds, setCreds] = useState<LoginFormValues | null>(null);
   const [schools, setSchools] = useState<SchoolSummary[] | null>(null);
@@ -26,9 +27,16 @@ export function LoginView() {
   const { mutate, isPending } = useLogin({ onSelectionNeeded: setSchools });
 
   // Guard: an already-authenticated user shouldn't see the login page.
+  //
+  // Platform admins go to /platform, not /dashboard. /dashboard is the school
+  // shell — it hangs off /auth/me/, which 403s for a platform admin, and its
+  // sidebar falls back to the full school-admin nav when personas is empty. So
+  // sending them there produced a broken shell full of links they can't open.
+  // Mirrors resolvePostAuthPath, which already branches this way after a fresh
+  // login; only this already-signed-in path was missing it.
   useEffect(() => {
-    if (tokens) router.replace("/dashboard");
-  }, [tokens, router]);
+    if (tokens) router.replace(isPlatformAdmin ? "/platform" : "/dashboard");
+  }, [tokens, isPlatformAdmin, router]);
 
   // A forced logout (expired refresh token) redirects here and sets this flag.
   useEffect(() => {

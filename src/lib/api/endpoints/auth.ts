@@ -54,6 +54,17 @@ export const SCHOOL_ENDPOINTS = {
   // excluded from SchoolBrandingUpdateSerializer precisely so it can't be
   // changed without going through this billing path.
   UPDATE_CAPACITY: (id: string) => `/api/schools/${id}/update-capacity/`,
+  // Platform-admin only (view_platform_analytics): per-school revenue
+  // projection plus school_count / subscribed_school_count /
+  // estimated_termly_revenue_total. A sizing tool, not billing — there's no
+  // gateway, so nothing here has been invoiced or collected.
+  FINANCIALS: () => `/api/schools/financials/`,
+  // Platform-admin only (manage_platform_schools). The ONLY mechanism that
+  // grants or extends a school's access today. Body takes trial_ends_at
+  // and/or subscription_ends_at (at least one) plus optional
+  // price_per_student — which 400s unless a subscription window exists or is
+  // set in the same call.
+  EXTEND_ACCESS: (id: string) => `/api/schools/${id}/extend-access/`,
   // Public (AllowAny) name search, ?q= must be >= 2 chars or it 400s. Exists
   // specifically to warn a would-be owner about duplicate schools at
   // create-school time — school NAMES have no uniqueness constraint (only slug
