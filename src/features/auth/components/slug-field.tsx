@@ -10,7 +10,7 @@ interface SlugFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export const SlugField = forwardRef<HTMLInputElement, SlugFieldProps>(
   function SlugField({ hasError, className, ...props }, ref) {
-    const domain = process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "schoolos.com";
+    const domain = process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "myschoolos.io";
 
     return (
       <div
