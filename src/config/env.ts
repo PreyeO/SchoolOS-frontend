@@ -14,6 +14,12 @@ export const env = {
     return process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "myschoolos.io";
   },
   appName: process.env.NEXT_PUBLIC_APP_NAME ?? "SchoolOS",
-  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  // Matches app/layout.tsx's metadataBase fallback deliberately — the two
+  // describe the same thing (where this app is served from) and disagreed:
+  // this defaulted to localhost:3000 while the layout defaulted to the real
+  // domain. With NEXT_PUBLIC_APP_URL unset in production that produced an
+  // og:image pointing at http://localhost:3000, which resolves to nothing for
+  // anyone sharing a link. The local dev value comes from .env.local.
+  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "https://myschoolos.io",
   enableAnalytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true",
 } as const;
