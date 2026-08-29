@@ -8,6 +8,7 @@ import { clearPersistedQueryCaches } from "@/lib/api/query-persistence";
 import { clearAllRegisterDrafts } from "@/features/attendance/lib/draft-storage";
 import { clearAllScoreDrafts } from "@/features/results/lib/score-draft-storage";
 import { AUTH_STORAGE_KEY, ssrSafeLocalStorage } from "@/lib/storage/ssr-safe-local-storage";
+import { useSchoolStore } from "./school-store";
 
 export interface AuthTokens {
   access: string;
@@ -54,6 +55,17 @@ export const useAuthStore = create<AuthState>()(
         clearPersistedQueryCaches();
         clearAllRegisterDrafts();
         clearAllScoreDrafts();
+        // The school context is persisted separately and outlived its own
+        // session: getSchoolId() falls back to currentSchool.id when the token
+        // carries no school_id, so a leftover school makes the NEXT user look
+        // school-scoped. That became a real problem once platform admins
+        // existed — their token has no school_id by design, so a stale
+        // currentSchool un-gates school-scoped queries they can only 403 on.
+        // Until now only UserMenu's logout cleared it, which meant the forced
+        // logout path (token-refresh) never did.
+        //
+        // getState() rather than the hook — this runs outside React.
+        useSchoolStore.getState().clearSchool();
         set({ pendingVerificationEmail: null, tokens: null, claims: null });
       },
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),

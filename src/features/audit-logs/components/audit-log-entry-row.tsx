@@ -14,7 +14,21 @@ import { AuditLogChanges } from "./audit-log-changes";
 // the category icon and makes the column harder to scan, not easier. The icon
 // rail answers "what kind of change" at a glance; the actor's name carries the
 // "who" in normal reading weight.
-export function AuditLogEntryRow({ entry }: { entry: AuditLogEntry }) {
+// showSchool is off by default because the school-side log is already scoped
+// to one school — naming it on every row would be noise. On the platform's
+// cross-school log it's the opposite: without it there's no way to tell whose
+// change you're reading.
+//
+// Rendered as its own badge rather than by changing cleanTargetRepr, which
+// strips " @ SchoolName" out of target strings. That stripping is right for
+// the school-side log and the two views share the formatter.
+export function AuditLogEntryRow({
+  entry,
+  showSchool = false,
+}: {
+  entry: AuditLogEntry;
+  showSchool?: boolean;
+}) {
   const { actor, rest } = formatAuditParts(entry);
   const category = categoryByKey(actionMeta(entry.action).category);
   const Icon = category?.icon ?? Activity;
@@ -42,6 +56,10 @@ export function AuditLogEntryRow({ entry }: { entry: AuditLogEntry }) {
             {formatTimeOfDay(entry.created_at)}
           </time>
         </div>
+
+        {showSchool && entry.school_name && (
+          <p className="mt-1 truncate text-[11px] text-n-400">{entry.school_name}</p>
+        )}
 
         {entry.changes && entry.changes.length > 0 && <AuditLogChanges changes={entry.changes} />}
       </div>

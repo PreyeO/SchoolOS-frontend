@@ -3,7 +3,14 @@ import { groupByDay } from "@/lib/text/group-by-day";
 import type { AuditLogEntry } from "../types";
 import { AuditLogEntryRow } from "./audit-log-entry-row";
 
-export function AuditLogTimeline({ entries }: { entries: AuditLogEntry[] }) {
+export function AuditLogTimeline({
+  entries,
+  showSchool = false,
+}: {
+  entries: AuditLogEntry[];
+  // Passed through to each row — see AuditLogEntryRow.
+  showSchool?: boolean;
+}) {
   const groups = groupByDay(entries);
 
   return (
@@ -13,7 +20,7 @@ export function AuditLogTimeline({ entries }: { entries: AuditLogEntry[] }) {
           <h2 className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.15em] text-n-400">{group.label}</h2>
           <ul className="divide-y divide-n-100 overflow-hidden rounded-xl border border-n-200 bg-white">
             {group.items.map((entry) => (
-              <AuditLogEntryRow key={entry.id} entry={entry} />
+              <AuditLogEntryRow key={entry.id} entry={entry} showSchool={showSchool} />
             ))}
           </ul>
         </section>
