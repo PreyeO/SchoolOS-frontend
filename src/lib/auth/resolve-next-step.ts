@@ -9,7 +9,7 @@ import { buildSchoolUrl } from "@/lib/tenant/school-url";
 // served from *.vercel.app, so login sent people to a host we don't own and the
 // session appeared to vanish. Reading the real hostname keeps that redirect
 // switched off everywhere except the domain that can serve it, and switches it
-// back on by itself once schoolos.com points here — no env var to remember.
+// back on by itself once myschoolos.io points here — no env var to remember.
 function servesSchoolSubdomains(): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;

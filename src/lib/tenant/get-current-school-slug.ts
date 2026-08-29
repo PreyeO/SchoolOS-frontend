@@ -1,7 +1,7 @@
 import { env } from "@/config/env";
 
 // Derives the school slug from the current hostname when on a school subdomain
-// (e.g. gcu.schoolos.com → "gcu", or gcu.lvh.me for local testing). Returns null
+// (e.g. gcu.myschoolos.io → "gcu", or gcu.lvh.me for local testing). Returns null
 // on the apex domain, localhost, or the www subdomain.
 export function getCurrentSchoolSlug(): string | null {
   if (typeof window === "undefined") return null;

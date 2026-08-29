@@ -40,7 +40,7 @@ export function Footer() {
               School management built for Nigerian schools — three terms, NERDC subjects, and offline-first.
             </p>
             <p className="mt-4 text-xs">
-              Lagos, Nigeria &middot; support@schoolos.com
+              Lagos, Nigeria &middot; support@myschoolos.io
             </p>
           </div>
 

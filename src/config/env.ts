@@ -7,8 +7,11 @@ export const env = {
   get API_BASE_URL(): string {
     return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
   },
+  // The apex the tenant subdomains hang off. Must match what the backend
+  // computes for School.subdomain ({slug}.myschoolos.io — confirmed live), or
+  // the post-login redirect sends people to a host that doesn't exist.
   get SCHOOL_DOMAIN(): string {
-    return process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "schoolos.com";
+    return process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "myschoolos.io";
   },
   appName: process.env.NEXT_PUBLIC_APP_NAME ?? "SchoolOS",
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",

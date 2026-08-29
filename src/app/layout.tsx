@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://schoolos.com",
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://myschoolos.io",
   ),
   title: { default: "SchoolOS", template: "%s | SchoolOS" },
   description:
