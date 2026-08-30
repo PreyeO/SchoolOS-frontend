@@ -1,13 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { PanelLeftClose, PanelLeftOpen, Settings, Sparkles, TriangleAlert } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Sparkles, TriangleAlert } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useSchoolStore } from "@/stores/school-store";
 import { useAccessStatus } from "../hooks/use-access-status";
-import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useNavGroups } from "../hooks/use-nav-groups";
 import { useSidebarAccordion } from "../hooks/use-sidebar-accordion";
 import { SidebarNavGroup } from "./sidebar-nav-group";
@@ -24,9 +22,6 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
   const navGroups = useNavGroups();
   const { openGroup, toggleGroup } = useSidebarAccordion(navGroups, pathname);
   const access = useAccessStatus();
-  // Every settings page is admin-only, so this footer link dead-ended for
-  // every teacher who clicked it.
-  const canOpenSettings = useCanAccess("/settings/school");
 
   return (
     <aside
@@ -82,19 +77,9 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
             <span className="flex-1">Access expired</span>
           </div>
         )}
-        {canOpenSettings && (
-        <Link
-          href="/settings/school"
-          title={collapsed ? "Settings" : undefined}
-          className={cn(
-            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors",
-            collapsed && "justify-center px-0",
-          )}
-        >
-          <Settings className="size-4 shrink-0" />
-          {!collapsed && "Settings"}
-        </Link>
-        )}
+        {/* No Settings link here: the sidebar's own Settings group already
+            lists every settings page, so this was a second door to the same
+            rooms — and one that pointed only at School Profile. */}
         <button
           type="button"
           onClick={onToggleCollapse}

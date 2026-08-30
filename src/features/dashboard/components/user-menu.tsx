@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -17,7 +16,6 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useSchoolStore } from "@/stores/school-store";
 
 export function UserMenu() {
-  const canOpenSettings = useCanAccess("/settings/school");
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const clearSchool = useSchoolStore((s) => s.clearSchool);
@@ -49,14 +47,8 @@ export function UserMenu() {
             <UserRound /> Profile
           </Link>
         </DropdownMenuItem>
-        {/* Every settings page is admin-only. Profile above stays for all. */}
-        {canOpenSettings && (
-          <DropdownMenuItem asChild>
-            <Link href="/settings/school">
-              <Settings /> Settings
-            </Link>
-          </DropdownMenuItem>
-        )}
+        {/* No Settings entry: the sidebar's Settings group is the way there,
+            and this pointed only at School Profile regardless. */}
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={handleLogout}>
           <LogOut /> Log out
