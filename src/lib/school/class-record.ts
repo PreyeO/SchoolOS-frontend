@@ -19,6 +19,17 @@ export interface ClassArmRecord {
   // attendance off. Never shown as a real arm — see isRealArm() — but its id is
   // still what enrollment/invite/attendance payloads must send for such a class.
   is_default: boolean;
+  // False once the arm has been "deleted" while historical records depend on
+  // it — scores, attendance, results, enrollments, offerings. The row survives
+  // so that history still points at something real, but the arm is excluded
+  // from every write path server-side and must be excluded from every picker
+  // here. Read-only: there is no reactivate endpoint; an admin "restores" an
+  // arm by creating a new one with the same name, which the backend allows
+  // because uniqueness now only applies to active rows.
+  //
+  // Optional for the rollout window only — a response predating the field
+  // means "active". Drop the `?` once the backend is deployed everywhere.
+  is_active?: boolean;
   class_teacher: ClassTeacherSummary | null;
 }
 

@@ -1,7 +1,7 @@
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 
 import type { ClassRecord } from "./class-record";
-import { realArms } from "./real-arms";
+import { isActiveArm, pickableArms } from "./real-arms";
 
 export interface ArmOption {
   armId: string;
@@ -33,13 +33,15 @@ export function buildArmOptions(classes: ClassRecord[]): ArmOptionGroup[] {
   [...classes]
     .sort((a, b) => a.order - b.order)
     .forEach((klass) => {
-      const arms = realArms(klass);
+      // pickableArms, not realArms: this builds PICKERS, and every one of
+      // them feeds a write the backend rejects for a deactivated arm.
+      const arms = pickableArms(klass);
       const level = klass.level as SchoolLevelValue;
 
       if (arms.length === 0) {
         // Only the system placeholder: still pickable — its id is what the
         // payload needs — but labelled by class, since "Default" is internal.
-        const systemArm = klass.arms[0];
+        const systemArm = klass.arms.find(isActiveArm);
         // No arms at all. Only possible for classes created before the
         // placeholder-arm behaviour existed; nothing here can hold an
         // enrollment, so it's excluded — see armlessClasses, which reports it

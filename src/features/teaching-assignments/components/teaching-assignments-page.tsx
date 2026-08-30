@@ -7,6 +7,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { armlessClasses, buildArmOptions } from "@/lib/school/arm-options";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { useSubjects } from "@/features/settings/hooks/use-subjects";
+import { isActiveSubject } from "@/lib/school/active-subject";
 import type { SubjectResponse } from "@/features/onboarding/types";
 
 import { useArmAssignments } from "../hooks/use-arm-assignments";
@@ -37,8 +38,13 @@ export function TeachingAssignmentsPage() {
 
   // Only subjects at this arm's level can be offered — the backend rejects a
   // level mismatch outright, so listing the rest would just produce a 400.
+  //
+  // Deactivated subjects are excluded for the same reason: POST
+  // /class-arm-subjects/ refuses them as "Subject(s) not found in this school".
+  // They stay visible on the Subjects management screen, just not offerable.
   const levelSubjects = useMemo(
-    () => (subjects ?? []).filter((s) => s.level === selected?.level),
+    () =>
+      (subjects ?? []).filter((s) => s.level === selected?.level && isActiveSubject(s)),
     [subjects, selected],
   );
 
