@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { isApexHost } from "@/lib/tenant/is-apex-host";
+import { resolveRequestHost } from "@/lib/tenant/request-host";
 
 // Sends a school subdomain's root to /login, while the apex keeps serving the
 // marketing landing page.
@@ -19,13 +20,16 @@ import { isApexHost } from "@/lib/tenant/is-apex-host";
 // tested directly; see the note there on why it's shape-first rather than
 // purely driven by NEXT_PUBLIC_SCHOOL_DOMAIN.
 export function proxy(request: NextRequest) {
-  const host = request.headers.get("host") ?? "";
+  // NOT request.headers.get("host") — Cloudflare proxies to the Vercel
+  // deployment hostname, so Host reads *.vercel.app for every tenant. See
+  // resolveRequestHost.
+  const host = resolveRequestHost(request.headers);
   const schoolDomain = process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "myschoolos.io";
   const apex = isApexHost(host, schoolDomain);
 
   if (!apex) {
     const response = NextResponse.redirect(new URL("/login", request.url));
-    response.headers.set("x-schoolos-routing", `tenant host=${host}`);
+    response.headers.set("x-schoolos-routing", `tenant host=${host} raw=${request.headers.get("host") ?? ""}`);
     return response;
   }
 
@@ -43,7 +47,10 @@ export function proxy(request: NextRequest) {
   // against. It leaks nothing: the host is already public (the caller sent it)
   // and the school domain ships inlined in the client bundle anyway.
   const response = NextResponse.next();
-  response.headers.set("x-schoolos-routing", `apex host=${host} domain=${schoolDomain}`);
+  response.headers.set(
+    "x-schoolos-routing",
+    `apex host=${host} raw=${request.headers.get("host") ?? ""} domain=${schoolDomain}`,
+  );
   return response;
 }
 
