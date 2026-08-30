@@ -43,6 +43,10 @@ export interface MeSubjectAssignment {
 }
 
 export interface MeTeacherBlock {
+  // The caller's own TeacherProfile id. Needed to tell "my note" from
+  // "someone else's" on a student's notes — StudentNote.author.id is a
+  // TeacherProfile id, and only the author may edit their own note.
+  id: string;
   class_arms: MeClassArm[];
   subject_assignments: MeSubjectAssignment[];
 }

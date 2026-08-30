@@ -117,6 +117,23 @@ export const PLATFORM_ADMIN_ENDPOINTS = {
   DETAIL: (id: string) => `/api/platform-admins/${id}/`,
 } as const;
 
+// Teachers' free-form notes about students, persisting across class, session
+// and teacher changes so context survives handover.
+//
+// Staff-internal: StudentNoteService.visible_notes admits an admin with
+// view_students or ANY teacher, and returns an EMPTY QUERYSET to everyone
+// else. A parent or student therefore gets 200 with count: 0 rather than a
+// 403 — so never reuse this on a family-facing screen expecting an error to
+// gate it.
+//
+// Writing requires a teacher profile (an admin without one gets 403), editing
+// is restricted to the authoring teacher, and deleting is allowed for the
+// author or an admin with edit_students. Filter with ?student=.
+export const STUDENT_NOTE_ENDPOINTS = {
+  LIST: () => `/api/student-notes/`,
+  DETAIL: (id: string) => `/api/student-notes/${id}/`,
+} as const;
+
 export const PARENT_ENDPOINTS = {
   LIST: () => `/api/parents/`,
   DETAIL: (id: string) => `/api/parents/${id}/`,
