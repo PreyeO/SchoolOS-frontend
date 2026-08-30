@@ -13,6 +13,7 @@ import type {
   DetailResponse,
   InviteAdminPayload,
   InviteDetailResponse,
+  InviteParentChild,
   InviteParentPayload,
   InviteTeacherPayload,
   PendingInvite,
@@ -35,24 +36,35 @@ export async function inviteAdmin(values: InviteAdminFormValues): Promise<Detail
   return data;
 }
 
-export async function inviteTeacher(values: InviteTeacherFormValues): Promise<DetailResponse> {
+// The optional link fields sit outside the zod schema on purpose: they're not
+// text inputs, they're separate pickers with their own state, and neither is
+// validated by shape — the backend owns the rules (an arm must be active and
+// at this school, a child must not repeat).
+export type InviteTeacherInput = InviteTeacherFormValues & { class_arm_ids?: string[] };
+export type InviteParentInput = InviteParentFormValues & { students?: InviteParentChild[] };
+
+export async function inviteTeacher(values: InviteTeacherInput): Promise<DetailResponse> {
   const payload: InviteTeacherPayload = {
     first_name: values.first_name,
     last_name: values.last_name,
     email: values.email,
     teacher_type: values.teacher_type,
     ...(values.phone_number?.trim() ? { phone_number: values.phone_number } : {}),
+    // Omitted rather than sent empty: the field is optional, and an empty list
+    // would be a no-op the audit log doesn't need to see.
+    ...(values.class_arm_ids?.length ? { class_arm_ids: values.class_arm_ids } : {}),
   };
   const { data } = await apiClient.post<DetailResponse>(ENDPOINTS.INVITE_TEACHER, payload);
   return data;
 }
 
-export async function inviteParent(values: InviteParentFormValues): Promise<DetailResponse> {
+export async function inviteParent(values: InviteParentInput): Promise<DetailResponse> {
   const payload: InviteParentPayload = {
     first_name: values.first_name,
     last_name: values.last_name,
     email: values.email,
     ...(values.phone_number?.trim() ? { phone_number: values.phone_number } : {}),
+    ...(values.students?.length ? { students: values.students } : {}),
   };
   const { data } = await apiClient.post<DetailResponse>(ENDPOINTS.INVITE_PARENT, payload);
   return data;

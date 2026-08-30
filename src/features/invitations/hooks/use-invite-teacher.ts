@@ -5,16 +5,15 @@ import { toast } from "sonner";
 
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
-import { inviteTeacher } from "../api/invitations-api";
+import { inviteTeacher, type InviteTeacherInput } from "../api/invitations-api";
 import { formatDetail } from "../lib/format-detail";
 import { PENDING_INVITES_QUERY_KEY } from "./use-pending-invites";
-import type { InviteTeacherFormValues } from "../schemas/invite-teacher-schema";
 
 export function useInviteTeacher() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: InviteTeacherFormValues) => inviteTeacher(values),
+    mutationFn: (values: InviteTeacherInput) => inviteTeacher(values),
     onSuccess: (data) => {
       // Pending invites sits on the same page as this form, so a new invite that
       // doesn't appear until a manual refresh looks like it wasn't sent. The
