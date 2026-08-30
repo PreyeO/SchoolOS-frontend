@@ -4,7 +4,9 @@ import { PAIN_RELIEF } from "@/data/landing";
 
 export function PainRelief() {
   return (
-    <section data-surface="ink" className="bg-ink text-paper py-12 md:py-24">
+    // scroll-mt-24 clears the fixed Navbar. Without it the anchor lands with
+    // the section's own heading hidden underneath the header.
+    <section id="product" data-surface="ink" className="bg-ink text-paper py-12 md:py-24 scroll-mt-24">
       <Container>
         <SectionLabel className="mb-6 md:mb-10 text-paper">{PAIN_RELIEF.eyebrow}</SectionLabel>
 

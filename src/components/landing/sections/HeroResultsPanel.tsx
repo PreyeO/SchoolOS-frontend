@@ -29,7 +29,7 @@ export function HeroResultsPanel({ phase, reduced }: Props) {
       </p>
 
       <div className="border border-white/10 rounded-lg overflow-hidden mb-3">
-        <div className="grid grid-cols-[1fr_24px_24px_28px_20px] gap-x-2 px-3 py-2 bg-white/[0.04] text-[9px] text-n-500 uppercase tracking-widest font-mono">
+        <div className="grid grid-cols-[1fr_24px_24px_28px_20px] gap-x-2 px-3 py-2 bg-white/4 text-[9px] text-n-500 uppercase tracking-widest font-mono">
           <span>Student</span>
           <span className="text-right">CA</span>
           <span className="text-right">Ex</span>
@@ -40,7 +40,7 @@ export function HeroResultsPanel({ phase, reduced }: Props) {
           <div
             key={r.name}
             className={cn(
-              "grid grid-cols-[1fr_24px_24px_28px_20px] gap-x-2 px-3 py-2 border-t border-white/[0.06] transition-all duration-500",
+              "grid grid-cols-[1fr_24px_24px_28px_20px] gap-x-2 px-3 py-2 border-t border-white/6 transition-all duration-500",
               i < fillCount ? "opacity-100" : "opacity-20",
             )}
             style={{ transitionDelay: reduced ? "0ms" : `${i * 100}ms` }}

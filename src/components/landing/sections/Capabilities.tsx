@@ -4,7 +4,7 @@ import { CapabilitiesClient } from "./CapabilitiesClient";
 
 export function Capabilities() {
   return (
-    <section className="bg-paper py-12 md:py-24">
+    <section id="features" className="bg-paper py-12 md:py-24 scroll-mt-24">
       <Container>
         <div className="mb-8 md:mb-12 max-w-2xl">
           <SectionLabel className="mb-4 text-n-500">What SchoolOS does</SectionLabel>

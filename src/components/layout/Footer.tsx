@@ -1,18 +1,22 @@
 import { Container } from "./Container";
 
+// The three that have somewhere to go now point at the real sections. The rest
+// keep href="#" because no such page or section exists yet — worth replacing
+// with real destinations (or dropping) before launch, since a link that scrolls
+// the reader back to the top reads as broken.
 const FOOTER_LINKS = [
   {
     heading: "Product",
     links: [
-      { label: "Features", href: "#" },
-      { label: "Pricing", href: "#" },
+      { label: "Features", href: "#features" },
+      { label: "Pricing", href: "#pricing" },
       { label: "What's new", href: "#" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { label: "About", href: "#" },
+      { label: "About", href: "#about" },
       { label: "Blog", href: "#" },
       { label: "Contact", href: "#" },
     ],
