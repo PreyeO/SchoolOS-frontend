@@ -47,6 +47,7 @@ export const settingsGroup: NavGroup = {
       href: "/settings/fees",
       icon: Coins,
       description: "Configure fee items, amounts, and class-based fee plans.",
+      permission: "view_fees",
     }, false),
     adminItem({
       label: "Payment Integrations",
@@ -59,12 +60,14 @@ export const settingsGroup: NavGroup = {
       href: "/settings/roles",
       icon: ShieldCheck,
       description: "Create custom roles and control what each staff member can access.",
+      permission: "manage_roles",
     }, false),
     adminItem({
       label: "Audit Log",
       href: "/settings/audit-log",
       icon: ScrollText,
       description: "See who changed what across your school, and when.",
+      permission: "view_audit_logs",
     }, false),
     adminItem({
       label: "Report Card Templates",

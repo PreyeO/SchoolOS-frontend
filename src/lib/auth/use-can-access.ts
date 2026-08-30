@@ -2,6 +2,7 @@
 
 import { canAccessPath, isPersona, type Persona } from "@/data/navigation";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSchoolPermissions } from "./use-school-permissions";
 
 // Whether this user may open a route — the same question RouteAccessGuard asks,
 // available before you offer them the link.
@@ -23,6 +24,7 @@ import { useAuthStore } from "@/stores/auth-store";
 // treated as having none.
 export function useCanAccess(href: string): boolean {
   const claims = useAuthStore((s) => s.claims);
+  const permissions = useSchoolPermissions();
   const known: Persona[] = (claims?.personas ?? []).filter(isPersona);
-  return canAccessPath(href, known.length > 0 ? known : ["admin"]);
+  return canAccessPath(href, known.length > 0 ? known : ["admin"], permissions);
 }

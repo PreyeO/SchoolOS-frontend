@@ -11,12 +11,16 @@ export const financeGroup: NavGroup = {
       href: "/fees",
       icon: Receipt,
       description: "Set up fee structures and generate termly invoices for every student.",
+      permission: "view_fees",
     }, false),
     adminItem({
       label: "Payments",
       href: "/payments",
       icon: CreditCard,
       description: "Track fee payments, balances, and send automated payment reminders.",
+      // The payments list itself is open, but both halves of the screen need
+      // fee items, so PaymentsPage already refuses without view_fees.
+      permission: "view_fees",
     }, false),
     adminItem({
       label: "Expenses",

@@ -20,6 +20,15 @@ export interface NavItem {
   personas: Persona[];
   // Unbuilt modules get a "Soon" badge in the sidebar.
   soon?: boolean;
+  // A school permission that the *admin* persona additionally needs for this
+  // item. It qualifies the admin persona only — a teacher who reaches a shared
+  // screen through their own persona is unaffected, because their access never
+  // came from an admin role in the first place.
+  //
+  // Set it only where the screen's own list endpoint refuses without it (that
+  // was checked per viewset, not assumed) — gating on a permission that only
+  // guards writes would hide a page the user can legitimately read.
+  permission?: string;
   // A related cluster shown nested under this one and expanded in place,
   // instead of every item sitting flat in the parent group. Present only on
   // disclosure items built with groupedItem() — href on those is a shared
