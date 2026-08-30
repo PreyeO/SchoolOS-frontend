@@ -15,7 +15,7 @@ export function useUpdateSubject() {
 }
 
 export function useDeleteSubject() {
-  return useMutationWithToast((id: string) => deleteSubject(id), "Removed");
+  return useMutationWithToast((id: string) => deleteSubject(id), "Removed from active use");
 }
 
 export function useAddSubjects() {

@@ -31,17 +31,22 @@ export function isApexHost(host: string, schoolDomain: string): boolean {
 
   if (NON_TENANT_SUFFIXES.some((suffix) => hostname.endsWith(suffix))) return true;
 
-  // The configured apex and its www. Still honoured — it's just no longer the
-  // only thing keeping tenant detection working.
+  // `www` is a prefix, not an identity — strip it and judge what's underneath.
+  //
+  // Treating any `www.*` host as apex was wrong: `www.fggc.myschoolos.io` is a
+  // school someone typed a `www.` in front of, not the marketing site, and it
+  // was landing them on the marketing page. Stripping first means
+  // `www.myschoolos.io` → `myschoolos.io` (apex) while
+  // `www.fggc.myschoolos.io` → `fggc.myschoolos.io` (tenant), which is what
+  // both actually mean.
+  const bare = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+
+  // The configured apex. Still honoured — it's just no longer the only thing
+  // keeping tenant detection working.
   const apex = schoolDomain.toLowerCase();
-  if (apex && (hostname === apex || hostname === `www.${apex}`)) return true;
+  if (apex && bare === apex) return true;
 
   // A bare registrable domain (`myschoolos.io`) has two labels; anything with
   // three or more (`fggc.myschoolos.io`) is a subdomain, i.e. a school.
-  //
-  // `www` is the one subdomain that means "apex" rather than "tenant", and no
-  // school may claim that slug.
-  if (hostname.startsWith("www.")) return true;
-
-  return hostname.split(".").length < 3;
+  return bare.split(".").length < 3;
 }

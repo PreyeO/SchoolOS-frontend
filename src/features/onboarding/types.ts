@@ -108,6 +108,10 @@ export interface SubjectPayload {
 
 export interface SubjectResponse extends SubjectPayload {
   id: string;
+  // See ClassArmRecord.is_active — same deactivation model. A subject with
+  // scores or offerings against it is deactivated rather than deleted, stays
+  // readable, and is rejected by every write path.
+  is_active?: boolean;
 }
 
 export interface CreateSubjectsPayload {
