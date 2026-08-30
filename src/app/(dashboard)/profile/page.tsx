@@ -3,7 +3,7 @@ import { UserRound } from "lucide-react";
 
 import { ComingSoon } from "@/features/dashboard/components/coming-soon";
 
-export const metadata: Metadata = { title: "Profile — SchoolOS" };
+export const metadata: Metadata = { title: "Profile" };
 
 export default function ProfilePage() {
   return (

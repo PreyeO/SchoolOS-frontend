@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { StudentFeesPage } from "@/features/fees/components/student-fees-page";
 
-export const metadata: Metadata = { title: "Fees & Invoices — SchoolOS" };
+export const metadata: Metadata = { title: "Fees & Invoices" };
 
 // ?student= and ?period= say whose ledger is open — set by the Payments
 // arrears list's "click a name to see their breakdown" link, and kept in sync

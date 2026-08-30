@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PlatformPeoplePage } from "@/features/platform/components/people-page";
 
-export const metadata: Metadata = { title: "Directory — SchoolOS" };
+export const metadata: Metadata = { title: "Directory" };
 
 export default function Page() {
   return <PlatformPeoplePage />;

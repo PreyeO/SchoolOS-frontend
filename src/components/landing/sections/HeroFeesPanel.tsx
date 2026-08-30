@@ -17,7 +17,7 @@ export function HeroFeesPanel({ phase, reduced }: Props) {
   return (
     <div>
       <p className="text-[10px] text-n-400 tracking-wider mb-3 font-mono">
-        FEE LEDGER — INCOMING PAYMENT
+        FEE LEDGER · INCOMING PAYMENT
       </p>
 
       <div className="border border-white/10 rounded-lg overflow-hidden mb-3">

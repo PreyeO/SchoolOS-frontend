@@ -1,4 +1,4 @@
-// Marketing layout — wraps all public-facing pages with Navbar and Footer.
+// Marketing layout. Wraps all public-facing pages with Navbar and Footer.
 import { Navbar } from "@/components/layout/Navbar";
 
 export default function MarketingLayout({

@@ -3,7 +3,9 @@ import Link from "next/link";
 
 import { AcceptInviteView } from "@/features/invitations/components/accept-invite-view";
 
-export const metadata: Metadata = { title: "Accept invite — SchoolOS" };
+// Bare title: the root layout's "%s | SchoolOS" template appends the brand,
+// same as every other page in this group.
+export const metadata: Metadata = { title: "Accept invite" };
 
 export default async function AcceptInvitePage({
   params,

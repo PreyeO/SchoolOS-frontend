@@ -41,7 +41,7 @@ export function LoginView() {
   // A forced logout (expired refresh token) redirects here and sets this flag.
   useEffect(() => {
     if (consumeSessionExpiredFlag()) {
-      toast.error("Your session expired — please log in again.");
+      toast.error("Your session expired. Please log in again.");
     }
   }, []);
 

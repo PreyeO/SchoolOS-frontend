@@ -4,7 +4,7 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { OnboardingAccessGuard } from "@/features/onboarding/components/onboarding-access-guard";
 import { OnboardingWizard } from "@/features/onboarding/components/onboarding-wizard";
 
-export const metadata: Metadata = { title: "Set up your school — SchoolOS" };
+export const metadata: Metadata = { title: "Set up your school" };
 
 export default function OnboardingPage() {
   return (
