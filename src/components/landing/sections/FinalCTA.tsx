@@ -4,7 +4,8 @@ import { FINAL_CTA } from "@/data/landing";
 
 export function FinalCTA() {
   return (
-    <section data-surface="ink" className="bg-ink py-12 md:py-24">
+    // id="demo": every "Book a demo" CTA on the page points at #demo.
+    <section id="demo" data-surface="ink" className="bg-ink py-12 md:py-24 scroll-mt-24">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
           <SectionLabel className="mb-4 text-paper/50">{FINAL_CTA.eyebrow}</SectionLabel>

@@ -6,7 +6,7 @@ import { PricingCard } from "./PricingCard";
 
 export function PricingTeaser() {
   return (
-    <section className="bg-n-50 py-12 md:py-24">
+    <section id="pricing" className="bg-n-50 py-12 md:py-24 scroll-mt-24">
       <Container>
         <div className="mb-8 md:mb-12 max-w-2xl">
           <SectionLabel className="mb-4 text-n-500">Pricing</SectionLabel>

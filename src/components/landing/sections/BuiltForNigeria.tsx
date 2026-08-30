@@ -4,7 +4,7 @@ import { BUILT_FOR_NIGERIA } from "@/data/landing";
 
 export function BuiltForNigeria() {
   return (
-    <section data-surface="brand" className="bg-brand py-12 md:py-24">
+    <section id="about" data-surface="brand" className="bg-brand py-12 md:py-24 scroll-mt-24">
       <Container>
         <div className="mb-8 md:mb-14 max-w-3xl">
           <SectionLabel className="mb-4 text-paper/60">{BUILT_FOR_NIGERIA.eyebrow}</SectionLabel>
