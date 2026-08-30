@@ -37,7 +37,7 @@ export function TeacherTypeField({
         {TEACHER_TYPES.map((type) => (
           <label
             key={type}
-            className="flex cursor-pointer gap-3 rounded-xl border border-n-200 p-3 transition-colors hover:border-n-300 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+            className="flex cursor-pointer gap-3 rounded-xl border border-n-200 p-3 transition-colors hover:border-n-300 has-checked:border-primary has-checked:bg-primary/5"
           >
             <input
               type="radio"

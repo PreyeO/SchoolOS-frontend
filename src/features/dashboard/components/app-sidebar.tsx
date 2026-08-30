@@ -28,7 +28,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
       data-surface="ink"
       className={cn(
         "hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-border transition-[width] duration-200",
-        collapsed ? "w-[68px]" : "w-64",
+        collapsed ? "w-17" : "w-64",
       )}
     >
       <div className="flex h-14 items-center gap-2.5 px-3 border-b border-border">
