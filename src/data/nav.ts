@@ -7,5 +7,8 @@ export const NAV_LINKS = [
   { label: "About", href: "#about" },
 ] as const;
 
-export const NAV_CTA_PRIMARY = { label: "Start free", href: "/signup" } as const;
+// Both public CTAs point at the pilot funnel while onboarding is invite-led.
+// Self-serve signup still exists at /signup and is reachable directly; only
+// the marketing entry points moved, so reverting is a one-line change.
+export const NAV_CTA_PRIMARY = { label: "Start free", href: "/book-demo" } as const;
 export const NAV_CTA_SECONDARY = { label: "Log in", href: "/login" } as const;

@@ -56,7 +56,7 @@ export const CAPABILITY_WEDGES = [
       "Parents track it in their portal",
       "Works on cheap Android phones",
     ],
-    cta: { label: "Book a demo", href: "#demo" },
+    cta: { label: "Book a demo", href: "/book-demo" },
   },
 ] as const;
 

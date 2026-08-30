@@ -17,8 +17,8 @@ export const HERO = {
     "NDPA-compliant",
   ],
   trustLine: "Built with Nigerian school owners, and we answer the phone.",
-  ctaPrimary: { label: "Start free", href: "/signup" },
-  ctaSecondary: { label: "Book a demo", href: "#demo" },
+  ctaPrimary: { label: "Start free", href: "/book-demo" },
+  ctaSecondary: { label: "Book a demo", href: "/book-demo" },
 } as const;
 
 export const PAIN_RELIEF = {
@@ -69,8 +69,8 @@ export const FINAL_CTA = {
   eyebrow: "Get started",
   heading: "Your school. Running smoothly. Starting now.",
   body: "Book a 30-minute demo and we'll show you SchoolOS running on a live school's data, not a toy demo. We'll answer every question. No commitment required.",
-  ctaPrimary: { label: "Start free", href: "/signup" },
-  ctaSecondary: { label: "Book a demo", href: "#demo" },
+  ctaPrimary: { label: "Start free", href: "/book-demo" },
+  ctaSecondary: { label: "Book a demo", href: "/book-demo" },
   footnote: "Start free this term. No card, no setup fee, cancel anytime.",
 } as const;
 

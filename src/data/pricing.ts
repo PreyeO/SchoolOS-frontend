@@ -18,8 +18,8 @@ export const PRICING_TIERS = [
       "Parent & student portals",
       "Up to 200 active students",
     ],
-    cta: { label: "Start free", href: "/signup" },
-    demoLink: { label: "Book a demo instead", href: "#demo" },
+    cta: { label: "Start free", href: "/book-demo" },
+    demoLink: { label: "Book a demo instead", href: "/book-demo" },
     featured: false,
   },
   {
@@ -37,8 +37,8 @@ export const PRICING_TIERS = [
       "Unlimited active students",
       "Priority support",
     ],
-    cta: { label: "Start free", href: "/signup" },
-    demoLink: { label: "Book a demo instead", href: "#demo" },
+    cta: { label: "Start free", href: "/book-demo" },
+    demoLink: { label: "Book a demo instead", href: "/book-demo" },
     featured: true,
   },
   {
