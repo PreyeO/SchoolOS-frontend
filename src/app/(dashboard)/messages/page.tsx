@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { ComingSoon } from "@/features/dashboard/components/coming-soon";
 
-export const metadata: Metadata = { title: "Messages — SchoolOS" };
+export const metadata: Metadata = { title: "Messages" };
 
 export default function Page() {
   return <ComingSoon href="/messages" />;

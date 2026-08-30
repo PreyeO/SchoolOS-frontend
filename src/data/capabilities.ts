@@ -1,44 +1,59 @@
-// Capability wedge copy and compact grid items.
+// Capability wedge copy and the roadmap grid.
+//
+// Every bullet in CAPABILITY_WEDGES describes something that works today,
+// checked against the API rather than assumed. Anything still being built
+// belongs in CAPABILITY_GRID, which is labelled as upcoming.
+//
+// What was removed and why, so it isn't re-added by accident:
+//   - Paystack/Flutterwave: PaymentSource lists them as "reserved slots",
+//     unused "until gateway integration lands". Cash, transfer, POS and cheque
+//     are the methods that actually record today.
+//   - SMS and WhatsApp, in every form: there is no messaging backend at all,
+//     and send_sms grants nothing. Parents read attendance and results in
+//     their own portal instead, which is built.
+//   - Installment plans: no such concept exists anywhere in the API.
+//   - "Withhold cards for fee defaulters": the defaulter list is real, but
+//     nothing gates a report card on fees.
 
 export const CAPABILITY_WEDGES = [
   {
     id: "results",
     eyebrow: "RESULTS & REPORT CARDS",
     heading: "Compile a term's results in an afternoon.",
-    body: "Teachers enter CA scores and exam marks. SchoolOS computes positions, averages, and grade remarks — with your school's own CA/exam weighting. Approve, then release to parents.",
+    body: "Teachers enter CA scores and exam marks. SchoolOS computes positions, averages, and grade remarks, using your school's own CA/exam weighting. Approve, then release to parents.",
     bullets: [
       "CA + exam weighting you control",
       "Class positions auto-calculated",
       "Branded PDF report cards",
       "Approve-and-release workflow",
-      "Withhold cards for fee defaulters",
+      "Class teacher & principal remarks",
     ],
     cta: { label: "See a sample report card", href: "#demo" },
   },
   {
     id: "fees",
     eyebrow: "FEES & PAYMENTS",
-    heading: "Stop chasing parents for fees.",
-    body: "Accept payments online, by transfer, USSD, or cash. Every naira auto-reconciles to your ledger. Parents get instant SMS receipts. Defaulters get reminders before you even ask.",
+    heading: "Know exactly who has paid, and who hasn't.",
+    body: "Record payments by cash, bank transfer, POS, or cheque, and every one lands against the student's balance. See the defaulter list for any class and term at a glance, with receipts you can download.",
     bullets: [
-      "Paystack & Flutterwave built in",
-      "Installment payment plans",
-      "Auto-reconciliation to ledger",
-      "Defaulter SMS reminders",
-      "Real-time fee balance per student",
+      "Cash, transfer, POS & cheque",
+      "Fee waivers and discounts",
+      "Real-time balance per student",
+      "Defaulter list per class & term",
+      "Downloadable payment receipts",
     ],
     cta: { label: "See how it works", href: "#demo" },
   },
   {
     id: "attendance",
-    eyebrow: "ATTENDANCE & COMMUNICATION",
-    heading: "Mark attendance with one tap. Parents know instantly.",
-    body: "Teachers mark attendance offline on any device. When a student is absent, parents get an automatic SMS or WhatsApp message before the end of first period — without you lifting a finger.",
+    eyebrow: "ATTENDANCE & PARENT ACCESS",
+    heading: "Mark attendance with one tap, even with no network.",
+    body: "Teachers mark the register offline on any device, and it syncs the moment they're back online. Parents follow their child's attendance, results, and fees in their own portal, without anyone having to send an update.",
     bullets: [
-      "Offline-first — no internet needed",
-      "Auto SMS/WhatsApp to parents",
+      "Offline-first, no internet needed",
+      "Present, absent, late & excused",
       "Attendance reports per class & term",
-      "Late arrival tracking",
+      "Parents track it in their portal",
       "Works on cheap Android phones",
     ],
     cta: { label: "Book a demo", href: "#demo" },
@@ -47,11 +62,13 @@ export const CAPABILITY_WEDGES = [
 
 export type CapabilityWedge = (typeof CAPABILITY_WEDGES)[number];
 
+// Not built yet. Presented as what's coming rather than what's included, since
+// listing them beside working features is a promise the product can't keep.
 export const CAPABILITY_GRID = [
+  { label: "Online payments", description: "Paystack and Flutterwave collection" },
+  { label: "SMS & WhatsApp", description: "Automatic alerts to parents" },
   { label: "Admissions", description: "Online applications and enrollment pipeline" },
   { label: "Timetable", description: "Auto-generated weekly class schedules" },
-  { label: "CBT & Exam Prep", description: "Computer-based mock exams and practice tests" },
-  { label: "Transport", description: "Bus routes and student tracking" },
   { label: "HR & Payroll", description: "Staff records, leave, and salary processing" },
-  { label: "Analytics", description: "Term-over-term performance dashboards" },
+  { label: "Transport", description: "Bus routes and student tracking" },
 ] as const;

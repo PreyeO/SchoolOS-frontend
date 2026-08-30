@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CloudOff } from "lucide-react";
 
-export const metadata: Metadata = { title: "Offline — SchoolOS" };
+export const metadata: Metadata = { title: "Offline" };
 
 // The service worker falls back here when a route was never visited online and
 // so was never cached. Deliberately static and dependency-free: it has to render

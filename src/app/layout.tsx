@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   ),
   title: { default: "SchoolOS", template: "%s | SchoolOS" },
   description:
-    "The operating system for Nigerian K–12 schools. Results, fees, attendance — all in one place.",
+    "The operating system for Nigerian K–12 schools. Results, fees, attendance, all in one place.",
   keywords: [
     "school management software Nigeria",
     "school management system",
@@ -48,15 +48,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "SchoolOS",
-    title: "SchoolOS — School management built for Nigeria",
+    title: "SchoolOS: School management built for Nigeria",
     description:
-      "Compile a term's results in an afternoon. Collect fees online. Track attendance with one tap. Built for three terms, NERDC subjects, and the Nigerian school year.",
+      "Compile a term's results in an afternoon. Track every naira of fees. Mark attendance with one tap. Built for three terms, NERDC subjects, and the Nigerian school year.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SchoolOS — School management built for Nigeria",
+    title: "SchoolOS: School management built for Nigeria",
     description:
-      "Compile a term's results in an afternoon. Collect fees online. Track attendance with one tap.",
+      "Compile a term's results in an afternoon. Track every naira of fees. Mark attendance with one tap.",
   },
   robots: { index: true, follow: true },
 };

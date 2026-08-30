@@ -25,7 +25,7 @@ export function HeroResultsPanel({ phase, reduced }: Props) {
   return (
     <div>
       <p className="text-[10px] text-n-400 tracking-wider mb-3 font-mono">
-        TERM RESULTS — SS2A · 2024/25 THIRD TERM
+        TERM RESULTS · SS2A · 2024/25 THIRD TERM
       </p>
 
       <div className="border border-white/10 rounded-lg overflow-hidden mb-3">
@@ -46,11 +46,11 @@ export function HeroResultsPanel({ phase, reduced }: Props) {
             style={{ transitionDelay: reduced ? "0ms" : `${i * 100}ms` }}
           >
             <span className="text-paper/80 truncate text-[10px] font-mono">{r.name}</span>
-            <span className="text-n-400 text-right text-[10px] font-mono">{i < fillCount ? r.ca : "—"}</span>
-            <span className="text-n-400 text-right text-[10px] font-mono">{i < fillCount ? r.ex : "—"}</span>
-            <span className="text-paper/80 text-right text-[10px] font-mono font-semibold">{i < fillCount ? r.ca + r.ex : "—"}</span>
+            <span className="text-n-400 text-right text-[10px] font-mono">{i < fillCount ? r.ca : "-"}</span>
+            <span className="text-n-400 text-right text-[10px] font-mono">{i < fillCount ? r.ex : "-"}</span>
+            <span className="text-paper/80 text-right text-[10px] font-mono font-semibold">{i < fillCount ? r.ca + r.ex : "-"}</span>
             <span className={cn("text-right text-[10px] font-mono font-bold", r.gr === "A" ? "text-grass" : r.gr === "B" ? "text-amber" : "text-n-400")}>
-              {i < fillCount ? r.gr : "—"}
+              {i < fillCount ? r.gr : "-"}
             </span>
           </div>
         ))}

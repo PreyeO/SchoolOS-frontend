@@ -4,7 +4,7 @@ import { InvitePeoplePanel } from "@/features/invitations/components/invite-peop
 import { PendingInvitesPanel } from "@/features/invitations/components/pending/pending-invites-panel";
 import { parseInvitePersona } from "@/features/invitations/lib/invite-persona-param";
 
-export const metadata: Metadata = { title: "Invitations — SchoolOS" };
+export const metadata: Metadata = { title: "Invitations" };
 
 // ?persona= decides which form opens, so the directories' "Invite teacher" /
 // "Add student" buttons land on the matching one. Read here rather than via

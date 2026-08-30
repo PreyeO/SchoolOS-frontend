@@ -87,7 +87,7 @@ export function CreateSchoolForm() {
           id="email"
           label="School email"
           error={errors.email?.message}
-          hint="This can be your personal email — you can update it later."
+          hint="This can be your personal email. You can update it later."
           required
         >
           <Input id="email" type="email" autoComplete="email" {...register("email")} />

@@ -37,7 +37,7 @@ export function DuplicateSchoolNotice({ matches }: { matches: SchoolSearchResult
         <ul className="mt-1.5 space-y-0.5 text-sm text-n-600">
           {shown.map((s) => (
             <li key={s.id}>
-              {s.name} <span className="text-n-400">— {s.city}, {stateLabel(s.state)}</span>
+              {s.name} <span className="text-n-400">&middot; {s.city}, {stateLabel(s.state)}</span>
             </li>
           ))}
         </ul>
@@ -46,7 +46,7 @@ export function DuplicateSchoolNotice({ matches }: { matches: SchoolSearchResult
         )}
         <p className="mt-2 text-xs text-n-500">
           If one of these is your school, ask an admin there to invite you rather than setting it
-          up again. If it&rsquo;s a different school, carry on — names don&rsquo;t need to be unique.
+          up again. If it&rsquo;s a different school, carry on. Names don&rsquo;t need to be unique.
         </p>
       </div>
     </div>

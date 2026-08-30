@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { StudentDetailPage } from "@/features/students/components/student-detail-page";
 
-export const metadata: Metadata = { title: "Student profile — SchoolOS" };
+export const metadata: Metadata = { title: "Student profile" };
 
 // The same detail screen the admin directory uses, on a teacher-reachable path.
 //

@@ -1,4 +1,4 @@
-// FAQ items — all question/answer copy lives here, never in JSX.
+// FAQ items. All question/answer copy lives here, never in JSX.
 
 export const FAQ_ITEMS = [
   {
@@ -7,15 +7,15 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Does it work offline or on a poor network?",
-    a: "Yes. Teachers can mark attendance and enter scores completely offline on any phone or laptop. Data syncs automatically when connectivity returns. SchoolOS is built for the Nigerian network reality — daily operations do not require fast or stable internet.",
+    a: "Yes. Teachers can mark attendance and enter scores completely offline on any phone or laptop. Data syncs automatically when connectivity returns. SchoolOS is built for the Nigerian network reality, so daily operations do not require fast or stable internet.",
   },
   {
     q: "How hard is it to move our existing records over?",
-    a: "Not hard — we do it with you. Our onboarding team imports your student list, historical results, and fee records from your spreadsheets or previous system. Most schools are fully live within one week. You don't need any technical knowledge.",
+    a: "Not hard, because we do it with you. Our onboarding team imports your student list, historical results, and fee records from your spreadsheets or previous system. Most schools are fully live within one week. You don't need any technical knowledge.",
   },
   {
     q: "What does it actually cost?",
-    a: "From ₦400 per active student per term. A school with 300 students pays ₦120,000 per term — often less than the cost of printing and distributing report cards manually. There are no hidden setup fees and no annual contracts.",
+    a: "From ₦400 per active student per term. A school with 300 students pays ₦120,000 per term, often less than the cost of printing and distributing report cards manually. There are no hidden setup fees and no annual contracts.",
   },
   {
     q: "What support do we get after going live?",

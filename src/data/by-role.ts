@@ -1,11 +1,18 @@
 // Role-based feature lists for the ByRole switcher section.
+//
+// Each line describes something a person in that role can actually do today,
+// checked against the API. Removed rather than softened: online/USSD fee
+// payment and bank-statement reconciliation (no gateway integration exists),
+// every SMS and WhatsApp claim (no messaging backend), Excel export of fees
+// (no export endpoint or client-side export), assignment resource sharing and
+// parent-to-school messaging (neither feature exists at all).
 
 export const ROLES_DATA = [
   {
     id: "admin",
     label: "Admin",
     heading: "Run the whole school from your dashboard.",
-    body: "One place to see every student, every result, and every naira — and to act on them.",
+    body: "One place to see every student, every result, and every naira, and to act on them.",
     features: [
       "Term planner and academic calendar",
       "All students, staff, and results in one view",
@@ -19,14 +26,14 @@ export const ROLES_DATA = [
     id: "bursar",
     label: "Bursar",
     heading: "Fee collection without the spreadsheet chaos.",
-    body: "Every payment — online, transfer, or cash — lands in the same ledger automatically.",
+    body: "Every payment, by transfer, POS, cheque, or cash, lands against the same student balance.",
     features: [
       "Real-time fee ledger per student",
-      "Online, USSD, and cash payment logging",
-      "Auto-reconciliation to bank statement",
-      "Defaulter lists and SMS reminders",
+      "Cash, transfer, POS, and cheque logging",
+      "Downloadable receipt for every payment",
+      "Defaulter list per class and term",
       "Term fee summary and collection reports",
-      "Export to Excel for external audits",
+      "Fee waivers and discounts per student",
     ],
   },
   {
@@ -37,24 +44,24 @@ export const ROLES_DATA = [
     features: [
       "Score entry from any phone or laptop",
       "Offline attendance marking",
-      "View class positions as you enter marks",
+      "Class broadsheet with positions",
       "Subject-level remarks and comments",
-      "Share assignment resources with students",
-      "Class broadcast via WhatsApp",
+      "Notes on a student that follow them up",
+      "Announcements to your own classes",
     ],
   },
   {
     id: "parent",
     label: "Parent",
     heading: "Know what's happening with your child.",
-    body: "On your phone. In real time. No more waiting for speech day to find out how they did.",
+    body: "On your phone, whenever you want it. No more waiting for speech day to find out how they did.",
     features: [
-      "Receive report cards directly on your phone",
-      "Pay fees online from anywhere",
-      "Get instant alerts when your child is absent",
-      "See outstanding fee balance at any time",
+      "Download report cards as they're released",
+      "Full fee breakdown, balance, and receipts",
+      "Follow attendance day by day",
+      "Track results across terms",
       "Receive school announcements and notices",
-      "Send messages directly to the school",
+      "Switch between all your children in one place",
     ],
   },
 ] as const;

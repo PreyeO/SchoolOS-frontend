@@ -19,7 +19,7 @@ export default function SignupPage() {
           <h1 className="font-display text-3xl font-bold text-ink">
             Create your account
           </h1>
-          <p className="mt-2 text-n-500">Get started free — no card required.</p>
+          <p className="mt-2 text-n-500">Get started free. No card required.</p>
         </div>
 
         <SignupForm />

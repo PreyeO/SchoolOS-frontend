@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { BroadsheetPage } from "@/features/results/components/broadsheet-page";
 
-export const metadata: Metadata = { title: "Broadsheet — SchoolOS" };
+export const metadata: Metadata = { title: "Broadsheet" };
 
 // ?arm= and ?period= say which arm and term to open on — set by "View
 // broadsheet" links elsewhere (Publish Results is the first). Read here rather

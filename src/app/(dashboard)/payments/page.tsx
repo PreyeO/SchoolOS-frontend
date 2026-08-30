@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PaymentsPage } from "@/features/fees/components/payments-page";
 
-export const metadata: Metadata = { title: "Payments — SchoolOS" };
+export const metadata: Metadata = { title: "Payments" };
 
 export default function Page() {
   return <PaymentsPage />;

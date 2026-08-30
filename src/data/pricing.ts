@@ -1,4 +1,8 @@
-// Pricing tiers — single source of truth for all pricing UI.
+// Pricing tiers. Single source of truth for all pricing UI.
+//
+// Features not yet built carry an explicit "(soon)" rather than sitting in the
+// list as though they ship today. That is most of the Growth tier, which is a
+// commercial question rather than a copy one: see the note in PROJECT.md.
 
 export const PRICING_TIERS = [
   {
@@ -11,7 +15,7 @@ export const PRICING_TIERS = [
       "Results & branded report cards",
       "Fee collection & ledger",
       "Attendance tracking",
-      "Parent SMS notifications",
+      "Parent & student portals",
       "Up to 200 active students",
     ],
     cta: { label: "Start free", href: "/signup" },
@@ -26,10 +30,10 @@ export const PRICING_TIERS = [
     description: "For schools ready to run every department in one place.",
     features: [
       "Everything in Starter",
-      "Timetable & CBT mock exams",
-      "HR & payroll basics",
-      "Admissions management",
-      "Transport management",
+      "Online fee payments (soon)",
+      "Timetable & CBT mock exams (soon)",
+      "HR & payroll basics (soon)",
+      "Admissions management (soon)",
       "Unlimited active students",
       "Priority support",
     ],

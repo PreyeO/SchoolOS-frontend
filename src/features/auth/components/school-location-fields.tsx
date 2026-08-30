@@ -56,7 +56,7 @@ export function SchoolLocationFields({ register, errors }: Props) {
           <FieldWrapper
             id="student_capacity"
             label="Student capacity"
-            hint="An estimate is fine — it's for your plan, not a cap on how many students you can add."
+            hint="An estimate is fine. It's for your plan, not a cap on how many students you can add."
             error={errors.student_capacity?.message}
             required
           >

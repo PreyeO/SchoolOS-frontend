@@ -26,7 +26,7 @@ export function AuthAside() {
       </div>
 
       <p className="font-mono text-xs text-paper/30 tracking-wide">
-        Built with Nigerian school owners — and we answer the phone.
+        Built with Nigerian school owners, and we answer the phone.
       </p>
     </aside>
   );

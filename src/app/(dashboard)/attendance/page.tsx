@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { AttendancePage } from "@/features/attendance/components/attendance-page";
 
-export const metadata: Metadata = { title: "Attendance — SchoolOS" };
+export const metadata: Metadata = { title: "Attendance" };
 
 // ?arm= and ?date= say which register is open. Both are read here rather than
 // with useSearchParams, which is the same server-side pattern the invitations

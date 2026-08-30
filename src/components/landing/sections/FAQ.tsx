@@ -13,7 +13,7 @@ export function FAQ() {
               Questions we get all the time.
             </h2>
             <p className="mt-4 text-n-600 leading-relaxed">
-              Still have questions? Call us — we answer the phone.
+              Still have questions? Call us, we answer the phone.
             </p>
           </div>
 
