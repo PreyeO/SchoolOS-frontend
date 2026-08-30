@@ -1,5 +1,23 @@
-// MOCK — replace with real API calls when the backend endpoints are ready.
-// (Recent activity is no longer mocked — see features/audit-logs/.)
+// Two dashboard widgets with no backend behind them.
+//
+// Both used to return invented school data — three fake calendar entries, and
+// notifications reading "5 students have overdue fee balances", "Second Term
+// results are ready to publish", "Your free trial ends in 24 days". None of it
+// was real, and all of it was indistinguishable from real: a school would go
+// looking for those five students and find nothing.
+//
+// They now return nothing, so both widgets fall through to the honest empty
+// states they already had ("No upcoming events" / "No new notifications").
+// That's a truthful blank rather than a convincing fiction.
+//
+// What each would need to become real:
+//   - Upcoming events: there is no calendar/events app in the backend at all.
+//     This needs the module built first, not just an endpoint.
+//   - Notifications: no endpoint either, but unlike events the *data* exists —
+//     fee arrears, publish-readiness and access status are all already
+//     fetched elsewhere in this app. A notification feed could be derived
+//     client-side from those without any backend work. Worth doing as its own
+//     piece; not worth faking in the meantime.
 
 export interface UpcomingEvent {
   id: string;
@@ -14,24 +32,10 @@ export interface Notification {
   unread: boolean;
 }
 
-function delay(ms = 500): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
-  await delay(300);
-  return [
-    { id: "1", title: "Mid-term break begins", date: "Fri, 18 Jul" },
-    { id: "2", title: "PTA meeting", date: "Wed, 23 Jul" },
-    { id: "3", title: "Inter-house sports day", date: "Sat, 2 Aug" },
-  ];
+  return [];
 }
 
 export async function getNotifications(): Promise<Notification[]> {
-  await delay(300);
-  return [
-    { id: "1", text: "5 students have overdue fee balances", timestamp: "2 hours ago", unread: true },
-    { id: "2", text: "Second Term results are ready to publish", timestamp: "1 day ago", unread: true },
-    { id: "3", text: "Your free trial ends in 24 days", timestamp: "2 days ago", unread: false },
-  ];
+  return [];
 }

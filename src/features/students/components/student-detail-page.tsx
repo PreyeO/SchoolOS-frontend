@@ -19,6 +19,7 @@ import { LinkParentDialog } from "./link-parent-dialog";
 import { MedicalAlerts } from "./medical-alerts";
 import { ReissuePasswordDialog } from "./reissue-password-dialog";
 import { StudentParentLinks } from "./student-parent-links";
+import { StudentNotesSection } from "./notes/student-notes-section";
 import { StudentProfileCards } from "./student-profile-cards";
 import { StudentResultsSection } from "./student-results-section";
 
@@ -99,6 +100,8 @@ export function StudentDetailPage({ id }: { id: string }) {
         <h2 className="mb-4 text-sm font-semibold text-ink">Results</h2>
         <StudentResultsSection studentId={student.id} />
       </div>
+
+      <StudentNotesSection studentId={student.id} />
 
       <StudentProfileCards student={student} canEdit={canEdit} />
 

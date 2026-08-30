@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { PanelLeftClose, PanelLeftOpen, Settings, Sparkles } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Settings, Sparkles, TriangleAlert } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useSchoolStore } from "@/stores/school-store";
-import { useTrialStatus } from "../hooks/use-overview-stats";
+import { useAccessStatus } from "../hooks/use-access-status";
 import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useNavGroups } from "../hooks/use-nav-groups";
 import { useSidebarAccordion } from "../hooks/use-sidebar-accordion";
@@ -23,7 +23,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
   const school = useSchoolStore((s) => s.currentSchool);
   const navGroups = useNavGroups();
   const { openGroup, toggleGroup } = useSidebarAccordion(navGroups, pathname);
-  const { data: trial } = useTrialStatus();
+  const access = useAccessStatus();
   // Every settings page is admin-only, so this footer link dead-ended for
   // every teacher who clicked it.
   const canOpenSettings = useCanAccess("/settings/school");
@@ -59,10 +59,27 @@ export function AppSidebar({ collapsed, onToggleCollapse }: Props) {
       </nav>
 
       <div className="border-t border-border p-2 space-y-1">
-        {trial?.isTrialing && !collapsed && (
+        {/* Null for anyone who can't see billing — the backend omits those
+            fields for non-admins, so a teacher gets no badge at all. */}
+        {access?.isTrialing && !collapsed && (
           <div className="flex items-center gap-2 rounded-lg bg-muted px-2.5 py-2 text-xs text-foreground/70">
             <Sparkles className="size-3.5 shrink-0 text-primary" />
-            <span className="flex-1">Trial: {trial.daysLeft} days left</span>
+            <span className="flex-1">
+              {access.daysLeft === null
+                ? "On trial"
+                : access.daysLeft === 0
+                  ? "Trial ends today"
+                  : `Trial: ${access.daysLeft} day${access.daysLeft === 1 ? "" : "s"} left`}
+            </span>
+          </div>
+        )}
+        {/* The state the old mock could never show. An expired school is
+            already having its writes refused, so this is the one billing
+            state that genuinely needs surfacing. */}
+        {access?.isExpired && !collapsed && (
+          <div className="flex items-center gap-2 rounded-lg bg-destructive/15 px-2.5 py-2 text-xs text-foreground">
+            <TriangleAlert className="size-3.5 shrink-0 text-destructive" />
+            <span className="flex-1">Access expired</span>
           </div>
         )}
         {canOpenSettings && (

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getOverviewStats, getTrialStatus } from "../api/dashboard-api";
+import { getOverviewStats } from "../api/dashboard-api";
 
 export function useOverviewStats() {
   return useQuery({
@@ -11,9 +11,3 @@ export function useOverviewStats() {
   });
 }
 
-export function useTrialStatus() {
-  return useQuery({
-    queryKey: ["dashboard", "trial-status"],
-    queryFn: getTrialStatus,
-  });
-}

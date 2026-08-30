@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles, TriangleAlert } from "lucide-react";
 
 import { useSchoolStore } from "@/stores/school-store";
-import { useTrialStatus } from "../hooks/use-overview-stats";
+import { useAccessStatus } from "../hooks/use-access-status";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -15,7 +15,7 @@ function greeting(): string {
 
 export function DashboardContextHeader() {
   const school = useSchoolStore((s) => s.currentSchool);
-  const { data: trial } = useTrialStatus();
+  const access = useAccessStatus();
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -25,14 +25,32 @@ export function DashboardContextHeader() {
         </h1>
       </div>
 
-      {trial?.isTrialing && (
+      {access?.isTrialing && (
         <Link
           href="/settings/subscription"
-          className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-ink hover:bg-primary/20 transition-colors"
+          className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-primary/20"
         >
           <Sparkles className="size-3.5 text-primary" />
-          Trial: {trial.daysLeft} days left
+          {access.daysLeft === null
+            ? "On trial"
+            : access.daysLeft === 0
+              ? "Trial ends today"
+              : `Trial: ${access.daysLeft} day${access.daysLeft === 1 ? "" : "s"} left`}
           <span className="text-primary underline underline-offset-2">Upgrade</span>
+        </Link>
+      )}
+
+      {/* An expired school can't write anything — registers, scores and
+          payments all refuse. Saying so here, where it's unmissable, beats
+          letting them discover it one failed save at a time. */}
+      {access?.isExpired && (
+        <Link
+          href="/settings/subscription"
+          className="flex items-center gap-2 rounded-full border border-clay/40 bg-clay/10 px-3.5 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-clay/20"
+        >
+          <TriangleAlert className="size-3.5 text-clay" />
+          Access expired
+          <span className="text-clay underline underline-offset-2">Renew</span>
         </Link>
       )}
     </div>
