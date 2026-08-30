@@ -98,6 +98,23 @@ export function canAccessPath(
   return itemAllowed(item, personas, permissions);
 }
 
+// Whether this item appears in the sidebar at all.
+//
+// Unbuilt modules are out of the MVP, so they're hidden rather than shown with
+// a "Soon" badge. Checked before shipping this: all 24 `soon` items render only
+// a ComingSoon placeholder, and all 40 of the rest are real screens, so the
+// flag is accurate in both directions and nothing that works gets hidden.
+//
+// Deliberately here and not in itemAllowed, which also backs canAccessPath:
+// these routes should still resolve if someone follows an old bookmark, and
+// land on the placeholder that explains itself. Blocking them there would
+// instead show "This page isn't available to your account", which blames the
+// reader's permissions for a feature that simply doesn't exist yet. What's
+// being removed is the invitation to click, not the page.
+function isVisible(item: NavItem, personas: Persona[], permissions: PermissionSet): boolean {
+  return !item.soon && itemAllowed(item, personas, permissions);
+}
+
 // Recurses into a groupedItem()'s nested items rather than filtering by the
 // wrapper's own (unioned, and so over-permissive) personas — a nested item
 // survives only on its own narrower personas, same as a flat one, and the
@@ -107,7 +124,7 @@ function filterItemsFor(items: NavItem[], personas: Persona[], permissions: Perm
     .map((item) =>
       item.items ? { ...item, items: filterItemsFor(item.items, personas, permissions) } : item,
     )
-    .filter((item) => (item.items ? item.items.length > 0 : itemAllowed(item, personas, permissions)));
+    .filter((item) => (item.items ? item.items.length > 0 : isVisible(item, personas, permissions)));
 }
 
 // Personas are not exclusive — a user can be an admin and a teacher at the same
