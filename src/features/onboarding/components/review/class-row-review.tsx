@@ -58,7 +58,7 @@ export function ClassRowReview({
               </Button>
             }
             title={`Delete ${klass.name}?`}
-            description="This removes the class and any arms."
+            description="Only possible while the class is unused. If any of its arms hold students or records, the delete is refused and nothing changes."
             isPending={deleteClass.isPending}
             onConfirm={() => deleteClass.mutate(klass.id)}
           />

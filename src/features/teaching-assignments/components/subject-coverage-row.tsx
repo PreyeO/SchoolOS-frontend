@@ -4,6 +4,8 @@ import { Plus, Trash2, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { DeactivatedBadge } from "@/components/shared/deactivated-badge";
+import { isActiveSubject } from "@/lib/school/active-subject";
 import type { SubjectResponse } from "@/features/onboarding/types";
 
 import { useRemoveArmSubject } from "../hooks/use-arm-subjects";
@@ -27,7 +29,15 @@ export function SubjectCoverageRow({ subject, assignments, armLabel, offeringId,
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
       <span className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="truncate text-sm text-ink">{subject.name}</span>
+        <span className={`truncate text-sm ${isActiveSubject(subject) ? "text-ink" : "text-n-500"}`}>
+          {subject.name}
+        </span>
+        {/* A subject deactivated after it was offered here still shows on the
+            arm — the offering row survives with it. Without this it reads as a
+            live subject that simply has no teacher, when in fact no teacher can
+            be assigned and no score can be entered against it. The offering
+            should be removed; the badge is what prompts that. */}
+        {!isActiveSubject(subject) && <DeactivatedBadge />}
         {subject.is_core && (
           <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
             Core
