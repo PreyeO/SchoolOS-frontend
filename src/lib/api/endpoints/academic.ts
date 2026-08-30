@@ -88,6 +88,15 @@ export const SUBJECT_ENDPOINTS = {
   // one of ?class_arm_id= (within that arm) or ?class_id= (across every arm
   // under the class) — sending both or neither is a 400 either way.
   LEADERBOARD: (id: string) => `/api/subjects/${id}/leaderboard/`,
+  // PUT, not PATCH. Updates many subjects atomically — all or nothing. Each
+  // item needs an id plus only the fields that changed; omitted fields keep
+  // their current values. Returns a bare array (not paginated).
+  //
+  // Every conflict comes back as a single {detail} string for the whole
+  // payload, with no indication of which row caused it, so the client has to
+  // pre-validate per row or the user gets an unactionable error on a 40-row
+  // edit. See validateDrafts in settings/lib/subject-bulk-edit.ts.
+  BULK_UPDATE: () => `/api/subjects/bulk-update/`,
 } as const;
 
 // list/create/destroy all require manage_academic_structure; MINE is open to any
