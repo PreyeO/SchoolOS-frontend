@@ -21,12 +21,30 @@ import { isApexHost } from "@/lib/tenant/is-apex-host";
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const schoolDomain = process.env.NEXT_PUBLIC_SCHOOL_DOMAIN ?? "myschoolos.io";
+  const apex = isApexHost(host, schoolDomain);
 
-  if (!isApexHost(host, schoolDomain)) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (!apex) {
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.headers.set("x-schoolos-routing", `tenant host=${host}`);
+    return response;
   }
 
-  return NextResponse.next();
+  // Kept deliberately, not debug scaffolding to remove later.
+  //
+  // This proxy's whole job is to decide between two pages, and when it decides
+  // wrongly the symptom is "the other page rendered" — indistinguishable from
+  // the proxy never having run at all. That ambiguity cost a real debugging
+  // session: a tenant host served the landing page, and there was no way from
+  // the outside to tell whether the deploy lacked the proxy, the env var was
+  // stale, or a cached prerender had bypassed it.
+  //
+  // One header answers all three at once — `curl -sI` a host and you see
+  // whether the proxy ran, what it decided, and which domain it compared
+  // against. It leaks nothing: the host is already public (the caller sent it)
+  // and the school domain ships inlined in the client bundle anyway.
+  const response = NextResponse.next();
+  response.headers.set("x-schoolos-routing", `apex host=${host} domain=${schoolDomain}`);
+  return response;
 }
 
 // Only the site root. Every other path — /login itself, /dashboard, /platform,
