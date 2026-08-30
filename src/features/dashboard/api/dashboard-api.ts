@@ -20,11 +20,6 @@ export interface OverviewStats {
   attendanceTodayPct: KpiStat;
 }
 
-export interface TrialStatus {
-  isTrialing: boolean;
-  daysLeft: number;
-}
-
 async function countOf(url: string, params: Record<string, unknown> = {}): Promise<number> {
   const { data } = await apiClient.get<PaginatedResponse<unknown>>(url, {
     params: { page_size: 1, ...params },
@@ -117,13 +112,3 @@ export async function getOverviewStats(): Promise<OverviewStats> {
   };
 }
 
-// MOCK — subscription/billing isn't built, so this trial countdown is invented.
-// Replace when the billing endpoints land.
-function delay(ms = 200): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function getTrialStatus(): Promise<TrialStatus> {
-  await delay();
-  return { isTrialing: true, daysLeft: 24 };
-}
