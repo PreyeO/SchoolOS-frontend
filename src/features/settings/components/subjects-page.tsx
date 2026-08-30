@@ -2,13 +2,16 @@
 
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/shared/error-state";
+import { isActiveSubject } from "@/lib/school/active-subject";
 import { useSchoolLevels } from "@/lib/school/use-school-levels";
 import type { SchoolLevelValue } from "@/data/school-levels";
 
 import { useSubjects } from "../hooks/use-subjects";
 import { AddSubjectDialog } from "./subjects/add-subject-dialog";
+import { BulkEditPanel } from "./subjects/bulk-edit-panel";
 import { LevelTabs } from "./subjects/level-tabs";
 import { SubjectsTable } from "./subjects/subjects-table";
 
@@ -17,6 +20,7 @@ export function SubjectsPage() {
   const { levels: schoolLevels } = useSchoolLevels();
   const [activeLevel, setActiveLevel] = useState<SchoolLevelValue | "all">("all");
   const [query, setQuery] = useState("");
+  const [bulkEditing, setBulkEditing] = useState(false);
 
   const filtered = useMemo(() => {
     if (!subjects) return [];
@@ -36,14 +40,32 @@ export function SubjectsPage() {
     return <ErrorState error={error} resourceLabel="your subjects" />;
   }
 
+  // A deactivated subject can't be bulk-updated — the endpoint looks up active
+  // rows only and rejects the whole (atomic) call if any id misses. They stay
+  // visible in the read-only table, which is where they're useful as context.
+  const editable = subjects.filter(isActiveSubject);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink">Subjects</h1>
-          <p className="mt-1 text-sm text-n-500">Manage the subjects taught at each level.</p>
+          <p className="mt-1 text-sm text-n-500">
+            {bulkEditing
+              ? "Edit any field directly, or select rows to change them together."
+              : "Manage the subjects taught at each level."}
+          </p>
         </div>
-        <AddSubjectDialog schoolLevels={schoolLevels} existingSubjects={subjects} />
+        {!bulkEditing && (
+          <span className="flex items-center gap-2">
+            {editable.length > 1 && (
+              <Button type="button" variant="outline" onClick={() => setBulkEditing(true)}>
+                Bulk edit
+              </Button>
+            )}
+            <AddSubjectDialog schoolLevels={schoolLevels} existingSubjects={subjects} />
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -56,7 +78,16 @@ export function SubjectsPage() {
         />
       </div>
 
-      <SubjectsTable subjects={filtered} schoolLevels={schoolLevels} />
+      {bulkEditing ? (
+        <BulkEditPanel
+          editable={editable}
+          visible={filtered.filter(isActiveSubject)}
+          schoolLevels={schoolLevels}
+          onExit={() => setBulkEditing(false)}
+        />
+      ) : (
+        <SubjectsTable subjects={filtered} schoolLevels={schoolLevels} />
+      )}
     </div>
   );
 }

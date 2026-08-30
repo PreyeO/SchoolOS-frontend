@@ -6,6 +6,7 @@ import { ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { canAccessPath, isPersona, type Persona } from "@/data/navigation";
+import { useSchoolPermissions } from "@/lib/auth/use-school-permissions";
 import { useAuthStore } from "@/stores/auth-store";
 
 // Hiding a link from the sidebar is presentation, not access control. Every
@@ -23,6 +24,7 @@ import { useAuthStore } from "@/stores/auth-store";
 export function RouteAccessGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const claims = useAuthStore((s) => s.claims);
+  const permissions = useSchoolPermissions();
 
   // Same fallback useNavGroups uses: an owner who created a school in this
   // session has no decoded claims yet, and must not be locked out of their own
@@ -30,7 +32,7 @@ export function RouteAccessGuard({ children }: { children: React.ReactNode }) {
   const known: Persona[] = (claims?.personas ?? []).filter(isPersona);
   const personas: Persona[] = known.length > 0 ? known : ["admin"];
 
-  if (canAccessPath(pathname, personas)) return <>{children}</>;
+  if (canAccessPath(pathname, personas, permissions)) return <>{children}</>;
 
   return (
     <div className="mx-auto max-w-md py-16 text-center">

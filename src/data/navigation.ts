@@ -63,33 +63,61 @@ export function findNavItemForPath(pathname: string) {
   return best;
 }
 
-// Whether these personas may open this path.
+// The caller's school permissions, or null when they aren't known yet.
+//
+// The distinction matters: permissions arrive from /auth/me/ over the network,
+// so there is a window on first load where the answer is "not yet" rather than
+// "no". Treating that as denial would blank the sidebar on every fresh login
+// and then refill it. Unknown means allow — the API stays the authority.
+export type PermissionSet = string[] | null;
+
+function itemAllowed(item: NavItem, personas: Persona[], permissions: PermissionSet): boolean {
+  const matched = item.personas.filter((p) => personas.includes(p));
+  if (matched.length === 0) return false;
+
+  // Access earned through any non-admin persona stands on its own — a teacher
+  // holds no admin role, so an admin permission has nothing to say about it.
+  if (matched.some((p) => p !== "admin")) return true;
+  if (!item.permission || permissions === null) return true;
+
+  return permissions.includes(item.permission);
+}
+
+// Whether this caller may open this path.
 //
 // A path with no nav item is deliberately allowed: detail pages, the onboarding
 // wizard and the platform area aren't in the sidebar, and denying by default
 // would lock people out of routes this registry was never meant to describe.
-export function canAccessPath(pathname: string, personas: Persona[]): boolean {
+export function canAccessPath(
+  pathname: string,
+  personas: Persona[],
+  permissions: PermissionSet = null,
+): boolean {
   const item = findNavItemForPath(pathname);
   if (!item) return true;
-  return item.personas.some((p) => personas.includes(p));
+  return itemAllowed(item, personas, permissions);
 }
 
 // Recurses into a groupedItem()'s nested items rather than filtering by the
 // wrapper's own (unioned, and so over-permissive) personas — a nested item
 // survives only on its own narrower personas, same as a flat one, and the
 // wrapper survives only if at least one nested item still does.
-function filterItemsForPersonas(items: NavItem[], personas: Persona[]): NavItem[] {
+function filterItemsFor(items: NavItem[], personas: Persona[], permissions: PermissionSet): NavItem[] {
   return items
-    .map((item) => (item.items ? { ...item, items: filterItemsForPersonas(item.items, personas) } : item))
-    .filter((item) => (item.items ? item.items.length > 0 : item.personas.some((p) => personas.includes(p))));
+    .map((item) =>
+      item.items ? { ...item, items: filterItemsFor(item.items, personas, permissions) } : item,
+    )
+    .filter((item) => (item.items ? item.items.length > 0 : itemAllowed(item, personas, permissions)));
 }
 
 // Personas are not exclusive — a user can be an admin and a teacher at the same
 // school, and should see what either can do rather than whichever the token
-// happened to list first. An item shows if any of the caller's personas match.
-export function getNavGroupsForPersonas(personas: Persona[]) {
+// happened to list first. An item shows if any of the caller's personas match,
+// and — for access coming via the admin persona — if the role carries the
+// permission that item's screen needs.
+export function getNavGroupsForPersonas(personas: Persona[], permissions: PermissionSet = null) {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: filterItemsForPersonas(group.items, personas),
+    items: filterItemsFor(group.items, personas, permissions),
   })).filter((group) => group.items.length > 0);
 }
