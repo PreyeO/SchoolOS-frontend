@@ -1,3 +1,5 @@
+import type { RelationshipType } from "@/features/parent-student-links/types";
+
 export type Gender = "male" | "female" | "other";
 export type TeacherType = "class" | "subject" | "both";
 
@@ -36,6 +38,22 @@ export interface InviteTeacherPayload {
   email: string;
   phone_number?: string;
   teacher_type: TeacherType;
+  // Optional. Seats the new teacher as class teacher on these arms in the same
+  // atomic call — plural, so one invite can cover several arms.
+  //
+  // The backend refuses the whole invite (400, nothing created) if the type is
+  // "subject", if ids repeat, or if any id isn't an active arm at this school.
+  // All three are prevented in the form rather than discovered on submit.
+  class_arm_ids?: string[];
+}
+
+// One child linked at parent-invite time. relationship is required and has no
+// server-side default: a link created without it would be wrong for someone,
+// and the school would have to find and correct it later.
+export interface InviteParentChild {
+  student_profile_id: string;
+  relationship: RelationshipType;
+  is_primary_contact?: boolean;
 }
 
 export interface InviteParentPayload {
@@ -43,6 +61,9 @@ export interface InviteParentPayload {
   last_name: string;
   email: string;
   phone_number?: string;
+  // Optional. Linked in the same atomic call; a duplicate student or one from
+  // another school rejects the entire invite.
+  students?: InviteParentChild[];
 }
 
 export interface AddStudentPayload {
