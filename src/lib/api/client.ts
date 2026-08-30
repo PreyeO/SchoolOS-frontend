@@ -3,7 +3,7 @@ import axios from "axios";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores/auth-store";
 
-import { ENDPOINTS } from "./endpoints";
+import { ENDPOINTS, PILOT_ENDPOINTS } from "./endpoints";
 import { installTokenRefresh } from "./token-refresh";
 
 export const apiClient = axios.create({
@@ -30,6 +30,9 @@ const PUBLIC_PATHS = [
   ENDPOINTS.PASSWORD_RESET_REQUEST,
   ENDPOINTS.PASSWORD_RESET_CONFIRM,
   ENDPOINTS.REFRESH,
+  // Public marketing form. A signed-in admin who opens /book-demo would
+  // otherwise attach their Bearer token to a pilot enquiry.
+  PILOT_ENDPOINTS.DEMO_REQUEST,
 ];
 
 function isPublicPath(url?: string): boolean {
