@@ -11,10 +11,10 @@ import { BookDemoSuccess } from "./book-demo-success";
 // Two columns on desktop, stacked on mobile with the pitch first — on a phone
 // the reader needs to know what they're signing up for before the fields.
 //
-// The submitted first name is the only state kept: it's the difference between
-// a generic confirmation and one addressed to the person who just wrote it.
+// Keeps just enough of the submission to make the confirmation specific: the
+// visitor's first name, and the channel they asked to be reached on.
 export function BookDemoView() {
-  const [submittedName, setSubmittedName] = useState<string | null>(null);
+  const [done, setDone] = useState<{ firstName: string; channel: string } | null>(null);
 
   return (
     <section className="py-14 md:py-20">
@@ -23,11 +23,11 @@ export function BookDemoView() {
           <BookDemoIntro />
 
           <div className="lg:pt-1">
-            {submittedName ? (
-              <BookDemoSuccess firstName={submittedName} />
+            {done ? (
+              <BookDemoSuccess firstName={done.firstName} channel={done.channel} />
             ) : (
               <div className="rounded-2xl border border-n-200 bg-white p-5 sm:p-6">
-                <BookDemoForm onDone={setSubmittedName} />
+                <BookDemoForm onDone={(firstName, channel) => setDone({ firstName, channel })} />
               </div>
             )}
           </div>

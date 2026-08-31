@@ -59,9 +59,12 @@ export function BookDemoSchoolFields({ register, control, errors }: Props) {
       </div>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink">
+        <legend className="text-sm font-medium text-ink">
           Levels your school runs <span className="text-clay">*</span>
         </legend>
+        {/* Said explicitly: the cards look like a single choice, and a school
+            that runs nursery through SSS should tick all four. */}
+        <p className="mb-2 mt-0.5 text-xs text-n-500">Choose all that apply.</p>
         <Controller
           name="levels"
           control={control}
