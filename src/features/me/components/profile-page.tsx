@@ -3,7 +3,7 @@
 import { DetailField } from "@/components/shared/detail-field";
 import { ErrorState } from "@/components/shared/error-state";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
-import { formatDate } from "@/lib/text/format-date";
+import { formatIsoDate } from "@/lib/text/format-date";
 
 import { useMe } from "../hooks/use-me";
 import { ProfileCard } from "./profile-card";
@@ -56,7 +56,7 @@ export function ProfilePage() {
         <DetailField label="Last name" value={me.user.last_name} />
         <DetailField label="Email" value={me.user.email} />
         <DetailField label="Phone number" value={me.user.phone_number} />
-        <DetailField label="Account created" value={formatDate(me.user.created_at)} />
+        <DetailField label="Account created" value={formatIsoDate(me.user.created_at)} />
       </ProfileCard>
 
       <ProfileCard title="School">
@@ -66,7 +66,7 @@ export function ProfilePage() {
         <DetailField label="Levels" value={levelLabels} />
         {/* The membership date, not the user's: when this person joined THIS
             school, which differs from account creation for anyone invited. */}
-        <DetailField label="Joined school" value={formatDate(me.membership.created_at)} />
+        <DetailField label="Joined school" value={formatIsoDate(me.membership.created_at)} />
       </ProfileCard>
 
       <ProfileRoleCards me={me} />

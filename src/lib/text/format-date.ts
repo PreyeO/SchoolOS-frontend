@@ -11,6 +11,22 @@ export function formatDate(date: string): string {
   });
 }
 
+// The same output as formatDate, but from a full ISO timestamp (created_at and
+// friends). Date parses those correctly on its own, so there's no midnight
+// suffix to append — doing so is what produces "…ZT00:00:00" and Invalid Date.
+//
+// Distinct from formatTimestamp, which also prints the time. Use this where the
+// moment is context rather than data: "Account created", "Joined school". The
+// hour a record was written is noise on a profile, and precision nobody asked
+// for reads as clutter.
+export function formatIsoDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 // The "YYYY-MM-DD" form <input type="date"> and the backend's date filters both
 // expect. Built from local parts rather than toISOString(), which would shift
 // the date by a day in negative-offset timezones.
