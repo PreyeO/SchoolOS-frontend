@@ -4,11 +4,7 @@ import { PILOT_COPY } from "@/data/pilot";
 
 // Replaces the form rather than sitting above it: the visitor is done, and
 // leaving a filled-in form on screen invites a second submission.
-//
-// Names the channel they actually chose. Telling someone who asked for email
-// that we'll WhatsApp them is a small broken promise, and it's the last thing
-// they read.
-export function BookDemoSuccess({ firstName, channel }: { firstName: string; channel: string }) {
+export function BookDemoSuccess({ firstName }: { firstName: string }) {
   return (
     <div className="rounded-2xl border border-n-200 bg-white p-6 text-center sm:p-8">
       <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10">
@@ -20,7 +16,7 @@ export function BookDemoSuccess({ firstName, channel }: { firstName: string; cha
       </h2>
 
       <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-n-600">
-        {PILOT_COPY.successBody(channel)}
+        {PILOT_COPY.successBody}
       </p>
     </div>
   );

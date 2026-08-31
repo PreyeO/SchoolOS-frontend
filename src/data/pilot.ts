@@ -27,35 +27,6 @@ export const CONTACT_TIMES = [
   { value: "evening", label: "Evening" },
 ] as const;
 
-// How the visitor wants to be reached. Each one asks for exactly the detail it
-// needs and nothing else — picking Email shouldn't require a phone number.
-//
-// `field` names the input that becomes required for that choice, so the form
-// and the schema read it from one place instead of both carrying the mapping.
-export const CONTACT_METHODS = [
-  {
-    value: "whatsapp",
-    label: "WhatsApp",
-    field: "phone_number",
-    inputLabel: "WhatsApp number",
-    hint: "We'll message you here.",
-  },
-  {
-    value: "email",
-    label: "Email",
-    field: "email",
-    inputLabel: "Email address",
-    hint: "We'll email you here.",
-  },
-  {
-    value: "phone",
-    label: "Phone call",
-    field: "phone_number",
-    inputLabel: "Phone number",
-    hint: "We'll call you here.",
-  },
-] as const;
-
 export const PILOT_COPY = {
   eyebrow: "Free pilot · this term",
   heading: "Join the SchoolOS pilot.",
@@ -70,12 +41,9 @@ export const PILOT_COPY = {
   steps: [
     { id: "you", title: "About you", blurb: "Two questions, then your school." },
     { id: "school", title: "Your school", blurb: "So we can set it up the way you run it." },
-    { id: "contact", title: "How to reach you", blurb: "Pick whichever suits you." },
+    { id: "contact", title: "How to reach you", blurb: "So we can get in touch to set up your demo." },
   ],
   successHeading: (firstName: string) => `Thanks, ${firstName}.`,
-  // Names the channel the visitor actually chose — promising WhatsApp to
-  // someone who asked for email is the kind of small broken promise that costs
-  // a first call.
-  successBody: (channel: string) =>
-    `We'll reach out on ${channel} within a day to set up your demo. Nothing to do in the meantime.`,
+  successBody:
+    "We'll be in touch within a day to set up your demo. Nothing to do in the meantime.",
 } as const;

@@ -6,40 +6,27 @@ import { useForm, type FieldPath } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { CONTACT_METHODS } from "@/data/pilot";
 import type { SchoolLevel } from "@/features/auth/types";
 
 import { useSubmitDemoRequest } from "../hooks/use-submit-demo-request";
 import { normalisePhone } from "../lib/phone";
 import { demoRequestSchema, type DemoRequestFormValues } from "../schemas/demo-request-schema";
-import type {
-  ContactMethod,
-  ContactTime,
-  DemoRequestPayload,
-  PilotRole,
-  StudentRange,
-} from "../types";
+import type { ContactTime, DemoRequestPayload, PilotRole, StudentRange } from "../types";
 import { BookDemoProgress } from "./book-demo-progress";
 import { BookDemoSchoolFields } from "./book-demo-school-fields";
 import { BookDemoStepContact } from "./book-demo-step-contact";
 import { BookDemoStepYou } from "./book-demo-step-you";
 
 // Which fields each step owns, so Next validates only what's on screen.
-// Contact's requirement is conditional and lives in the schema's superRefine,
-// so both possible fields are listed — the irrelevant one has no rule attached
-// and passes silently.
 const STEP_FIELDS: FieldPath<DemoRequestFormValues>[][] = [
   ["full_name", "role"],
   ["school_name", "state", "city", "levels", "student_range"],
-  ["contact_method", "phone_number", "email"],
+  ["email", "phone_number", "message"],
 ];
 
-export function BookDemoForm({ onDone }: { onDone: (firstName: string, channel: string) => void }) {
+export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }) {
   const { mutate, isPending } = useSubmitDemoRequest();
   const [step, setStep] = useState(0);
-  // Mirrored from the radio group's own onChange rather than read with watch(),
-  // which makes React Compiler bail on memoizing this component.
-  const [method, setMethod] = useState<ContactMethod | "">("");
 
   const {
     register,
@@ -61,7 +48,7 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string, channel: 
   }
 
   function submit(values: DemoRequestFormValues) {
-    const selected = CONTACT_METHODS.find((m) => m.value === values.contact_method);
+    const message = values.message?.trim();
     const payload: DemoRequestPayload = {
       full_name: values.full_name.trim(),
       role: values.role as PilotRole,
@@ -70,19 +57,14 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string, channel: 
       city: values.city.trim(),
       levels: values.levels as SchoolLevel[],
       student_range: values.student_range as StudentRange,
-      contact_method: values.contact_method as ContactMethod,
-      // Only the field matching the chosen channel is sent; the other was never
-      // shown, so submitting it would be sending the +234 default as data.
-      ...(selected?.field === "email"
-        ? { email: values.email?.trim() }
-        : { phone_number: normalisePhone(values.phone_number ?? "") }),
+      email: values.email.trim(),
+      phone_number: normalisePhone(values.phone_number),
       ...(values.best_time_to_call
         ? { best_time_to_call: values.best_time_to_call as ContactTime }
         : {}),
+      ...(message ? { message } : {}),
     };
-    mutate(payload, {
-      onSuccess: () => onDone(payload.full_name.split(" ")[0], selected?.label ?? "your channel"),
-    });
+    mutate(payload, { onSuccess: () => onDone(payload.full_name.split(" ")[0]) });
   }
 
   return (
@@ -94,12 +76,7 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string, channel: 
         <BookDemoSchoolFields register={register} control={control} errors={errors} />
       )}
       {step === 2 && (
-        <BookDemoStepContact
-          register={register}
-          errors={errors}
-          method={method}
-          onMethodChange={setMethod}
-        />
+        <BookDemoStepContact register={register} errors={errors} />
       )}
 
       <div className="flex items-center gap-2 pt-1">
