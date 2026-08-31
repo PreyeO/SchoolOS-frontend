@@ -5,6 +5,12 @@ import { env } from "@/config/env";
 // wrong fails closed (no hand-off, stay on the apex) rather than open, but a
 // silent mismatch would be hard to spot from the outside.
 
+// The bridge announces itself rather than the apex guessing when it's listening.
+// iframe.onload fires when the child DOCUMENT loads, which is before React has
+// hydrated and registered its message listener — so posting on load raced
+// hydration and the tokens landed with nobody listening. The child now speaks
+// first, and only once it is genuinely ready to receive.
+export const HANDOFF_READY = "schoolos:auth-handoff:ready" as const;
 export const HANDOFF_REQUEST = "schoolos:auth-handoff" as const;
 export const HANDOFF_ACK = "schoolos:auth-handoff:ok" as const;
 
@@ -27,7 +33,12 @@ export interface HandoffMessage {
 // can plant a session, so the bridge accepts messages from nowhere else — and
 // notably not from another school's subdomain, which would otherwise let one
 // tenant write tokens into another's origin.
-export function isTrustedHandoffOrigin(origin: string): boolean {
+//
+// Enumerated rather than expressed as a predicate alone, so the bridge can
+// address its "ready" announcement to each of them by name instead of posting
+// to "*". The announcement carries nothing secret, but a wildcard target in
+// auth code is the kind of thing that gets copied somewhere it does matter.
+export function trustedHandoffOrigins(): string[] {
   const domain = env.SCHOOL_DOMAIN;
   const allowed = [`https://${domain}`, `https://www.${domain}`];
 
@@ -36,7 +47,11 @@ export function isTrustedHandoffOrigin(origin: string): boolean {
     allowed.push("http://localhost:3000", "http://lvh.me:3000", "http://www.lvh.me:3000");
   }
 
-  return allowed.includes(origin);
+  return allowed;
+}
+
+export function isTrustedHandoffOrigin(origin: string): boolean {
+  return trustedHandoffOrigins().includes(origin);
 }
 
 export function handoffUrl(slug: string): string {
