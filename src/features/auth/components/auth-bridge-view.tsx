@@ -5,8 +5,10 @@ import { useEffect } from "react";
 import { applyAuthTokens } from "@/lib/auth/apply-auth-tokens";
 import {
   HANDOFF_ACK,
+  HANDOFF_READY,
   HANDOFF_REQUEST,
   isTrustedHandoffOrigin,
+  trustedHandoffOrigins,
   type HandoffMessage,
 } from "@/lib/auth/handoff-contract";
 
@@ -39,6 +41,20 @@ export function AuthBridgeView() {
     }
 
     window.addEventListener("message", onMessage);
+
+    // Announce only AFTER the listener is attached. The apex used to send on
+    // iframe.onload, which fires when this document loads — before React
+    // hydrates and runs this effect — so the tokens arrived with nothing
+    // listening and the hand-off silently timed out. Speaking first, and only
+    // once genuinely ready, removes the race.
+    //
+    // Addressed to each trusted apex origin by name rather than "*". The
+    // message carries nothing secret, but wildcard targets in auth code get
+    // copied to places where that stops being true.
+    for (const origin of trustedHandoffOrigins()) {
+      window.parent?.postMessage({ type: HANDOFF_READY }, origin);
+    }
+
     return () => window.removeEventListener("message", onMessage);
   }, []);
 

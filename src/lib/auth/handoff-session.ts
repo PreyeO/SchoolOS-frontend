@@ -1,5 +1,6 @@
 import {
   HANDOFF_ACK,
+  HANDOFF_READY,
   HANDOFF_REQUEST,
   HANDOFF_TIMEOUT_MS,
   handoffUrl,
@@ -48,10 +49,22 @@ export async function handoffSessionToSchool(
     }
 
     function onMessage(event: MessageEvent) {
-      // Only the subdomain we asked, and only the ack we expect.
+      // Only the subdomain we asked.
       if (event.origin !== targetOrigin) return;
-      if ((event.data as { type?: string } | null)?.type !== HANDOFF_ACK) return;
-      finish(true);
+      const type = (event.data as { type?: string } | null)?.type;
+
+      // The bridge tells us when it has a listener attached; sending before
+      // that raced its hydration and the tokens went nowhere. This listener is
+      // registered before the iframe is appended, so the signal can't be missed.
+      if (type === HANDOFF_READY) {
+        iframe.contentWindow?.postMessage(
+          { type: HANDOFF_REQUEST, access, refresh },
+          targetOrigin,
+        );
+        return;
+      }
+
+      if (type === HANDOFF_ACK) finish(true);
     }
 
     // Any failure — bridge not deployed, storage partitioned, network gone —
@@ -61,12 +74,7 @@ export async function handoffSessionToSchool(
 
     window.addEventListener("message", onMessage);
 
-    iframe.onload = () => {
-      iframe.contentWindow?.postMessage(
-        { type: HANDOFF_REQUEST, access, refresh },
-        targetOrigin,
-      );
-    };
+    // Nothing is sent on load — the bridge's own ready signal drives it.
     iframe.onerror = () => finish(false);
 
     document.body.appendChild(iframe);
