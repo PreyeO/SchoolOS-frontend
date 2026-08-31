@@ -1,57 +1,48 @@
-import { env } from "@/config/env";
-import { buildSchoolUrl } from "@/lib/tenant/school-url";
-
-// Whether this build is actually served from the school domain, and so can hand
-// a user off to https://<slug>.<domain>.
-//
-// NODE_ENV === "production" used to stand in for this, but it answers a
-// different question: a Vercel deployment is also "production" while being
-// served from *.vercel.app, so login sent people to a host we don't own and the
-// session appeared to vanish. Reading the real hostname keeps that redirect
-// switched off everywhere except the domain that can serve it, and switches it
-// back on by itself once myschoolos.io points here — no env var to remember.
-function servesSchoolSubdomains(): boolean {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return host === env.SCHOOL_DOMAIN || host.endsWith(`.${env.SCHOOL_DOMAIN}`);
-}
-
 interface NextStepArgs {
   state: string;
   requiresSchoolSelection?: boolean;
-  slug?: string;
-  // Where "complete" leads locally. Create-school flow defaults to onboarding;
+  // Where "complete" leads. Create-school flow defaults to onboarding;
   // login passes "/dashboard".
   completePath?: string;
 }
 
+// Where to send someone once they hold tokens.
+//
+// This used to hand off to https://<slug>.<domain> after login, and no longer
+// does. Tokens live in localStorage, which is scoped per origin, so
+// www.myschoolos.io and fggc.myschoolos.io do not share a session: redirecting
+// across that boundary delivered the user to their subdomain with an empty
+// token store, and straight back to /login.
+//
+// It only ever fired when the caller already knew the slug, which on the apex
+// meant the multi-school picker alone — so the bug hit exactly the users with
+// more than one school, and nobody else.
+//
+// The apex is now the canonical app host. Subdomains still work for anyone who
+// goes to one directly: getCurrentSchoolSlug() reads the host and scopes their
+// login automatically, and they stay there. What's gone is the forced hop.
+//
+// Reinstating it needs the session shared across subdomains first — a cookie
+// scoped to .myschoolos.io, ideally httpOnly and set by the backend. Until
+// that exists, sending anyone across origins mid-flow logs them out.
 export function resolveNextStep({
   state,
   requiresSchoolSelection,
-  slug,
   completePath = "/onboarding",
-}: NextStepArgs): {
-  path: string;
-  external: boolean;
-} {
+}: NextStepArgs): { path: string } {
   if (state === "create_school") {
-    return { path: "/create-school", external: false };
+    return { path: "/create-school" };
   }
 
   if (state === "complete") {
     // multi-school selection handled in the login flow
     if (requiresSchoolSelection) {
-      return { path: completePath, external: false };
+      return { path: completePath };
     }
     // completePath, not "/admin": there is no /admin route — src/app/(dashboard)/admin
-    // is an empty directory — so the hand-off landed on a 404 even on a domain
-    // that could serve it. The subdomain should open the same page the local
-    // path would.
-    if (slug && servesSchoolSubdomains()) {
-      return { path: buildSchoolUrl(slug, completePath), external: true };
-    }
-    return { path: completePath, external: false };
+    // is an empty directory — so the hand-off landed on a 404.
+    return { path: completePath };
   }
 
-  return { path: "/", external: false };
+  return { path: "/" };
 }

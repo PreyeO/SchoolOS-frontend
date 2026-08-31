@@ -43,9 +43,8 @@ export function useVerifyOtp(email: string) {
       }
     }
 
-    const { path, external } = await resolvePostAuthPath({ state: data.state });
-    if (external) window.location.href = path;
-    else router.push(path);
+    const { path } = await resolvePostAuthPath({ state: data.state });
+    router.push(path);
   }
 
   return useMutation({

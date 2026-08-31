@@ -36,12 +36,8 @@ export function useCreateSchool() {
         levels,
       });
 
-      const { path, external } = await resolvePostAuthPath({ state: data.state, slug: variables.slug });
-      if (external) {
-        window.location.href = path;
-      } else {
-        router.push(path);
-      }
+      const { path } = await resolvePostAuthPath({ state: data.state });
+      router.push(path);
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

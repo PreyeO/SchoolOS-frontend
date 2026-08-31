@@ -45,9 +45,8 @@ export function useAcceptInvite() {
         }
       }
 
-      const { path, external } = await resolvePostAuthPath({ state: data.state });
-      if (external) window.location.href = path;
-      else router.push(path);
+      const { path } = await resolvePostAuthPath({ state: data.state });
+      router.push(path);
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));
