@@ -20,7 +20,7 @@ export function useSwitchSchool() {
 
   return useMutation({
     mutationFn: (schoolSlug: string) => switchSchool(schoolSlug),
-    onSuccess: async (data, schoolSlug) => {
+    onSuccess: async (data) => {
       const claims = applyAuthTokens(data.access, data.refresh);
 
       if (claims.school_id) {
@@ -42,7 +42,11 @@ export function useSwitchSchool() {
         }
       }
 
-      const { path } = await resolvePostAuthPath({ state: data.state, slug: schoolSlug });
+      // Same-origin by design now (see resolveNextStep). window.location.href
+      // rather than router.push is still deliberate: switching school has to
+      // repaint the whole shell, and a hard reload is the simplest way to be
+      // sure nothing from the previous school survives in memory.
+      const { path } = await resolvePostAuthPath({ state: data.state });
       window.location.href = path;
     },
     onError: (error) => {

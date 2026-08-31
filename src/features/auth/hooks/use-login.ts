@@ -25,7 +25,7 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
   const setPendingEmail = useAuthStore((s) => s.setPendingVerificationEmail);
   const hydrateSchool = useSchoolStore((s) => s.hydrateSchool);
 
-  async function handleScoped(data: LoginResponse, variables: LoginPayload) {
+  async function handleScoped(data: LoginResponse) {
     if (data.requires_school_selection) return;
     const claims = applyAuthTokens(data.access, data.refresh);
 
@@ -51,9 +51,10 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
       }
     }
 
-    const { path, external } = await resolvePostAuthPath({ state: data.state, slug: variables.school_slug });
-    if (external) window.location.href = path;
-    else router.push(path);
+    // Always same-origin: see resolveNextStep on why the subdomain hand-off
+    // was removed. Signing in at the apex keeps you at the apex.
+    const { path } = await resolvePostAuthPath({ state: data.state });
+    router.push(path);
   }
 
   function handleError(error: unknown, variables: LoginPayload) {
@@ -73,12 +74,12 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
 
   return useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       if (data.requires_school_selection) {
         onSelectionNeeded(data.schools);
         return;
       }
-      void handleScoped(data, variables);
+      void handleScoped(data);
     },
     onError: handleError,
   });

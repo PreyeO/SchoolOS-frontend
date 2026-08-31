@@ -6,29 +6,31 @@ import { resolveNextStep } from "./resolve-next-step";
 
 interface Args {
   state: string;
-  slug?: string;
 }
 
-// Centralized post-auth destination resolver, used by login/verify-otp/create-school
-// after applyAuthTokens() has already stored tokens+claims. Layers the real
-// onboarding-stage check on top of the existing sync resolveNextStep: state ===
-// "create_school" or an external subdomain redirect short-circuit as before;
-// only the local "complete" destination gets refined into dashboard vs onboarding.
-export async function resolvePostAuthPath({ state, slug }: Args): Promise<{ path: string; external: boolean }> {
+// Centralized post-auth destination resolver, used by login/verify-otp/
+// create-school/accept-invite after applyAuthTokens() has stored tokens+claims.
+// Layers the real onboarding-stage check on top of resolveNextStep: only the
+// "complete" destination gets refined into dashboard vs onboarding.
+//
+// Always same-origin now — see resolveNextStep for why the subdomain hand-off
+// was removed. A useful side effect: the onboarding-stage refinement below no
+// longer gets skipped, which it was for anyone the redirect caught.
+export async function resolvePostAuthPath({ state }: Args): Promise<{ path: string }> {
   const claims = useAuthStore.getState().claims;
-  if (claims?.is_platform_admin) return { path: "/platform", external: false };
+  if (claims?.is_platform_admin) return { path: "/platform" };
 
-  const base = resolveNextStep({ state, slug, completePath: "/dashboard" });
-  if (base.external || base.path !== "/dashboard") return base;
+  const base = resolveNextStep({ state, completePath: "/dashboard" });
+  if (base.path !== "/dashboard") return base;
 
   const schoolId = getSchoolId();
   if (!schoolId || !canDoOnboarding(claims)) return base;
 
   try {
     const stage = await getOnboardingStage(schoolId);
-    return { path: stage.is_completed ? "/dashboard" : "/onboarding", external: false };
+    return { path: stage.is_completed ? "/dashboard" : "/onboarding" };
   } catch {
     // Fail open to onboarding rather than strand the user on a broken dashboard.
-    return { path: "/onboarding", external: false };
+    return { path: "/onboarding" };
   }
 }
