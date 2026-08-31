@@ -19,12 +19,41 @@ export const STUDENT_RANGES = [
 ] as const;
 
 // Optional, and kept to three coarse buckets on purpose. The follow-up is a
-// WhatsApp message from a person, not a calendar slot, so anything finer would
-// promise a precision nobody is holding to.
+// message from a person, not a calendar slot, so anything finer would promise a
+// precision nobody is holding to.
 export const CONTACT_TIMES = [
   { value: "morning", label: "Morning" },
   { value: "afternoon", label: "Afternoon" },
   { value: "evening", label: "Evening" },
+] as const;
+
+// How the visitor wants to be reached. Each one asks for exactly the detail it
+// needs and nothing else — picking Email shouldn't require a phone number.
+//
+// `field` names the input that becomes required for that choice, so the form
+// and the schema read it from one place instead of both carrying the mapping.
+export const CONTACT_METHODS = [
+  {
+    value: "whatsapp",
+    label: "WhatsApp",
+    field: "phone_number",
+    inputLabel: "WhatsApp number",
+    hint: "We'll message you here.",
+  },
+  {
+    value: "email",
+    label: "Email",
+    field: "email",
+    inputLabel: "Email address",
+    hint: "We'll email you here.",
+  },
+  {
+    value: "phone",
+    label: "Phone call",
+    field: "phone_number",
+    inputLabel: "Phone number",
+    hint: "We'll call you here.",
+  },
 ] as const;
 
 export const PILOT_COPY = {
@@ -36,10 +65,17 @@ export const PILOT_COPY = {
     "We import your students and set up your terms with you",
     "Live in about a week",
   ],
-  // Says what happens next, on which channel, within what time. The success
-  // state repeats it, because that's the moment the promise has to land.
-  formIntro: "Tell us about your school and we'll reach out on WhatsApp.",
+  // Split across three short steps rather than one long column: the fields are
+  // the same, but a page that shows five of them at a time is answerable.
+  steps: [
+    { id: "you", title: "About you", blurb: "Two questions, then your school." },
+    { id: "school", title: "Your school", blurb: "So we can set it up the way you run it." },
+    { id: "contact", title: "How to reach you", blurb: "Pick whichever suits you." },
+  ],
   successHeading: (firstName: string) => `Thanks, ${firstName}.`,
-  successBody:
-    "We'll reach out on WhatsApp within a day to set up your demo. Nothing to do in the meantime.",
+  // Names the channel the visitor actually chose — promising WhatsApp to
+  // someone who asked for email is the kind of small broken promise that costs
+  // a first call.
+  successBody: (channel: string) =>
+    `We'll reach out on ${channel} within a day to set up your demo. Nothing to do in the meantime.`,
 } as const;

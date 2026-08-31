@@ -1,27 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldPath } from "react-hook-form";
+import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { FieldWrapper } from "@/features/auth/components/field-wrapper";
-import { CONTACT_TIMES, PILOT_COPY, PILOT_ROLES } from "@/data/pilot";
+import { CONTACT_METHODS } from "@/data/pilot";
+import type { SchoolLevel } from "@/features/auth/types";
 
 import { useSubmitDemoRequest } from "../hooks/use-submit-demo-request";
+import { normalisePhone } from "../lib/phone";
 import { demoRequestSchema, type DemoRequestFormValues } from "../schemas/demo-request-schema";
-import type { DemoRequestPayload, PilotRole, StudentRange, ContactTime } from "../types";
-import type { SchoolLevel } from "@/features/auth/types";
+import type {
+  ContactMethod,
+  ContactTime,
+  DemoRequestPayload,
+  PilotRole,
+  StudentRange,
+} from "../types";
+import { BookDemoProgress } from "./book-demo-progress";
 import { BookDemoSchoolFields } from "./book-demo-school-fields";
+import { BookDemoStepContact } from "./book-demo-step-contact";
+import { BookDemoStepYou } from "./book-demo-step-you";
 
-export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }) {
+// Which fields each step owns, so Next validates only what's on screen.
+// Contact's requirement is conditional and lives in the schema's superRefine,
+// so both possible fields are listed — the irrelevant one has no rule attached
+// and passes silently.
+const STEP_FIELDS: FieldPath<DemoRequestFormValues>[][] = [
+  ["full_name", "role"],
+  ["school_name", "state", "city", "levels", "student_range"],
+  ["contact_method", "phone_number", "email"],
+];
+
+export function BookDemoForm({ onDone }: { onDone: (firstName: string, channel: string) => void }) {
   const { mutate, isPending } = useSubmitDemoRequest();
+  const [step, setStep] = useState(0);
+  // Mirrored from the radio group's own onChange rather than read with watch(),
+  // which makes React Compiler bail on memoizing this component.
+  const [method, setMethod] = useState<ContactMethod | "">("");
 
   const {
     register,
     control,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm<DemoRequestFormValues>({
     resolver: zodResolver(demoRequestSchema),
@@ -30,105 +54,79 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }
     defaultValues: { levels: [], phone_number: "+234" },
   });
 
+  const isLast = step === STEP_FIELDS.length - 1;
+
+  async function next() {
+    if (await trigger(STEP_FIELDS[step])) setStep((s) => s + 1);
+  }
+
   function submit(values: DemoRequestFormValues) {
+    const selected = CONTACT_METHODS.find((m) => m.value === values.contact_method);
     const payload: DemoRequestPayload = {
       full_name: values.full_name.trim(),
       role: values.role as PilotRole,
-      phone_number: values.phone_number.replace(/[\s-]/g, ""),
-      email: values.email.trim(),
       school_name: values.school_name.trim(),
       state: values.state,
       city: values.city.trim(),
       levels: values.levels as SchoolLevel[],
       student_range: values.student_range as StudentRange,
-      // Omitted when unanswered rather than sent empty.
+      contact_method: values.contact_method as ContactMethod,
+      // Only the field matching the chosen channel is sent; the other was never
+      // shown, so submitting it would be sending the +234 default as data.
+      ...(selected?.field === "email"
+        ? { email: values.email?.trim() }
+        : { phone_number: normalisePhone(values.phone_number ?? "") }),
       ...(values.best_time_to_call
         ? { best_time_to_call: values.best_time_to_call as ContactTime }
         : {}),
     };
-    mutate(payload, { onSuccess: () => onDone(payload.full_name.split(" ")[0]) });
+    mutate(payload, {
+      onSuccess: () => onDone(payload.full_name.split(" ")[0], selected?.label ?? "your channel"),
+    });
   }
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="space-y-4">
-      <p className="text-sm text-n-500">{PILOT_COPY.formIntro}</p>
+      <BookDemoProgress index={step} />
 
-      <FieldWrapper id="full_name" label="Full name" error={errors.full_name?.message} required>
-        <Input
-          id="full_name"
-          autoComplete="name"
-          aria-invalid={!!errors.full_name}
-          aria-describedby={errors.full_name ? "full_name-error" : undefined}
-          {...register("full_name")}
+      {step === 0 && <BookDemoStepYou register={register} errors={errors} />}
+      {step === 1 && (
+        <BookDemoSchoolFields register={register} control={control} errors={errors} />
+      )}
+      {step === 2 && (
+        <BookDemoStepContact
+          register={register}
+          errors={errors}
+          method={method}
+          onMethodChange={setMethod}
         />
-      </FieldWrapper>
+      )}
 
-      <FieldWrapper id="role" label="Your role" error={errors.role?.message} required>
-        <Select
-          id="role"
-          defaultValue=""
-          aria-invalid={!!errors.role}
-          aria-describedby={errors.role ? "role-error" : undefined}
-          {...register("role")}
-        >
-          <option value="" disabled>
-            Select your role
-          </option>
-          {PILOT_ROLES.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </Select>
-      </FieldWrapper>
-
-      {/* inputMode="tel" opens the numeric keypad without type="tel"'s habit of
-          stripping the leading +, which this field depends on. */}
-      <FieldWrapper
-        id="phone_number"
-        label="Phone number (WhatsApp)"
-        hint="This is how we'll reach you."
-        error={errors.phone_number?.message}
-        required
-      >
-        <Input
-          id="phone_number"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          aria-invalid={!!errors.phone_number}
-          aria-describedby={errors.phone_number ? "phone_number-error" : undefined}
-          {...register("phone_number")}
-        />
-      </FieldWrapper>
-
-      <FieldWrapper id="email" label="Email" error={errors.email?.message} required>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "email-error" : undefined}
-          {...register("email")}
-        />
-      </FieldWrapper>
-
-      <BookDemoSchoolFields register={register} control={control} errors={errors} />
-
-      <FieldWrapper id="best_time_to_call" label="Best time to reach you (optional)">
-        <Select id="best_time_to_call" defaultValue="" {...register("best_time_to_call")}>
-          <option value="">Any time</option>
-          {CONTACT_TIMES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </Select>
-      </FieldWrapper>
-
-      <Button type="submit" disabled={isPending} className="h-11 w-full font-semibold">
-        {isPending ? "Sending…" : "Join the pilot"}
-      </Button>
+      <div className="flex items-center gap-2 pt-1">
+        {step > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11"
+            onClick={() => setStep((s) => s - 1)}
+            disabled={isPending}
+          >
+            <ArrowLeft className="size-4" />
+            Back
+          </Button>
+        )}
+        {/* type="button" on Next matters: a submit here would run the whole
+            schema and surface errors for steps the visitor hasn't reached. */}
+        {isLast ? (
+          <Button type="submit" disabled={isPending} className="h-11 flex-1 font-semibold">
+            {isPending ? "Sending…" : "Join the pilot"}
+          </Button>
+        ) : (
+          <Button type="button" onClick={next} className="h-11 flex-1 font-semibold">
+            Next
+          </Button>
+        )}
+      </div>
     </form>
   );
 }
