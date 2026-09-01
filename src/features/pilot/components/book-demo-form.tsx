@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type FieldPath } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
@@ -33,6 +33,7 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }
     control,
     handleSubmit,
     trigger,
+    clearErrors,
     formState: { errors },
   } = useForm<DemoRequestFormValues>({
     resolver: zodResolver(demoRequestSchema),
@@ -43,8 +44,24 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }
 
   const isLast = step === STEP_FIELDS.length - 1;
 
+  // A zod resolver validates the WHOLE schema on every pass — it can't check a
+  // subset, because the schema is one object. So validating step 2 also
+  // evaluates step 3's still-empty email and phone, and those errors reach
+  // formState before the visitor has seen the fields: the step opened already
+  // red, accusing them of not filling in something they'd never been shown.
+  //
+  // Cleared only the first time a step is reached. Coming back to a step you
+  // genuinely got wrong keeps its errors, which is the useful behaviour.
+  const furthestStep = useRef(0);
+
   async function next() {
-    if (await trigger(STEP_FIELDS[step])) setStep((s) => s + 1);
+    if (!(await trigger(STEP_FIELDS[step]))) return;
+    const target = step + 1;
+    if (target > furthestStep.current) {
+      furthestStep.current = target;
+      clearErrors(STEP_FIELDS[target]);
+    }
+    setStep(target);
   }
 
   function submit(values: DemoRequestFormValues) {

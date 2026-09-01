@@ -14,10 +14,18 @@ export async function getDemoRequests(filters: DemoRequestFilters): Promise<Demo
   const { data } = await apiClient.get<PaginatedResponse<DemoRequest>>(
     PILOT_ENDPOINTS.DEMO_REQUEST,
     {
+      // Only non-empty values are sent. django-filter silently ignores an
+      // unknown param but treats an empty one as a real filter on some field
+      // types, so an empty string is never the same as "no filter".
       params: {
         page_size: 100,
         ...(filters.search ? { search: filters.search } : {}),
         ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.role ? { role: filters.role } : {}),
+        ...(filters.student_range ? { student_range: filters.student_range } : {}),
+        ...(filters.state ? { state: filters.state } : {}),
+        ...(filters.created_at_after ? { created_at_after: filters.created_at_after } : {}),
+        ...(filters.created_at_before ? { created_at_before: filters.created_at_before } : {}),
       },
     },
   );
