@@ -1,128 +1,33 @@
-import { type PricingTier } from "@/data/pricing";
-import { CheckIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { PRICING_PLAN } from "@/data/pricing";
 
-interface Props {
-  tier: PricingTier;
-}
+import { PricingFeatureList } from "./PricingFeatureList";
 
-export function PricingCard({ tier }: Props) {
+// The one plan. No tier name above the price: with a single plan, a label like
+// "Standard" only invites the reader to look for the tier it's being compared
+// against, and there isn't one.
+export function PricingCard() {
   return (
-    <div
-      className={cn(
-        "relative flex flex-col rounded-2xl border p-8",
-        tier.featured
-          ? "border-brand bg-brand text-paper shadow-xl"
-          : "border-n-200 bg-paper text-ink",
-      )}
-    >
-      {tier.featured && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber px-4 py-1 text-xs font-semibold text-ink">
-          Most popular
-        </span>
-      )}
-
+    <div className="flex flex-col rounded-2xl border border-n-200 bg-paper p-8 text-ink">
       <div className="mb-6">
-        <p
-          className={cn(
-            "font-display text-lg font-semibold mb-3",
-            tier.featured ? "text-paper" : "text-ink",
-          )}
-        >
-          {tier.name}
-        </p>
         <div className="flex items-baseline gap-1">
-          {tier.price !== null ? (
-            <>
-              <span
-                className={cn(
-                  "font-display text-4xl font-bold",
-                  tier.featured ? "text-paper" : "text-ink",
-                )}
-              >
-                ₦{tier.price.toLocaleString()}
-              </span>
-              <span
-                className={cn(
-                  "text-sm",
-                  tier.featured ? "text-paper/70" : "text-n-500",
-                )}
-              >
-                {tier.unit}
-              </span>
-            </>
-          ) : (
-            <span
-              className={cn(
-                "font-display text-3xl font-bold",
-                tier.featured ? "text-paper" : "text-ink",
-              )}
-            >
-              Custom
-            </span>
-          )}
+          <span className="font-display text-4xl font-bold text-ink">
+            ₦{PRICING_PLAN.price.toLocaleString()}
+          </span>
+          <span className="text-sm text-n-500">{PRICING_PLAN.unit}</span>
         </div>
-        <p
-          className={cn(
-            "text-xs mt-2",
-            tier.featured ? "text-paper/60" : "text-n-400",
-          )}
-        >
-          {tier.limit}
-        </p>
+        <p className="mt-2 text-xs text-n-400">{PRICING_PLAN.periodNote}</p>
       </div>
 
-      <p
-        className={cn(
-          "text-sm leading-relaxed mb-6",
-          tier.featured ? "text-paper/75" : "text-n-600",
-        )}
-      >
-        {tier.description}
-      </p>
+      <p className="mb-6 text-sm leading-relaxed text-n-600">{PRICING_PLAN.description}</p>
 
-      <ul className="flex-1 space-y-3 mb-8">
-        {tier.features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-sm">
-            <CheckIcon
-              className={cn(
-                "mt-0.5 h-4 w-4 shrink-0",
-                tier.featured ? "text-amber" : "text-grass",
-              )}
-              aria-hidden="true"
-            />
-            <span className={tier.featured ? "text-paper/85" : "text-ink"}>
-              {f}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <PricingFeatureList items={PRICING_PLAN.features} className="mb-8 flex-1" />
 
       <a
-        href={tier.cta.href}
-        className={cn(
-          "block rounded-lg px-6 py-3 text-center text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2",
-          tier.featured
-            ? "bg-amber text-ink focus-visible:outline-amber"
-            : "border border-brand text-brand focus-visible:outline-brand",
-        )}
+        href={PRICING_PLAN.cta.href}
+        className="block rounded-lg border border-brand px-6 py-3 text-center text-sm font-semibold text-brand transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
-        {tier.cta.label}
+        {PRICING_PLAN.cta.label}
       </a>
-
-      {tier.demoLink && (
-        <a
-          href={tier.demoLink.href}
-          className={cn(
-            "mt-3 block text-center text-xs transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-2",
-            tier.featured
-              ? "text-paper/50 focus-visible:outline-paper"
-              : "text-n-400 focus-visible:outline-n-400",
-          )}
-        >
-          {tier.demoLink.label}
-        </a>
-      )}
     </div>
   );
 }

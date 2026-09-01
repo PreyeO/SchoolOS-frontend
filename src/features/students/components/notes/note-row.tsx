@@ -7,6 +7,7 @@ import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Button } from "@/components/ui/button";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
+import { wasEdited } from "@/lib/text/was-edited";
 
 import {
   useDeleteStudentNote,
@@ -28,7 +29,7 @@ export function NoteRow({ note }: { note: StudentNote }) {
   const remove = useDeleteStudentNote();
 
   const [first, last] = nameParts(note.author.name);
-  const edited = note.updated_at !== note.created_at;
+  const edited = wasEdited(note.created_at, note.updated_at);
 
   return (
     <li className="flex gap-3 py-3">

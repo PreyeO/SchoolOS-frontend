@@ -424,6 +424,64 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 
 - **Confirmed blocked, and deliberately not faked:** payment history and receipt download (`PaymentViewSet` gates `list`/`retrieve`/`receipt` on `view_fees`, which hard-requires `is_admin`), attendance, and enrollment history. A parent can therefore see that a fee is settled but not when it was paid or download proof — an odd half-position worth closing, and ask #3 in the doc above.
 
+**Every note and notice claimed it had been edited (2026-09-01).** Reported on the
+teacher dashboard's student notes; the same bug was sitting on announcements.
+Both read `updated_at !== created_at`, which is never false: Django sets the two
+with **separate `timezone.now()` calls** — `auto_now_add` and `auto_now` each run
+their own `pre_save` during the same insert — so a row is born with the pair
+microseconds apart. **Confirmed against the real database rather than inferred:**
+the one untouched student note had a 40µs gap, and all three untouched
+announcements 23–390µs. Every record ever written carried "· edited".
+- Fixed with a tolerance in one shared `lib/text/was-edited.ts`, not per-screen —
+  the two call sites had already drifted into being two copies of the same
+  wrong line, and any future `created_at`/`updated_at` pair from this backend
+  has the same property.
+- **One second**, which is ~25,000x the observed gap. Both timestamps are
+  computed in Python inside a single `pre_save` pass, so no network or DB
+  latency widens the real gap; and nobody writes, re-reads and saves an edit
+  inside a second. An unparseable timestamp yields `NaN`, whose comparisons are
+  all false, so a malformed value reads as "not edited" rather than mislabelling.
+- Not a backend change: the gap is an artifact of how the rows are written, and
+  only the frontend claims to read meaning into it.
+
+**Pricing collapsed to one plan plus the pilot (2026-09-01).** Was three tiers at
+₦400 / ₦350 / custom. Now **₦1,000 per student per term**, one plan, with the
+first 90 days free.
+- **Starter is gone as a tier, deliberately** — it was the user's own open
+  question and the answer is no. The backend has one product with two access
+  states, `trialing` and `subscribed` (`School.access_status`), and **no feature
+  differs between them**: a trialing school has everything, an expired one loses
+  writes. So a free tier beside the paid one would have listed identical
+  features and invited "what am I giving up?", whose honest answer is "nothing,
+  only time". That's an onboarding step, not a plan.
+- **So the free period is the pilot**, which is where the whole funnel already
+  pointed (`/book-demo`, `data/pilot.ts`, whose eyebrow already read "Free
+  pilot"). Two panels rather than a ladder: price left, pilot right — a pricing
+  section that leads with "free" and makes you hunt for the number reads as
+  evasive, and left-to-right the pair states the entire offer in one line. The
+  pilot panel shows **no price, not even ₦0**, since a zero beside the ₦1,000
+  would read as a cheaper product when it's the same one, free for a while.
+- **₦1,000 / 90 days is what the backend already models**, not a new convention:
+  `DEFAULT_PRICE_PER_STUDENT_NAIRA = 1000` and the capacity proration divides by
+  90 (`students_added * price_per_student * days_remaining / 90`). The two must
+  move together — the landing page is the only place the figure is public.
+- **Roadmap items were dropped from the card, not relabelled.** Carrying five
+  "(soon)" lines is what made the old Growth tier look thin; `CapabilityGrid`
+  already presents them under "On the roadmap" with a Soon badge.
+- **`PRICING_NOTE` was quietly wrong and was corrected while here.** It said
+  billing is on active students "enrolled and attending this term". Billing is
+  on the **declared `student_capacity`** — that's what the proration charges and
+  what `get_schools_financial_summary` projects from. The note now says so and
+  points at Settings › Subscription, where a school can change it.
+- The FAQ's cost answer and `PRICING_TRUST` carried the old figure too. The
+  FAQ's "often less than printing report cards manually" comparison was dropped
+  rather than repeated at 2.5x the price.
+- **Verified in the built output**, not just in source: the rendered landing page
+  has ₦1,000, "One plan. One price", "Free for 90 days" and "Join the pilot",
+  and zero occurrences of ₦400, ₦350, Growth, Enterprise, "Most popular" or
+  "Up to 200 students". Clean `tsc`, `eslint` and `build`.
+- **⚠️ The 90 days is not what a self-signup gets — see the backend gap below.**
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
@@ -475,6 +533,17 @@ What still needs backend work the frontend cannot do alone. Re-verified
   `SchoolAdminProfile` have no update route, and `/api/users/` is POST-only —
   so nobody can edit their own name or phone. That's why `/profile` is
   read-only.
+- **The automatic trial is 30 days, but the landing page now promises 90.**
+  `UserService.create_school` hardcodes `trial_ends_at = now + timedelta(days=30)`
+  (`accounts/services.py`), so anyone who self-signs-up at `/signup` gets 30 —
+  and the marketing site, the pilot page and the FAQ all now say 90. Not
+  currently visible, because every marketing CTA routes to `/book-demo` and a
+  pilot school's access is granted by a platform admin through
+  `POST /schools/{id}/extend-access/`, who can set any date. But `/signup` is
+  live and reachable directly, and that path silently under-delivers by two
+  months. Either the constant becomes 90, or it becomes configurable, or
+  self-signup stops granting a trial and waits for the pilot flow. **Backend's
+  call — flagged, not worked around.**
 - **No test suite anywhere in the frontend.** Not a backend gap, but the most
   consequential absence in the repo: `tsc`/`eslint`/`build` all passed while
   three borders were missing from score entry and while the offline cache was

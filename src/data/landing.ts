@@ -75,4 +75,4 @@ export const FINAL_CTA = {
 } as const;
 
 export const PRICING_TRUST =
-  "Try it free this term. If it doesn't save you time, walk away, and your data leaves with you.";
+  "Try it free for a full term. If it doesn't save you time, walk away, and your data leaves with you.";
