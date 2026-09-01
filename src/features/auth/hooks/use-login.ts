@@ -7,8 +7,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api/get-error-message";
 import { applyAuthTokens } from "@/lib/auth/apply-auth-tokens";
 import { resolvePostAuthPath } from "@/lib/auth/resolve-post-auth-path";
-import { handoffSessionToSchool } from "@/lib/auth/handoff-session";
-import { schoolOrigin } from "@/lib/auth/handoff-contract";
+import { buildHandoffUrl } from "@/lib/auth/handoff";
 import { getCurrentSchoolSlug } from "@/lib/tenant/get-current-school-slug";
 import { getSchoolDetail } from "@/lib/school/get-school-detail";
 import { useAuthStore } from "@/stores/auth-store";
@@ -58,24 +57,17 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
 
     const { path } = await resolvePostAuthPath({ state: data.state });
 
-    // Signing in on the apex: move the session onto the school's own subdomain
-    // so the URL shows which school you're in. Tokens are portable (the backend
-    // validates a signature, not an origin); localStorage is not, so they're
-    // handed over by postMessage rather than carried in the URL — see
-    // handoff-session.
+    // Signing in on the apex: hand the session to the school's own subdomain so
+    // the URL shows which school you're in. Tokens are portable (the backend
+    // validates a signature, not an origin); localStorage is not, so they
+    // travel in the URL fragment — never sent to a server — and the landing
+    // page strips them from history and rotates immediately. See lib/auth/handoff.
     //
     // Only from the apex, and only when the school is known. Already on a
     // subdomain means there is nothing to move.
-    const alreadyScoped = getCurrentSchoolSlug() !== null;
-    if (slug && !alreadyScoped) {
-      const moved = await handoffSessionToSchool(slug, data.access, data.refresh);
-      if (moved) {
-        window.location.href = `${schoolOrigin(slug)}${path}`;
-        return;
-      }
-      // Hand-off failed (bridge unreachable, storage partitioned). Fall through
-      // to the apex, where the session already works — a nicer URL is never
-      // worth stranding someone.
+    if (slug && getCurrentSchoolSlug() === null) {
+      window.location.href = buildHandoffUrl(slug, data.access, data.refresh, path);
+      return;
     }
 
     router.push(path);
