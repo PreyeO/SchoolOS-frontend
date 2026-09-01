@@ -13,11 +13,16 @@ import type { PeopleKind, PlatformPerson } from "../api/platform-people-api";
 // answer completely. The school's own admin, who quotes that number when they
 // report a problem, already knows whose it is; nobody at the vendor needs to.
 //
-// Adults keep their names — teachers, parents and school admins are the people
-// a platform admin actually corresponds with, and identifying the record is the
-// point of the lookup — but their email is masked. Recognising a record and
-// being able to contact or correlate someone are different needs, and only the
-// first belongs on this screen.
+// Adults keep their names — they're the people a platform admin actually
+// corresponds with, and identifying the record is the point of the lookup.
+//
+// Teachers' and parents' emails are masked: recognising a record and being able
+// to contact or correlate someone are different needs, and only the first
+// belongs on a vendor screen for a school's own staff and families.
+//
+// School admins are NOT masked. They're the customer — the people SchoolOS has
+// a contractual relationship with and legitimately corresponds with about
+// billing, access and support — so their address is ours to hold in full.
 //
 // This narrows what is DISPLAYED. The list endpoint still sends the full
 // record — name, email, gender, class — so the payload is in the browser
@@ -57,6 +62,8 @@ export function PlatformPersonRow({ person, kind }: { person: PlatformPerson; ki
     );
   }
 
+  const maskAddress = kind === "teachers" || kind === "parents";
+
   return (
     <li className="flex items-center gap-3 px-4 py-2.5">
       <PersonAvatar
@@ -69,12 +76,13 @@ export function PlatformPersonRow({ person, kind }: { person: PlatformPerson; ki
         <span className="block truncate text-sm text-ink">
           {person.user.first_name} {person.user.last_name}
         </span>
-        {/* Masked: a platform admin needs to recognise the record, not to
-            contact this person or match them against an address elsewhere. The
-            domain stays, since it tells support whether they're on the school's
-            own domain and identifies nobody by itself. */}
-        <span className="block truncate font-mono text-xs text-n-500">
-          {maskEmail(person.user.email)}
+        {/* The domain is kept even when masked: it tells support whether
+            someone is on the school's own domain or a personal address, and
+            identifies nobody by itself. */}
+        <span
+          className={`block truncate text-xs text-n-500 ${maskAddress ? "font-mono" : ""}`}
+        >
+          {maskAddress ? maskEmail(person.user.email) : person.user.email}
         </span>
       </span>
     </li>

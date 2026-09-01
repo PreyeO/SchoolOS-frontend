@@ -1,10 +1,15 @@
 // Navigation structure — single source of truth for all nav components.
 
+// Root-relative ("/#features"), not bare ("#features"). These sections live on
+// the landing page, but the navbar now renders on every marketing page — and a
+// bare fragment on /book-demo looks for an element that isn't there, so the
+// links did nothing at all. With the leading slash they navigate home and then
+// scroll; on the landing page itself the behaviour is unchanged.
 export const NAV_LINKS = [
-  { label: "Product", href: "#product" },
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#about" },
+  { label: "Product", href: "/#product" },
+  { label: "Features", href: "/#features" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "About", href: "/#about" },
 ] as const;
 
 // Both public CTAs point at the pilot funnel while onboarding is invite-led.
