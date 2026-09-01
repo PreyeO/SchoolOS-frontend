@@ -30,7 +30,10 @@ export function consumeSessionExpiredFlag(): boolean {
 // module-scoped before: one refresh must serve every request that 401s in the
 // same window, or a burst of parallel calls each fires its own and they race to
 // write the store.
-export function installTokenRefresh(client: AxiosInstance, isPublicPath: (url?: string) => boolean) {
+export function installTokenRefresh(
+  client: AxiosInstance,
+  isPublicRequest: (config: { url?: string; method?: string }) => boolean,
+) {
   let isRefreshing = false;
   let queue: Array<(token: string | null) => void> = [];
 
@@ -72,7 +75,7 @@ export function installTokenRefresh(client: AxiosInstance, isPublicPath: (url?: 
       const status = error.response?.status;
       const original = error.config as RetriableConfig | undefined;
 
-      if (status !== 401 || !original || original._retried || isPublicPath(original.url)) {
+      if (status !== 401 || !original || original._retried || isPublicRequest(original)) {
         return Promise.reject(error);
       }
 
