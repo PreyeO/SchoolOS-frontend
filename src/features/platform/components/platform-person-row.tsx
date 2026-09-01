@@ -1,6 +1,7 @@
 import { GraduationCap } from "lucide-react";
 
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { maskEmail } from "@/lib/text/mask-email";
 
 import type { PeopleKind, PlatformPerson } from "../api/platform-people-api";
 
@@ -12,9 +13,11 @@ import type { PeopleKind, PlatformPerson } from "../api/platform-people-api";
 // answer completely. The school's own admin, who quotes that number when they
 // report a problem, already knows whose it is; nobody at the vendor needs to.
 //
-// The adult directories are unchanged: teachers, parents and school admins are
-// the people a platform admin actually corresponds with, and identifying them
-// is the point of looking them up.
+// Adults keep their names — teachers, parents and school admins are the people
+// a platform admin actually corresponds with, and identifying the record is the
+// point of the lookup — but their email is masked. Recognising a record and
+// being able to contact or correlate someone are different needs, and only the
+// first belongs on this screen.
 //
 // This narrows what is DISPLAYED. The list endpoint still sends the full
 // record — name, email, gender, class — so the payload is in the browser
@@ -66,7 +69,13 @@ export function PlatformPersonRow({ person, kind }: { person: PlatformPerson; ki
         <span className="block truncate text-sm text-ink">
           {person.user.first_name} {person.user.last_name}
         </span>
-        <span className="block truncate text-xs text-n-500">{person.user.email}</span>
+        {/* Masked: a platform admin needs to recognise the record, not to
+            contact this person or match them against an address elsewhere. The
+            domain stays, since it tells support whether they're on the school's
+            own domain and identifies nobody by itself. */}
+        <span className="block truncate font-mono text-xs text-n-500">
+          {maskEmail(person.user.email)}
+        </span>
       </span>
     </li>
   );
