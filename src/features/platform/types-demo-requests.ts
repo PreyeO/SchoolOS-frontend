@@ -33,7 +33,15 @@ export interface DemoRequest {
   updated_at: string;
 }
 
+// Mirrors DemoRequestFilter on the backend. created_at_* are dates
+// (YYYY-MM-DD), matching the created_at_after / created_at_before convention
+// the profile lists already use.
 export interface DemoRequestFilters {
   search?: string;
   status?: DemoRequestStatus;
+  role?: PilotRole;
+  student_range?: StudentRange;
+  state?: string;
+  created_at_after?: string;
+  created_at_before?: string;
 }

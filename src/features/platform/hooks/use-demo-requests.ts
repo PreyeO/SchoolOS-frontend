@@ -12,7 +12,9 @@ const DEMO_REQUESTS_KEY = ["platform", "demo-requests"];
 
 export function useDemoRequests(filters: DemoRequestFilters) {
   return useQuery({
-    queryKey: [...DEMO_REQUESTS_KEY, filters.search ?? "", filters.status ?? ""],
+    // Every filter in the key: two different filter sets are two different
+    // results, and sharing a key would serve one for the other.
+    queryKey: [...DEMO_REQUESTS_KEY, filters],
     queryFn: () => getDemoRequests(filters),
   });
 }

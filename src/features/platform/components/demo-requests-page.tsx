@@ -9,7 +9,12 @@ import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 import { useDemoRequests } from "../hooks/use-demo-requests";
-import { DEMO_REQUEST_STATUSES, type DemoRequestStatus } from "../types-demo-requests";
+import {
+  DEMO_REQUEST_STATUSES,
+  type DemoRequestFilters,
+  type DemoRequestStatus,
+} from "../types-demo-requests";
+import { DemoRequestFilterBar } from "./demo-request-filters";
 import { DemoRequestRow } from "./demo-request-row";
 
 const STATUS_LABELS: Record<DemoRequestStatus, string> = {
@@ -24,12 +29,17 @@ export function DemoRequestsPage() {
   // question is "who haven't we called yet", not "everyone who ever asked".
   const [status, setStatus] = useState<DemoRequestStatus | "all">("pending");
   const [search, setSearch] = useState("");
+  // Everything except status and search, which have their own controls.
+  const [filters, setFilters] = useState<DemoRequestFilters>({});
   const debounced = useDebouncedValue(search, 300);
 
   const { data: requests, isPending, isError, error } = useDemoRequests({
+    ...filters,
     search: debounced || undefined,
     status: status === "all" ? undefined : status,
   });
+
+  const hasNarrowed = debounced.length > 0 || Object.values(filters).some(Boolean);
 
   function tabClass(active: boolean) {
     return cn(
@@ -73,14 +83,16 @@ export function DemoRequestsPage() {
         </div>
       </div>
 
+      <DemoRequestFilterBar value={filters} onChange={setFilters} />
+
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading demo requests…</p>
       ) : isError ? (
         <ErrorState error={error} resourceLabel="the demo requests" />
       ) : requests.length === 0 ? (
         <p className="rounded-xl border border-n-200 bg-white p-8 text-center text-sm text-n-400 italic">
-          {debounced
-            ? "No demo requests match that search."
+          {hasNarrowed
+            ? "No demo requests match those filters."
             : status === "all"
               ? "No demo requests yet."
               : `Nothing ${STATUS_LABELS[status].toLowerCase()}.`}
