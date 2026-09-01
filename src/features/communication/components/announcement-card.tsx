@@ -2,6 +2,7 @@
 
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { formatTimeOfDay } from "@/lib/text/format-time-of-day";
+import { wasEdited } from "@/lib/text/was-edited";
 
 import { audienceLabel } from "../lib/audiences";
 import { categoryMeta } from "../lib/categories";
@@ -28,7 +29,7 @@ export function AnnouncementCard({ announcement, canManage, reachesMe }: Props) 
   // Null once the author's user record is removed. Fall back to a label rather
   // than rendering "undefined undefined" or an empty avatar.
   const byline = author ? `${author.first_name} ${author.last_name}` : "Removed user";
-  const edited = announcement.updated_at !== announcement.created_at;
+  const edited = wasEdited(announcement.created_at, announcement.updated_at);
   const kind = categoryMeta(announcement.category);
   const KindIcon = kind.icon;
 

@@ -28,11 +28,11 @@ export const CONTACT_TIMES = [
 ] as const;
 
 export const PILOT_COPY = {
-  eyebrow: "Free pilot · this term",
+  eyebrow: "Free pilot · 90 days",
   heading: "Join the SchoolOS pilot.",
-  body: "We're onboarding a small number of Nigerian schools for a free pilot this term. Full access to everything, and we help you set it up. No cost.",
+  body: "We're onboarding a small number of Nigerian schools for a free 90-day pilot. Full access to everything, and we help you set it up. No cost.",
   reassurances: [
-    "No cost, and no card",
+    "Free for 90 days, and no card",
     "We import your students and set up your terms with you",
     "Live in about a week",
   ],

@@ -15,7 +15,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What does it actually cost?",
-    a: "From ₦400 per active student per term. A school with 300 students pays ₦120,000 per term, often less than the cost of printing and distributing report cards manually. There are no hidden setup fees and no annual contracts.",
+    a: "₦1,000 per student per term, and your first term is free. There is one plan, so a school of forty and a school of four thousand get exactly the same features. A school with 300 students pays ₦300,000 a term once the free term ends. No setup fee, no annual contract.",
   },
   {
     q: "What support do we get after going live?",
