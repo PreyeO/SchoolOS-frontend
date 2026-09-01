@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type FieldPath } from "react-hook-form";
 import { ArrowLeft } from "lucide-react";
@@ -33,7 +33,6 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }
     control,
     handleSubmit,
     trigger,
-    clearErrors,
     formState: { errors },
   } = useForm<DemoRequestFormValues>({
     resolver: zodResolver(demoRequestSchema),
@@ -44,24 +43,27 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }
 
   const isLast = step === STEP_FIELDS.length - 1;
 
-  // A zod resolver validates the WHOLE schema on every pass — it can't check a
-  // subset, because the schema is one object. So validating step 2 also
-  // evaluates step 3's still-empty email and phone, and those errors reach
-  // formState before the visitor has seen the fields: the step opened already
-  // red, accusing them of not filling in something they'd never been shown.
-  //
-  // Cleared only the first time a step is reached. Coming back to a step you
-  // genuinely got wrong keeps its errors, which is the useful behaviour.
-  const furthestStep = useRef(0);
-
   async function next() {
-    if (!(await trigger(STEP_FIELDS[step]))) return;
-    const target = step + 1;
-    if (target > furthestStep.current) {
-      furthestStep.current = target;
-      clearErrors(STEP_FIELDS[target]);
-    }
-    setStep(target);
+    // trigger(names) writes errors for those names only — confirmed in RHF's
+    // source — so advancing never marks a later step's fields.
+    if (await trigger(STEP_FIELDS[step])) setStep((s) => s + 1);
+  }
+
+  // Enter means "next", not "submit", until the last step.
+  //
+  // A bare <form> submits on Enter from any text input. On a three-step form
+  // that ran handleSubmit from step 1 — and handleSubmit validates the WHOLE
+  // schema (`_runSchema()` with no names, then `_formState.errors = errors`),
+  // so every later field was marked invalid at once. Step 3 then opened with
+  // email and phone already red, accusing the visitor of not filling in fields
+  // they had never been shown, without them having pressed the button.
+  //
+  // Textareas keep Enter as a newline — the optional message is one.
+  function onKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
+    if (e.key !== "Enter" || isLast) return;
+    if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
+    e.preventDefault();
+    void next();
   }
 
   function submit(values: DemoRequestFormValues) {
@@ -85,7 +87,7 @@ export function BookDemoForm({ onDone }: { onDone: (firstName: string) => void }
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} onKeyDown={onKeyDown} noValidate className="space-y-4">
       <BookDemoProgress index={step} />
 
       {step === 0 && <BookDemoStepYou register={register} errors={errors} />}

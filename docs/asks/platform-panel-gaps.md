@@ -1,5 +1,8 @@
 # Backend asks — Platform admin panel
 
+**Status 2026-09-01:** §2 has shipped. §1 and §3 are still open, and the §4
+notes still hold.
+
 The staff console is built and live: Overview, Schools (+ detail with
 extend-access), Revenue, Directory, Staff, Audit log. Everything below was
 found by probing with a real Super Admin token — none of it is visible from
@@ -40,16 +43,12 @@ a refinement rather than a prerequisite.
 
 ---
 
-## 2. The audit log can't be filtered by school
+## 2. ~~The audit log can't be filtered by school~~ — SHIPPED
 
-`AuditLogFilters` exposes `action`, `actor` search, and a `created_at` range —
-no school parameter. The platform audit log is cross-school (914 entries here)
-and each row *carries* `school_name`, so we can label rows but not narrow to
-one school.
-
-**Ask:** a `school_id` filter on `AuditLogViewSet`. Cheap, and it turns "what
-happened at this school" from scrolling into a query. It would also let the
-school detail page show that school's recent activity inline.
+`AuditLogFilter` now exposes `school_id` alongside `action`, `actor` and the
+`created_at` range. Confirmed in the backend filter. Not yet consumed on the
+frontend: the school detail page could show that school's recent activity
+inline, which is what the filter was asked for.
 
 ---
 
