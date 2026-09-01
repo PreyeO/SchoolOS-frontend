@@ -4,17 +4,29 @@ import Link from "next/link";
 import { CalendarRange, CalendarX } from "lucide-react";
 
 import { useCanAccess } from "@/lib/auth/use-can-access";
+import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { useSchoolStore } from "@/stores/school-store";
 
 export function TermChip() {
   const school = useSchoolStore((s) => s.currentSchool);
+  // The store holds null both for "no term is current" and for "we haven't
+  // looked yet", and those must not read the same. Sharing the query key with
+  // useSyncSchoolData means this reads the same cache entry rather than
+  // fetching again — it only needs to know whether the answer has arrived.
+  //
+  // Without this the chip announced "No current term" on every fresh boot,
+  // which became permanent-looking after a subdomain hand-off, where the store
+  // starts empty and the school loads before the sessions do.
+  const { isPending: termUnknown } = useAcademicSessions();
   // Sessions & Terms is admin-only, so for a teacher this is a statement of
   // fact rather than something they can act on — the same warning, without a
   // link that would refuse them.
   const canFixTerm = useCanAccess("/settings/sessions");
 
-  // Nothing to say before a school is loaded at all.
-  if (!school) return null;
+  // Nothing to say before a school is loaded, or before the term is known.
+  // Silence is right for both: a chip that flashes a warning and then corrects
+  // itself teaches people to distrust it.
+  if (!school || termUnknown) return null;
 
   // No period marked current. This isn't cosmetic: enrolling a student and
   // inviting one both fail outright with "No current academic session is set for
