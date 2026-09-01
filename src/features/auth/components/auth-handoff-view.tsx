@@ -6,7 +6,9 @@ import { apiClient } from "@/lib/api/client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
 import { applyAuthTokens } from "@/lib/auth/apply-auth-tokens";
 import { HANDOFF_PARAMS, safeNextPath } from "@/lib/auth/handoff";
+import { getSchoolDetail } from "@/lib/school/get-school-detail";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSchoolStore } from "@/stores/school-store";
 
 // Receives a session handed over from the apex and settles it onto this
 // subdomain, then sends the visitor on.
@@ -52,7 +54,18 @@ export function AuthHandoffView() {
 
     applyAuthTokens(access, refresh);
 
-    async function rotateThenContinue() {
+    // Rotate the handed-over pair, and warm the school store, before moving on.
+    //
+    // The store is origin-scoped like everything else, so it arrives empty on
+    // this subdomain. The dashboard would otherwise paint in the default
+    // SchoolOS palette and repaint once the profile query landed — and an empty
+    // store is what let the term race drop the current session (see
+    // useSyncSchoolData). Filling it here means the dashboard boots knowing
+    // which school it is.
+    //
+    // Both run together: neither depends on the other, and this page is already
+    // showing a "signing you in" state.
+    async function rotate() {
       try {
         const { data } = await apiClient.post<{ access: string; refresh?: string }>(
           ENDPOINTS.REFRESH,
@@ -65,10 +78,36 @@ export function AuthHandoffView() {
         // Rotation is a hardening step, not a gate. The handed-over pair works;
         // failing here must not strand someone on a blank page.
       }
+    }
+
+    async function warmSchool() {
+      const schoolId = useAuthStore.getState().claims?.school_id;
+      if (!schoolId) return;
+      try {
+        const school = await getSchoolDetail(schoolId);
+        useSchoolStore.getState().hydrateSchool({
+          id: school.id,
+          name: school.name,
+          slug: school.slug,
+          school_type: school.school_type,
+          levels: school.levels,
+          primaryColor: school.primary_color,
+          accentColor: school.accent_color,
+          logoUrl: school.logo,
+          motto: school.motto,
+        });
+      } catch {
+        // The dashboard re-fetches this anyway via useSyncSchoolData; warming
+        // it here only removes a repaint.
+      }
+    }
+
+    async function settleThenContinue() {
+      await Promise.allSettled([rotate(), warmSchool()]);
       window.location.replace(next);
     }
 
-    void rotateThenContinue();
+    void settleThenContinue();
   }, []);
 
   return (

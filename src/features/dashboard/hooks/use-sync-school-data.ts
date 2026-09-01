@@ -19,6 +19,15 @@ export function useSyncSchoolData() {
   const { data: sessions } = useAcademicSessions();
   const hydrateSchool = useSchoolStore((s) => s.hydrateSchool);
   const updateSession = useSchoolStore((s) => s.updateSession);
+  // updateSession is a no-op while currentSchool is null — it merges into an
+  // existing school rather than creating one. On a fresh origin the store
+  // starts empty and these two queries race, so whenever sessions landed first
+  // the term was silently dropped and the effect never re-ran. That is what
+  // left the chip reading "no current term" after a subdomain hand-off until a
+  // manual refresh, where the store was already populated and the order no
+  // longer mattered. Waiting for the school, and re-running once it arrives,
+  // makes the order irrelevant.
+  const hasSchool = useSchoolStore((s) => s.currentSchool !== null);
 
   useEffect(() => {
     if (!school) return;
@@ -36,7 +45,7 @@ export function useSyncSchoolData() {
   }, [school, hydrateSchool]);
 
   useEffect(() => {
-    if (!sessions) return;
+    if (!sessions || !hasSchool) return;
     const current = sessions
       .flatMap((s) => s.periods.map((p) => ({ sessionName: s.name, period: p })))
       .find((entry) => entry.period.is_current);
@@ -45,5 +54,5 @@ export function useSyncSchoolData() {
     // enrollment path (invite-student, enroll) hard-fails until one is set — so
     // the chip showing a stale term would hide the actual cause of those errors.
     updateSession(current?.sessionName ?? null, current?.period.name ?? null);
-  }, [sessions, updateSession]);
+  }, [sessions, hasSchool, updateSession]);
 }
