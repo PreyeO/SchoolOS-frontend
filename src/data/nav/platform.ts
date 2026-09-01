@@ -1,5 +1,6 @@
 import {
   Building2,
+  Inbox,
   LayoutDashboard,
   ScrollText,
   ShieldCheck,
@@ -46,6 +47,7 @@ export const PLATFORM_NAV_GROUPS: NavGroup[] = [
     icon: Building2,
     items: [
       item("All schools", "/platform/schools", Building2, "Every school on the platform and its access status."),
+      item("Demo requests", "/platform/demo-requests", Inbox, "Schools that asked to join the pilot."),
       item("Revenue", "/platform/revenue", TrendingUp, "Projected termly revenue, per school."),
     ],
   },
