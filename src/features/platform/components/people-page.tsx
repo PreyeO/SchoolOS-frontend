@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
-import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +12,7 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 import { getPlatformPeople, type PeopleKind } from "../api/platform-people-api";
 import { usePlatformSchools } from "../hooks/use-platform";
+import { PlatformPersonRow } from "./platform-person-row";
 
 const TABS: { value: PeopleKind; label: string }[] = [
   { value: "students", label: "Students" },
@@ -74,7 +74,7 @@ export function PlatformPeoplePage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email…"
+            placeholder={kind === "students" ? "Search by admission number…" : "Search by name or email…"}
             className="pl-9"
             aria-label="Search people"
           />
@@ -92,6 +92,12 @@ export function PlatformPeoplePage() {
 
         {TABS.map((tab) => (
           <TabsContent key={tab.value} value={tab.value}>
+            {tab.value === "students" && (
+              <p className="mb-3 rounded-lg border border-n-200 bg-n-50 px-3 py-2 text-xs text-n-500">
+                Students are listed by admission number and class only. Most are minors, and
+                supporting a school doesn&rsquo;t require knowing a child&rsquo;s name.
+              </p>
+            )}
             {query.isPending ? (
               <p className="text-sm text-n-400" role="status">Loading…</p>
             ) : query.isError ? (
@@ -106,22 +112,7 @@ export function PlatformPeoplePage() {
               <>
                 <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
                   {query.data.people.map((person) => (
-                    <li key={person.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <PersonAvatar
-                        firstName={person.user.first_name}
-                        lastName={person.user.last_name}
-                        photo={person.user.photo}
-                        className="size-8 shrink-0"
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-ink">
-                          {person.user.first_name} {person.user.last_name}
-                        </span>
-                        <span className="block truncate text-xs text-n-500">
-                          {person.user.email}
-                        </span>
-                      </span>
-                    </li>
+                    <PlatformPersonRow key={person.id} person={person} kind={tab.value} />
                   ))}
                 </ul>
                 {query.data.total > query.data.people.length && (
