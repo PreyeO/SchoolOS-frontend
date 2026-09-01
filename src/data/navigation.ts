@@ -8,7 +8,8 @@ import { communicationGroup } from "./nav/communication";
 import { operationsGroup } from "./nav/operations";
 import { insightsGroup } from "./nav/insights";
 import { settingsGroup } from "./nav/settings";
-import type { NavItem, Persona } from "./nav/types";
+import { PLATFORM_NAV_GROUPS } from "./nav/platform";
+import type { NavGroup, NavItem, Persona } from "./nav/types";
 
 export type { NavGroup, NavItem, Persona } from "./nav/types";
 export { isPersona } from "./nav/types";
@@ -46,21 +47,35 @@ export function getNavItemByHref(href: string) {
   return undefined;
 }
 
-// The nav item governing a pathname, including nested routes: /students/<id>
-// resolves to the /students item. Longest match wins, so /settings/grading picks
-// the grading item rather than /settings.
-//
-// This turns the nav's persona declarations into the single source of truth for
-// access, rather than a second list that could drift from it.
-export function findNavItemForPath(pathname: string) {
+// Longest match wins within the groups given, so /settings/grading picks the
+// grading item rather than /settings, and /students/<id> resolves to /students.
+function matchIn(groups: NavGroup[], pathname: string): NavItem | undefined {
   let best: NavItem | undefined;
-  for (const group of NAV_GROUPS) {
+  for (const group of groups) {
     for (const item of flattenLeaves(group.items)) {
       const matches = item.href === pathname || pathname.startsWith(`${item.href}/`);
       if (matches && (!best || item.href.length > best.href.length)) best = item;
     }
   }
   return best;
+}
+
+// Which row the current route belongs to — used for sidebar highlighting and
+// the topbar title.
+//
+// Searches the PLATFORM groups too, and that is the whole point. They are
+// deliberately absent from NAV_GROUPS because that registry is persona-filtered
+// and knows nothing about platform admins — but the platform sidebar still has
+// to know which of its own rows is open. Without them every /platform/* route
+// matched nothing, so no row ever highlighted and the accordion collapsed its
+// open group on each navigation, because useSidebarAccordion re-derives the
+// open group from exactly this function.
+//
+// Matching only. Access is decided by canAccessPath below, which stays on
+// NAV_GROUPS — a platform route must not become reachable just because it can
+// now be identified.
+export function findNavItemForPath(pathname: string) {
+  return matchIn([...NAV_GROUPS, ...PLATFORM_NAV_GROUPS], pathname);
 }
 
 // The caller's school permissions, or null when they aren't known yet.
@@ -93,7 +108,10 @@ export function canAccessPath(
   personas: Persona[],
   permissions: PermissionSet = null,
 ): boolean {
-  const item = findNavItemForPath(pathname);
+  // matchIn, not findNavItemForPath: access is a school-nav question. Letting
+  // a platform row answer it would have /platform/* gated by the filler
+  // personas on PLATFORM_NAV_GROUPS rather than by PlatformGuard.
+  const item = matchIn(NAV_GROUPS, pathname);
   if (!item) return true;
   return itemAllowed(item, personas, permissions);
 }
