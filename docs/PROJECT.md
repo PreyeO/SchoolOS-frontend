@@ -32,16 +32,16 @@ src/hooks/  src/lib/{api,auth,tenant,validations,utils}  src/stores/  src/types/
 - **Import via the `@/` alias.** File naming: components `PascalCase.tsx`, hooks `use-thing.ts` → `useThing`, others `kebab-case.ts`.
 - **Preserve trailing slashes exactly** as the backend defines them (some endpoints have them, some don't).
 
-## Deliberate 150-line exceptions (reviewed 2026-08-18)
+## Deliberate 150-line exceptions (counts re-checked 2026-09-01)
 
 Four files are knowingly over the limit. This is a decision, not an oversight — don't "fix" them casually.
 
 | File | Lines |
 |---|---|
-| `features/results/components/score-entry-page.tsx` | ~441 |
-| `features/attendance/components/attendance-page.tsx` | ~439 |
-| `features/results/components/publish-results-page.tsx` | ~391 |
-| `features/results/components/behaviour-page.tsx` | ~361 |
+| `features/results/components/score-entry-page.tsx` | 441 |
+| `features/attendance/components/attendance-page.tsx` | 462 |
+| `features/results/components/publish-results-page.tsx` | 418 |
+| `features/results/components/behaviour-page.tsx` | 343 |
 
 **Why:** all four carry offline state — draft seeding *during render*, paused-mutation queues, and reconciliation against a query's `dataUpdatedAt`. The order of those render-time state updates is load-bearing (see the comments in `use-register-draft-sync.ts` and `use-score-draft-sync.ts`). **There are no tests in this repo**, and `tsc`/`eslint`/`build` cannot detect a broken seed ordering, a dropped border, or marks that silently stop restoring after a reconnect — a bulk-refactor pass through these files in Aug 2026 shipped exactly such a styling regression, caught only by chance. Splitting them is a real risk with no safety net, and they are already densely commented on *why* each ordering is what it is, which is the part that's hard to reconstruct.
 
@@ -49,7 +49,7 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 
 **Also:** never bulk-rewrite JSX with a script. Two regex passes in that same sweep went wrong (one silently no-op'd on multi-line attributes, the other stripped Tailwind classes from elements it wasn't targeting). Hand-edit, or verify every hunk.
 
-**A fifth exception, of a different kind: `data/countries.ts` (~265 lines).** A flat ISO 3166-1 lookup table (249 entries), generated 2026-08-24 by pulling `django_countries.countries` directly off the running backend — not hand-typed — so it can't drift from what `StudentProfileUpdateSerializer` accepts for `nationality`. This is data, not logic, same class as `nigerian-states.ts`; it's only long because there are 249 countries rather than 37 states. Splitting a flat lookup table alphabetically would be line-count theater with no readability gain — there's no real seam to split along. If it needs regenerating, re-run the same `django_countries.countries` pull against the live backend rather than hand-editing entries.
+**A fifth exception, of a different kind: `data/countries.ts` (264 lines).** A flat ISO 3166-1 lookup table (249 entries), generated 2026-08-24 by pulling `django_countries.countries` directly off the running backend — not hand-typed — so it can't drift from what `StudentProfileUpdateSerializer` accepts for `nationality`. This is data, not logic, same class as `nigerian-states.ts`; it's only long because there are 249 countries rather than 37 states. Splitting a flat lookup table alphabetically would be line-count theater with no readability gain — there's no real seam to split along. If it needs regenerating, re-run the same `django_countries.countries` pull against the live backend rather than hand-editing entries.
 
 ## Error & toast handling (uniform)
 - The backend returns `{ "detail": ... }` where `detail` is a **string OR an array of strings**, for both success and error.
@@ -60,9 +60,11 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 ## Auth & tenancy
 - Base URL from `NEXT_PUBLIC_API_BASE_URL` (dev: `http://localhost:8000`). School domain from `NEXT_PUBLIC_SCHOOL_DOMAIN`.
 - Tokens (`access`,`refresh`) stored in **localStorage** via zustand `persist` (dev; move to httpOnly cookies before launch — noted as TODO). Deliberately localStorage, not sessionStorage — the latter is scoped per tab, which broke opening a dashboard link in a new tab (it saw an empty store and bounced to `/login` despite the user being authenticated elsewhere).
-- Axios request interceptor attaches `Authorization: Bearer <access>` — **EXCEPT on public routes**: signup (`/api/users/`), `/api/auth/verify-email/`, `/api/auth/resend-verification/`, `/api/auth/login/`, password-reset request/confirm, and accept-invite. (A stale token on a public route causes a 401 — this bug has bitten before.)
+- Axios request interceptor attaches `Authorization: Bearer <access>` — **except on public routes** (`PUBLIC_RULES` in `lib/api/client.ts`): signup, verify-email, resend-verification, login, password-reset request/confirm, refresh, and `POST /api/demo-requests/`. A stale token on a public route causes a 401 — that bug has bitten before. **Rules are `{ path, methods? }`, not bare paths**: `/api/demo-requests/` is public for POST (the marketing form) and authenticated for GET/PATCH (the platform lead queue), and matching on path alone sent the admin's reads out with no header. The same predicate gates the refresh interceptor, so getting it wrong breaks recovery too.
 - Decode the access token (`jwt-decode`) for claims: `user_id`, `school_id`, `membership_id`, `personas` (e.g. `["admin","owner"]`), `is_platform_admin`.
-- **Multi-tenant:** each school lives on a subdomain (`<slug>.myschoolos.io` — matches the backend's computed `School.subdomain`). Auth happens on the apex; the school app on the subdomain. Subdomains don't resolve on `localhost` — use a dev fallback (`lvh.me`). Keep the tenant redirect isolated in `lib/tenant/school-url.ts`, and the apex-vs-tenant decision in `src/proxy.ts`. Never hardcode the domain — read `env.SCHOOL_DOMAIN`, which is what made the `schoolos.com` → `myschoolos.io` rename a config change rather than a hunt.
+- **Multi-tenant:** each school lives on a subdomain (`<slug>.myschoolos.io` — matches the backend's computed `School.subdomain`). Subdomains don't resolve on `localhost` — use a dev fallback (`lvh.me`). Never hardcode the domain — read `env.SCHOOL_DOMAIN`, which made the `schoolos.com` → `myschoolos.io` rename a config change rather than a hunt.
+- **Signing in on the apex hands the session to the subdomain** (`lib/auth/handoff.ts` → `/auth-handoff`). The token is portable — the backend validates a signature, not an origin — but `localStorage` is per-origin, so it has to be carried across explicitly. It travels in the URL **fragment**, which never reaches a server; the landing page strips it from history, rotates the refresh token (the backend rotates and blacklists, so the copy that travelled is dead within a second), warms the school store, then hard-navigates. An earlier postMessage/iframe version worked in Chrome and silently did nothing in Safari, which partitions storage for cross-origin iframes. Anyone entering via their own subdomain never touches this: `getCurrentSchoolSlug()` scopes their login from the hostname and they stay put.
+- The apex-vs-tenant decision lives in `src/proxy.ts` — **`proxy.ts`, not `middleware.ts`**: Next 16 renamed the convention, and it runs on the nodejs runtime (edge unsupported). It matches `/` only.
 - Source `school_id` from the decoded token (fallback `currentSchool.id` in the school-store).
 - **`currentSchool` (school-store) reflects other users' edits via refetch-on-mount/focus, not push.** It's written at login/verify-otp/create-school time, and directly by whichever mutation made an edit — a different already-logged-in session (or a second tab) wouldn't otherwise see the change until logout/login. `useSyncSchoolData` (mounted in `DashboardShell`) re-runs `useSchoolProfile`/`useAcademicSessions` (TanStack default: refetch on mount + window refocus) and syncs the result back in via `hydrateSchool`/`updateSession`. This is deliberately not real-time/live — no WebSocket or SSE layer exists in `SchoolOS-backend`, and adding one is out of scope for this workspace (backend is read-only here). A tab left open, focused, and never refreshed still won't pick up another user's change until it refocuses or something else remounts it.
 
@@ -253,7 +255,7 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 - **Unverified:** Safari storage partitioning. `www.` and `<slug>.` are the same site, so the iframe should get normal first-party storage rather than a partitioned bucket, but that can't be tested from here. If it does get partitioned the hand-off simply fails closed and the user stays on the apex.
 - Context: the tenant worker fix shipped, so `fgc.myschoolos.io/` now 307s to `/login` with `x-schoolos-routing: tenant host=fgc.myschoolos.io`. Anyone entering via their own subdomain was already staying there; this closes the last gap, which was the marketing site's Log in link.
 
-**Post-login subdomain hand-off removed (2026-08-31).** Reported as "after logging in at www I don't see my school's subdomain". Investigating it found the reverse of a cosmetic problem: the URL staying on the apex is the path that *works*, and the one case that did redirect was silently logging people out.
+**Post-login subdomain hand-off removed (2026-08-31).** *(Superseded 2026-09-01 — the hand-off is back, carrying the session across rather than assuming it travels. The constraint below is why, and still holds.)* Reported as "after logging in at www I don't see my school's subdomain". Investigating it found the reverse of a cosmetic problem: the URL staying on the apex is the path that *works*, and the one case that did redirect was silently logging people out.
 - **Tokens live in `localStorage`, which is scoped per origin.** `www.myschoolos.io` and `fggc.myschoolos.io` are different origins, so `window.location.href = "https://<slug>.myschoolos.io/dashboard"` delivered the user to their subdomain with an empty token store, and straight back to `/login`.
 - **It only fired when the caller already knew the slug**, which on the apex meant the multi-school picker alone — so it hit exactly the users with more than one school. Two such accounts exist (`p@gmail.com`, `ayibakep@gmail.com`, both `fgc` + `graceland-collage`). A single-school user never had a slug to redirect with, which is why the reported symptom was a wrong URL rather than a failed login.
 - **A third instance: switching school from a subdomain.** `use-switch-school` passed the *new* school's slug and then hard-navigated — so switching from `fgc.` to `graceland-collage.` crossed origins too. It wasn't in the first grep because it never referenced `external`; `tsc` caught it when the argument was removed.
@@ -421,40 +423,63 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 
 - **Confirmed blocked, and deliberately not faked:** payment history and receipt download (`PaymentViewSet` gates `list`/`retrieve`/`receipt` on `view_fees`, which hard-requires `is_admin`), attendance, and enrollment history. A parent can therefore see that a fee is settled but not when it was paid or download proof — an odd half-position worth closing, and ask #3 in the doc above.
 
-## Next up (re-audited against `SchoolOS-backend` on 2026-08-27)
+## Next up
 
-**This audit went deeper than a route-path diff.** The 2026-08-24 count (114/122) came from diffing Django's URL resolver against `lib/api/endpoints/` — but a path-level diff misses new *methods* and *query params* on a path already marked "consumed" (that's exactly how `PATCH /api/students/:id/` sat unnoticed as a gap last time). This pass instead grepped every hand-written `create`/`update`/`partial_update`/`destroy` across all six apps directly, and every `filterset_fields` declaration, rather than trusting ViewSet mixin lists or the route diff alone.
+Nothing is queued. The last full route audit (2026-08-31) found the backend
+essentially fully consumed: of ~130 registered routes, the only unwired ones
+were four detail routes whose list response already carries everything
+(`audit-logs`, `class-arm-results`, `result-remarks`,
+`subject-result-submissions`) and the flat `academic-periods/` list, which is
+read nested inside sessions. All deliberate, none overlooked.
 
-That method surfaced one substantial new finding and confirmed everything else already listed is either shipped or a genuine backend gap. **Known-route count is now 124, not 122** — two real, registered routes (`students/bulk-import/`, `students/bulk-import/preview/`) don't appear in the 2026-08-24 count at all, most likely because they were added to the backend after that audit ran rather than missed by it. 114 of the 124 are consumed; the 10 that aren't are itemized below by priority. **Not re-confirmed live** — Docker was unresponsive for the second half of this session, so nothing below has a fresh curl behind it; treat the route/behavior claims as a static-source read pending one.
+Re-audit rather than trust this: the backend moves between sessions, and a
+path-level diff misses new *methods* and *query params* on a path already
+marked consumed. Grep the hand-written `create`/`update`/`partial_update`/
+`destroy` methods and every `filterset_fields` declaration, not just the URL
+resolver.
 
-### Phase 1 — highest value, ready to build now
-1. ~~**CSV bulk student import**~~ — **done 2026-08-27.** See the block below. It was real bulk-onboarding infrastructure sitting fully built server-side and completely untouched by the frontend until now.
+## Real backend gaps
 
-### Phase 2 — confirmed and fixed
-2. ~~**`SubjectAssignmentViewSet`'s filter param name didn't match what the frontend sent.**~~ — **confirmed and fixed 2026-08-27**, without Docker. `academic/views.py` declares `filterset_fields = ['class_arm_id', 'teacher_id', 'subject_id']` on that ViewSet — attname-suffixed — while the sibling `ClassArmSubjectOfferingViewSet` uses bare `filterset_fields = ['class_arm']`. Both are valid django-filter declarations (confirmed by reproducing `DjangoFilterBackend.get_filterset_class`'s exact construction path locally, pip-installing `django-filter==25.1`/`Django==6.0`-equivalent into a scratch dir since Django's `Options.get_field()` *does* resolve a ForeignKey's `_id`-suffixed attname — my first guess, that the declaration itself was broken, was wrong) — but each exposes a **different query-param name**: the attname style answers to `?teacher_id=`, the bare style to `?teacher=`. `getTeacherAssignments` (`teaching-assignments-api.ts`) was sending the bare `teacher` param against the attname-style filter. Proved the actual failure mode with an in-memory SQLite repro against a model shaped like `SubjectAssignment`: the *right* param name filters correctly, but the *wrong* one — exactly what the frontend was sending — silently returns the **unfiltered queryset**, because django-filter drops an unrecognized query param rather than erroring. Fixed by sending `teacher_id` instead of `teacher`. Blast radius: the Teacher/Staff detail page's "what this teacher teaches" section (`TeacherSubjectAssignments`) was showing every subject assignment in the school, not just the one teacher's — live on every teacher's staff page since whenever that attname-style declaration landed. **Still not confirmed against the real database** (Docker was unreachable all session) — the repro used a from-scratch model that mirrors `SubjectAssignment`'s field, not the live one; worth one real click-through on a teacher with a small, known assignment list once Docker's back, mainly to catch anything the repro's simplification might have missed (permissions, serialization, multiple filters combined).
+What still needs backend work the frontend cannot do alone. Re-verified
+2026-09-01.
 
-### Phase 3 — parked or separate-initiative (backend ready, not a small add)
-3. **Mobile navigation** — parked by the user, agreed in principle: a bottom tab bar for teachers (Home · Register · Scores · More), drawer kept for admins. Needs `viewportFit: "cover"` in `app/layout.tsx` first — zero `env(safe-area-inset-*)` usages currently, so it evaluates to 0 on iOS. Parents/students out of scope until their screens exist.
-4. **Platform admin panel** (`/platform`) — separate initiative, different persona (`is_platform_admin`, no `school_id`). Backend ready. Scope it on its own.
-5. **Sidebar navigation** — flagged by the user as "still a bit difficult to navigate," left alone this session (see the UI-fixes block above) pending a concrete spec of what's hard to find.
+- **No backend app at all:** Admissions · Expenses · Payroll · Messages ·
+  SMS/WhatsApp · Events & Calendar · Timetable · CBT · Transport. These are the
+  nav items hidden as unbuilt, and the same list the landing page presents as
+  roadmap rather than features.
+- **Online fee payment is unbuilt server-side**, not merely unwired.
+  `PaymentSource.PAYSTACK`/`FLUTTERWAVE` are unused enum slots,
+  `Payment.gateway_reference` is written by nothing, and there is no webhook
+  endpoint. A gateway-integration project (initiate, verify, webhook,
+  idempotent recording), not an addition.
+- **Seven school permissions gate nothing server-side** — `delete_students`,
+  `delete_staff`, `delete_fees`, `edit_staff`, `edit_attendance`,
+  `export_fees`, `send_sms`. They're grantable in the Roles editor and grant
+  nothing. `edit_attendance` is the most misleading: marking is teacher-only by
+  design, so no admin can ever mark a register whatever is ticked. Backend's
+  call whether to implement or drop them.
+- **Audit log:** no export endpoint (the NDPA-compliance ask); no `target_type`
+  filter, so "every change to Students" isn't expressible; `search` covers the
+  actor only, not who was affected; and the 82 action strings are hardcoded in
+  `features/audit-logs/lib/actions/` — a catalog endpoint like
+  `school-admin-roles/permissions/` would remove that coupling.
+- **`PUT /subjects/bulk-update/` 500s on a name swap.** The service's own
+  validation permits it, then its row-by-row save trips the unique constraint
+  mid-loop. Order-dependent. See `docs/asks/subject-bulk-update-swap-500.md`;
+  the bulk editor blocks the case client-side meanwhile.
+- **Platform admins receive full student records** for every school — name,
+  email, gender, photo, class. The panel now displays only admission number and
+  class, but that's display-only. See `docs/asks/platform-student-exposure.md`.
+- **Profile update endpoints don't exist.** `TeacherProfile`/`ParentProfile`/
+  `SchoolAdminProfile` have no update route, and `/api/users/` is POST-only —
+  so nobody can edit their own name or phone. That's why `/profile` is
+  read-only.
+- **No test suite anywhere in the frontend.** Not a backend gap, but the most
+  consequential absence in the repo: `tsc`/`eslint`/`build` all passed while
+  three borders were missing from score entry and while the offline cache was
+  deleting itself. Treat every "it builds" as unverified.
 
-### Phase 4 — small, deliberate non-gaps (listed so they don't get "rediscovered")
-- Four `:id/` retrieve routes whose list response already carries everything (`audit-logs`, `class-arm-results`, `result-remarks`, `subject-result-submissions`), `academic-periods/` list (periods are read nested inside sessions), `subjects/bulk-update/` (prefer per-record PATCH), and the two platform-panel routes above — all deliberately unwired, not overlooked.
-
-## Real backend gaps — re-audited 2026-08-27
-What still requires backend work the frontend cannot do on its own:
-- **Admissions:** no backend app; placeholder nav item only.
-- **Expenses / Payroll:** no backend app, so two of Finance's five items stay placeholders; `/finance-reports` can only show outstanding balances.
-- **Messages / SMS & WhatsApp / Events & Calendar:** no backend app; Announcements is the only built item in Communication.
-- ~~**Parents and students have no screens.**~~ — **largely closed 2026-08-27.** Announcements is open to both, and parents have full results/fees self-service (see the Parent self-service block above). Three things remain genuinely blocked, all needing backend work we cannot do from this workspace:
-  - **A student cannot learn their own `StudentProfile.id`.** `accounts/services.py` builds the `/me` `student` block as `{"current_class": ..., "parent_links": ...}` — no `id`, even though `student_profile.id` is in scope on the line above. The self-access branches in `results/services.py` and `fees/services.py` (`is_self`) are already written and working; they simply can never be called, because nothing tells a student which id is theirs (it isn't in the JWT either). **Ask: add `"id": str(student_profile.id)` to that dict.** One field, no new endpoint, no permission change — and it unblocks a Student results/fees screen that would then be a near-copy of the parent one.
-  - **No parent/student attendance visibility.** `attendance/views.py`'s `get_queryset` grants rows to admin-with-`view_attendance` or teacher; everyone else falls through to `qs.none()` — a 200 with an empty list, not a 403, so it fails silently. `attendance/filters.py` has no `student` filter either. **Ask, if wanted: a parent/student branch (self- and live-link-scoped, mirroring what fees/results already do) plus a `student` filterset field.** No UI until then — it would be a permanently empty list with no way to explain itself.
-  - **Online fee payment is unbuilt server-side**, not merely unwired. `PaymentSource.PAYSTACK`/`FLUTTERWAVE` are unused enum slots, `Payment.gateway_reference` is written by nothing, `PaymentViewSet.create` requires the admin-only `record_fees` unconditionally, and there is no webhook endpoint anywhere. A real gateway-integration project (initiate, verify, webhook, idempotent recording), not an addition to the above.
-- **Audit log — asks for the backend team** (UI built and live): no export endpoint (CSV/PDF, the NDPA-compliance ask); no `target_type` filter, so "every change to Students" isn't expressible; `search` covers the actor only, not who was affected; and the 82 action strings are hardcoded in `features/audit-logs/lib/actions/` — a catalog endpoint like `school-admin-roles/permissions/` would remove that coupling.
-- **`student_capacity` can't be changed after create-school:** set once by `SchoolCreationSerializer` and excluded from `SchoolBrandingUpdateSerializer`'s whitelist (grouped with billing fields), so Django admin is the only way to edit it. Nothing enforces it either. Confirmed still true this pass — `SchoolBrandingUpdateSerializer`'s whitelist is `name, logo, primary_color, accent_color, motto, address, city, phone_number, email, website`, no capacity field.
-- **No test suite anywhere in the frontend.** Not a backend gap, but the most consequential absence in the repo: `tsc`/`eslint`/`build` all passed while three borders were missing from score entry and while the offline cache was deleting itself. Treat every "it builds" as unverified.
-
-**Confirmed with no gap this pass:** `TeacherProfile`/`ParentProfile`/`SchoolAdminProfile` have no update endpoint at all (checked every hand-written method in `accounts/views.py`) — that's a real, permanent backend limitation, not a missed wiring job; `attendance`, `results`, `fees`, and `announcements` apps have no writable capability beyond what's already wired.
+Open asks live in `docs/asks/`. Delete one when it ships.
 
 ## How to work in this repo
 - One concern per prompt. State your plan, then build. Run `lint` + `build` and show results before "done".
