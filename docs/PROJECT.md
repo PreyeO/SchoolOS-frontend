@@ -574,6 +574,52 @@ cross-checked against the backend's own `docs/storage.md`.
   boots: upload a real logo and confirm the 204, the key shape, and that the
   PATCH's S3 HEAD passes. See the gap below.
 
+**Login on the apex flickered through three destinations (2026-09-02).** Reported
+as: sign in from the landing page and the URL goes `myschoolos.io/dashboard` →
+subdomain → `/auth-handoff` → subdomain again; entering via the subdomain
+directly shows none of it. **Not the hand-off's fault** — it was a race on the
+apex side, and the hand-off was merely the thing that eventually won.
+- **`applyAuthTokens` writes to the auth store synchronously; the redirect is
+  two awaits away** — `getSchoolDetail`, then `getOnboardingStage` inside
+  `resolvePostAuthPath` for an owner. `LoginView`'s already-signed-in guard
+  watches `tokens`, so it fired the instant they landed and `router.replace`'d
+  to `/dashboard` **on the apex**, mounting the whole `DashboardShell` (and its
+  `/me`, profile and sessions queries) for the few hundred ms before
+  `window.location.href` threw it away. Simulated the real ordering: **three**
+  apex redirects before the hand-off, one hop after the fix.
+- **Fixed by scoping the guard to its actual purpose.** It exists for someone
+  who *arrives* at `/login` already signed in; a session appearing while the
+  form is on screen belongs to `useLogin`, which may still be deciding where to
+  send it — possibly to another origin. `useLogin` now exposes `isRedirecting`,
+  set **before** `applyAuthTokens` so there is no window at all. It is not
+  `isPending`: that goes false the moment `onSuccess` returns, while
+  `handleScoped` is still awaiting.
+- **`LoginView` never waited for `hasHydrated`** — a second flash, on the same
+  screen. `tokens` is null on the first render whether or not a session exists,
+  so an already-signed-in visitor got a frame of the login form before being
+  redirected. The auth store's own comment on `hasHydrated` names LoginView as a
+  consumer that must wait, and it wasn't. Now gated in both the guard and the
+  render.
+- **The apex was keeping the session it had just given away.** The hand-off page
+  rotates on arrival and the backend blacklists the old refresh token, so within
+  a second the apex held a dead pair behind an access token that still looked
+  valid for up to an hour — returning there later meant landing on the apex
+  dashboard, working for a while, then dying at the first refresh as *"Your
+  session expired."* It now hands the session on and drops its copy.
+- **New `clearSession()` on the auth store, deliberately not `clearAuth()`.**
+  `clearAuth` also wipes the offline query cache and a teacher's queued
+  register/score drafts — correct when a session *ends* on a shared device,
+  wrong when it is being handed to another origin, where it would be silent
+  loss of unsubmitted work.
+- **The apex now shows "Signing you in…", the same sentence `/auth-handoff`
+  shows**, so the cross-origin move reads as one step rather than two loading
+  screens. The URL bar still changes once — that is inherent to moving a
+  session across origins, and the `/auth-handoff` stop is what reads the
+  fragment.
+- Clean `tsc`, `eslint`, `build`. **The ordering is verified by simulation, not
+  in a browser** — there is no browser automation here, so the actual flicker
+  needs one click-through on a deployed build to confirm.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

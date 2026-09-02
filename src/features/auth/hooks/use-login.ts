@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -26,9 +27,30 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
   const router = useRouter();
   const setPendingEmail = useAuthStore((s) => s.setPendingVerificationEmail);
   const hydrateSchool = useSchoolStore((s) => s.hydrateSchool);
+  // True from the moment a scoped session is about to be applied until the page
+  // is gone. LoginView reads it to stand down its already-signed-in guard —
+  // see the note below. Never reset: every path out of handleScoped navigates.
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   async function handleScoped(data: LoginResponse) {
     if (data.requires_school_selection) return;
+
+    // Set BEFORE applyAuthTokens, and that ordering is the whole fix.
+    //
+    // applyAuthTokens writes to the auth store SYNCHRONOUSLY, but the redirect
+    // below is two awaits away — getSchoolDetail, then getOnboardingStage
+    // inside resolvePostAuthPath for an owner. LoginView's "already signed in"
+    // guard watches `tokens`, so without this it fired the instant the tokens
+    // landed and router.replace'd to /dashboard ON THE APEX, mounting the whole
+    // dashboard shell (and its /me, profile and sessions queries) for the few
+    // hundred milliseconds before window.location.href threw it all away.
+    //
+    // That was the reported flicker: myschoolos.io/dashboard → subdomain
+    // /auth-handoff → subdomain /dashboard. The guard is for someone who
+    // arrives at /login already signed in; a session that appears while the
+    // form is on screen is this hook's own, and this hook owns where it goes.
+    setIsRedirecting(true);
+
     const claims = applyAuthTokens(data.access, data.refresh);
     let slug: string | null = null;
 
@@ -66,7 +88,24 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
     // Only from the apex, and only when the school is known. Already on a
     // subdomain means there is nothing to move.
     if (slug && getCurrentSchoolSlug() === null) {
-      window.location.href = buildHandoffUrl(slug, data.access, data.refresh, path);
+      const handoffUrl = buildHandoffUrl(slug, data.access, data.refresh, path);
+
+      // Give the session away rather than keeping a copy. The tokens above had
+      // to be stored so getSchoolDetail and the onboarding-stage check could
+      // authenticate, but the apex must not keep them: the hand-off page
+      // rotates on arrival and the backend BLACKLISTS the old refresh token,
+      // so within a second this origin is holding a dead pair behind an access
+      // token that still looks valid for up to an hour.
+      //
+      // Left in place, returning to the apex later hits LoginView's
+      // already-signed-in guard, lands on the apex dashboard, works for a
+      // while, then dies at the first refresh as "Your session expired".
+      //
+      // clearSession, not clearAuth: this session is being handed on, not
+      // ended, so a teacher's queued registers and score drafts on this origin
+      // are not ours to delete.
+      useAuthStore.getState().clearSession();
+      window.location.href = handoffUrl;
       return;
     }
 
@@ -88,7 +127,7 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
     toast.error(message);
   }
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
     onSuccess: (data) => {
       if (data.requires_school_selection) {
@@ -99,4 +138,13 @@ export function useLogin({ onSelectionNeeded }: UseLoginOptions) {
     },
     onError: handleError,
   });
+
+  // Named fields rather than spreading the mutation object: LoginView uses
+  // exactly these three, and spreading a TanStack result touches every property
+  // on it, which defeats its change tracking for no benefit.
+  //
+  // isRedirecting is NOT isPending. isPending goes false the moment onSuccess
+  // returns, while handleScoped is still awaiting its two requests — precisely
+  // the window this flag exists to cover.
+  return { mutate: mutation.mutate, isPending: mutation.isPending, isRedirecting };
 }

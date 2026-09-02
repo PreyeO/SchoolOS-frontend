@@ -28,8 +28,14 @@ interface AuthState {
   hasHydrated: boolean;
   setPendingVerificationEmail: (email: string) => void;
   clearPendingVerificationEmail: () => void;
-  setTokens: (tokens: AuthTokens) => void;
-  setClaims: (claims: AuthClaims) => void;
+  setTokens: (tokens: AuthTokens | null) => void;
+  setClaims: (claims: AuthClaims | null) => void;
+  // Drops the session and nothing else. Distinct from clearAuth, which also
+  // wipes the offline query cache and a teacher's queued register/score drafts
+  // — right when a session ENDS on a shared device, wrong when it is being
+  // handed to another origin, where deleting unsubmitted work would be silent
+  // data loss. Used by the apex→subdomain hand-off; see use-login.
+  clearSession: () => void;
   clearAuth: () => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -47,6 +53,7 @@ export const useAuthStore = create<AuthState>()(
         set({ pendingVerificationEmail: null }),
       setTokens: (tokens) => set({ tokens }),
       setClaims: (claims) => set({ claims }),
+      clearSession: () => set({ tokens: null, claims: null }),
       clearAuth: () => {
         // The offline cache holds a teacher's roster, any queued register or
         // score batch, and the draft stores hold half-finished ones. Leaving any
