@@ -11,3 +11,4 @@ export * from "./endpoints/people";
 export * from "./endpoints/fees";
 export * from "./endpoints/announcements";
 export * from "./endpoints/pilot";
+export * from "./endpoints/storage";

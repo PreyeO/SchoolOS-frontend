@@ -26,7 +26,9 @@ export function useUpdateBranding(onAdvanced: (currentStep: StepKey) => void) {
       const school = await updateBranding(schoolId, {
         primary_color: values.primary_color,
         accent_color: values.accent_color,
-        ...(values.logo?.trim() ? { logo: values.logo.trim() } : {}),
+        // undefined = untouched, null = cleared, string = a new S3 key. See
+        // the note in use-branding-edit.ts.
+        ...(values.logo_key !== undefined ? { logo_key: values.logo_key } : {}),
         ...(values.motto?.trim() ? { motto: values.motto.trim() } : {}),
       });
       const stage = await advanceOnboardingStage(schoolId, "branding");

@@ -1,11 +1,10 @@
 import { z } from "zod";
 
 export const brandingSchema = z.object({
-  // TODO: restore file upload when hosting is ready — logo is a plain URL for now.
-  logo: z
-    .string()
-    .optional()
-    .refine((v) => !v || /^https?:\/\/.+/.test(v), "Enter a valid URL starting with http:// or https://"),
+  // An S3 object key from the presigned-upload flow, set by ImageUploadField
+  // rather than typed — nothing to validate beyond "a string or nothing".
+  // Null clears the logo.
+  logo_key: z.string().nullable().optional(),
   primary_color: z.string().min(1, "Pick a primary colour"),
   accent_color: z.string().min(1, "Pick an accent colour"),
   motto: z.string().trim().optional(),

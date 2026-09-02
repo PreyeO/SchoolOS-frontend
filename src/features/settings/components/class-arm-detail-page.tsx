@@ -6,6 +6,7 @@ import { ArrowLeft, UserRound } from "lucide-react";
 import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { SCHOOL_LEVELS } from "@/data/school-levels";
+import { studentPhoto } from "@/features/students/lib/student-photo";
 import { useCanAccess } from "@/lib/auth/use-can-access";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 
@@ -107,7 +108,7 @@ export function ClassArmDetailPage({ armId }: { armId: string }) {
                 <PersonAvatar
                   firstName={student.user.first_name}
                   lastName={student.user.last_name}
-                  photo={student.user.photo}
+                  photo={studentPhoto(student)}
                   className="size-8 shrink-0"
                 />
                 <div className="min-w-0 flex-1">

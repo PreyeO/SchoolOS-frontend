@@ -13,7 +13,11 @@ export interface SchoolProfilePayload {
   phone_number: string;
   email: string;
   website?: string;
-  logo?: string;
+  // The S3 key, NOT a URL, and NOT `logo`. The backend's
+  // SchoolBrandingUpdateSerializer whitelists `logo_key`; `logo` is a read-only
+  // presigned GET URL on the response. Sending `logo` is silently dropped by
+  // DRF — a 200 that saves nothing.
+  logo_key?: string | null;
   primary_color: string;
   accent_color: string;
   motto?: string;

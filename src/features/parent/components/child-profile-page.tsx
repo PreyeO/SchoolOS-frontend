@@ -5,6 +5,7 @@ import { PersonAvatar } from "@/components/shared/person-avatar";
 import { EnrollmentStatusBadge } from "@/features/students/components/enrollment-status-badge";
 import { genderLabel } from "@/features/students/lib/labels";
 import { isSyntheticEmail } from "@/features/students/lib/is-synthetic-email";
+import { studentPhoto } from "@/features/students/lib/student-photo";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 import { formatDate } from "@/lib/text/format-date";
@@ -58,7 +59,7 @@ export function ChildProfilePage() {
                 <PersonAvatar
                   firstName={student?.user.first_name ?? selected.child!.student_name}
                   lastName={student?.user.last_name ?? ""}
-                  photo={student?.user.photo}
+                  photo={student ? studentPhoto(student) : null}
                   className="size-14 shrink-0"
                 />
                 <div className="min-w-0 flex-1">

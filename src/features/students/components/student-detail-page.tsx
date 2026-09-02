@@ -13,6 +13,7 @@ import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 
 import { useCanEditStudent } from "../hooks/use-update-student";
 import { isSyntheticEmail } from "../lib/is-synthetic-email";
+import { studentPhoto } from "../lib/student-photo";
 import { EnrollmentCard } from "./enrollment-card";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
@@ -67,7 +68,12 @@ export function StudentDetailPage({ id }: { id: string }) {
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-n-200 bg-white p-5">
         <div className="flex items-center gap-4">
-          <PersonAvatar firstName={user.first_name} lastName={user.last_name} photo={user.photo} className="size-14" />
+          <PersonAvatar
+            firstName={user.first_name}
+            lastName={user.last_name}
+            photo={studentPhoto(student)}
+            className="size-14"
+          />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="font-display text-xl font-bold text-ink truncate">

@@ -6,6 +6,7 @@ import { MessageSquarePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { cn } from "@/lib/utils";
+import { studentPhoto } from "@/features/students/lib/student-photo";
 import type { StudentListItem } from "@/features/students/types";
 
 import type { DraftEntry } from "../hooks/use-register-draft";
@@ -29,7 +30,12 @@ export function RegisterRow({ student, entry, savedRecord, canMark, onStatus, on
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
-      <PersonAvatar firstName={user.first_name} lastName={user.last_name} photo={user.photo} className="size-8" />
+      <PersonAvatar
+        firstName={user.first_name}
+        lastName={user.last_name}
+        photo={studentPhoto(student)}
+        className="size-8"
+      />
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm text-ink">{name}</span>

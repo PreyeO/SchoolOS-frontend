@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronsUpDown, Check, Loader2 } from "lucide-react";
 
 import {
@@ -20,9 +21,21 @@ import { SchoolLogo } from "./school-logo";
 // gray-on-initial avatar here rather than SchoolLogo's brand-colored one,
 // which needs the fuller CurrentSchool shape this list doesn't provide.
 function OtherSchoolAvatar({ name, logo }: { name: string; logo: string | null }) {
-  if (logo) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={logo} alt={name} className="size-5 shrink-0 rounded object-cover" />;
+  // Same expiring-presigned-URL fallback as SchoolLogo: these links die after an
+  // hour, and a broken-image glyph in a school picker reads as a broken account.
+  // Tracks WHICH url failed, not a boolean, so a refreshed link is retried
+  // without a reset effect — see the same note in school-logo.tsx.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  if (logo && failedSrc !== logo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={logo}
+        alt={name}
+        onError={() => setFailedSrc(logo)}
+        className="size-5 shrink-0 rounded object-cover"
+      />
+    );
   }
   return (
     <div className="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-[10px] font-bold text-muted-foreground">

@@ -20,7 +20,11 @@ export function useEditBranding() {
       return updateBranding(schoolId, {
         primary_color: values.primary_color,
         accent_color: values.accent_color,
-        ...(values.logo?.trim() ? { logo: values.logo.trim() } : {}),
+        // Three states, not two: undefined means "untouched, don't send",
+        // null means "the logo was removed, clear it", and a string is a new
+        // S3 key. The old `logo?.trim() ? … : {}` collapsed the first two, so
+        // removing a logo silently did nothing.
+        ...(values.logo_key !== undefined ? { logo_key: values.logo_key } : {}),
         ...(values.motto?.trim() ? { motto: values.motto.trim() } : {}),
       });
     },

@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ColorPicker } from "@/components/shared/color-picker";
-import { LogoUrlField } from "@/components/shared/logo-url-field";
+import { ImageUploadField } from "@/features/uploads/components/image-upload-field";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { contrastRatio } from "@/lib/contrast";
 
@@ -31,7 +31,9 @@ interface Props {
 
 function defaultsFrom(school: SchoolResponse): BrandingFormValues {
   return {
-    logo: school.logo ?? "",
+    // undefined so an untouched logo is omitted from the PATCH — this field
+    // holds an S3 key, and school.logo is a presigned read URL, not one.
+    logo_key: undefined,
     primary_color: school.primary_color,
     accent_color: school.accent_color,
     motto: school.motto ?? "",
@@ -40,6 +42,7 @@ function defaultsFrom(school: SchoolResponse): BrandingFormValues {
 
 export function EditBrandingDialog({ school, trigger }: Props) {
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const { mutateAsync, isPending } = useEditBranding();
 
   const {
@@ -75,12 +78,19 @@ export function EditBrandingDialog({ school, trigger }: Props) {
           <DialogTitle>Edit branding</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submit)} noValidate className="space-y-5">
-          <FieldWrapper id="edit-logo" label="School logo" error={errors.logo?.message}>
+          <FieldWrapper id="edit-logo_key" label="School logo" error={errors.logo_key?.message}>
             <Controller
-              name="logo"
+              name="logo_key"
               control={control}
               render={({ field }) => (
-                <LogoUrlField id="edit-logo" value={field.value ?? ""} onChange={field.onChange} hasError={!!errors.logo} />
+                <ImageUploadField
+                  id="edit-logo_key"
+                  prefix="school-logos"
+                  label="logo"
+                  currentUrl={school.logo}
+                  onChange={field.onChange}
+                  onUploadingChange={setUploading}
+                />
               )}
             />
           </FieldWrapper>
@@ -119,8 +129,8 @@ export function EditBrandingDialog({ school, trigger }: Props) {
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving…" : "Save"}
+            <Button type="submit" disabled={isPending || uploading}>
+              {uploading ? "Uploading…" : isPending ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </form>

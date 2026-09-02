@@ -73,9 +73,11 @@ export const aboutSchema = z.object({
   favourite_food: optionalText,
   hobbies: optionalLongText,
   ambitions: optionalLongText,
-  // A plain URLField on the model, not an upload — there is no multipart path
-  // for student photos, so this is a link to an image hosted elsewhere.
-  photo: z.union([z.string().trim().url("Enter a full URL, starting with https://"), z.literal("")]),
+  // An S3 object key from the presigned-upload flow, set by ImageUploadField
+  // rather than typed. StudentProfile.photo became photo_key when S3 landed;
+  // `photo` on the response is a read-only presigned GET URL. Undefined means
+  // untouched (omit from the PATCH), null clears it.
+  photo_key: z.string().nullable().optional(),
 });
 
 export type AdmissionFormValues = z.infer<typeof admissionSchema>;
@@ -86,6 +88,11 @@ export type StudentEditValues = AdmissionFormValues | PersonalFormValues | About
 // Empty string means "clear this", which the API expresses as null. Sending ""
 // would store a blank rather than an absent value, and the detail page renders
 // those differently.
+//
+// `undefined` passes straight through and is then dropped by JSON.stringify, so
+// a field left at undefined (photo_key, when no new file was picked) is omitted
+// from the PATCH rather than sent as null. That distinction is what keeps an
+// untouched photo from being cleared by an edit to the fields beside it.
 export function toPayload(values: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, value === "" ? null : value]),
