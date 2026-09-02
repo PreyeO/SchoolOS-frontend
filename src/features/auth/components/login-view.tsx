@@ -18,13 +18,19 @@ import type { SchoolSummary } from "../types";
 export function LoginView() {
   const router = useRouter();
   const tokens = useAuthStore((s) => s.tokens);
+  // `tokens` is null on the first render whether or not a session exists —
+  // persist hasn't read localStorage yet. Without this gate the guard below
+  // can't fire on that pass, so an already-signed-in visitor gets a frame of
+  // the login form before being redirected. The auth store's own comment on
+  // hasHydrated names LoginView as a consumer that must wait; it wasn't.
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const isPlatformAdmin = useAuthStore((s) => s.claims?.is_platform_admin) ?? false;
 
   const [creds, setCreds] = useState<LoginFormValues | null>(null);
   const [schools, setSchools] = useState<SchoolSummary[] | null>(null);
   const [pendingSlug, setPendingSlug] = useState<string | null>(null);
 
-  const { mutate, isPending } = useLogin({ onSelectionNeeded: setSchools });
+  const { mutate, isPending, isRedirecting } = useLogin({ onSelectionNeeded: setSchools });
 
   // Guard: an already-authenticated user shouldn't see the login page.
   //
@@ -34,9 +40,15 @@ export function LoginView() {
   // sending them there produced a broken shell full of links they can't open.
   // Mirrors resolvePostAuthPath, which already branches this way after a fresh
   // login; only this already-signed-in path was missing it.
+  //
+  // Stands down during our own login. This guard is for a session that was
+  // ALREADY there when someone opened /login; one that appears while the form
+  // is on screen belongs to useLogin, which may still be resolving where to
+  // send it — possibly to another origin. See the note in handleScoped.
   useEffect(() => {
+    if (!hasHydrated || isRedirecting) return;
     if (tokens) router.replace(isPlatformAdmin ? "/platform" : "/dashboard");
-  }, [tokens, isPlatformAdmin, router]);
+  }, [hasHydrated, tokens, isRedirecting, isPlatformAdmin, router]);
 
   // A forced logout (expired refresh token) redirects here and sets this flag.
   useEffect(() => {
@@ -45,7 +57,22 @@ export function LoginView() {
     }
   }, []);
 
-  if (tokens) return null;
+  // Deliberately not a blank screen. The two awaits in handleScoped take real
+  // time, and on the apex the very next thing is /auth-handoff, which shows
+  // this exact sentence — so the wording is identical on both sides and the
+  // cross-origin move reads as one step rather than two loading screens.
+  if (isRedirecting) {
+    return (
+      <p className="text-sm text-n-500" role="status">
+        Signing you in…
+      </p>
+    );
+  }
+
+  // Nothing until we know. Rendering the form on an unhydrated null and pulling
+  // it away a frame later is the flash this gate exists to prevent — and
+  // hydration from localStorage is synchronous, so this costs a frame at most.
+  if (!hasHydrated || tokens) return null;
 
   function handleCredentials(values: LoginFormValues) {
     setCreds(values);
