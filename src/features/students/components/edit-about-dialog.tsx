@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { FieldWrapper } from "@/features/auth/components/field-wrapper";
+import { ImageUploadField } from "@/features/uploads/components/image-upload-field";
 
 import { useUpdateStudent } from "../hooks/use-update-student";
 import { aboutSchema, toPayload, type AboutFormValues } from "../schemas/student-edit-schema";
@@ -14,16 +17,19 @@ import { StudentEditShell } from "./student-edit-shell";
 // why favourite food and ambitions are stored at all — they're not decoration.
 export function EditAboutDialog({ student }: { student: StudentDetail }) {
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const update = useUpdateStudent(student.id);
 
   const defaults: AboutFormValues = {
     favourite_food: student.favourite_food ?? "",
     hobbies: student.hobbies ?? "",
     ambitions: student.ambitions ?? "",
-    photo: student.photo ?? "",
+    // undefined = untouched, so editing hobbies alone never disturbs the photo.
+    photo_key: undefined,
   };
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -52,6 +58,7 @@ export function EditAboutDialog({ student }: { student: StudentDetail }) {
       onOpenChange={handleOpenChange}
       onSubmit={handleSubmit(submit)}
       isPending={update.isPending}
+      isUploading={uploading}
     >
       <TextField
         id="edit-favourite-food"
@@ -71,15 +78,28 @@ export function EditAboutDialog({ student }: { student: StudentDetail }) {
         error={errors.ambitions}
         registration={register("ambitions")}
       />
-      {/* A URL, not an upload — the model stores a link and there is no
-          multipart path for student photos anywhere in the API. */}
-      <TextField
-        id="edit-photo"
-        label="Photo URL"
-        error={errors.photo}
-        registration={register("photo")}
-        hint="Link to an image hosted elsewhere. Leave blank to use their initials."
-      />
+      <FieldWrapper
+        id="edit-photo_key"
+        label="Photo"
+        hint="Optional — their initials show when there's no photo."
+        error={errors.photo_key?.message}
+      >
+        <Controller
+          name="photo_key"
+          control={control}
+          render={({ field }) => (
+            <ImageUploadField
+              id="edit-photo_key"
+              prefix="student-photos"
+              label="photo"
+              shape="circle"
+              currentUrl={student.photo}
+              onChange={field.onChange}
+              onUploadingChange={setUploading}
+            />
+          )}
+        />
+      </FieldWrapper>
     </StudentEditShell>
   );
 }

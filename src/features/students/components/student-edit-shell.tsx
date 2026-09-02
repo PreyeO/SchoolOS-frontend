@@ -22,6 +22,9 @@ interface Props {
   onOpenChange: (next: boolean) => void;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
   isPending: boolean;
+  // Only the About dialog has a file field. Saving while bytes are in flight
+  // would PATCH the previous photo_key, which reads as the upload doing nothing.
+  isUploading?: boolean;
   children: React.ReactNode;
 }
 
@@ -36,6 +39,7 @@ export function StudentEditShell({
   onOpenChange,
   onSubmit,
   isPending,
+  isUploading = false,
   children,
 }: Props) {
   return (
@@ -59,8 +63,8 @@ export function StudentEditShell({
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving…" : "Save"}
+            <Button type="submit" disabled={isPending || isUploading}>
+              {isUploading ? "Uploading…" : isPending ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </form>

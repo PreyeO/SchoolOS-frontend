@@ -9,7 +9,11 @@ export type { StepKey, OnboardingStageResponse };
 // Only these four fields are editable in onboarding; the rest of the school
 // profile was set at create-school and is edited later in dashboard Settings.
 export interface BrandingPayload {
-  logo?: string;
+  // The S3 key from the presigned-upload flow, NOT a URL and NOT `logo`. The
+  // backend whitelists `logo_key` on write and returns `logo` as a read-only
+  // presigned GET URL. DRF drops unknown fields silently, so sending `logo`
+  // returns 200 and saves nothing.
+  logo_key?: string | null;
   primary_color: string;
   accent_color: string;
   motto?: string;

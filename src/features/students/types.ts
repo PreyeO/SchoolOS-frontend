@@ -33,6 +33,11 @@ export interface StudentListItem {
   user: UserMinimal;
   admission_number: string;
   gender: Gender;
+  // The STUDENT's own photo (StudentProfile.photo_key), added to
+  // StudentProfileListSerializer when S3 landed. Distinct from `user.photo`,
+  // which is User.photo_key — a different column with no attach endpoint at
+  // all, so it is null for every student today. Read via studentPhoto().
+  photo: string | null;
   enrollment_status: EnrollmentStatus;
   date_of_admission: string | null;
   current_class: CurrentClass | null;

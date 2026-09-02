@@ -480,7 +480,11 @@ first 90 days free.
   has ₦1,000, "One plan. One price", "Free for 90 days" and "Join the pilot",
   and zero occurrences of ₦400, ₦350, Growth, Enterprise, "Most popular" or
   "Up to 200 students". Clean `tsc`, `eslint` and `build`.
-- **⚠️ The 90 days is not what a self-signup gets — see the backend gap below.**
+- **The 90 days now matches the backend** (corrected 2026-09-02). When this
+  shipped, `create_school` still granted `timedelta(days=30)` and it was logged
+  as a gap. The same pull that brought S3 changed it to **90 days**, so a
+  self-signup at `/signup` now gets exactly what the page promises. Gap closed;
+  nothing to do.
 
 **The admin dashboard greeted the school, not the person (2026-09-01).**
 `DashboardContextHeader` read `{greeting()}, {school?.name}` — "Good morning,
@@ -498,6 +502,77 @@ first name, matching what the teacher home already did.
   student). Now one `lib/text/greeting.ts`, the same consolidation `TermBadge`
   and `NoCurrentTermNotice` got. It deliberately returns the greeting alone and
   never "greeting, name", so each caller keeps its own in-flight fallback.
+
+**File upload wired to S3 (2026-09-02).** The backend shipped a `storage` app
+(commit `04be93e`) doing direct browser-to-S3 upload; the frontend's logo and
+photo fields were still paste-a-URL text boxes carrying a *"restore file upload
+when hosting is ready"* TODO. They now upload real files. Contract read from
+`storage/{views,services,serializers,urls}.py` and `accounts/serializers.py`,
+cross-checked against the backend's own `docs/storage.md`.
+- **It arrived as a silent breakage, and that was the urgent half.** The models
+  went `School.logo` → `logo_key` and `StudentProfile.photo` → `photo_key`, so
+  `SchoolBrandingUpdateSerializer` and `StudentProfileUpdateSerializer` no
+  longer accept the field names the frontend was sending. **DRF drops unknown
+  fields silently**, so saving a logo returned `200` and changed nothing. Same
+  class as the stale-`ff65937`-container bug: a success response for work that
+  never happened.
+- **Three steps, and the order is the whole contract.** `POST
+  /api/presigned-upload/` issues a *reservation*, not an asset; the file goes
+  straight to S3 (the backend never sees the bytes); only after S3's 204 may the
+  key be attached via PATCH, where the backend HEADs the object before saving.
+  A dropped upload means the PATCH simply never happens, which is the correct
+  failure — so `useImageUpload` calls `onUploaded` only after the S3 POST
+  resolves.
+- **The S3 POST uses bare `fetch`, not `apiClient`, deliberately.** The axios
+  instance attaches `Authorization: Bearer` to everything not on the public
+  list — through it, every logo upload would ship a SchoolOS JWT to Amazon.
+  Using a different client is what actually guarantees it, rather than a comment
+  saying not to. No `Content-Type` header is set by hand either: the browser
+  must generate it for the multipart boundary, and the policy's own
+  `Content-Type` condition is satisfied by the form *field* in `fields`, which
+  is a different thing from the request header.
+- **A generation counter, not a boolean, guards the abandon rule.** Picking B
+  while A is still uploading must not save A's key — and A's promise can resolve
+  last. Each pick increments a ref; a step resolving against a stale generation
+  drops its result. The in-flight request is also aborted so the bytes stop.
+- **The form field holds a KEY and defaults to `undefined`, not to the current
+  URL.** Three states: `undefined` omits `logo_key` from the PATCH (untouched),
+  `null` clears it, a string sets it. The old `logo?.trim() ? … : {}` collapsed
+  the first two, so *removing* a logo silently did nothing. Seeding the field
+  with the response's `logo` would be worse still — that's a presigned read URL,
+  not a key, and the backend's HEAD would 400 it.
+- **Save is disabled while bytes are in flight** on all four forms. Saving
+  mid-upload would PATCH the *previous* key, which reads as the upload having
+  quietly done nothing.
+- **An uploaded student photo would have been invisible.** Every student avatar
+  read `user.photo` — `User.photo_key`, a different column with **no attach
+  endpoint anywhere in the API** — while the upload writes `StudentProfile.
+  photo_key`, surfaced as the top-level `photo` that `StudentProfileListSerializer`
+  gained in the same commit. The photo would have saved correctly and never
+  appeared. All six avatar sites now go through `studentPhoto()` (directory row,
+  detail page, attendance register, class-arm roster, parent's child profile),
+  which prefers the student's own and falls back to the user's. Staff, admin,
+  parent and announcement avatars still read `user.photo`, correctly — those are
+  User records with no StudentProfile.
+- **Read URLs expire after an hour** (`S3_PRESIGNED_READ_EXPIRY`), and the
+  school store persists to `localStorage` — so a tab reopened the next morning
+  holds a URL that now 403s. `SchoolLogo` and the switcher's avatar render raw
+  `<img>` and had no error handling, so that renders the browser's broken-image
+  glyph in the sidebar and topbar: a stale link reading as a corrupted logo.
+  Both now fall back to the initial, and both track **which URL failed** rather
+  than a boolean — a `useState(false)` + reset-effect pair is the obvious
+  version and is exactly what `react-hooks/set-state-in-effect` rejects. Self
+  healing, since `useSyncSchoolData` refetches on mount and focus.
+- **`user-photos` is accepted by the presigned endpoint and deliberately not in
+  `UploadPrefix`.** There is no attach endpoint for `User.photo_key`; offering it
+  would produce an orphaned S3 object and nowhere to put the key.
+- **NOT VERIFIED LIVE — the backend cannot boot.** `config/settings/base.py:161`
+  reads `AWS_ACCESS_KEY_ID` through `config()` with no default, and neither
+  `.env` nor `.env.example` carries the four AWS keys, so `school_os_web` exits 1
+  on `UndefinedValueError` before serving anything. Clean `tsc`, `eslint` and
+  `build`, but not one presigned POST has been issued. First thing once it
+  boots: upload a real logo and confirm the 204, the key shape, and that the
+  PATCH's S3 HEAD passes. See the gap below.
 
 ## Next up
 
@@ -550,17 +625,18 @@ What still needs backend work the frontend cannot do alone. Re-verified
   `SchoolAdminProfile` have no update route, and `/api/users/` is POST-only —
   so nobody can edit their own name or phone. That's why `/profile` is
   read-only.
-- **The automatic trial is 30 days, but the landing page now promises 90.**
-  `UserService.create_school` hardcodes `trial_ends_at = now + timedelta(days=30)`
-  (`accounts/services.py`), so anyone who self-signs-up at `/signup` gets 30 —
-  and the marketing site, the pilot page and the FAQ all now say 90. Not
-  currently visible, because every marketing CTA routes to `/book-demo` and a
-  pilot school's access is granted by a platform admin through
-  `POST /schools/{id}/extend-access/`, who can set any date. But `/signup` is
-  live and reachable directly, and that path silently under-delivers by two
-  months. Either the constant becomes 90, or it becomes configurable, or
-  self-signup stops granting a trial and waits for the pilot flow. **Backend's
-  call — flagged, not worked around.**
+- **`school_os_web` will not boot without four AWS env vars.**
+  `config/settings/base.py:161-164` reads `AWS_ACCESS_KEY_ID`,
+  `AWS_SECRET_ACCESS_KEY`, `AWS_STORAGE_BUCKET_NAME` and `AWS_S3_REGION_NAME`
+  through `config()` with **no default**, so a missing one raises
+  `UndefinedValueError` at import time and the container exits 1. Neither `.env`
+  nor `.env.example` carries them, so there is nothing to copy from — which
+  makes this a fresh-clone blocker, not just a local one. Adding them to
+  `.env.example` (empty, as documentation) would have made it self-evident.
+  Until they're set, every screen is unreachable, upload or not.
+  **Also needs the bucket's CORS to allow the frontend origin** — Django's
+  `CORS_ALLOWED_ORIGINS` has no say over a direct-to-S3 POST, and a bucket
+  rejection surfaces in the browser as an opaque `TypeError` with no response.
 - **No test suite anywhere in the frontend.** Not a backend gap, but the most
   consequential absence in the repo: `tsc`/`eslint`/`build` all passed while
   three borders were missing from score entry and while the offline cache was

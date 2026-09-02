@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -8,7 +9,7 @@ import type { FieldErrors } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColorPicker } from "@/components/shared/color-picker";
-import { LogoUrlField } from "@/components/shared/logo-url-field";
+import { ImageUploadField } from "@/features/uploads/components/image-upload-field";
 import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { focusFirstError } from "@/features/onboarding/lib/first-error-field-id";
 import { contrastRatio } from "@/lib/contrast";
@@ -20,6 +21,7 @@ import { BrandingPreview } from "./branding-preview";
 
 export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) {
   const { mutate, isPending } = useUpdateSchoolProfile();
+  const [uploading, setUploading] = useState(false);
 
   const { control, register, handleSubmit, formState: { errors } } = useForm<SchoolProfileFormValues>({
     resolver: zodResolver(schoolProfileSchema),
@@ -30,7 +32,10 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
       phone_number: school.phone_number,
       email: school.email,
       website: school.website ?? "",
-      logo: school.logo ?? "",
+      // undefined, not school.logo: this field holds an S3 KEY now, and an
+      // untouched logo must be omitted from the PATCH rather than echoing the
+      // read URL back as though it were one.
+      logo_key: undefined,
       primary_color: school.primary_color,
       accent_color: school.accent_color,
       motto: school.motto ?? "",
@@ -81,12 +86,19 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
 
       <section className="space-y-5 rounded-xl border border-n-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-ink">Branding</h2>
-        <FieldWrapper id="logo" label="School logo" hint="Paste a link to your logo image." error={errors.logo?.message}>
+        <FieldWrapper id="logo_key" label="School logo" hint="Optional" error={errors.logo_key?.message}>
           <Controller
-            name="logo"
+            name="logo_key"
             control={control}
             render={({ field }) => (
-              <LogoUrlField id="logo" value={field.value ?? ""} onChange={field.onChange} hasError={!!errors.logo} />
+              <ImageUploadField
+                id="logo_key"
+                prefix="school-logos"
+                label="logo"
+                currentUrl={school.logo}
+                onChange={field.onChange}
+                onUploadingChange={setUploading}
+              />
             )}
           />
         </FieldWrapper>
@@ -122,8 +134,10 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
         </div>
       </section>
 
-      <Button type="submit" disabled={isPending} className="font-semibold">
-        {isPending ? "Saving…" : "Save changes"}
+      {/* Disabled while bytes are in flight — saving then would PATCH the
+          previous key, which reads as the upload having done nothing. */}
+      <Button type="submit" disabled={isPending || uploading} className="font-semibold">
+        {uploading ? "Uploading…" : isPending ? "Saving…" : "Save changes"}
       </Button>
     </form>
   );

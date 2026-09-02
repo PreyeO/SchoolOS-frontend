@@ -13,10 +13,11 @@ export const schoolProfileSchema = z.object({
     .string()
     .optional()
     .refine((v) => !v || /^https?:\/\/.+/.test(v), "Enter a valid URL starting with http:// or https://"),
-  logo: z
-    .string()
-    .optional()
-    .refine((v) => !v || /^https?:\/\/.+/.test(v), "Enter a valid URL starting with http:// or https://"),
+  // An S3 object key from the presigned-upload flow, not a URL — the backend
+  // renamed School.logo to logo_key and now HEADs the object before saving. The
+  // field is set by ImageUploadField and never typed, so there's nothing to
+  // validate beyond "a string or nothing"; null clears the logo.
+  logo_key: z.string().nullable().optional(),
   primary_color: z.string().min(1, "Pick a primary colour"),
   accent_color: z.string().min(1, "Pick an accent colour"),
   motto: z.string().trim().optional(),
