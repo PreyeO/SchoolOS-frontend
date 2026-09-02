@@ -642,6 +642,36 @@ the same thing as not being there.
   not an information architecture — `photo_key` shares a PATCH with favourite
   food, and that says nothing about where a person looks for it.
 
+**Nothing clickable had a pointer cursor (2026-09-02).** Every button in the app
+showed the arrow, not the hand. **Not a codebase mistake — the reset changed
+underneath it:** Tailwind v3's Preflight set `cursor: pointer` on `button`, and
+**v4's dropped that rule entirely** (verified in
+`node_modules/tailwindcss/preflight.css` — there is no cursor declaration for
+button at all), so every button fell back to the browser default.
+- **One base rule in `globals.css`, not a `cursor-pointer` class per element.**
+  A sweep across several hundred buttons is a bulk JSX rewrite — the thing this
+  repo has been burned by twice — it can't reach Radix's own internals, and the
+  next component added would silently miss it.
+- **The native `<select>` was the biggest catch.** `components/ui/select` is a
+  real `<select>` (deliberately, for the OS picker on phones), it's on 20+
+  screens, and browsers give it `cursor: default`. It opens a dropdown on click,
+  so it's in the rule.
+- **Scoped to what actually takes a click.** Buttons, selects, summary,
+  clickable input types (checkbox/radio/color/file/submit/button/reset), labels
+  wrapping a checkbox or radio, and the ARIA roles Radix renders as divs
+  (`menuitem`, `option`, `tab`, …). **Text-entry fields are deliberately
+  excluded** — text, email, password, number, search and date keep the I-beam,
+  because a pointer there promises a click where the gesture is typing.
+  `a[href]` needs nothing; the UA stylesheet already points it.
+- **Disabled is excluded two ways because Radix expresses it two ways** — a real
+  `disabled` attribute on what it renders as `<button>`, `aria-disabled="true"`
+  on what it renders as a div with a role. No `[data-disabled]` catch-all: it
+  would be redundant *and* would lose on specificity to
+  `button:not(:disabled)`, so it would have been a rule with a false comment.
+- **Verified in the emitted CSS**, not just in source — the compiled selector
+  list is present in the production chunk after Lightning CSS processing
+  (which unquotes the attribute values but is otherwise identical).
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
