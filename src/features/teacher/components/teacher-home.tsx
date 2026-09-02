@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { useMe } from "@/features/me/hooks/use-me";
+import { greeting } from "@/lib/text/greeting";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useTeacherOverview } from "../hooks/use-teacher-overview";
@@ -16,13 +17,6 @@ import { NeedsAttentionList } from "./needs-attention-list";
 import { RegisterStatusList } from "./register-status-list";
 import { OfflineActions } from "./offline-actions";
 import { TeacherStatTiles } from "./teacher-stat-tiles";
-
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 function todayLabel(): string {
   return new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
