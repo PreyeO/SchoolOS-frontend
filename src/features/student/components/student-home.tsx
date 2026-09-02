@@ -15,17 +15,11 @@ import { useReportCard } from "@/features/results/hooks/use-report-card";
 import { isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 import { useTermSelection } from "@/lib/school/use-term-selection";
+import { greeting } from "@/lib/text/greeting";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useMyStudentId } from "../hooks/use-my-student-id";
 import { NotEnrolledNotice } from "./not-enrolled-notice";
-
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 // A student's own landing screen — the same shape as a parent's, minus the
 // child switcher, because a student is only ever looking at themselves.

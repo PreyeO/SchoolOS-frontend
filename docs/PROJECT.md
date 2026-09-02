@@ -482,6 +482,23 @@ first 90 days free.
   "Up to 200 students". Clean `tsc`, `eslint` and `build`.
 - **⚠️ The 90 days is not what a self-signup gets — see the backend gap below.**
 
+**The admin dashboard greeted the school, not the person (2026-09-01).**
+`DashboardContextHeader` read `{greeting()}, {school?.name}` — "Good morning,
+Grace Academy 👋" — which addresses the building. Now the signed-in person's
+first name, matching what the teacher home already did.
+- **Costs no extra request.** `/me` is already in cache on every school screen —
+  the shell's nav gating goes through `useSchoolPermissions`, which is
+  `useMe()` — so this is a cache read, the same reasoning `TeacherHome` records.
+- **Falls back to the bare greeting** while `/me` is in flight, rather than
+  rendering a comma with nothing after it.
+- **Nothing is lost by dropping the school name**, and that was checked rather
+  than assumed: it still renders in the sidebar header and in the topbar's
+  `SchoolSwitcher` — the latter being the one that survives a collapsed sidebar.
+- **`greeting()` was four byte-identical copies** (admin, teacher, parent,
+  student). Now one `lib/text/greeting.ts`, the same consolidation `TermBadge`
+  and `NoCurrentTermNotice` got. It deliberately returns the greeting alone and
+  never "greeting, name", so each caller keeps its own in-flight fallback.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

@@ -7,6 +7,7 @@ import { TermBadge } from "@/features/results/components/term-badge";
 import { useReportCard } from "@/features/results/hooks/use-report-card";
 import { isPermissionDeniedError } from "@/lib/api/get-error-message";
 import { useTermSelection } from "@/lib/school/use-term-selection";
+import { greeting } from "@/lib/text/greeting";
 import { useSchoolStore } from "@/stores/school-store";
 
 import { usePerformanceTrend } from "@/features/academic-record/hooks/use-performance-trend";
@@ -18,13 +19,6 @@ import { childScreenGuard } from "./child-screen-guard";
 import { FeeProgress } from "@/features/academic-record/components/fee-progress";
 import { PerformanceCard } from "@/features/academic-record/components/performance-card";
 import { SubjectPerformanceCard } from "@/features/academic-record/components/subject-performance-card";
-
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 // A parent's landing screen, scoped to whichever child the switcher has
 // selected: this term's standing, how the year is trending, what's owed, and

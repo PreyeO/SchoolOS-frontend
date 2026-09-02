@@ -3,25 +3,29 @@
 import Link from "next/link";
 import { Sparkles, TriangleAlert } from "lucide-react";
 
-import { useSchoolStore } from "@/stores/school-store";
+import { useMe } from "@/features/me/hooks/use-me";
+import { greeting } from "@/lib/text/greeting";
 import { useAccessStatus } from "../hooks/use-access-status";
 
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
-
 export function DashboardContextHeader() {
-  const school = useSchoolStore((s) => s.currentSchool);
+  // Already in cache — useSchoolPermissions reaches /me from the shell's nav
+  // gating on every school screen — so this costs no extra request.
+  const { data: me } = useMe();
+  const firstName = me?.user.first_name;
   const access = useAccessStatus();
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
+        {/* Greets the person, not the school — "Good morning, Grace" rather
+            than "Good morning, Grace Academy", which read as addressing the
+            building. No context is lost: the school name is still on screen
+            twice, in the sidebar header and in the topbar's SchoolSwitcher
+            (which is the one that survives a collapsed sidebar).
+            Falls back to the bare greeting rather than showing a comma with
+            nothing after it while /me is still in flight. */}
         <h1 className="font-display text-2xl font-bold text-ink">
-          {greeting()}, {school?.name ?? "your school"} 👋
+          {firstName ? `${greeting()}, ${firstName}` : greeting()} 👋
         </h1>
       </div>
 
