@@ -14,6 +14,7 @@ import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { useCanEditStudent } from "../hooks/use-update-student";
 import { isSyntheticEmail } from "../lib/is-synthetic-email";
 import { studentPhoto } from "../lib/student-photo";
+import { EditStudentPhotoDialog } from "./edit-student-photo-dialog";
 import { EnrollmentCard } from "./enrollment-card";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
@@ -68,12 +69,19 @@ export function StudentDetailPage({ id }: { id: string }) {
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-n-200 bg-white p-5">
         <div className="flex items-center gap-4">
-          <PersonAvatar
-            firstName={user.first_name}
-            lastName={user.last_name}
-            photo={studentPhoto(student)}
-            className="size-14"
-          />
+          {/* The avatar itself is the photo control for anyone who may edit —
+              see EditStudentPhotoDialog. A reader who may not gets the plain
+              avatar, with no affordance promising an action they'd be refused. */}
+          {canEdit ? (
+            <EditStudentPhotoDialog student={student} />
+          ) : (
+            <PersonAvatar
+              firstName={user.first_name}
+              lastName={user.last_name}
+              photo={studentPhoto(student)}
+              className="size-14"
+            />
+          )}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="font-display text-xl font-bold text-ink truncate">

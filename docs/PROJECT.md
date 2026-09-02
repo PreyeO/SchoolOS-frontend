@@ -620,6 +620,28 @@ apex side, and the hand-off was merely the thing that eventually won.
   in a browser** — there is no browser automation here, so the actual flicker
   needs one click-through on a deployed build to confirm.
 
+**Student photo moved onto the avatar (2026-09-02, same day).** The upload
+shipped inside **About → Edit**, between hobbies and ambitions — which is where
+the field sits in `StudentProfileUpdateSerializer`'s whitelist, and exactly where
+nobody looks for it. Reported as *"I can't see an upload image in the student
+about card, no icon to indicate."* It was there and it was unfindable, which is
+the same thing as not being there.
+- **The control is now the avatar itself** (`EditStudentPhotoDialog`): a camera
+  badge on the photo in the page header, opening a one-field dialog. You change
+  a picture by clicking the picture.
+- **The badge is always visible, not hover-only** — a hover affordance doesn't
+  exist on a phone, and this page is opened on one constantly.
+- **Gated on `canEdit`** (`useCanEditStudent`, mirroring `CanEditStudentProfile`).
+  A reader who may not edit gets the plain avatar rather than a camera button
+  that would 403 — the same rule as every other action on this page.
+- **Removed from the About dialog** rather than left in both places: two
+  controls writing one field is worse than a badly-placed one. `aboutSchema`
+  lost `photo_key` and the dialog sends the three text fields it always did;
+  the photo dialog sends its own single-field PATCH.
+- **The lesson is about placement, not plumbing.** The API's field grouping is
+  not an information architecture — `photo_key` shares a PATCH with favourite
+  food, and that says nothing about where a person looks for it.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

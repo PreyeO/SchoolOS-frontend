@@ -73,11 +73,9 @@ export const aboutSchema = z.object({
   favourite_food: optionalText,
   hobbies: optionalLongText,
   ambitions: optionalLongText,
-  // An S3 object key from the presigned-upload flow, set by ImageUploadField
-  // rather than typed. StudentProfile.photo became photo_key when S3 landed;
-  // `photo` on the response is a read-only presigned GET URL. Undefined means
-  // untouched (omit from the PATCH), null clears it.
-  photo_key: z.string().nullable().optional(),
+  // No photo here. It shares this PATCH's whitelist (photo_key) but not this
+  // form: it's edited from the avatar via EditStudentPhotoDialog, which sends
+  // its own single-field payload.
 });
 
 export type AdmissionFormValues = z.infer<typeof admissionSchema>;
@@ -89,10 +87,10 @@ export type StudentEditValues = AdmissionFormValues | PersonalFormValues | About
 // would store a blank rather than an absent value, and the detail page renders
 // those differently.
 //
-// `undefined` passes straight through and is then dropped by JSON.stringify, so
-// a field left at undefined (photo_key, when no new file was picked) is omitted
-// from the PATCH rather than sent as null. That distinction is what keeps an
-// untouched photo from being cleared by an edit to the fields beside it.
+// `undefined` is left alone rather than converted, and JSON.stringify then drops
+// it — so an absent key is omitted from the PATCH instead of clearing the field.
+// None of the three forms here relies on that today, but the distinction is the
+// reason the conversion tests `=== ""` rather than falsiness.
 export function toPayload(values: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, value === "" ? null : value]),
