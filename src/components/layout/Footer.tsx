@@ -26,9 +26,11 @@ const FOOTER_LINKS = [
   {
     heading: "Legal",
     links: [
-      { label: "Privacy policy", href: "#" },
-      { label: "Terms of service", href: "#" },
-      { label: "NDPA compliance", href: "#" },
+      { label: "Privacy policy", href: "/privacy" },
+      { label: "Terms of service", href: "/terms" },
+      // Was "NDPA compliance", which asserted a legal status nobody had
+      // verified. The page describes what we actually do instead.
+      { label: "Data protection", href: "/data-protection" },
     ],
   },
 ] as const;

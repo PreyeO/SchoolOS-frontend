@@ -14,7 +14,9 @@ export const HERO = {
     "WAEC & NECO grading",
     "Offline-first",
     "Parent & student portals",
-    "NDPA-compliant",
+    // Was "NDPA-compliant" — an unverified assertion of legal status, and a
+    // trust chip is the worst place for one. Says what we do instead.
+    "Your data stays yours",
   ],
   trustLine: "Built with Nigerian school owners, and we answer the phone.",
   ctaPrimary: { label: "Start free", href: "/book-demo" },
@@ -39,7 +41,11 @@ export const BUILT_FOR_NIGERIA = {
     { label: "WAEC & NECO scales", description: "A1–F9 grades, credit thresholds, and subject remarks, calculated for you." },
     { label: "Naira payments", description: "Cash, bank transfer, POS, and cheque, all recorded against one ledger and balance." },
     { label: "Offline-first", description: "Mark attendance and enter scores with no network; it all syncs when you're back online." },
-    { label: "NDPA compliance", description: "Your students' data encrypted and handled to Nigeria's data-protection standard. You own it and can export it anytime." },
+    // "You own it and can export it anytime" was false: there is no export
+    // endpoint anywhere in the API (checked 2026-09-03), so "anytime" meant
+    // "by emailing us". Encryption in transit is real; encryption at rest was
+    // never verified, so it's gone rather than restated.
+    { label: "Data protection", description: "Access separated by school and by role, medical details limited to the staff who need them, and every change recorded in an audit log." },
   ],
 } as const;
 

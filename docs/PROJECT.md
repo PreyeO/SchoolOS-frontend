@@ -694,6 +694,48 @@ rather than tracking how many are outstanding.
   table shows the loading line between pages. Worth revisiting for all six at
   once rather than diverging here.
 
+**Legal pages written, and two marketing claims retracted (2026-09-03).** The
+footer's three Legal links were all `href="#"`. Now `/privacy`, `/terms` and
+`/data-protection`, in the `(marketing)` group so they inherit Navbar and
+Footer. Content lives in `data/legal/*` behind a shared `LegalPage` shell —
+numbered, anchor-linked sections, because a policy is read to find one clause.
+- **Written from a field-by-field audit of the real data model**, not a
+  template. Every category named in the Privacy Policy maps to an actual column
+  in `accounts/models.py`, `audit/models.py` or the storage app.
+- **The audit found two false claims, both live on the landing page.** The FAQ
+  said *"You own your data and can export everything at any time"* and the
+  feature grid said *"You own it and can export it anytime"* — **there is no
+  export endpoint anywhere in the API.** `export_fees` is one of the seven
+  permissions that gate nothing server-side. Both rewritten; the policy states
+  the portability right is honoured *manually, on request*, and says so plainly
+  rather than implying a button.
+- **"Encrypted at rest" also went**, from the FAQ. Encryption in transit is
+  real and verifiable; at-rest was never checked and is not ours to assert.
+- **"NDPA compliance" / "NDPA-compliant" replaced throughout** — footer link,
+  landing trust chip, feature grid, and the hidden `/settings/privacy` nav item
+  (which additionally promised "exports" and "NDPA compliance settings" on its
+  ComingSoon page). The rename is the substance: *compliance* asserts a legal
+  status nobody has verified, and a trust chip is the worst place for one.
+  *Data protection* describes a document we can stand behind.
+- **The sensitive-data finding drove the whole shape of these pages.**
+  `StudentProfile` stores blood group, genotype, allergies, chronic conditions,
+  disabilities and emergency medications — health data, plus religion, **about
+  children**. That is the highest-risk category a school system can hold, and
+  the policies say so and advise schools to leave fields blank unless the school
+  would act on them.
+- **Gaps are stated, not hidden**: no self-service export, no automated erasure
+  workflow, no online subscription payment, sub-processors partly outside
+  Nigeria, and no advertised certification — with an invitation to ask us in
+  writing instead.
+- **⚠️ NOT externally researched.** The web-search budget was exhausted when
+  this was written, so no NDPA text, NDPC guidance or 2025–26 amendment was
+  checked against a source. Handled by **citing no section numbers, no
+  registration tier and no certification** — only the Act and the Commission by
+  name, plus the data-subject rights, which are stable. Anything more specific
+  must be verified before it goes on the page. **These need a Nigerian lawyer's
+  review before launch regardless**; they are an honest description of the
+  system, not legal advice.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

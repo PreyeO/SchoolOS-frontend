@@ -85,11 +85,15 @@ export const settingsGroup: NavGroup = {
       // admins looking for screens that aren't there.
       description: "Your school's access status and student capacity.",
     }, false),
+    // Unbuilt, so hidden from the sidebar (soon defaults true) — but the
+    // ComingSoon page still renders this description, and it promised
+    // "exports" that no endpoint provides and "NDPA compliance settings" that
+    // aren't a thing. Named for what such a screen would actually do.
     adminItem({
-      label: "Data & Privacy (NDPA)",
+      label: "Data & Privacy",
       href: "/settings/privacy",
       icon: Lock,
-      description: "Manage data retention, exports, and NDPA compliance settings.",
+      description: "Data retention and privacy controls for your school.",
     }),
   ],
 };
