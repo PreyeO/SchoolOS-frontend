@@ -152,6 +152,7 @@ export interface PendingInvite {
 }
 
 export interface PendingInvitesFilters {
+  page?: number;
   persona?: InvitePersona;
   status?: InviteStatus;
   search?: string;

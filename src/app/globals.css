@@ -154,6 +154,58 @@
   html { @apply font-sans scroll-smooth; }
   body { @apply bg-background text-foreground; }
   h1, h2, h3 { font-family: var(--font-bricolage), var(--font-sans); }
+
+  /* Anything you can click gets the hand.
+     ────────────────────────────────────────────────────────────────
+     Tailwind v3's Preflight set `cursor: pointer` on buttons; v4's DROPPED
+     that rule (checked in node_modules/tailwindcss/preflight.css — there is no
+     cursor declaration for button at all), so every button in the app fell
+     back to the browser default of `cursor: default`. Nothing in this codebase
+     did anything wrong; the reset changed underneath it.
+
+     One rule here rather than a `cursor-pointer` class on several hundred
+     elements: a sweep like that is a bulk JSX rewrite, it can't cover Radix's
+     own internals, and the next component added would silently miss it.
+
+     Scoped to things that genuinely take a click, and nothing else. Text-entry
+     fields are deliberately absent — an <input type="text">, email, password,
+     number, search or date keeps the I-beam, because the pointer would promise
+     a click where the real gesture is typing. `a[href]` is absent too: the UA
+     stylesheet already points it.
+
+     `select` is in the list and matters most in practice: components/ui/select
+     is a NATIVE <select> (deliberately, for the OS picker on phones), it is
+     used on 20+ screens, and browsers give it `cursor: default`. It opens a
+     dropdown on click, so it belongs here.
+
+     Disabled is excluded two ways because Radix expresses it two ways: a real
+     `disabled` attribute on what it renders as <button> (accordion trigger,
+     switch, checkbox), and `aria-disabled="true"` on what it renders as a div
+     with a role (menu items, select options). There is deliberately no
+     `[data-disabled]` escape hatch: Radix sets it alongside `aria-disabled`, so
+     it would be redundant — and it would lose anyway, since
+     `button:not(:disabled)` outscores a bare attribute selector. */
+  button:not(:disabled),
+  select:not(:disabled),
+  summary,
+  input:is(
+      [type="checkbox"],
+      [type="radio"],
+      [type="color"],
+      [type="file"],
+      [type="submit"],
+      [type="button"],
+      [type="reset"]
+    ):not(:disabled),
+  label:has(> input:is([type="checkbox"], [type="radio"]):not(:disabled)),
+  [role="button"]:not(:disabled),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="menuitemcheckbox"]:not([aria-disabled="true"]),
+  [role="menuitemradio"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 /* ─── Utilities ──────────────────────────────────────────────── */
