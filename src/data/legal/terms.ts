@@ -18,7 +18,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       id: "agreement",
       heading: "This agreement",
       body: [
-        "These terms apply to the school that signs up for SchoolOS and to everyone who uses it under that school's account — administrators, teachers, parents and pupils.",
+        "These terms apply to the school that signs up for SchoolOS and to everyone who uses it under that school's account: administrators, teachers, parents and pupils.",
         "The person who creates a school's account confirms they are authorised to accept these terms for that school. If you are using SchoolOS through a school, the school's own rules apply to you as well.",
       ],
     },
@@ -36,7 +36,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       heading: "Free trial",
       body: [
         "New schools get 90 days of full access at no cost and with no card required. Every feature is available during the trial; nothing is held back.",
-        "At the end of the trial, a school that has not subscribed loses the ability to make changes — registers cannot be marked, scores cannot be entered, payments cannot be recorded. The school's existing data is not deleted, and access is restored as soon as a subscription starts.",
+        "At the end of the trial, a school that has not subscribed loses the ability to make changes: registers cannot be marked, scores cannot be entered, payments cannot be recorded. The school's existing data is not deleted, and access is restored as soon as a subscription starts.",
       ],
     },
     {
@@ -54,7 +54,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       id: "your-data",
       heading: "Your school's data belongs to your school",
       body: [
-        "Everything a school records in SchoolOS — pupil records, results, attendance, fee history — remains the school's. We do not claim ownership of it, we do not sell it, and we do not use it for anything except running the platform for that school and keeping it secure.",
+        "Everything a school records in SchoolOS (pupil records, results, attendance, fee history) remains the school's. We do not claim ownership of it, we do not sell it, and we do not use it for anything except running the platform for that school and keeping it secure.",
         "We process it under the Privacy Policy and the Data Protection Policy, which form part of these terms.",
         "If a school leaves, we will return or delete its data on request. Ask before closing the account rather than after.",
       ],
@@ -68,7 +68,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
         "Share your login, or use someone else's.",
         "Attempt to reach data belonging to another school, or to a person whose records your role does not cover.",
         "Upload anything unlawful, or any file intended to damage the platform or its users.",
-        "Probe, scan or attempt to break the security of the service. If you find a vulnerability, report it to us — we would rather hear from you than not.",
+        "Probe, scan or attempt to break the security of the service. If you find a vulnerability, report it to us; we would rather hear from you than not.",
         "Resell or rent access to SchoolOS to anyone else.",
       ],
     },
