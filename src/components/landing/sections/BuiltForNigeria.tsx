@@ -2,9 +2,12 @@ import { Container } from "@/components/layout/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { BUILT_FOR_NIGERIA } from "@/data/landing";
 
+// id was "about" — renamed to match the navbar/footer's "How It Works" label,
+// which this section's content (calendar, subjects, grading, payments,
+// offline) always was, not company-about copy.
 export function BuiltForNigeria() {
   return (
-    <section id="about" data-surface="brand" className="bg-brand py-12 md:py-24 scroll-mt-24">
+    <section id="how-it-works" data-surface="brand" className="bg-brand py-12 md:py-24 scroll-mt-24">
       <Container>
         <div className="mb-8 md:mb-14 max-w-3xl">
           <SectionLabel className="mb-4 text-paper/60">{BUILT_FOR_NIGERIA.eyebrow}</SectionLabel>

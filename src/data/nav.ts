@@ -9,7 +9,14 @@ export const NAV_LINKS = [
   { label: "Product", href: "/#product" },
   { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/#pricing" },
-  { label: "About", href: "/#about" },
+  // Was "About", pointing at the same section — but the section itself
+  // (BuiltForNigeria) has never been company-about copy; it's three-term
+  // calendar, NERDC subjects, grading, payments, offline-first — how the
+  // product fits a school's own workflow. The id was renamed to match
+  // (`how-it-works`), since a label reading "How It Works" linking to a
+  // fragment literally called `#about` would be the kind of thing someone
+  // notices in the address bar.
+  { label: "How It Works", href: "/#how-it-works" },
 ] as const;
 
 // Both public CTAs point at the pilot funnel while onboarding is invite-led.

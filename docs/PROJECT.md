@@ -953,6 +953,28 @@ call site.
   clicking once it's up: Teaching Assignments' arm dropdown, the Review Queue
   for a class with no real arms, and a teacher's My Classes tile.
 
+**Footer and navbar cleaned of dead links (2026-09-03).** "What's new" and
+"Blog" pointed at `href="#"` with no page behind either — removed outright
+rather than left as a link that scrolls the reader back to the top and reads
+as broken. "Contact" had the same problem (no contact page exists) and now
+goes straight to `mailto:hello@myschoolos.io` instead.
+- **"About" was a mislabel, not just a rename.** The section both the navbar
+  and footer called "About" (`BuiltForNigeria.tsx`) has never been
+  company-about copy — its content is the three-term calendar, NERDC subjects,
+  grading, Naira payments, offline-first: how the product fits a school's own
+  workflow. Relabelled "How It Works" everywhere, and the section's `id`
+  renamed from `about` to `how-it-works` to match — a nav item reading "How It
+  Works" that linked to a fragment literally called `#about` would be exactly
+  the kind of thing someone notices in the address bar. `MobileNav.tsx` reads
+  `NAV_LINKS` directly, so it inherited the rename with no separate edit.
+- **Product and Company footer groups now hold only what's real** — two links
+  each (Features/Pricing; How It Works/Contact) rather than padding out to
+  three with a dead one. No filler added.
+- Clean `tsc`, `eslint`, `build`, and verified against the **compiled** landing
+  page and `/book-demo` (root-relative, so the anchor works from both): "How It
+  Works" present, `#about` gone, `href="#"` count zero anywhere in the page,
+  no "Blog"/"What's new" text, mailto present.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
