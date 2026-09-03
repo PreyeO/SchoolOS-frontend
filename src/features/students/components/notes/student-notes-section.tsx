@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { NotebookPen, Plus } from "lucide-react";
+import { NotebookPen } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
-import { Button } from "@/components/ui/button";
 
 import {
   useCreateStudentNote,
@@ -14,73 +12,72 @@ import {
 import { NoteComposer } from "./note-composer";
 import { NoteRow } from "./note-row";
 
-// Teachers' running notes on a student.
+// One running note per student, not a message board.
 //
-// The reason this exists is handover: notes persist across class, session and
-// teacher changes, so next year's teacher inherits context instead of relying
-// on someone remembering to pass it on. That's why the list is a chronology
-// with author and date on every entry, and why an old note shows the class the
-// student was in when it was written.
+// Visible only to the form teacher currently responsible for this student's
+// class, plus admins — see the reasoning in use-student-notes.ts. Everyone
+// else on this page (a subject teacher, say) sees nothing here at all, not an
+// empty state: the section itself is the thing being hidden, not its content.
 //
-// Staff-only, and structurally so — the endpoint returns an empty list to
-// parents and students rather than a 403, and this section only renders on
-// screens they can't reach. If it's ever reused somewhere family-facing, that
-// empty list would read as "no notes" rather than "not for you".
-export function StudentNotesSection({ studentId }: { studentId: string }) {
-  const [composing, setComposing] = useState(false);
+// The point is handover between consecutive form teachers of the same arm —
+// "parents pick him up at 4pm", "takes medication at 2pm" — so it reads as one
+// continuous box a teacher adds to, not a chronology of separate messages:
+// exactly one composer, always visible for whoever may write, appending
+// directly under it rather than behind an "Add note" click. Entries still
+// carry an author and date each (the backend has no other way to record who
+// said what when, and that provenance is real value for a successor reading
+// it two years later) but are styled as lines in one log, not as individually
+// bordered cards.
+export function StudentNotesSection({
+  studentId,
+  currentClassArmId,
+}: {
+  studentId: string;
+  currentClassArmId: string | null;
+}) {
   const { data: notes, isPending, isError, error } = useStudentNotes(studentId);
-  const { canWrite } = useNotePermissions();
+  const permissions = useNotePermissions(currentClassArmId);
+  const { canView, canWrite } = permissions;
   const create = useCreateStudentNote(studentId);
+
+  if (!canView) return null;
 
   return (
     <div className="rounded-xl border border-n-200 bg-white p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-          <NotebookPen className="size-4 text-n-400" />
-          Teacher notes
-        </h2>
-        {/* Only a teacher may write — an admin without a teacher profile gets a
-            403 from the endpoint, so the button is absent rather than failing. */}
-        {canWrite && !composing && (
-          <Button type="button" variant="outline" size="sm" onClick={() => setComposing(true)}>
-            <Plus className="size-3.5 mr-1" />
-            Add note
-          </Button>
-        )}
-      </div>
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <NotebookPen className="size-4 text-n-400" />
+        Student note
+      </h2>
 
-      {composing && (
+      {canWrite && (
         <div className="mt-3">
           <NoteComposer
-            placeholder="What should the next teacher know? Behaviour patterns, ongoing concerns, what works."
-            submitLabel="Add note"
+            placeholder="What should the next form teacher know? Routines, ongoing concerns, what works — e.g. picked up at 4pm, medication at 2pm."
+            submitLabel="Add"
             isPending={create.isPending}
-            onCancel={() => setComposing(false)}
-            onSubmit={(note) => create.mutate(note, { onSuccess: () => setComposing(false) })}
+            onSubmit={(note) => create.mutate(note)}
           />
         </div>
       )}
 
       {isPending ? (
         <p className="mt-3 text-sm text-n-400" role="status">
-          Loading notes…
+          Loading…
         </p>
       ) : isError ? (
         <div className="mt-3">
-          <ErrorState error={error} resourceLabel="these notes" />
+          <ErrorState error={error} resourceLabel="this note" />
         </div>
       ) : notes.length === 0 ? (
-        !composing && (
-          <p className="mt-3 text-sm text-n-400 italic">
-            {canWrite
-              ? "No notes yet. Anything you record here follows this student to their next class and teacher."
-              : "No notes yet. Teachers can record context here about this student."}
-          </p>
-        )
+        <p className="mt-3 text-sm text-n-400 italic">
+          {canWrite
+            ? "Nothing recorded yet. What you add here follows this student to their next form teacher."
+            : "Nothing recorded yet."}
+        </p>
       ) : (
-        <ul className="mt-1 divide-y divide-n-100">
+        <ul className="mt-3 space-y-3 divide-y divide-n-100">
           {notes.map((note) => (
-            <NoteRow key={note.id} note={note} />
+            <NoteRow key={note.id} note={note} permissions={permissions} />
           ))}
         </ul>
       )}

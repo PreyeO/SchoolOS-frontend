@@ -975,6 +975,55 @@ goes straight to `mailto:hello@myschoolos.io` instead.
   Works" present, `#about` gone, `href="#"` count zero anywhere in the page,
   no "Blog"/"What's new" text, mailto present.
 
+**Teacher notes narrowed to form teachers, and collapsed to one running note
+per student (2026-09-03).** Was: any teacher could see and write notes on any
+student (the backend's own deliberate design — `StudentNoteService`'s
+docstring says so explicitly), rendered as a chronology of separately-composed
+entries behind an "Add note" click each time.
+- **Visibility now gated on being the CURRENT form teacher of the student's
+  class** — `useNotePermissions(currentClassArmId)` checks
+  `me.teacher.class_arms` (arms this teacher leads) against
+  `student.current_class.class_arm_id`, not against the note's own historical
+  class (which can differ after a transfer). This is a **frontend-only**
+  narrowing — the backend still permits any teacher to read/write, since that
+  policy lives in `StudentNoteService` and this workspace can't change it — so
+  the section simply doesn't render for a non-form-teacher rather than the API
+  refusing them; a direct API call would still work for them today.
+- **Admins keep view access, and that was a judgment call, not a spec.** The
+  ask said "only teachers that are form teachers"; nothing was said about
+  admins either way. Kept visible because admins already see everything else
+  on this page, already hold delete rights over any note
+  (`edit_students`), and are the only backstop if something needs review after
+  the writing teacher has rotated out. **Flagged, not assumed silently** — easy
+  to flip to admin-excluded if that's not what was meant.
+- **Verified with 9 fixture cases**, not just read: admin with/without a
+  current class, the exact-match form teacher, a form teacher of a *different*
+  arm (must be denied — this is the case that actually enforces "form teacher
+  of THIS class", not "a form teacher somewhere"), a subject-only teacher,
+  and a student with no current enrolment.
+- **One box, not a list of separately-triggered composers.** The "Add note"
+  button that revealed a composer is gone; a form teacher now sees the
+  textarea always present at the top of the same bordered card, and submitting
+  appends to the list below it in place — no modal, no toggle state. Past
+  entries still carry author/date (the backend has no other way to record who
+  said what when, and that provenance is real value two years later — losing
+  it to make the box look more "singular" would cost more than it gained), but
+  render as lines in one log rather than individually-triggered messages.
+- **1000-character cap**, matching `optionalLongText` in
+  `student-edit-schema.ts` (the same limit already used for allergies, hobbies,
+  chronic conditions) — picked for consistency with the rest of this student
+  record rather than a new number invented for this one field. Enforced via
+  the textarea's own `maxLength` (a hard stop, not just validation) plus a
+  live `n/1000` counter that turns clay-coloured past the limit.
+- Clean `tsc`, `eslint`, `build`. `NoteRow` now takes `permissions` as a prop
+  computed once by the parent, rather than calling the hook again per row.
+- **Not verified live** — same blocker as everything this session,
+  `school_os_web` still down on the missing AWS env vars. Worth a real
+  click-through once it's up: a subject teacher should see nothing, the
+  current form teacher should see one box, and a teacher who *used to* lead
+  that arm should also see nothing once they've rotated out — even though
+  their own past entries are still in it.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
