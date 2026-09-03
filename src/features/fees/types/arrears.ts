@@ -30,7 +30,15 @@ export interface FeeDefaulter {
 // live-ledger rule that old-class debt disappears on transfer, so small
 // disagreements against the sum of every student ledger are expected, not a bug.
 export interface FeeCollectionPoint {
+  // "{session name} {period name}", e.g. "2025/2026 First Term" — already
+  // session-qualified, so it's unambiguous as a chart label on its own.
   term: string;
+  // Both added backend-side specifically so the Fee Collection KPI can pick the
+  // school's ACTIVE term rather than the newest one by start_date. The two
+  // differ whenever a later period exists but hasn't been marked current —
+  // a school that has set up next term's dates in advance, which is normal.
+  academic_period_id: string;
+  is_current: boolean;
   collected: number;
   outstanding: number;
 }

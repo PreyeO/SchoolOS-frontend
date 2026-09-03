@@ -736,6 +736,33 @@ numbered, anchor-linked sections, because a policy is read to find one clause.
   review before launch regardless**; they are an honest description of the
   system, not legal advice.
 
+**Fee Collection KPI now picks the current term, not the newest one (2026-09-03).**
+The dashboard's Fee Collection card (not the chart below it, which was already
+correct — it plots every returned term) read `summary[summary.length - 1]`,
+the last point by `start_date`. That silently breaks the moment a school sets
+up next term's dates in advance, which is ordinary practice: the newest period
+by date is a term nobody has started, billed at ₦0 and collected at ₦0, so the
+KPI read the empty *next* term instead of the live one and fell through to "—"
+on a school with perfectly healthy collection.
+- **The backend already carries the fix — `get_collection_summary` returns
+  `is_current` and `academic_period_id` per point**, added specifically so this
+  KPI could select the school's active term rather than infer it from array
+  order (see the docstring in `fees/services.py`). The frontend simply wasn't
+  reading them; `FeeCollectionPoint` didn't even have the fields typed.
+- `feeCollectionStat` now does `summary.find(p => p.is_current) ?? summary[summary.length - 1]`
+  — falls back to newest only when no period is marked current at all, which is
+  a school genuinely between terms rather than the "next term already
+  scheduled" case this was written for.
+- **Verified against fixtures**, not just read: seven cases including the
+  motivating one (current term is the *middle* point, not the last), current
+  billed-but-uncollected (must show 0%, not "—"), no term marked current, and a
+  hypothetical older backend without the field (degrades to the old behaviour
+  rather than crashing).
+- Clean `tsc`, `eslint`, `build`. **Not verified live** — `school_os_web` has
+  been down since the S3 pull (missing AWS env vars, see the backend-gaps
+  section); worth a real click-through once it's up, specifically a school with
+  a future term's dates already entered.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
