@@ -836,6 +836,47 @@ existed in the previous draft.
   only appears inside the RSC hydration payload, which is expected — that's
   serialized prop data, not rendered text). Clean `tsc`, `eslint`, `build`.
 
+**School creation now hands off to the subdomain, same as login (2026-09-03).**
+`useCreateSchool`'s `onSuccess` always did `router.push(path)` — same-origin —
+so a school created on the apex stayed on `myschoolos.io/onboarding` while its
+real home was `<slug>.myschoolos.io`. Now mirrors `useLogin`'s `handleScoped`
+exactly: `if (slug && getCurrentSchoolSlug() === null)`, build the fragment URL
+via the same `buildHandoffUrl`, `clearSession()` before leaving so the apex
+doesn't keep a soon-to-be-blacklisted refresh token behind a still-valid-
+looking access token, then `window.location.href`.
+- **`CreateSchoolResponse` was missing a field the backend always sends.**
+  `accounts/views.py`'s `create_school` action unconditionally serializes the
+  new school through `SchoolDetailSerializer(school, include_billing=True)`
+  and attaches it as `data['school']` — same serializer login's own
+  `getSchoolDetail()` reads — but the frontend type only had
+  `requires_school_selection`/`state`/`access`/`refresh`. Added `school?:
+  SchoolDetailResponse`.
+- **The hook now hydrates the store from that response, not from the submitted
+  form.** The old code re-derived `school_type` from `levels` client-side
+  (duplicating backend logic already run once to build the request, then run
+  again server-side, then thrown away) and used `variables.slug` — the typed
+  value — instead of the created record. `school_type`/`levels`/`slug` now
+  come straight from `data.school`, the canonical result. `setCurrentSchool`
+  stays the right call (not `hydrateSchool`): its whole contract is resetting
+  session/classes/subjectCount for a genuinely new school, which this always is.
+- **No login-style flicker risk here, and that's a property of the target page,
+  not something ported over.** `LoginView`'s bug was a *second* component
+  (its own already-signed-in guard) reacting to tokens landing before the
+  redirect resolved. `/create-school` has no such guard — nothing else on that
+  page watches `tokens`. So no `isRedirecting` flag was needed; the async gap
+  in `onSuccess` exists here too (`isPending` still goes false before the
+  hand-off's own work finishes, pre-existing and unchanged), but with nothing
+  reacting to it, it doesn't produce an observable bug the way it did on login.
+- **Traced rather than assumed**: `resolvePostAuthPath({ state: data.state })`
+  is byte-identical to the pre-existing call, so the resolved `path` (typically
+  `/onboarding` for a fresh school) is unchanged — only what happens *with*
+  that path (hand off vs. local push) is new. Confirmed `createSchool`/
+  `useCreateSchool` have exactly one call site (`create-school-form.tsx`), so
+  no other flow needed updating.
+- Clean `tsc`, `eslint`, `build`. **Not verified live** — same blocker as
+  everything else this session, `school_os_web` is still down on the missing
+  AWS env vars.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
