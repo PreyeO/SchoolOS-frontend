@@ -93,8 +93,16 @@ export function useSubjectLeaderboard(
         (acrossClass ? row.subject_position_in_class : row.subject_position_in_arm) ?? ranks[i],
       score: Number(row.total_score),
       grade: row.grade,
-      // Only worth showing when arms are mixed together.
-      armLabel: acrossClass ? (row.student.current_class?.arm_name ?? null) : null,
+      // Only worth showing when arms are mixed together — and not at all when
+      // this class's only arm is the system placeholder (is_default), which
+      // otherwise leaked its raw internal name ("{class} - Default") onto the
+      // row: there is no second arm to disambiguate FROM in that case, so it's
+      // exactly the "no real arm" case that should show nothing rather than a
+      // literal "Default".
+      armLabel:
+        acrossClass && row.student.current_class && !row.student.current_class.is_default
+          ? row.student.current_class.arm_name
+          : null,
     })),
   };
 }
