@@ -136,13 +136,21 @@ export async function getRoles(): Promise<Role[]> {
   return data.results;
 }
 
-// page_size=100 (backend max) — no pagination UI here; a school actively
-// managing invites is expected to stay well under that in practice.
-export async function getPendingInvites(filters: PendingInvitesFilters): Promise<PendingInvite[]> {
+// Returns the envelope, not just `results` — the panel needs `count` to render
+// PaginationControls. Previously this asked for page_size=100 and threw the
+// count away on the assumption a school would stay under it; invites accumulate
+// (accepted and expired ones never leave the list), so the 101st was simply
+// unreachable with nothing on screen saying so.
+//
+// No page_size param: the backend's default is 25 and PAGE_SIZE in the panel
+// matches it, the same arrangement the Staff/Student/Parent directories use.
+export async function getPendingInvites(
+  filters: PendingInvitesFilters,
+): Promise<PaginatedResponse<PendingInvite>> {
   const { data } = await apiClient.get<PaginatedResponse<PendingInvite>>(INVITE_ENDPOINTS.LIST(), {
-    params: { page_size: 100, ...filters },
+    params: filters,
   });
-  return data.results;
+  return data;
 }
 
 export async function resendInvite(id: string): Promise<PendingInvite> {

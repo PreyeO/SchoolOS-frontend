@@ -672,6 +672,28 @@ button at all), so every button fell back to the browser default.
   list is present in the production chunk after Lightning CSS processing
   (which unquotes the attribute values but is otherwise identical).
 
+**Pending invites paginated (2026-09-03).** The list asked for `page_size=100`
+(the backend max) and threw the envelope's `count` away, keeping only `results`
+— so the 101st invite was simply unreachable, with nothing on screen saying a
+page had been cut off. The original comment called a school staying under 100
+"expected in practice", which underrates how the list grows: **accepted and
+expired invites never leave it**, so it accumulates for the life of the school
+rather than tracking how many are outstanding.
+- Now the standard shape used by Staff/Students/Parents/Admins: `page` in the
+  filters, the full `PaginatedResponse` returned from the API layer, and the
+  shared `PaginationControls` below the table. No `page_size` param — the
+  backend's default is 25 (`CustomPagination.page_size`, confirmed alongside
+  `REST_FRAMEWORK["PAGE_SIZE"]`) and the panel's constant matches it.
+- **Every filter change resets to page 1.** Narrowing status/persona/search
+  while on page 3 can leave fewer pages than that, and the request returns empty
+  on a list that isn't — which reads as "no invites" rather than "no page 3".
+- The four `invalidateQueries` callers (resend + the three invite forms) key off
+  the `["invitations","pending"]` prefix, so they still refresh every cached
+  page without change.
+- Consistent with the other directories, there is **no `keepPreviousData`** — the
+  table shows the loading line between pages. Worth revisiting for all six at
+  once rather than diverging here.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
