@@ -763,6 +763,42 @@ on a school with perfectly healthy collection.
   section); worth a real click-through once it's up, specifically a school with
   a future term's dates already entered.
 
+**Privacy Policy updated with the legal entity, and a bold-text renderer added
+to the legal shell (2026-09-03, same day).** The user supplied revised copy
+naming **AKỤ TECHNOLOGY LTD** as the company behind SchoolOS, an explicit
+controller/processor split (school = controller, AKỤ = processor for school
+records; AKỤ = controller for its own business records), a 72-hour
+breach-notification commitment, a parental-consent-form-template offer in the
+Children section, and a closing "operator of SchoolOS" line — none of which
+existed in the previous draft.
+- **The copy leans on bold for legal emphasis** ("the school is the **data
+  controller**", the company name, the contact email), so `LegalRichText`
+  (`components/legal/legal-rich-text.tsx`) was added: parses exactly `**bold**`
+  and nothing else — no markdown library, since links/headings/lists already
+  have their own typed fields on `LegalSection` and would be unused syntax to
+  support. Wired into every body paragraph, list item and callout in
+  `LegalPage`, so Terms and Data Protection get the capability too even though
+  today only Privacy uses it.
+- **First pass used a module-level `/g` regex with manual `.lastIndex` resets**,
+  which `react-hooks/immutability` correctly rejected — a shared regex object
+  mutated during render is exactly the kind of external state that breaks under
+  concurrent rendering. Rewritten on `String.matchAll`, which owns its iterator
+  per call with nothing shared to step on.
+- **New optional `footer` field on `LegalDocument`**, rendered small and
+  separated below the last section — for the closing entity line. Left
+  optional and unset on Terms/Data Protection rather than added there
+  unrequested; they already name the operator within their own sections.
+- **Caught a slip against the standing house rule**: the first draft of the new
+  footer line itself used an em dash ("AKỤ TECHNOLOGY LTD — operator of
+  SchoolOS"), copied straight from the user's pasted markdown, contradicting
+  the no-em-dash pass from earlier the same day. Fixed to a comma before it
+  shipped.
+- **Verified against the compiled output**: 0 em dashes, `<strong>` present at
+  every intended emphasis point (company name, "Identity:" and the other list
+  labels, "data controller"), zero unrendered `**` in visible DOM (raw `**`
+  only appears inside the RSC hydration payload, which is expected — that's
+  serialized prop data, not rendered text). Clean `tsc`, `eslint`, `build`.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

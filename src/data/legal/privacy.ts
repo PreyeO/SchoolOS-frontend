@@ -1,12 +1,19 @@
 import type { LegalDocument } from "./types";
 
-// Written against what the system ACTUALLY stores, field by field, from
-// accounts/models.py, audit/models.py and the storage app — not from a
-// template. Every category named below corresponds to a real column.
+// Updated 2026-09-03 with the user's own revised copy — the legal entity name
+// (AKỤ TECHNOLOGY LTD), an explicit controller/processor split naming AKỤ as
+// processor for school records, a 72-hour breach-notification commitment, and
+// a parental-consent form template offer in the Children section.
 //
-// If the data model changes, this changes. In particular: the health fields in
-// section 3 are the ones that make this a sensitive-data policy rather than an
-// ordinary one, and they are on records about children.
+// Still grounded in the real data model where it was before: every category in
+// section 2 maps to an actual column in accounts/models.py, and the "no
+// self-service export" admission in section 10 still matches — no export
+// endpoint exists anywhere in the API (checked 2026-09-03). If either changes,
+// this must change with it.
+//
+// **bold** spans render via LegalRichText (components/legal/legal-rich-text.tsx),
+// which supports only that one marker — deliberately, since nothing else in
+// this content needs it.
 export const PRIVACY_POLICY: LegalDocument = {
   title: "Privacy Policy",
   summary:
@@ -17,8 +24,8 @@ export const PRIVACY_POLICY: LegalDocument = {
       id: "who-we-are",
       heading: "Who we are, and who holds your data",
       body: [
-        "SchoolOS is school-management software used by Nigerian schools. This policy explains what personal information passes through the platform and what happens to it.",
-        "Two different relationships matter, and which one applies changes who you should contact. For everything a school records about its own pupils, parents and staff, the school decides what is collected and why: the school is the data controller, and SchoolOS processes that information on its instructions. For the information we collect directly about you (a demo request, an account you create with us, an email you send us), SchoolOS is the controller.",
+        "SchoolOS is school-management software used by Nigerian schools. It is owned and operated by **AKỤ TECHNOLOGY LTD** (\"AKỤ\", \"we\", \"us\"). This policy explains what personal information passes through the platform and what happens to it. Because much of what the platform handles belongs to children, we treat it carefully and in line with the Nigeria Data Protection Act, 2023 (NDPA).",
+        "Two different relationships matter, and which one applies changes who you should contact. For everything a school records about its own pupils, parents and staff, the school decides what is collected and why: the **school is the data controller**, and **AKỤ (through SchoolOS) processes** that information on the school's instructions. For the information we collect directly about you (a demo request, an account you create with us, an email you send us), **AKỤ is the controller**.",
         "In practice: questions about your child's records, marks, attendance or fees go to the school. Questions about the platform itself go to us.",
       ],
     },
@@ -29,13 +36,13 @@ export const PRIVACY_POLICY: LegalDocument = {
         "A school using SchoolOS may record the following about a pupil. Not every school uses every field; most are optional, and a school chooses what it needs.",
       ],
       list: [
-        "Identity: name, admission number, date of birth, gender, photograph",
-        "Background: nationality, state of origin, religion, previous school, date of admission",
-        "Health: blood group, genotype, allergies, chronic conditions, disabilities and emergency medications",
-        "Personal detail used on nursery and primary report cards: favourite food, hobbies, ambitions",
-        "School life: class and arm, attendance records with any note explaining an absence, scores, grades, report cards, conduct and behaviour ratings, teacher notes about the pupil",
-        "Fees: what was billed, paid, waived or is outstanding, and payment records",
-        "Guardians: the parents or guardians linked to the pupil and their relationship to them",
+        "**Identity:** name, admission number, date of birth, gender, photograph",
+        "**Background:** nationality, state of origin, religion, previous school, date of admission",
+        "**Health:** blood group, genotype, allergies, chronic conditions, disabilities and emergency medications",
+        "**Personal detail used on nursery and primary report cards:** favourite food, hobbies, ambitions",
+        "**School life:** class and arm, attendance records with any note explaining an absence, scores, grades, report cards, conduct and behaviour ratings, teacher notes about the pupil",
+        "**Fees:** what was billed, paid, waived or is outstanding, and payment records",
+        "**Guardians:** the parents or guardians linked to the pupil and their relationship to them",
       ],
       callout:
         "Health information and religion are sensitive personal data, and here they concern children. Schools should record them only where there is a real reason to: an allergy the school must act on in an emergency is a good reason; completeness for its own sake is not. Teachers at the school can see these fields, because a teacher may need them mid-lesson.",
@@ -80,11 +87,11 @@ export const PRIVACY_POLICY: LegalDocument = {
         "Access inside a school is limited by role, and the limits are enforced by the server rather than by hiding buttons.",
       ],
       list: [
-        "Parents see only their own linked children: results once published, fees, attendance and profile.",
-        "Pupils see only themselves.",
-        "Teachers see pupils at their school, including medical alerts, and the classes and subjects they are assigned.",
-        "Administrators see what their assigned role permits; a school can restrict an administrator to, say, fees alone.",
-        "SchoolOS staff can see school and account records for support and billing. Pupil records are deliberately reduced on our internal tools: a pupil appears there by admission number and class, not by name, and teacher and parent email addresses are masked.",
+        "**Parents** see only their own linked children: results once published, fees, attendance and profile.",
+        "**Pupils** see only themselves.",
+        "**Teachers** see pupils at their school, including medical alerts, and the classes and subjects they are assigned.",
+        "**Administrators** see what their assigned role permits; a school can restrict an administrator to, say, fees alone.",
+        "**AKỤ / SchoolOS staff** can see school and account records for support and billing. Pupil records are deliberately reduced on our internal tools: a pupil appears there by admission number and class, not by name, and teacher and parent email addresses are masked.",
       ],
     },
     {
@@ -94,9 +101,9 @@ export const PRIVACY_POLICY: LegalDocument = {
         "We use a small number of service providers, each handling data only to deliver part of the platform:",
       ],
       list: [
-        "Amazon Web Services: storage of uploaded files (school logos and pupil photographs).",
-        "Our email provider: sending verification codes, invitations and notifications.",
-        "Our hosting and database providers: running the application itself.",
+        "**Amazon Web Services:** storage of uploaded files (school logos and pupil photographs).",
+        "**Our email provider:** sending verification codes, invitations and notifications.",
+        "**Our hosting and database providers:** running the application itself.",
       ],
       callout:
         "Some of these providers operate outside Nigeria, which means some personal information is transferred and stored abroad. We choose established providers and require them to protect the data, but a school that needs data to remain in Nigeria should raise it with us before signing up rather than assume it.",
@@ -127,7 +134,7 @@ export const PRIVACY_POLICY: LegalDocument = {
       body: [
         "Traffic between your browser and SchoolOS is encrypted. Passwords are stored hashed, never in a readable form. Access is separated by school, so one school's data is not reachable from another's account, and every permission is checked on the server for each request.",
         "Uploaded photographs and logos are held in private storage and served through short-lived links that expire, rather than being published at a guessable address.",
-        "No system is perfectly secure. If a breach occurs that puts anyone at risk, we will notify the affected schools and the Nigeria Data Protection Commission as required.",
+        "No system is perfectly secure. If a breach occurs that puts anyone at risk, we will notify the affected schools and the Nigeria Data Protection Commission as required, and within 72 hours where the law requires it.",
       ],
     },
     {
@@ -135,7 +142,7 @@ export const PRIVACY_POLICY: LegalDocument = {
       heading: "Children",
       body: [
         "SchoolOS is not sold to children and is not marketed to them. Pupil accounts are created by a school, not by the pupil, and a pupil signing in can see only their own records.",
-        "Where a child's information is recorded, the school is responsible for having a proper basis to record it and for involving parents or guardians as the law requires.",
+        "Where a child's information is recorded, the school is responsible for having a proper basis to record it and for involving parents or guardians as the law requires. To help with this, we can provide schools with a simple parental-consent form template to use at enrolment.",
       ],
     },
     {
@@ -149,9 +156,10 @@ export const PRIVACY_POLICY: LegalDocument = {
       id: "contact",
       heading: "Contact us",
       body: [
-        "Write to hello@myschoolos.io with anything about this policy, or to make a request about information we hold about you. Tell us which school you are connected to; it helps us route the request correctly.",
-        "If you believe we have not handled your information properly, you may complain to the Nigeria Data Protection Commission.",
+        "Write to **hello@myschoolos.io** with anything about this policy, or to make a request about information we hold about you. Tell us which school you are connected to; it helps us route the request correctly.",
+        "If you believe we have not handled your information properly, you may complain to the **Nigeria Data Protection Commission**.",
       ],
     },
   ],
+  footer: "AKỤ TECHNOLOGY LTD, operator of SchoolOS.",
 };

@@ -1,5 +1,6 @@
 import { Container } from "@/components/layout/Container";
 import type { LegalDocument } from "@/data/legal/types";
+import { LegalRichText } from "./legal-rich-text";
 
 // One shell for all three legal pages. Deliberately plain: a policy is read to
 // find a specific clause, so the layout's whole job is a readable measure, a
@@ -48,7 +49,7 @@ export function LegalPage({ doc }: { doc: LegalDocument }) {
               <div className="mt-4 space-y-4">
                 {section.body.map((paragraph) => (
                   <p key={paragraph} className="leading-relaxed text-n-600">
-                    {paragraph}
+                    <LegalRichText text={paragraph} />
                   </p>
                 ))}
               </div>
@@ -58,7 +59,9 @@ export function LegalPage({ doc }: { doc: LegalDocument }) {
                   {section.list.map((item) => (
                     <li key={item} className="flex gap-2.5 leading-relaxed text-n-600">
                       <span aria-hidden="true" className="mt-2.5 size-1 shrink-0 rounded-full bg-n-400" />
-                      <span>{item}</span>
+                      <span>
+                        <LegalRichText text={item} />
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -66,12 +69,18 @@ export function LegalPage({ doc }: { doc: LegalDocument }) {
 
               {section.callout && (
                 <p className="mt-5 rounded-xl border border-amber/40 bg-amber/5 p-4 text-sm leading-relaxed text-ink">
-                  {section.callout}
+                  <LegalRichText text={section.callout} />
                 </p>
               )}
             </section>
           ))}
         </div>
+
+        {doc.footer && (
+          <p className="mt-8 border-t border-n-200 pt-6 text-xs italic text-n-400">
+            <LegalRichText text={doc.footer} />
+          </p>
+        )}
       </article>
     </Container>
   );

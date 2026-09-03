@@ -24,4 +24,9 @@ export interface LegalDocument {
   summary: string;
   effective: string;
   sections: LegalSection[];
+  // Optional closing line naming the legal entity behind SchoolOS, rendered
+  // small and set apart below the last section. Optional because not every
+  // document needs it stated twice — Terms and Data Protection already name
+  // the operator in their own sections.
+  footer?: string;
 }
