@@ -763,6 +763,27 @@ on a school with perfectly healthy collection.
   section); worth a real click-through once it's up, specifically a school with
   a future term's dates already entered.
 
+**Terms of Service revised twice more the same day.** First pass added the
+registered company (AKỤ TECHNOLOGY LTD, both addresses), replaced the
+₦1,000/90-day trial commercial terms with a free pilot of unspecified length
+and no committed pricing, and a data-export promise on leaving that names a
+format (spreadsheets/CSV) and a timeframe — going further than the Privacy
+Policy's plainer "we return or delete on request." **Flagged rather than
+silently fixed:** this directly contradicts `data/pricing.ts` and the FAQ,
+which still state a firm ₦1,000/student/term and a fixed 90-day trial on the
+public pricing page — a school reading both would see the homepage promise a
+number the Terms explicitly disclaim as "a plan, not a commitment." Not
+touched pending a decision on the pricing page itself.
+- Second pass, minutes later: section 5 now names **both** the Privacy Policy
+  and the Data Protection Policy as incorporated (was Privacy Policy alone),
+  and the WhatsApp/phone contact block added in the first pass was removed
+  from section 12, leaving email only. Both confirmed in the compiled output.
+- Section ids were freed to match the new headings (`pilot-and-cost` instead of
+  the old `trial`) — checked first that nothing links to a specific `/terms#`
+  anchor, so nothing else needed updating.
+- Same `**bold**` → `LegalRichText` pattern as Privacy; verified in the
+  compiled HTML rather than assumed from source.
+
 **Privacy Policy updated with the legal entity, and a bold-text renderer added
 to the legal shell (2026-09-03, same day).** The user supplied revised copy
 naming **AKỤ TECHNOLOGY LTD** as the company behind SchoolOS, an explicit
