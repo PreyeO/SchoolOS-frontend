@@ -12,7 +12,7 @@ import type { LegalDocument } from "./types";
 export const DATA_PROTECTION_POLICY: LegalDocument = {
   title: "Data Protection Policy",
   summary:
-    "How SchoolOS protects the information a school entrusts to it — for proprietors and administrators deciding whether to sign up.",
+    "How SchoolOS protects the information a school entrusts to it, for proprietors and administrators deciding whether to sign up.",
   effective: "3 September 2026",
   sections: [
     {
@@ -20,7 +20,7 @@ export const DATA_PROTECTION_POLICY: LegalDocument = {
       heading: "Controller and processor",
       body: [
         "Under the Nigeria Data Protection Act 2023, a school using SchoolOS is the data controller for its pupils', families' and staff records: the school decides what to collect and why. SchoolOS is the data processor, acting on the school's instructions.",
-        "This is not a technicality. It means the school answers to families for what it records, and SchoolOS answers to the school for what it does with it. It also means we will not use a school's records for our own purposes — we have no product that would benefit from doing so, and these terms would not permit it.",
+        "This is not a technicality. It means the school answers to families for what it records, and SchoolOS answers to the school for what it does with it. It also means we will not use a school's records for our own purposes: we have no product that would benefit from doing so, and these terms would not permit it.",
         "SchoolOS is a controller in its own right only for our own business information: the accounts of people who sign up, demo enquiries, and billing records.",
       ],
     },
@@ -43,7 +43,7 @@ export const DATA_PROTECTION_POLICY: LegalDocument = {
       heading: "Children's data, and why it deserves more care",
       body: [
         "Almost everyone whose data sits in SchoolOS is a child, and some of what schools record about them is sensitive: blood group, genotype, allergies, chronic conditions, disabilities, emergency medications, and religion.",
-        "These fields exist because a school genuinely needs some of them — a teacher who has to act on a peanut allergy should not have to go looking. But sensitive data about a minor is the highest-risk category a school system can hold, and the platform is built accordingly: medical information surfaces as an alert to teachers at the school and is not shown on our internal support tools at all.",
+        "These fields exist because a school genuinely needs some of them: a teacher who has to act on a peanut allergy should not have to go looking. But sensitive data about a minor is the highest-risk category a school system can hold, and the platform is built accordingly: medical information surfaces as an alert to teachers at the school and is not shown on our internal support tools at all.",
       ],
       callout:
         "Our advice to schools: record a health field only where there is something the school would actually do with it. A blank field carries no risk. A completed one that nobody uses carries all of the risk and none of the benefit.",
@@ -52,7 +52,7 @@ export const DATA_PROTECTION_POLICY: LegalDocument = {
       id: "access-control",
       heading: "How access is controlled",
       body: [
-        "Every request is authorised on the server against the caller's school and role — the interface hides what you cannot reach, but hiding is not the control; the server refusing is.",
+        "Every request is authorised on the server against the caller's school and role. The interface hides what you cannot reach, but hiding is not the control; the server refusing is.",
         "Roles are defined by each school. A school can create an administrator who can see fees and nothing else, or staff records and nothing else. Parents reach only their own linked children; pupils reach only themselves.",
         "Changes are recorded in an audit log that names who made them and, for most actions, the values before and after. Administrators can read it; nobody can edit it.",
       ],
@@ -100,7 +100,7 @@ export const DATA_PROTECTION_POLICY: LegalDocument = {
       heading: "If something goes wrong",
       body: [
         "If we become aware of a breach affecting personal data, we will investigate immediately, contain it, tell the affected schools what happened and what it means for them, and notify the Nigeria Data Protection Commission where the law requires it.",
-        "We would rather tell a school about a problem it had not noticed than have it find out later. If you believe you have found a security issue, write to hello@myschoolos.io — a report made in good faith is welcome and we will not pursue anyone for making one.",
+        "We would rather tell a school about a problem it had not noticed than have it find out later. If you believe you have found a security issue, write to hello@myschoolos.io; a report made in good faith is welcome and we will not pursue anyone for making one.",
       ],
     },
     {

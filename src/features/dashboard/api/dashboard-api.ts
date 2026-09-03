@@ -34,31 +34,36 @@ async function countOf(url: string, params: Record<string, unknown> = {}): Promi
 // No trend deltas: comparing against last term needs history the API doesn't
 // expose yet, and a fabricated "+12 this term" is the same lie in smaller type.
 // The trend slot carries a plain descriptor instead.
-// The share of one term's bill that has actually been collected.
+// The share of the CURRENT term's bill that has actually been collected.
 //
-// The summary carries no id or is_current flag per point, so a point can't be
-// matched back to a specific AcademicPeriod — the last element is simply the
-// most recent by start_date. That's the best available proxy for "the term the
-// school is on", and it can legitimately be a term that has only just opened, so
-// the tile names the term in its descriptor rather than leaving the figure to be
-// read as school-wide or all-time.
+// Picks the point the school has marked current, not the newest by start_date.
+// Those differ the moment a school sets up next term's dates in advance — which
+// is ordinary practice — and the old `summary[length - 1]` then reported a term
+// nobody has started yet: a bill of ₦0 collected against ₦0 billed, which fell
+// through to "—" and made a school with healthy collection look like it had no
+// fee data at all. The backend added `is_current` per point for exactly this.
+//
+// Falls back to the last element when no period is marked current. A school can
+// genuinely be between terms, and the newest is the best guess available; the
+// descriptor names the term either way, so the figure is never left to be read
+// as school-wide or all-time.
 //
 // hasData is false when nothing is billed at all: 0% against a zero bill is
 // arithmetic, not a fact about collection.
 function feeCollectionStat(summary: FeeCollectionPoint[]): KpiStat {
-  const latest = summary[summary.length - 1];
-  const billed = latest ? latest.collected + latest.outstanding : 0;
+  const current = summary.find((point) => point.is_current) ?? summary[summary.length - 1];
+  const billed = current ? current.collected + current.outstanding : 0;
 
-  if (!latest || billed === 0) {
+  if (!current || billed === 0) {
     return { label: "Fee Collection", value: "—", trend: { direction: "flat", label: "" }, hasData: false };
   }
 
   return {
     label: "Fee Collection",
-    value: `${Math.round((latest.collected / billed) * 100)}%`,
+    value: `${Math.round((current.collected / billed) * 100)}%`,
     // No delta against the previous term: the two are different bills against
     // different rosters, so "+6% on last term" would compare unlike things.
-    trend: { direction: "flat", label: latest.term },
+    trend: { direction: "flat", label: current.term },
     hasData: true,
   };
 }
