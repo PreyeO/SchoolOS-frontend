@@ -1,26 +1,30 @@
 import { Container } from "./Container";
 
-// The three that have somewhere to go point at the real sections, root-relative
-// so they work from /book-demo too — the footer renders on every marketing
-// page, and a bare fragment there points at nothing. The rest keep href="#"
-// because no such page or section exists yet — worth replacing with real
-// destinations (or dropping) before launch, since a link that scrolls the
-// reader back to the top reads as broken.
+// Every link here goes somewhere real. Root-relative section links
+// (/#features etc.) so they work from /book-demo too — the footer renders on
+// every marketing page, and a bare fragment there points at nothing.
+//
+// "What's new" and "Blog" are gone rather than pointed at href="#": neither
+// page exists, and a link that scrolls the reader back to the top reads as
+// broken. Nothing in the app is a natural stand-in for either, so dropping
+// them was the honest option — add them back only once there's a real
+// destination. "Contact" isn't a page either, so it goes straight to email
+// rather than to a page that doesn't exist.
 const FOOTER_LINKS = [
   {
     heading: "Product",
     links: [
       { label: "Features", href: "/#features" },
       { label: "Pricing", href: "/#pricing" },
-      { label: "What's new", href: "#" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { label: "About", href: "/#about" },
-      { label: "Blog", href: "#" },
-      { label: "Contact", href: "#" },
+      // Was "About" — see the note on NAV_LINKS in data/nav.ts. Same section,
+      // renamed to match what it's actually always described.
+      { label: "How It Works", href: "/#how-it-works" },
+      { label: "Contact", href: "mailto:hello@myschoolos.io" },
     ],
   },
   {
