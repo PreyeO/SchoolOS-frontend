@@ -763,6 +763,22 @@ on a school with perfectly healthy collection.
   section); worth a real click-through once it's up, specifically a school with
   a future term's dates already entered.
 
+**Data Protection Policy given the same AKỤ TECHNOLOGY LTD pass (2026-09-03,
+same day).** Section 1 previously said "SchoolOS is the data processor" and
+section 10 said "SchoolOS is a Nigerian company" — both now name **AKỤ
+TECHNOLOGY LTD** as the entity, matching the split Privacy and Terms already
+draw (SchoolOS is the platform; AKỤ is the legal entity that operates it).
+Contact restructured to the same email-as-list-item shape Terms uses, and the
+same closing footer line added.
+- **The re-paste of Privacy needed no changes** — verified paragraph by
+  paragraph against the live file rather than assumed identical, and the only
+  two differences were spots already fixed in the previous em-dash pass. Worth
+  knowing: the user's own source draft still carries em dashes in places
+  already cleaned here, so a future re-paste of any of these three should be
+  diffed against the live file rather than applied wholesale.
+- Verified in the compiled output: 0 em dashes across all three pages, AKỤ
+  named and bolded at both points, footer present.
+
 **Terms of Service revised twice more the same day.** First pass added the
 registered company (AKỤ TECHNOLOGY LTD, both addresses), replaced the
 ₦1,000/90-day trial commercial terms with a free pilot of unspecified length

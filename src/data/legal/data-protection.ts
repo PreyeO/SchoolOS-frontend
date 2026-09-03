@@ -5,10 +5,17 @@ import type { LegalDocument } from "./types";
 // The rename was the point: "NDPA compliance" is a claim about our legal status
 // that nobody had verified, and a page under that name has to either prove it or
 // mislead. "Data Protection Policy" describes a document we can actually stand
-// behind — what we do, what we don't, and where the gaps are.
+// behind: what we do, what we don't, and where the gaps are.
 //
 // Audience is the school, not the individual: this is the page a proprietor
 // reads before signing. Individual-facing detail lives in the Privacy Policy.
+//
+// Updated 2026-09-03 to name AKỤ TECHNOLOGY LTD explicitly as the processor
+// (was "SchoolOS" standing in for the company throughout section 1 and 10 —
+// SchoolOS is the platform, AKỤ is the legal entity, and Terms/Privacy already
+// draw that line). Contact restructured to the same email-as-list-item shape
+// Terms uses. **bold** spans render via LegalRichText
+// (components/legal/legal-rich-text.tsx).
 export const DATA_PROTECTION_POLICY: LegalDocument = {
   title: "Data Protection Policy",
   summary:
@@ -19,9 +26,9 @@ export const DATA_PROTECTION_POLICY: LegalDocument = {
       id: "roles",
       heading: "Controller and processor",
       body: [
-        "Under the Nigeria Data Protection Act 2023, a school using SchoolOS is the data controller for its pupils', families' and staff records: the school decides what to collect and why. SchoolOS is the data processor, acting on the school's instructions.",
-        "This is not a technicality. It means the school answers to families for what it records, and SchoolOS answers to the school for what it does with it. It also means we will not use a school's records for our own purposes: we have no product that would benefit from doing so, and these terms would not permit it.",
-        "SchoolOS is a controller in its own right only for our own business information: the accounts of people who sign up, demo enquiries, and billing records.",
+        "Under the Nigeria Data Protection Act 2023, a school using SchoolOS is the **data controller** for its pupils', families' and staff records: the school decides what to collect and why. **AKỤ TECHNOLOGY LTD** (\"AKỤ\", \"we\", \"us\"), which operates the SchoolOS platform, is the **data processor**, acting on the school's instructions.",
+        "This is not a technicality. It means the school answers to families for what it records, and AKỤ answers to the school for what it does with it. It also means we will not use a school's records for our own purposes: we have no product that would benefit from doing so, and these terms would not permit it.",
+        "AKỤ is a controller in its own right only for our own business information: the accounts of people who sign up, demo enquiries, and billing records.",
       ],
     },
     {
@@ -107,17 +114,17 @@ export const DATA_PROTECTION_POLICY: LegalDocument = {
       id: "registration",
       heading: "Our regulatory position",
       body: [
-        "SchoolOS is a Nigerian company processing the data of Nigerian data subjects, and we operate on the basis that the Nigeria Data Protection Act 2023 applies to us in full.",
+        "AKỤ TECHNOLOGY LTD is a Nigerian company processing the data of Nigerian data subjects through SchoolOS, and we operate on the basis that the Nigeria Data Protection Act 2023 applies to us in full.",
       ],
       callout:
-        "We describe what we do rather than advertise a certification. Where a school's own obligations require formal confirmation of our registration status with the Nigeria Data Protection Commission or a signed processing agreement, ask us directly and we will give you a straight answer in writing.",
+        "We describe what we do rather than advertise a certification. Where a school's own obligations require formal confirmation of our registration status with the Nigeria Data Protection Commission or a signed data processing agreement, ask us directly and we will give you a straight answer in writing.",
     },
     {
       id: "contact-dp",
       heading: "Contact",
-      body: [
-        "Data protection questions, requests for a processing agreement, or anything in this policy: hello@myschoolos.io.",
-      ],
+      body: ["Data protection questions, requests for a processing agreement, or anything in this policy:"],
+      list: ["Email: **hello@myschoolos.io**"],
     },
   ],
+  footer: "AKỤ TECHNOLOGY LTD, operator of SchoolOS.",
 };
