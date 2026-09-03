@@ -41,10 +41,11 @@ export function ClassArmDetailPage({ armId }: { armId: string }) {
       </Link>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
+        {/* Class name lives in `title` now (armDisplayName prefixes it for a
+            real arm), so repeating it here would read as "Primary 1 A" over
+            "Primary 1 · Junior Secondary" — the same name twice. */}
         <h1 className="font-display text-xl font-bold text-ink">{title}</h1>
-        <p className="mt-0.5 text-sm text-n-500">
-          {arm.class_name} · {levelLabel}
-        </p>
+        <p className="mt-0.5 text-sm text-n-500">{levelLabel}</p>
 
         <div className="mt-4 flex items-center gap-2.5 border-t border-n-100 pt-4">
           <UserRound className="size-4 shrink-0 text-n-400" />

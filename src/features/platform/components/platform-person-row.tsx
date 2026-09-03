@@ -1,6 +1,7 @@
 import { GraduationCap } from "lucide-react";
 
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 import { maskEmail } from "@/lib/text/mask-email";
 
 import type { PeopleKind, PlatformPerson } from "../api/platform-people-api";
@@ -36,10 +37,11 @@ export function PlatformPersonRow({ person, kind }: { person: PlatformPerson; ki
       enrollment_status?: string;
     };
     const klass = student.current_class;
+    // The class/arm line is the ONLY identifying context on this row — a
+    // support agent looking up "admission number BX-0142" has nothing else to
+    // go on — so it needs the full "{class} {arm}" form, not a bare letter.
     const placement = klass
-      ? klass.is_default
-        ? klass.class_name
-        : klass.arm_name
+      ? armDisplayName({ name: klass.arm_name, is_default: klass.is_default }, klass.class_name)
       : "Not enrolled";
 
     return (

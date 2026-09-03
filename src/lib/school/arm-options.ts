@@ -1,12 +1,16 @@
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 
+import { armDisplayName } from "./arm-display-name";
 import type { ClassRecord } from "./class-record";
 import { isActiveArm, pickableArms } from "./real-arms";
 
 export interface ArmOption {
   armId: string;
-  // What to call this teaching unit. An arm shows its own name; a class with no
-  // real arms shows the class name, since "Default" is an internal placeholder.
+  // What to call this teaching unit: "{class} {arm}" for a real arm ("Primary
+  // 1 A"), since an option sitting in a dropdown next to nine other letters is
+  // meaningless on its own; the class name alone for a class whose only arm is
+  // the system placeholder, since "Default" is an internal implementation
+  // detail no school ever named. See lib/school/arm-display-name.ts.
   label: string;
   className: string;
   level: SchoolLevelValue;
@@ -52,7 +56,12 @@ export function buildArmOptions(classes: ClassRecord[]): ArmOptionGroup[] {
       }
 
       arms.forEach((arm) => {
-        options.push({ armId: arm.id, label: arm.name, className: klass.name, level });
+        options.push({
+          armId: arm.id,
+          label: armDisplayName(arm, klass.name),
+          className: klass.name,
+          level,
+        });
       });
     });
 

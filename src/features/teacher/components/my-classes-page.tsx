@@ -51,10 +51,12 @@ export function MyClassesPage() {
             <div key={klass.classArmId} className="flex flex-col rounded-xl border border-n-200 bg-white p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
+                  {/* label already reads "Primary 1 A" for a real arm (armDisplayName
+                      prefixes the class) and just "Primary 1" for a class whose only
+                      arm is the system placeholder — a second line repeating the
+                      class name underneath used to be needed when label was the bare
+                      arm letter; it isn't any more. */}
                   <h2 className="truncate font-display text-base font-semibold text-ink">{klass.label}</h2>
-                  {klass.label !== klass.className && (
-                    <p className="truncate text-xs text-n-400">{klass.className}</p>
-                  )}
                 </div>
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                   <School className="size-4 text-primary" />

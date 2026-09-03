@@ -6,6 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Button } from "@/components/ui/button";
+import { armDisplayName } from "@/lib/school/arm-display-name";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 import { wasEdited } from "@/lib/text/was-edited";
 
@@ -46,7 +47,7 @@ export function NoteRow({ note }: { note: StudentNote }) {
               which teacher's vantage the observation came from. */}
           {note.class_name && (
             <span className="text-[11px] text-n-400">
-              · {note.arm_name || note.class_name}
+              · {armDisplayName({ name: note.arm_name }, note.class_name)}
             </span>
           )}
         </div>

@@ -877,6 +877,82 @@ looking access token, then `window.location.href`.
   everything else this session, `school_os_web` is still down on the missing
   AWS env vars.
 
+**Class arm naming fixed at the root, not screen by screen (2026-09-03).**
+Reported as two things: pickers like Teaching Assignments' class-arm dropdown
+showing bare "A", "B" with no class name, and "Default" showing through
+somewhere with no real arm entered. Both traced to `armDisplayName`
+(`lib/school/arm-display-name.ts`), the one helper ~17 files already funnel
+arm-naming through — so the fix landed there once, rather than at each
+call site.
+- **The backend never named an arm "Primary 1A".** `ClassArm.name` is just
+  "A" — confirmed in `academic/models.py`. The frontend's whole naming layer
+  exists to combine it with the class, and `armDisplayName` was the one place
+  that DIDN'T: it returned the bare arm name for a real arm, full stop. Now
+  `"{class} {arm}"` — "Primary 1 A" — matching what `arm-multi-select.tsx`
+  (the teacher/parent invite arm picker) already did correctly and in
+  isolation, and what three separate comments elsewhere in the codebase
+  described as the intended behaviour without the code actually doing it
+  (`use-my-classes.ts`, `teacher-subject-assignments.tsx`, and dead code in
+  `use-my-assignments.ts` all said "JSS 1 A" in a comment while the function
+  beside it returned "A").
+- **The "Default" leak was a real, separate bug, not just a missing check.**
+  The placeholder arm's actual name (`AcademicService.create_classes`) is
+  `f"{class_obj.name} - Default"` — e.g. "Primary 1 - Default" — not bare
+  "Default". `armDisplayName`'s existing string-fallback (for the one embedded
+  shape with no `is_default` flag, `ClassArmSubjectResultSubmissionSerializer`)
+  compared against bare `"Default"`, which can never match "Primary 1 -
+  Default". So the fallback never actually fired — every class with no real
+  arms showed the raw string verbatim on the Result Review queue and the
+  Submission Scores dialog, the two screens that rely on it. Fixed by building
+  the comparison from the real `className` argument instead of a fixed
+  literal.
+- **`buildArmOptions`** (`lib/school/arm-options.ts`) — the actual choke point
+  behind Teaching Assignments, Attendance, Promotion, Broadsheet, Leaderboard,
+  Publish Results, Review Queue, Principal's Remarks, and both student-add
+  flows (13 screens total, per the file's own comment) — built its own inline
+  `label: arm.name`, bypassing the helper entirely. Now calls
+  `armDisplayName(arm, klass.name)`, so every one of those pickers gets the
+  fix without being touched individually.
+- **Two screens had already worked around the bare-name bug by showing the
+  class name a second time underneath, and now show it twice for real.**
+  `my-classes-page.tsx` ("My Classes" teacher tiles) had `{klass.label !==
+  klass.className && <p>{klass.className}</p>}` — a small grey class name
+  under a big bare arm letter. `class-arm-detail-page.tsx` had `{arm.class_name}
+  · {levelLabel}` under a bare-arm-name heading. Both fixed to stop repeating
+  what the (now full) label already says — the class-arm-detail page keeps
+  only the level line, the teacher tile drops the second line entirely.
+- **`use-leaderboard.ts`'s `armLabel` bypassed the helper too**, reading
+  `current_class.arm_name` raw with no `is_default` check — same "Primary 1 -
+  Default" leak, on the leaderboard's inline "· A" tag. Fixed to suppress the
+  tag entirely (not prefix it) when the class has no real arm: a leaderboard
+  ranking one class across several arms only needs the bare letter to
+  disambiguate rows FROM EACH OTHER (the class itself is the page's own
+  heading, so `leaderboard-table.tsx` was deliberately left showing the bare
+  arm — the one place in this pass where bare is correct, because the class
+  name is already on screen exactly once, not zero times).
+- **`platform-person-row.tsx`** (the platform admin's de-identified student
+  directory — admission number + class is the *only* identifying context on
+  that row, per the screen's own design) and **`note-row.tsx`** (a teacher
+  note's "written when in ⟨class⟩" tag) both read `arm_name` raw with no
+  `is_default` guard. Both switched to `armDisplayName`.
+- **Deleted dead code carrying the wrong assumption in a comment**:
+  `groupByClassArm`/`MyClass` in `use-my-assignments.ts` had zero consumers
+  (confirmed — only the query hook beside it is imported anywhere) and its
+  comment claimed `arm_name` "is the full label," which is false; a future
+  reader copying that pattern would have reproduced the exact bug this fixes.
+- **Verified against fixtures**, not just read: 9 cases covering the real
+  backend placeholder string with and without the flag, null/undefined names,
+  a school that names an arm literally "Default," and the defensive
+  already-prefixed guard. Clean `tsc`, `eslint`, `build`.
+- **Deliberately left bare, and why**: `arm-row-review.tsx` (Settings ›
+  Classes, where an admin renames/deletes an arm listed directly under its own
+  class heading — bare is correct, the heading IS the class) and
+  `leaderboard-table.tsx` (above). Neither was a bug.
+- **Not verified live** — same blocker as everything else this session,
+  `school_os_web` is still down on the missing AWS env vars. First thing worth
+  clicking once it's up: Teaching Assignments' arm dropdown, the Review Queue
+  for a class with no real arms, and a teacher's My Classes tile.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
