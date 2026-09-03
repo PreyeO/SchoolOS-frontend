@@ -1,3 +1,5 @@
+import type { SchoolDetailResponse } from "@/lib/school/get-school-detail";
+
 export interface SignupPayload {
   first_name: string;
   last_name: string;
@@ -65,6 +67,14 @@ export interface CreateSchoolResponse {
   state: string;
   access?: string;
   refresh?: string;
+  // accounts/views.py's create_school always sets this — the view pops
+  // `school` off the service result and replaces it with
+  // SchoolDetailSerializer(school, include_billing=True).data, unconditionally,
+  // so it's present on every real response. Typed via SchoolDetailResponse
+  // (not a hand-rolled shape) since it's the exact same serializer login's
+  // getSchoolDetail() reads, and carries the canonical slug — the one the
+  // subdomain hand-off must use, not the value re-read from the submitted form.
+  school?: SchoolDetailResponse;
 }
 
 export interface LoginPayload {
