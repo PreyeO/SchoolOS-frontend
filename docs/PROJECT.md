@@ -1024,6 +1024,61 @@ entries behind an "Add note" click each time.
   that arm should also see nothing once they've rotated out — even though
   their own past entries are still in it.
 
+**"How It Works" didn't scroll when clicked from the landing page itself
+(2026-09-03).** The id/href rename from the previous entry was correct and
+already verified in a production build — the actual bug was one level down,
+in how Next handles a `<Link href="/#section">` click when the visitor is
+**already on `/`**. Checked against this Next version's own docs rather than
+assumed (`node_modules/next/dist/docs/.../link.md`, "Scrolling to an id"): the
+built-in scroll-to-hash behaviour is described as firing **on navigation** —
+and a same-route, hash-only click isn't a navigation Next treats that way, so
+the URL updated and the page never moved. Cross-route hash links (e.g.
+`/book-demo` → `/#pricing`) were never affected, which is why the four anchors
+looked fine when that fix landed on 2026-08-30 — nobody had tested a click
+from the landing page to its own section before.
+- **Fixed with `useInPageAnchorClick`** (`lib/scroll-to-in-page-hash.ts`): on
+  click, compares the link's path against the current pathname; only when
+  they match (i.e. only the case Next doesn't handle) does it
+  `preventDefault`, `scrollIntoView` the target element directly, and
+  `history.pushState` to keep the address bar honest. A real cross-page link
+  falls through untouched — Next's own behaviour there was never broken.
+  `scrollIntoView` honours each section's existing `scroll-mt-24`, so the
+  fixed Navbar offset didn't need a second number to keep in sync.
+- **Wired into all three places a marketing anchor is clickable**: `Navbar`,
+  `MobileNav` (composed with its existing `onClose`, so the drawer still
+  closes even when the tap also scrolls the page under it), and `Footer`.
+  Not just the one link reported — the underlying mechanism was identical for
+  Features/Pricing/Product too, on every same-page click, so scoping the fix
+  to only "How It Works" would have left the same bug live under the other
+  three.
+- **`Footer` is now a client component**, which it wasn't before — the only
+  change needed to attach the click handler, matching the stated exception in
+  this repo's own "server components by default" rule.
+
+**Footer's Product/Company groups audited and reshaped, same request.** Asked
+directly: is the structure right, change what isn't.
+- **"Company" is gone as a heading.** It held "How It Works" (product
+  narrative, not company narrative — see the id-rename entry above) and
+  "Contact", which just duplicated the brand column's own
+  "Lagos, Nigeria · hello@myschoolos.io" as a link instead of plain text. There
+  is no About-the-company page, no blog, no careers page behind either
+  candidate for a real "Company" column, so rather than leave a column with one
+  thin, redundant link, it's gone: **How It Works moved into Product**
+  (matching where the navbar already puts it, right after Pricing), and the
+  brand column's email became a real `mailto:` link so there's exactly one
+  clickable contact line, not two representations of the same address.
+- **Grid rebalanced** from four columns (brand + 3 groups) to three (brand +
+  Product + Legal) — `md:grid-cols-[2fr_1fr_1fr]`, so Legal doesn't stretch
+  into a phantom fourth slot.
+- Clean `tsc`, `eslint`, `build`; verified in the compiled output on both `/`
+  and `/book-demo` — "Company" and the standalone "Contact" link gone from
+  both, "How It Works" present under Product on both, the brand-column email
+  is a `mailto:` link.
+- **Not verified in a real browser** — there is no browser automation here, so
+  the actual scroll-and-land behaviour (as opposed to the click being wired
+  correctly in the compiled JS) still wants one real click-through once the
+  dev server's up.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
