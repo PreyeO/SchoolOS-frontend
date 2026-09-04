@@ -1557,6 +1557,51 @@ builds the list, but the gate costs nothing).
   half-building it.
 - Clean `tsc`, `eslint`, `build`.
 
+**`public/sw.js` finally touched — the offline date-revert bug had a second,
+more common trigger than the one already fixed (2026-09-04).** Reported: load
+several days' registers while online, go offline, reselect ANY of those
+already-loaded dates — it snaps back to today instead of showing what's
+sitting right there in cache. This is different from the earlier-fixed case
+(picking a date NEVER loaded before) — this is a date that genuinely WAS
+cached, which should just work.
+- **Root cause**: `networkFirst()`'s offline fallback used
+  `cache.match(request, { ignoreSearch: true })` unconditionally. Its own
+  comment explained why it was added — "every link into it carries the arm
+  id... while what's cached is the bare /attendance from precache... ignoreSearch
+  is what makes the register reachable at all" — but the premise underneath
+  that ("the server returns the same document for /attendance whatever ?arm=
+  says") was already established as false earlier this session:
+  `attendance/page.tsx` (and `fees/page.tsx`) genuinely bake `?arm=/?date=`
+  into server-rendered props. `ignoreSearch` doesn't distinguish `today`'s
+  cached entry from `2026-08-30`'s — it matches whichever one the Cache API
+  happens to return first for that pathname, and in practice that's the
+  precached bare `/attendance` (installed with no params, so its baked-in
+  date defaults to today) — which is exactly "reverts to today," every time,
+  regardless of which real date was clicked.
+- **Fixed**: try an exact match first (`cache.match(request)`, no
+  `ignoreSearch`) — since each `?arm=&date=` combination genuinely is
+  distinct cached content, this now correctly finds that specific date's own
+  entry when it was actually visited before. `ignoreSearch` was **not**
+  removed, only demoted to a last-resort fallback for when the exact URL
+  truly isn't cached — preserving the original case that comment was solving
+  (a cold, offline-from-the-start device whose only cached copy is the bare
+  precached shell) rather than regressing it to the generic `/offline` page.
+- This, combined with the earlier fix in `attendance-page.tsx` (skip the
+  URL-sync `router.replace()` while `unavailableOffline`), should now cover
+  both halves of the original report: a genuinely-uncached date no longer
+  triggers a doomed navigation at all, and a genuinely-cached date now
+  resolves to its own correct content instead of whatever `ignoreSearch`
+  happened to hit.
+- Same reasoning applies to `/fees?student=&period=`, which reads
+  `searchParams` the identical way — this is a general fix to `networkFirst`,
+  not attendance-specific.
+- `node --check public/sw.js` confirms valid syntax. **Not verified live** —
+  still no browser in this session, and this is exactly the file CLAUDE.md
+  flags as fragile, hand-written, and untested; the reasoning above is as far
+  as static analysis can go. A real offline click-through (load several dates
+  online, go offline, reselect each) is the only way to be sure — please
+  test before trusting this fully.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
