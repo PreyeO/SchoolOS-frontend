@@ -93,12 +93,20 @@ export function MyClassesPage() {
                 )}
               </div>
 
-              <Button type="button" variant="outline" size="sm" asChild className="mt-4 w-full">
-                <Link href={`/attendance?arm=${klass.classArmId}`}>
-                  <ClipboardCheck className="size-3.5 mr-1.5" />
-                  Take register
-                </Link>
-              </Button>
+              {/* Form classes only — the daily register belongs to the form
+                  teacher (see register-status-list.tsx's identical gate on
+                  the dashboard). The backend authorises any teacher to mark
+                  any arm, but inviting a subject-only teacher to "take
+                  register" here manufactures an obligation that isn't
+                  theirs. */}
+              {klass.isFormClass && (
+                <Button type="button" variant="outline" size="sm" asChild className="mt-4 w-full">
+                  <Link href={`/attendance?arm=${klass.classArmId}`}>
+                    <ClipboardCheck className="size-3.5 mr-1.5" />
+                    Take register
+                  </Link>
+                </Button>
+              )}
             </div>
           ))}
         </div>
