@@ -4,7 +4,7 @@ import { ErrorState } from "@/components/shared/error-state";
 import { OfflineNotice } from "@/components/shared/offline-notice";
 import { TermPicker } from "@/components/shared/term-picker";
 import { LedgerPanel } from "@/features/fees/components/ledger-panel";
-import { useStudentLedger, useStudentPayments } from "@/features/fees/hooks/use-student-ledger";
+import { useStudentLedger } from "@/features/fees/hooks/use-student-ledger";
 import { NoTermsNotice } from "@/features/results/components/no-terms-notice";
 import { TermBadge } from "@/features/results/components/term-badge";
 import { useTermSelection } from "@/lib/school/use-term-selection";
@@ -30,18 +30,19 @@ const NO_WAIVERS = new Map<string, string>();
 // The capability flags are passed false rather than read from
 // useHasSchoolPermission: that hook resolves off me.admin.school_admin_role,
 // which a parent has no block for, so it would return false anyway — but by
-// accident rather than by statement. LedgerPanel drops the payment history
-// section and every row action under these, so no payments query is needed.
+// accident rather than by statement. canFilterByFeeItem is left at its
+// default false: that filter's options come from GET /fee-items/, which
+// requires the admin-only view_fees permission a parent never holds. Payment
+// history itself was opened to linked parents on 2026-08-29 —
+// PaymentViewSet used to require view_fees (admin-only), so a parent could
+// see a fee was settled but never when it was paid or download a receipt for
+// it — a narrower, separate allowance from the fee-item listing permission.
 export function ChildFeesPage() {
   const term = useTermSelection();
   const selected = useSelectedChild();
   const childId = selected.child?.student_id;
   const { student } = useChildStudent(childId, term.periodId);
   const ledger = useStudentLedger(childId ?? null, term.periodId);
-  // Opened to linked parents on 2026-08-29 — PaymentViewSet used to require
-  // view_fees (admin-only), so a parent could see a fee was settled but never
-  // when it was paid or download a receipt for it.
-  const payments = useStudentPayments(childId ?? null, !!childId);
 
   const guard = childScreenGuard(selected);
   const termName = term.label ?? "";
@@ -99,7 +100,6 @@ export function ChildFeesPage() {
                     canRecord={false}
                     canWaive={false}
                     canViewFees
-                    payments={payments}
                   />
                 </div>
               )}

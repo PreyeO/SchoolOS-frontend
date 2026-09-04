@@ -22,11 +22,27 @@ export function useStudentLedger(studentId: string | null, academicPeriodId: str
 // Gated on view_fees by the caller rather than allowed to 403: a teacher can
 // read the ledger above but not this, so the history section is simply absent
 // for them instead of showing a permission error beside data they can see.
-export function useStudentPayments(studentId: string | null, enabled: boolean) {
+export function useStudentPayments(
+  studentId: string | null,
+  enabled: boolean,
+  page: number,
+  pageSize: number,
+  status: string | null,
+  feeItemId: string | null,
+) {
   return useQuery({
-    queryKey: [FEE_ITEMS_QUERY_KEY, "payments", studentId],
-    queryFn: () => getStudentPayments(studentId as string),
+    queryKey: [FEE_ITEMS_QUERY_KEY, "payments", studentId, page, pageSize, status, feeItemId],
+    queryFn: () =>
+      getStudentPayments(studentId as string, {
+        page,
+        page_size: pageSize,
+        ...(status ? { status } : {}),
+        ...(feeItemId ? { fee_item: feeItemId } : {}),
+      }),
     enabled: !!studentId && enabled,
+    // Keeps the current page/filter's results on screen while the next
+    // combination loads, instead of collapsing to a spinner on every change.
+    placeholderData: (previous) => previous,
   });
 }
 

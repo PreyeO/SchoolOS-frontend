@@ -10,17 +10,16 @@ import type { Payment, RecordPaymentPayload } from "../types";
 // belongs to a period, and the bursar's question at the desk is usually "what
 // has this family paid us", not "what did they pay in Second Term".
 //
-// page_size=100 with no pagination UI. A student accumulating more than 100
-// payments would need one per week for two years; if that becomes real, this
-// needs paging rather than a bigger page.
-//
 // Requires view_fees — strictly more than the ledger, which any teacher can
 // read. Callers must gate on the permission rather than letting this 403.
-export async function getStudentPayments(studentId: string): Promise<Payment[]> {
+export async function getStudentPayments(
+  studentId: string,
+  params: { page: number; page_size: number; status?: string; fee_item?: string },
+): Promise<PaginatedResponse<Payment>> {
   const { data } = await apiClient.get<PaginatedResponse<Payment>>(PAYMENT_ENDPOINTS.LIST(), {
-    params: { student: studentId, page_size: 100 },
+    params: { student: studentId, ...params },
   });
-  return data.results;
+  return data;
 }
 
 // Records one payment against one fee item. Requires record_fees.
