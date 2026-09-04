@@ -26,6 +26,8 @@ export function useStudentFeesSelection(
   // clicks "Change student", and would re-enable this fetch every time they
   // cleared their own selection.
   const [consumedDeepLinkId, setConsumedDeepLinkId] = useState<string | null>(null);
+  // Same idea, for the term half of the deep link — see the note below.
+  const [consumedPeriodId, setConsumedPeriodId] = useState<string | null>(null);
 
   // Resolves the deep-linked id into the full record the context bar and
   // ledger dialogs need. Disabled once consumed, so clearing the student later
@@ -44,13 +46,21 @@ export function useStudentFeesSelection(
     setStudent(deepLinkedStudent.data);
   }
 
-  // The term half of the deep link: stored directly, no fetch needed. Applied
-  // once — after this, `term`'s own picker is the source of truth, same as
-  // student above.
-  useEffect(() => {
-    if (initialPeriodId) term.setPeriodId(initialPeriodId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- consume the initial prop once on mount
-  }, []);
+  // The term half of the deep link. Was a mount-only effect ("consume the
+  // initial prop once") — fixed 2026-09-03 to re-apply whenever the incoming
+  // value actually changes, the same rule the student half above already
+  // followed. A mount-only effect is only correct if this component instance
+  // is guaranteed fresh per distinct link, which Next's client-side route
+  // cache doesn't strictly promise (back/forward navigation is explicitly
+  // documented to reuse cached segments to preserve scroll position) — and
+  // this was the one place in the file that assumed it anyway. If that
+  // assumption ever breaks, this used to mean a bursar could land on a
+  // student's ledger still showing whichever term a PRIOR visit had consumed,
+  // reachable only by leaving the page and clicking back in.
+  if (initialPeriodId && initialPeriodId !== consumedPeriodId) {
+    setConsumedPeriodId(initialPeriodId);
+    term.setPeriodId(initialPeriodId);
+  }
 
   // Keeps the URL a live bookmark of what's on screen, so refreshing or
   // sharing the link returns to the same student and term rather than

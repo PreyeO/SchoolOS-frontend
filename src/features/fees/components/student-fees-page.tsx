@@ -97,7 +97,17 @@ export function StudentFeesPage({
             onPeriodChange={term.setPeriodId}
           />
 
-          {!student ? (
+          {isResolvingStudent ? (
+            // The deep-linked id has arrived but useStudentDetail hasn't
+            // resolved it into a full record yet — student is still null at
+            // this point. Without this branch, that window showed "Search for
+            // a student" underneath the context bar's own "Loading student…",
+            // which read as the link having silently failed rather than
+            // still being in flight.
+            <p className="text-sm text-n-400" role="status">
+              Loading fees…
+            </p>
+          ) : !student ? (
             <p className="text-sm text-n-400 italic">
               Search for a student to see their fees for {termName}.
             </p>

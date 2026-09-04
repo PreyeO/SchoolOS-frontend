@@ -63,12 +63,41 @@ export function useScoreDraft(
     [draft, queued, savedForComponent, componentMax],
   );
 
+  // Whether the SERVER — not merely the offline queue — actually reflects
+  // every entry in the draft. Deliberately NOT `changed` above: `changed`'s
+  // `inFlight` branch treats a draft value as "no longer unsaved" the moment
+  // it matches what was just handed to the queue, which is the right call for
+  // the "unsaved" badge (a teacher shouldn't see a nag for something already
+  // queued) but the wrong signal for whether the raw draft in localStorage is
+  // safe to delete. A queued mutation can sit paused for hours; clearing the
+  // only surviving copy of what was typed the moment it merely matched the
+  // QUEUE — rather than once the server had actually accepted it — left
+  // nothing to reconstruct from on a refresh while still offline: the local
+  // draft was already gone, and the server's own copy genuinely hadn't moved
+  // yet. The score would then vanish until back online, at which point the
+  // queued mutation finally completes and invalidates ["results"] (see
+  // use-enter-scores.ts's onSuccess), and the score reappears from the
+  // server — exactly the reported symptom. Comparing against savedForComponent
+  // instead means this only goes true once that has genuinely happened.
+  const unconfirmedByServer = useMemo(
+    () =>
+      Object.entries(draft).filter(([studentId, value]) => {
+        const trimmed = value.trim();
+        if (trimmed === "") return false;
+        const parsed = Number(trimmed);
+        if (Number.isNaN(parsed) || parsed < 0 || parsed > componentMax) return false;
+        const existing = savedForComponent.get(studentId);
+        if (!existing) return true;
+        return Number(existing.score_obtained) !== parsed;
+      }),
+    [draft, savedForComponent, componentMax],
+  );
+
   // Once nothing differs from the server there is no unsaved work to protect, so
   // the stored copy is dropped. Without this the draft outlived its usefulness
   // and, being applied on top of every later seed, kept reinstating stale numbers
-  // over fresher ones. Self-correcting: while a save is still queued offline the
-  // server copy hasn't moved, `changed` stays non-empty, and the draft is kept.
-  const isSynced = ready && changed.length === 0;
+  // over fresher ones.
+  const isSynced = ready && unconfirmedByServer.length === 0;
   useEffect(() => {
     if (isSynced && key) clearScoreDraft(membershipId, key);
   }, [isSynced, key, membershipId]);

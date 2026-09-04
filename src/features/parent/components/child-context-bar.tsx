@@ -31,10 +31,21 @@ export function ChildContextBar({ child, childrenLinks, onSelect, student, trail
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
         <ChildSwitcher child={child} childrenLinks={childrenLinks} onSelect={onSelect} />
-        <p className="mt-1 truncate text-xs text-n-500">
-          {klassLabel && <>{klassLabel} · </>}
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 truncate text-xs text-n-500">
+          {klassLabel && <span>{klassLabel} ·</span>}
           <span className="font-mono">{child.admission_number}</span>
-          <span className="capitalize"> · Your {child.relationship}</span>
+          {/* Was "· Your {relationship}" — e.g. "· Your mother", right next to
+              the CHILD's own admission number. Read on the child's own results
+              screen, that phrasing names a third person ("your mother" as in
+              the reader's own mother) rather than saying who the reader is TO
+              this child, which is what the field actually records
+              (ParentStudentLink.relationship — "I am this child's mother").
+              A plain role badge, matching how the admin-facing linked-parents
+              list already renders the same field (student-parent-links.tsx),
+              says the same fact without the ambiguity. */}
+          <span className="rounded-full bg-n-100 px-2 py-0.5 text-[11px] capitalize text-n-500">
+            {child.relationship}
+          </span>
         </p>
       </div>
       {trailing}

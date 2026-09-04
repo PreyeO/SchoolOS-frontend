@@ -93,11 +93,36 @@ export function useRegisterDraft(
     [draft, savedById, queuedByStudent],
   );
 
+  // Whether the SERVER — not merely the offline queue — actually reflects
+  // every entry in the draft. Deliberately NOT `changed` above: its queued-mark
+  // shortcut treats a draft entry as "no longer unsaved" the moment it matches
+  // what was just handed to the queue, which is right for the "unsaved" count
+  // (a teacher shouldn't be nagged about a mark already queued) but wrong as
+  // the signal for whether the local draft is safe to delete. A queued mark
+  // can sit paused for hours; clearing the only surviving copy of it the
+  // moment it merely matched the QUEUE — rather than once the server had
+  // actually accepted it — left nothing to reconstruct from on a refresh
+  // while still offline: the local draft was already gone, and the server's
+  // own copy genuinely hadn't moved. Marks would then vanish until back
+  // online, at which point the queued mutation finally completes and
+  // invalidates ["attendance"] (see use-bulk-mark.ts's onSuccess), and the
+  // marks reappear from the server. Comparing against savedById instead means
+  // this only goes true once that has genuinely happened. See the identical
+  // fix and longer note in features/results/hooks/use-score-draft.ts, the
+  // sibling this hook is explicitly modelled on.
+  const unconfirmedByServer = useMemo(
+    () =>
+      Object.entries(draft).filter(([studentId, entry]) => {
+        const record = savedById[studentId];
+        if (!record) return true;
+        return record.status !== entry.status || (record.note ?? "") !== entry.note;
+      }),
+    [draft, savedById],
+  );
+
   // Once nothing differs from the server there is no unsaved work to protect,
-  // so the stored copy is dropped. Self-correcting: while a save is still queued
-  // offline the server copy hasn't moved, `changed` stays non-empty, and the
-  // draft is deliberately kept.
-  const isSynced = ready && changed.length === 0;
+  // so the stored copy is dropped.
+  const isSynced = ready && unconfirmedByServer.length === 0;
   useEffect(() => {
     if (isSynced && key) clearDraft(membershipId, key);
   }, [isSynced, key, membershipId]);
