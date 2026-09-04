@@ -123,20 +123,6 @@ export function AttendancePage({
     armId ?? initialArmId ?? myClasses[0]?.classArmId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
-  // Keep the URL saying which register is open, so a refresh returns to it
-  // rather than silently snapping back to today's date and the default arm.
-  //
-  // replace, not push: the date input fires on every change, and pushing would
-  // bury the previous page under a dozen history entries. Mirrors the *derived*
-  // selection, so the arm chosen by default on first load is written down too.
-  useEffect(() => {
-    if (!selectedId) return;
-    const params = new URLSearchParams({ arm: selectedId, date });
-    const next = `${pathname}?${params.toString()}`;
-    if (`${window.location.pathname}${window.location.search}` === next) return;
-    router.replace(next, { scroll: false });
-  }, [selectedId, date, pathname, router]);
-
   const {
     data: roster,
     isPending: rosterLoading,
@@ -163,6 +149,41 @@ export function AttendancePage({
   // last-write-wins would then commit those over the real records.
   const todayUnmarkedOffline = savedPaused && !saved && date === todayLocal();
   const savedRecords = saved ?? (todayUnmarkedOffline ? NO_RECORDS : undefined);
+
+  // Records are cached per date — the key is ["attendance","records",arm,date] —
+  // so offline a date resolves only if it was opened while online. Any other
+  // date pauses forever, which without this check rendered "Loading register…"
+  // indefinitely: the same trap the class list had, reachable just by nudging
+  // the date field back a day. Computed here, ahead of the URL-sync effect
+  // below, so that effect can tell a genuinely unreachable selection apart from
+  // one that just hasn't resolved yet.
+  const unavailableOffline = (savedPaused && !savedRecords) || (rosterPaused && !roster);
+
+  // Keep the URL saying which register is open, so a refresh returns to it
+  // rather than silently snapping back to today's date and the default arm.
+  //
+  // replace, not push: the date input fires on every change, and pushing would
+  // bury the previous page under a dozen history entries. Mirrors the *derived*
+  // selection, so the arm chosen by default on first load is written down too.
+  //
+  // Skipped while unavailableOffline: this route is an async Server Component
+  // that bakes ?arm=/?date= into props via searchParams, so replace() here
+  // means a real RSC fetch for that exact URL. Offline, with nothing cached for
+  // this arm/date, the service worker can't find an exact match and falls back
+  // to whatever /attendance document IS cached (`ignoreSearch: true`) — serving
+  // a *different* date's baked-in props and silently snapping the picker back
+  // to it. Leaving the URL alone here means the address bar briefly lags the
+  // picker, but the picker's own "No saved copy of this date" message (below)
+  // gets to render instead of being clobbered by that stale navigation. Once
+  // unavailableOffline clears — back online, or the data was cached after all —
+  // this re-runs and the URL catches up.
+  useEffect(() => {
+    if (!selectedId || unavailableOffline) return;
+    const params = new URLSearchParams({ arm: selectedId, date });
+    const next = `${pathname}?${params.toString()}`;
+    if (`${window.location.pathname}${window.location.search}` === next) return;
+    router.replace(next, { scroll: false });
+  }, [selectedId, date, pathname, router, unavailableOffline]);
 
   const bulkMark = useBulkMark();
 
@@ -223,12 +244,8 @@ export function AttendancePage({
     }
   }
 
-  // Records are cached per date — the key is ["attendance","records",arm,date] —
-  // so offline a date resolves only if it was opened while online. Any other
-  // date pauses forever, which without this check rendered "Loading register…"
-  // indefinitely: the same trap the class list had, reachable just by nudging
-  // the date field back a day.
-  const unavailableOffline = (savedPaused && !savedRecords) || (rosterPaused && !roster);
+  // unavailableOffline is computed earlier, alongside the URL-sync effect that
+  // needs it before this point in the render.
   const loadingRegister =
     !unavailableOffline && (rosterLoading || (savedLoading && !savedRecords));
 
