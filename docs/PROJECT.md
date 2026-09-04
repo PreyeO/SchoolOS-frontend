@@ -1124,6 +1124,89 @@ way to reach the rest.
   everything this session, `school_os_web` still down on the missing AWS env
   vars.
 
+**Three unrelated bugs reported together, fixed separately (2026-09-03).**
+
+**1. Offline scores (and attendance marks) could vanish on refresh while still
+offline — the highest-stakes of the three, given this is the exact code
+CLAUDE.md flags as fragile with no test safety net.** Reported for scores;
+tracing it found the identical bug in attendance's register draft, since
+`use-register-draft.ts` is explicitly modelled on the same shape.
+- **Root cause, precisely**: `changed` (in both `use-score-draft.ts` and
+  `use-register-draft.ts`) treats a draft entry as "no longer unsaved" the
+  moment it matches what was just handed to the mutation queue —
+  `usePendingScores`/`usePendingMarks` read the QUEUED value, not a
+  server-confirmed one. That's the *correct* behaviour for the "N unsaved"
+  badge (a teacher shouldn't be nagged about something already queued). But
+  `isSynced` — the signal that clears the raw draft from localStorage — reused
+  the SAME `changed` value. A comment on this code claimed "while a save is
+  still queued offline the server copy hasn't moved, `changed` stays
+  non-empty, and the draft is kept" — traced it and that claim was wrong: the
+  `queued`/`inFlight` branch short-circuits BEFORE the server comparison ever
+  runs, so `changed` goes empty the moment the draft matches the QUEUE, not
+  the server.
+- **The actual sequence**: type a score offline → Save queues a paused
+  mutation → draft now equals the queued value → `changed` empties →
+  `isSynced` fires → `clearScoreDraft` wipes the ONLY surviving local record of
+  what was typed, while the mutation is still unconfirmed → refresh while
+  still offline re-seeds from `readScoreDraft` (now empty) plus `scores` (the
+  server hasn't received anything yet) → the score is gone. Once online, the
+  queued mutation finally completes, `onSuccess` invalidates `["results"]`
+  (`use-enter-scores.ts`) or `["attendance"]` (`use-bulk-mark.ts`), and the
+  score reappears — from the server, exactly as reported.
+- **Fixed by introducing a separate, stricter `unconfirmedByServer`** — the
+  same filter as `changed`, minus the `queued` short-circuit — used only for
+  the clear-draft decision. `changed` itself is untouched, so the "unsaved"
+  badge and what gets resent on a second Save both keep their existing,
+  correct behaviour. This is a one-line change in what `isSynced` compares
+  against, not a change to the render-time seeding order in
+  `use-score-draft-sync.ts`/`use-register-draft-sync.ts` — the part explicitly
+  called out as load-bearing and risky to touch; neither file was modified.
+- **Verified both directions weren't broken**: confirmed both mutations'
+  `onSuccess` genuinely invalidate the underlying query (so the fix doesn't
+  leave the draft stuck forever once really saved), and reproduced the exact
+  reported sequence in a fixture — the OLD logic loses the score after an
+  offline refresh, the NEW logic keeps it and still clears correctly once the
+  server actually confirms it.
+
+**2. Parent-facing "Your mother" next to the child's admission number.** Not
+wrong data — `child.relationship` is the parent's own recorded relationship to
+that child — but wrong phrasing: read on the CHILD's own results screen, "Your
+mother" reads as naming a third person (the reader's own mother), not stating
+who the reader is to this child. Changed `ChildContextBar` (used on the
+parent's home, results, fees and attendance screens) from inline "· Your
+{relationship}" text to a plain role badge — "Mother" / "Father" / "Guardian" —
+matching how the same field already renders on the admin-facing linked-parents
+list (`student-parent-links.tsx`), which states the fact without the
+possessive ambiguity.
+
+**3. Payments → Fees breakdown intermittently missing until a second click.**
+Two real gaps in `use-student-fees-selection.ts`, both about how robustly the
+`?student=&period=` deep link gets applied:
+- **Asymmetric robustness between the two halves of the same deep link.** The
+  student half already re-applies whenever the incoming id differs from what
+  was last consumed. The term half only ever applied `initialPeriodId` once,
+  in a mount-only effect with `exhaustive-deps` explicitly disabled — correct
+  only if this component instance is guaranteed fresh per distinct link, which
+  Next's client-side route cache doesn't strictly promise (back/forward
+  navigation is documented to reuse cached segments to preserve scroll
+  position). Fixed to follow the identical re-apply-on-change rule the student
+  half already used, removing the fragile mount-only effect and its lint
+  suppression.
+- **The main content area ignored `isResolvingStudent` entirely** — during the
+  window after a deep-linked id arrives but before `useStudentDetail` resolves
+  it, the context bar correctly showed "Loading student…" while the panel
+  below it showed "Search for a student to see their fees," which reads as the
+  link having silently failed rather than still being in flight. Added the
+  missing branch.
+- Honest caveat: I could not reproduce the exact intermittency in a browser —
+  there is none available in this session — so this is the most well-justified
+  fix from static reading, not a confirmed root cause the way the offline bug
+  above is. Worth a real click-through once the backend is up.
+
+Clean `tsc`, `eslint`, `build` across all three. **Not verified live** — same
+blocker as everything this session, `school_os_web` still down on the missing
+AWS env vars.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
