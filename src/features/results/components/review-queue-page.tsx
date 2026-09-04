@@ -85,7 +85,11 @@ export function ReviewQueuePage() {
             onPeriodChange={(id) => { term.setPeriodId(id); resetPage(); }}
             armGroups={armGroups}
             armId={armId}
-            onArmChange={(id) => { setArmId(id); resetPage(); }}
+            // Clears the subject pick too: the dropdown's own options just
+            // narrowed to this arm (see useReviewQueueView), and a subject
+            // that isn't taught here would otherwise sit selected but absent
+            // from its own list.
+            onArmChange={(id) => { setArmId(id); setSubjectId(""); resetPage(); }}
             subjects={subjects}
             subjectId={subjectId}
             onSubjectChange={(id) => { setSubjectId(id); resetPage(); }}

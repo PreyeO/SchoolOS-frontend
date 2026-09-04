@@ -6,6 +6,8 @@ import { Select } from "@/components/ui/select";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
 import type { PeriodOptionGroup } from "@/lib/school/period-options";
 
+import type { ReviewQueueSubjectOption } from "../hooks/use-review-queue-view";
+
 interface Props {
   termGroups: PeriodOptionGroup[];
   periodId: string | null;
@@ -15,7 +17,7 @@ interface Props {
   // empty-value option, so the shared picker covers this without a variant.
   armId: string;
   onArmChange: (id: string) => void;
-  subjects: { id: string; name: string }[];
+  subjects: ReviewQueueSubjectOption[];
   subjectId: string;
   onSubjectChange: (id: string) => void;
 }
@@ -55,7 +57,10 @@ export function ReviewQueueFilters({
         <span className="text-n-500">Subject</span>
         {/* Built from the submissions actually returned, not the school's whole
             subject list — offering a subject nobody has submitted would filter
-            to an empty table with nothing to explain it. */}
+            to an empty table with nothing to explain it. Narrows to the picked
+            class's own subjects once one is chosen, and disambiguator (set only
+            on an actual name collision — see useReviewQueueView) tells apart two
+            different subjects that would otherwise render identically. */}
         <Select
           value={subjectId}
           onChange={(e) => onSubjectChange(e.target.value)}
@@ -65,7 +70,7 @@ export function ReviewQueueFilters({
           <option value="">All subjects</option>
           {subjects.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.name}
+              {s.disambiguator ? `${s.name} — ${s.disambiguator}` : s.name}
             </option>
           ))}
         </Select>

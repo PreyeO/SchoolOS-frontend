@@ -1686,7 +1686,38 @@ only ever called with the *current* period, with no way to ask for another.
   the user's own note on the API confirmed.
 - Clean `tsc`, `eslint`.
 
-Full build across all three fixes pending — will confirm once it completes.
+Clean `build` too, across all three fixes.
+
+**Result Review's subject filter: repeated labels and no arm-narrowing
+(2026-09-04).** Two reports at once, both in `use-review-queue-view.ts`.
+- **"Mathematics" appearing twice with no way to tell them apart.** Not a
+  frontend dedup bug — `subjects` was already keyed by subject id, which
+  can't produce a literal duplicate id. Checked `academic/models.py`:
+  `Subject` is "scoped to a level" and unique per `(school, name, level)`
+  **only while active** — so two genuinely different subject ids can render
+  with the identical name, either because two different levels each define
+  their own "Mathematics", or because a deactivated subject (kept for its
+  historical scores — the exact shape behaviour traits already had this
+  session) collides in name with its own active replacement. Either way nothing
+  in the dropdown told them apart.
+- **Subject options weren't narrowed by the Class filter.** `subjects` was
+  built from `allSubmissions` unconditionally, never from `armId`, so picking
+  a specific class still offered every subject anyone teaches anywhere.
+  Confirmed against `academic/models.py`: `Subject` is level-scoped, not
+  arm-scoped, so a class's subjects genuinely are a subset of the school-wide
+  list — no backend gap, and no extra request needed either: `ResultSubmission`
+  (what this screen already fetches in full for the term) already carries
+  `class_arm`, `class_name`, `subject`, and `subject_name` on every row, which
+  is everything both fixes need.
+- **Fixed**: `subjects` now filters by `armId` first, then only appends a
+  disambiguator when a name genuinely collides with another in the resulting
+  list. The disambiguator is every distinct `class_name` that subject id's OWN
+  submissions span (not just one) — Subject isn't arm-scoped, so a single id
+  routinely covers several classes already, and naming only one would imply a
+  narrower scope than picking it actually filters to. Picking a class now also
+  clears any selected subject that isn't taught there, rather than leaving a
+  selection absent from its own now-narrower dropdown.
+- Clean `tsc`, `eslint`, `build`.
 
 ## Next up
 
