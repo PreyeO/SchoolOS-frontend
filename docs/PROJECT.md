@@ -1805,6 +1805,47 @@ the picker silently shows nothing — indistinguishable from "no such teacher."
   subject-and-arm used to look the same way; it now says so.
 - Clean `tsc`, `eslint`, `build`.
 
+**School Switcher didn't change subdomain (2026-09-05).** Reported precisely:
+a teacher at both Blossom Academy and FGGC, signed in on
+`bloosom.myschoolos.io`, picks FGGC from the switcher — expects to land on
+`fggc.myschoolos.io`, stays on Blossom's subdomain instead.
+- **Root cause**: `useSwitchSchool` reused the shared `resolvePostAuthPath`
+  (login/verify-otp/create-school/accept-invite's post-auth destination
+  resolver), whose own comment already says why it's "always same-origin
+  now": those four flows only ever run on the origin the session already
+  belongs to, so never crossing origins is correct there — tokens don't
+  travel with a plain redirect, and `resolveNextStep`'s own comment records
+  exactly this breaking multi-school login once before (fixed by removing the
+  hand-off, not by carrying tokens across). Switching schools is the one case
+  where that assumption doesn't hold: it's specifically about landing
+  somewhere that ISN'T the current membership, so "stay on this origin" is
+  wrong exactly when it matters — on a school's own subdomain, switching to a
+  DIFFERENT school. The new tokens got written into the WRONG school's
+  origin-scoped localStorage (silently stranding them there for anyone who
+  revisits that subdomain directly before next logging in), and the browser
+  never navigated anywhere.
+- **Fixed** by reusing the *other* existing cross-origin mechanism this app
+  already has for exactly this problem — the apex→subdomain hand-off after
+  login (`lib/auth/handoff.ts`, `/auth-handoff`, hardened against a real race
+  earlier this same day). `useSwitchSchool` now checks
+  `getCurrentSchoolSlug()` against the newly-switched-to school's own slug;
+  when they differ, it carries the fresh token pair across via the handoff
+  URL fragment instead of applying them locally at all, landing on the new
+  school's own subdomain, which stores them there itself. Staying on the
+  current origin (apex, or already the right subdomain) keeps the exact
+  original behavior.
+- Needed the new school's slug BEFORE deciding whether to apply the new
+  tokens locally — but the normal `getSchoolDetail()` goes through
+  `apiClient`, whose request interceptor unconditionally attaches whatever
+  token is CURRENTLY stored (still the OLD school's, at that point), which
+  would ask "what school is this" with the wrong identity. Added a one-off
+  raw `axios.get` with the NEW access token as an explicit header,
+  bypassing that interceptor entirely rather than working around it.
+- Clean `tsc`, `eslint`, `build`. **Not verified live** — no browser in this
+  session, and this genuinely needs two schools open in it to reproduce; the
+  same static-analysis caveat as every session change to auth/token-handling
+  code this app already has.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
