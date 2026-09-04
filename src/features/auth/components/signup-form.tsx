@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -30,7 +31,10 @@ export function SignupForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SignupFormValues>({ resolver: zodResolver(signupSchema) });
+  } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { accepted_terms: false },
+  });
 
   function onSubmit(values: SignupFormValues) {
     clearAuth();
@@ -104,6 +108,34 @@ export function SignupForm() {
           {...register("phone_number")}
         />
       </FieldWrapper>
+
+      <div>
+        <label className="flex items-start gap-2.5 text-sm text-n-600">
+          <input
+            type="checkbox"
+            aria-invalid={!!errors.accepted_terms}
+            aria-describedby={errors.accepted_terms ? "accepted_terms-error" : undefined}
+            className="mt-0.5 size-4 shrink-0 accent-primary"
+            {...register("accepted_terms")}
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" className="text-primary hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+        {errors.accepted_terms && (
+          <p id="accepted_terms-error" role="alert" className="mt-1 text-xs text-red-600">
+            {errors.accepted_terms.message}
+          </p>
+        )}
+      </div>
 
       <Button
         type="submit"

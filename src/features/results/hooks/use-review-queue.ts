@@ -9,30 +9,22 @@ import type { PaginatedResponse } from "@/lib/api/types";
 import type { ResultSubmission } from "../types";
 
 export const REVIEW_QUEUE_QUERY_KEY = ["results", "review-queue"];
+export const REVIEW_QUEUE_PAGE_SIZE = 25;
 
-// Every submission for a term, across all classes and subjects — the admin's
-// view of where results have got to. Unfiltered by status on purpose: an admin
-// needs to see what's still outstanding as much as what's waiting on them.
+// Every submission for a term, across all classes and subjects. Used for
+// whole-term SUMMARIES — useResultsProgress's outstanding/awaiting/approved
+// counts, and Publish Results' own progress reasoning — which genuinely need
+// every row, not one page of it. NOT used by the review queue's own browsing
+// table any more (see useReviewQueuePage below) — that one pages server-side,
+// since browsing doesn't need the whole term in memory at once the way a
+// term-wide count does.
 //
-// Fetches every page rather than stopping at one, and that's deliberate: a
-// ClassArmSubjectResultSubmission row only exists once a teacher has entered at
-// least one score for that (class_arm, subject, period) — created lazily, see
-// the model's own docstring — so the true total is bounded by real submitted
-// work for ONE term, not by pupil count. Genuinely large (multiple hundreds)
-// only for a big school deep into a term, and even then this is a handful of
-// requests, not an unbounded fetch.
-//
-// The alternative — a single page_size=100 request with a "showing X of Y,
-// incomplete" warning — is what this replaced (2026-09-03). It silently
-// dropped the rest of the term for any school that crossed the ceiling, with
-// no way to reach it. The reason it has to be a full fetch rather than
-// server-paged Next/Previous: the queue's own sort — submitted-and-awaiting
-// first, everything else after (see STATUS_ORDER in review-queue-page.tsx) —
-// has no backend equivalent (no ordering param on this endpoint), so paging
-// through the server's own order would scatter "needs your review" items
-// across pages instead of surfacing them. Fetching the complete set once and
-// paginating client-side over the correctly-sorted result is what keeps that
-// design intact while still not truncating anything.
+// Fetches every page rather than stopping at one: a ClassArmSubjectResultSubmission
+// row only exists once a teacher has entered at least one score for that
+// (class_arm, subject, period) — created lazily, see the model's own
+// docstring — so the true total is bounded by real submitted work for ONE
+// term, not by pupil count. Genuinely large (multiple hundreds) only for a
+// big school deep into a term, and even then this is a handful of requests.
 export async function getReviewQueue(academicPeriodId: string): Promise<ResultSubmission[]> {
   const submissions: ResultSubmission[] = [];
   let page = 1;
@@ -51,8 +43,67 @@ export async function getReviewQueue(academicPeriodId: string): Promise<ResultSu
 
 export function useReviewQueue(academicPeriodId: string | null | undefined) {
   return useQuery({
-    queryKey: [...REVIEW_QUEUE_QUERY_KEY, academicPeriodId],
+    queryKey: [...REVIEW_QUEUE_QUERY_KEY, "all", academicPeriodId],
     queryFn: () => getReviewQueue(academicPeriodId as string),
     enabled: !!academicPeriodId,
+  });
+}
+
+export interface ReviewQueuePageFilters {
+  classArmId?: string;
+  subjectId?: string;
+}
+
+// One page of this term's submissions, filtered server-side by class/subject
+// (ClassArmSubjectResultSubmissionViewSet.filterset_fields covers both) — what
+// the review queue's own browsing table uses (2026-09-05, at the user's
+// explicit request: fetching the whole term up front, as getReviewQueue above
+// still does for the summary screens, made the browsing table wait on however
+// many pages the term happened to have before the first row could render).
+//
+// What paging server-side gives up, and why: the queue's own priority sort —
+// submitted-and-awaiting first, everything else after — used to sort the
+// COMPLETE term, so nothing needing review could be buried behind an earlier
+// page's worth of already-approved rows. Sorting only within whichever page
+// is loaded (still done — see useReviewQueueView) can't reproduce that once
+// paged server-side, because the backend orders submissions by `-created_at`
+// (ClassArmSubjectResultSubmission.Meta.ordering) with no ordering param
+// exposed to ask for anything else. The "N awaiting your review" figure has
+// the same problem for the same reason, compounded by `status` not even being
+// in filterset_fields — there's no way to ask the backend for just a count of
+// submitted-status rows either. Both are now page-scoped. See docs/asks/ for
+// the backend ask that would let either come back.
+export async function getReviewQueuePage(
+  academicPeriodId: string,
+  page: number,
+  filters: ReviewQueuePageFilters,
+): Promise<PaginatedResponse<ResultSubmission>> {
+  const { data } = await apiClient.get<PaginatedResponse<ResultSubmission>>(
+    RESULT_SUBMISSION_ENDPOINTS.LIST(),
+    {
+      params: {
+        academic_period: academicPeriodId,
+        page,
+        page_size: REVIEW_QUEUE_PAGE_SIZE,
+        ...(filters.classArmId ? { class_arm: filters.classArmId } : {}),
+        ...(filters.subjectId ? { subject: filters.subjectId } : {}),
+      },
+    },
+  );
+  return data;
+}
+
+export function useReviewQueuePage(
+  academicPeriodId: string | null | undefined,
+  page: number,
+  filters: ReviewQueuePageFilters,
+) {
+  return useQuery({
+    queryKey: [...REVIEW_QUEUE_QUERY_KEY, "page", academicPeriodId, page, filters],
+    queryFn: () => getReviewQueuePage(academicPeriodId as string, page, filters),
+    enabled: !!academicPeriodId,
+    // Keeps the current page's rows on screen while the next page loads,
+    // instead of collapsing the whole list to a spinner on every click.
+    placeholderData: (previous) => previous,
   });
 }
