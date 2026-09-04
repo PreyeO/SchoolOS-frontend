@@ -1284,6 +1284,72 @@ session, `school_os_web` still down on the missing AWS env vars; bug 1's
 mechanism is well-supported by reading the service worker and page source
 side by side, bug 3's is an explicitly flagged guess.
 
+**Payments → Fees breakdown not auto-showing on the first click, root cause
+found (2026-09-04).** Reported once already (2026-09-03) and "fixed" by
+correcting the term-half of the deep link and adding an `isResolvingStudent`
+branch — both genuine improvements, but neither was the actual cause, which is
+why the user saw no change. `school_os_web` came up mid-session (AWS env vars
+were added on the user's side), which didn't change the diagnosis — this bug
+is purely client-side — but did confirm the container itself now boots clean.
+- **Root cause**: `use-student-fees-selection.ts`'s URL-sync effect (added
+  2026-09-03 alongside `attendance-page.tsx`'s own arm/date sync, described in
+  its own comment as mirroring it) fires on every render and unconditionally
+  writes `student`/`term.periodId` back into the URL. On the render right
+  after landing on `?student=X&period=Y`, `student` is still `null` — the deep
+  link hasn't resolved yet, `useStudentDetail` is mid-flight — so this effect
+  ran anyway and rewrote the URL to `?period=Y`, **stripping `student=X` while
+  the fetch for X was still in flight**. That URL change flows back down as a
+  new `initialStudentId` prop (now `undefined`), which flips
+  `useStudentDetail`'s `enabled` to `false` and changes its query key (both
+  keyed off `initialStudentId`) — orphaning the original request from this
+  hook's point of view. The fetch itself isn't cancelled and still lands in
+  the TanStack cache, just under a key nothing is watching anymore, so the
+  screen falls through to "Search for a student" and stays there.
+- **Why it looked intermittent, and why a second click "fixed" it**: this is a
+  straight race between that effect firing (scheduled right after the first
+  paint) and `useStudentDetail`'s fetch resolving. Slow enough — cold
+  connection, cold Django worker — and the effect wins, stripping the link
+  before resolution. Fast enough — or the SAME student's detail already sitting
+  warm in cache from the prior orphaned fetch — and the render-time seeding
+  block (`if (deepLinkedStudent.data && ...)`) sets `student` synchronously
+  before the effect ever runs with a null value, so the URL is written
+  correctly. A retry of the same student is far more likely to win because
+  the first, silently-orphaned fetch already warmed that exact cache entry.
+- **Fixed** by computing `isResolvingStudent` ahead of the effect (previously
+  only returned from the hook, computed after) and skipping the URL write
+  entirely while it's true — the same shape as the offline guard just added to
+  `attendance-page.tsx` above, applied here for a race instead of an offline
+  gap. Once resolution settles, success or failure, the effect resumes
+  normally.
+- Clean `tsc`, `eslint`, `build`. **Still not verified live** — the backend
+  coming up mid-session didn't help here since there's no browser in this
+  session to actually watch the effect-timing race play out; this is a
+  logic fix derived from tracing the exact render sequence, not something
+  reproduced and confirmed fixed by observation. Worth a deliberate
+  slow-network click-through (DevTools throttling) to confirm.
+
+**Two related questions from the same message, not bugs — answered rather
+than changed:**
+- **"Why does pagination fetch everything up front, then not re-fetch on
+  Next?"** — asked after using the Result Review queue (2026-09-03, above).
+  That's deliberate, not an oversight: the queue's priority sort
+  (submitted-and-awaiting first) has no backend equivalent — there's no
+  ordering param on that endpoint — so paging through the server's own order
+  would scatter the items that most need attention across pages. Fetching the
+  full term's submissions once (bounded by real submitted work, not pupil
+  count) and paginating client-side over the correctly-sorted result is what
+  keeps that sort intact. The real fix, if this is worth revisiting, is a
+  backend ordering param — a `SchoolOS-backend` change outside this workspace.
+- **"Payment table headers not aligned — Billed/Paid/Owing sit at the end,
+  Student/Admission no. sit at the start."** — checked `arrears-table.tsx`:
+  this is intentional, not a misalignment bug. Every numeric column
+  (`Billed`/`Paid`/`Owing`) is `text-right` in both its `<th>` and its `<td>`s,
+  consistently, matching how `payment-log-tab.tsx`'s `Amount` column also
+  right-aligns — a standard convention so digits line up for scanning, name
+  columns stay left-aligned since there's nothing to line up numerically.
+  Flagged back to the user rather than changed, since "intentional" and "what
+  the user wants" aren't the same thing here.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
