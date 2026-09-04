@@ -1536,6 +1536,27 @@ of gap as the Payment log's own before this session's earlier fix.
 - Clean `tsc`, `eslint`, `build` across every touched file (api, hook, three
   page components, `LedgerPanel`, `PaymentHistory`).
 
+**My Classes' CTA made per-class-role instead of one fixed button
+(2026-09-04).** Was always "Take register" (gated on form-class-only, fixed
+earlier the same day) even for a class where the teacher only takes a
+subject and has no register of their own. Now shows one button per hat the
+teacher actually wears in that specific class: "Take register" when
+`isFormClass`, "Enter scores" when `subjects.length > 0`, both side by side
+(not stacked) when a teacher is both the form teacher and a subject teacher
+in the same arm — two short labels read fine at half card width, and it
+avoids the card growing taller just for holding both roles. Neither shows
+when a class card represents neither (shouldn't happen given how `useMyClasses`
+builds the list, but the gate costs nothing).
+- "Enter scores" links to bare `/results`, not a deep link the way "Take
+  register" carries `?arm=`: score entry (`score-entry-page.tsx`) has no
+  searchParams support at all today, unlike attendance/fees, and that file is
+  one of the four documented 150-line exceptions this session has repeatedly
+  been careful not to touch without a clear, contained reason. Wiring up
+  arm-scoped deep-linking there is a reasonable follow-up if wanted, but
+  wasn't part of what was asked here — flagging it rather than quietly
+  half-building it.
+- Clean `tsc`, `eslint`, `build`.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
