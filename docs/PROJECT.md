@@ -1499,6 +1499,43 @@ asked here.)
 - Clean `tsc`, `eslint`, `build` across all 79 new files plus the two touched
   components.
 
+**Fee item + status filter and real pagination on payment history
+(2026-09-04).** Was `getStudentPayments(studentId)`, `page_size=100`, no UI —
+explicitly flagged in its own comment as a deliberate cap, and the same class
+of gap as the Payment log's own before this session's earlier fix.
+- Made `PaymentHistory` self-contained rather than threading filter/page
+  state through three separate parent components: it now owns its query
+  directly (`studentId` + optional `canFilterByFeeItem` props) instead of
+  receiving a pre-fetched `UseQueryResult<Payment[]>`. `getStudentPayments`
+  and `useStudentPayments` gained `page`/`status`/`fee_item` and now return
+  the full envelope. `LedgerPanel` no longer takes or forwards a `payments`
+  prop at all — one fewer thing three call sites had to wire up identically.
+- **The fee-item filter is gated behind `canFilterByFeeItem` (default
+  `false`), not shown by `canViewFees` alone.** Populating its dropdown means
+  listing this school's fee items (`GET /fee-items/`), which requires the
+  admin-only `view_fees` **school permission** — a real permission the bursar
+  screen's `canViewFees` already *is* (`useHasSchoolPermission("view_fees")`
+  in `student-fees-page.tsx`), so that screen passes
+  `canFilterByFeeItem={canViewFees}`. But `LedgerPanel`'s `canViewFees` prop
+  means something different in the parent/student screens
+  (`child-fees-page.tsx`, `my-fees-page.tsx`) — there it's hardcoded `true` as
+  a business decision ("a parent/student may see their own child's/own
+  payment history"), not a permission check, and neither persona can ever
+  hold `view_fees` at all. Passing the same value for both would have sent a
+  parent's Fees screen straight into a 403 the moment they touched the
+  dropdown. Both screens simply omit the prop, so they keep the status filter
+  and pagination (no extra permission needed for either) without the
+  fee-item one.
+- Status filter and fee-item filter both reuse the exact shape already built
+  for the Payment log tab (`payment-log-tab.tsx`, above) — same status enum,
+  same `useFeeItemsForPeriod` (scoped to the caller's own current term,
+  labelled `name — class_name`).
+- `PAGE_SIZE = 10`, smaller than the Payment log's 25: this is one student's
+  history, not the whole school's, and a shorter page reads better on what's
+  usually a handful of rows.
+- Clean `tsc`, `eslint`, `build` across every touched file (api, hook, three
+  page components, `LedgerPanel`, `PaymentHistory`).
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

@@ -7,11 +7,7 @@ import { OfflineNotice } from "@/components/shared/offline-notice";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
-import {
-  useStudentLedger,
-  useStudentPayments,
-  useStudentWaivers,
-} from "../hooks/use-student-ledger";
+import { useStudentLedger, useStudentWaivers } from "../hooks/use-student-ledger";
 import { useStudentFeesSelection } from "../hooks/use-student-fees-selection";
 import { LedgerPanel } from "./ledger-panel";
 import { StudentFeesContextBar } from "./student-fees-context-bar";
@@ -49,7 +45,6 @@ export function StudentFeesPage({
   );
 
   const ledger = useStudentLedger(student?.id ?? null, term.periodId);
-  const payments = useStudentPayments(student?.id ?? null, canViewFees);
   const waivers = useStudentWaivers(student?.id ?? null, canViewFees && canWaive);
 
   // fee_item id → waiver id. The ledger says *whether* a row is waived but not
@@ -128,7 +123,7 @@ export function StudentFeesPage({
               canRecord={canRecord}
               canWaive={canWaive}
               canViewFees={canViewFees}
-              payments={payments}
+              canFilterByFeeItem={canViewFees}
             />
           )}
         </>

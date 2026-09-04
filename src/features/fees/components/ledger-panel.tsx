@@ -1,9 +1,8 @@
 "use client";
 
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { Payment, StudentLedger } from "../types";
+import type { StudentLedger } from "../types";
 import { LedgerSummary } from "./ledger-summary";
 import { LedgerTable } from "./ledger-table";
 import { NotBilledNotice } from "./not-billed-notice";
@@ -17,10 +16,11 @@ interface Props {
   canRecord: boolean;
   canWaive: boolean;
   canViewFees: boolean;
-  // Only read when canViewFees — the history section is absent otherwise, so a
-  // caller who can't view it (a parent reading their own child's ledger) has no
-  // query to hand over and shouldn't have to invent one.
-  payments?: UseQueryResult<Payment[]>;
+  // Whether the caller genuinely holds the admin-only view_fees SCHOOL
+  // permission, as opposed to merely being allowed to see this student's own
+  // payment history (a parent/student's narrower, separate allowance) — see
+  // the identical note on PaymentHistory's own prop. Defaults false.
+  canFilterByFeeItem?: boolean;
 }
 
 // The loaded half of the bursar's desk — summary, the line-by-line table (or
@@ -35,7 +35,7 @@ export function LedgerPanel({
   canRecord,
   canWaive,
   canViewFees,
-  payments,
+  canFilterByFeeItem,
 }: Props) {
   return (
     <div className="space-y-5">
@@ -62,15 +62,10 @@ export function LedgerPanel({
         />
       )}
 
-      {canViewFees && payments && (
+      {canViewFees && (
         <section className="space-y-2.5">
           <SectionLabel>Payment history</SectionLabel>
-          <PaymentHistory
-            payments={payments.data}
-            isPending={payments.isPending}
-            isError={payments.isError}
-            error={payments.error}
-          />
+          <PaymentHistory studentId={ledger.student.id} canFilterByFeeItem={canFilterByFeeItem} />
         </section>
       )}
     </div>
