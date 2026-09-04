@@ -23,9 +23,16 @@ function nameParts(full: string): [string, string] {
   return [first, rest.join(" ")];
 }
 
-export function NoteRow({ note }: { note: StudentNote }) {
+interface Props {
+  note: StudentNote;
+  // Computed once by the parent (it already needs the same call to gate the
+  // whole section and the composer) rather than recomputed per row.
+  permissions: ReturnType<typeof useNotePermissions>;
+}
+
+export function NoteRow({ note, permissions }: Props) {
   const [editing, setEditing] = useState(false);
-  const { canEdit, canDelete, isMine } = useNotePermissions();
+  const { canEdit, canDelete, isMine } = permissions;
   const update = useUpdateStudentNote();
   const remove = useDeleteStudentNote();
 

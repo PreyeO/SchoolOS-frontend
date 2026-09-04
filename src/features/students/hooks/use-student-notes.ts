@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useMe } from "@/features/me/hooks/use-me";
 import { getErrorMessage } from "@/lib/api/get-error-message";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
-import { useIsTeacher } from "@/lib/auth/use-personas";
+import { useIsSchoolAdmin } from "@/lib/auth/use-personas";
 
 import {
   createStudentNote,
@@ -58,24 +58,42 @@ export function useDeleteStudentNote() {
   return useNotesMutation((id: string) => deleteStudentNote(id), "Note deleted");
 }
 
-// Who may do what with a given note.
+// Who may see and do what with a student's notes.
 //
-// Mirrors StudentNoteService rather than guessing: writing needs a teacher
-// profile (an admin without one gets 403 — verified live), editing is the
-// author's alone even against admins, and deleting is the author OR an admin
-// holding edit_students.
+// Narrowed 2026-09-03 from "any teacher" to "the form teacher of this
+// student's CURRENT class" — deliberately, per the ask: this is a handover
+// tool between consecutive form teachers of the same arm ("parents pick him up
+// at 4pm", "takes medication at 2pm"), not a general staffroom notice board.
+// The backend still permits any teacher to read/write (StudentNoteService
+// intentionally isn't restricted that way — see its docstring), so this is a
+// frontend-only narrowing: the section simply doesn't render for a teacher who
+// isn't the current form teacher, rather than the API refusing them.
+//
+// Admins keep view access — they already see everything else on this page,
+// already hold delete rights over any note (edit_students), and are the only
+// backstop if something needs review after the writing teacher has moved on.
+// This is a judgment call, not something the user specified either way; flag
+// it if admins shouldn't see this.
+//
+// currentClassArmId is the student's OWN current class_arm_id
+// (student.current_class?.class_arm_id) — not the note's historical one, which
+// can differ after a transfer or promotion and is deliberately not what gates
+// access here.
 //
 // `author.id` is null once that teacher's profile has been removed, at which
 // point nobody can edit the note and only an admin can clear it — hence the
 // explicit null check rather than comparing a possibly-undefined id.
-export function useNotePermissions() {
+export function useNotePermissions(currentClassArmId: string | null) {
   const { data: me } = useMe();
-  const isTeacher = useIsTeacher();
+  const isAdmin = useIsSchoolAdmin();
   const canDeleteAny = useHasSchoolPermission("edit_students");
   const myTeacherId = me?.teacher?.id;
+  const isFormTeacherHere =
+    !!currentClassArmId && !!me?.teacher?.class_arms.some((arm) => arm.id === currentClassArmId);
 
   return {
-    canWrite: isTeacher && !!myTeacherId,
+    canView: isAdmin || isFormTeacherHere,
+    canWrite: isFormTeacherHere,
     isMine: (note: StudentNote) => !!myTeacherId && note.author.id === myTeacherId,
     canEdit: (note: StudentNote) => !!myTeacherId && note.author.id === myTeacherId,
     canDelete: (note: StudentNote) =>

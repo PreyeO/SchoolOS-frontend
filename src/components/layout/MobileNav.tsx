@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { NAV_CTA_PRIMARY, NAV_CTA_SECONDARY, NAV_LINKS } from "@/data/nav";
+import { useInPageAnchorClick } from "@/lib/scroll-to-in-page-hash";
 
 import { Button } from "../ui/button";
 
@@ -9,6 +12,8 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ onClose }: MobileNavProps) {
+  const onAnchorClick = useInPageAnchorClick();
+
   return (
     <div className="flex flex-col h-full pt-2 pb-6">
       <div className="mb-8 px-1">
@@ -22,7 +27,13 @@ export function MobileNav({ onClose }: MobileNavProps) {
           <Link
             key={link.href}
             href={link.href}
-            onClick={onClose}
+            onClick={(e) => {
+              // Closes the drawer regardless — even when the click also
+              // scrolls the page underneath it, the sheet shouldn't stay open
+              // over content the tap was aimed at.
+              onAnchorClick(e, link.href);
+              onClose();
+            }}
             className="px-3 py-3 text-base font-medium text-n-700 hover:text-ink hover:bg-n-100 rounded-lg transition-colors"
           >
             {link.label}

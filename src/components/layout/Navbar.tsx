@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { NAV_CTA_PRIMARY, NAV_CTA_SECONDARY, NAV_LINKS } from "@/data/nav";
+import { useInPageAnchorClick } from "@/lib/scroll-to-in-page-hash";
 import { cn } from "@/lib/utils";
 
 import { Button } from "../ui/button";
@@ -25,6 +26,7 @@ function Logo() {
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const onAnchorClick = useInPageAnchorClick();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -49,6 +51,7 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={(e) => onAnchorClick(e, link.href)}
               className="px-4 py-2 text-sm font-medium text-n-600 hover:text-ink hover:bg-n-100 rounded-md transition-colors"
             >
               {link.label}

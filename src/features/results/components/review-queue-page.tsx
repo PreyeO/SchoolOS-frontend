@@ -3,17 +3,19 @@
 import { useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/shared/error-state";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
 import { useReviewQueue } from "../hooks/use-review-queue";
+import { REVIEW_QUEUE_PAGE_SIZE, useReviewQueueView } from "../hooks/use-review-queue-view";
 import {
   useApproveResult,
   useRejectResult,
   useUnlockResult,
 } from "../hooks/use-submission-actions";
-import type { ResultSubmission, SubmissionStatus } from "../types";
+import type { ResultSubmission } from "../types";
 import { NoTermsNotice } from "./no-terms-notice";
 import { type ReviewAction, ReviewActionDialogs } from "./review-action-dialogs";
 import { ReviewQueueEmpty } from "./review-queue-empty";
@@ -22,17 +24,14 @@ import { ReviewQueueList } from "./review-queue-list";
 import { SubmissionScoresDialog } from "./submission-scores-dialog";
 import { TermBadge } from "./term-badge";
 
-// Ordered by what needs doing, not alphabetically. Anything waiting on the admin
-// comes first; approved work sinks to the bottom because it needs nothing.
-const STATUS_ORDER: SubmissionStatus[] = ["submitted", "rejected", "draft", "approved"];
-
 export function ReviewQueuePage() {
   // Term keys the request; class and subject narrow what came back.
   const term = useTermSelection();
   const { data: classes } = useClasses();
-  const { data, isPending, isError, error } = useReviewQueue(term.periodId);
+  const { data: allSubmissions, isPending, isError, error } = useReviewQueue(term.periodId);
   const [armId, setArmId] = useState("");
   const [subjectId, setSubjectId] = useState("");
+  const [page, setPage] = useState(1);
   const approve = useApproveResult();
   const reject = useRejectResult();
   const unlock = useUnlockResult();
@@ -40,32 +39,17 @@ export function ReviewQueuePage() {
   const [viewing, setViewing] = useState<ResultSubmission | null>(null);
 
   const armGroups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
-
-  // Only subjects that actually appear in this term's queue. Offering one nobody
-  // has submitted would filter to an empty table with nothing to explain it.
-  const subjects = useMemo(() => {
-    const seen = new Map<string, string>();
-    (data?.submissions ?? []).forEach((s) => seen.set(s.subject, s.subject_name));
-    return [...seen.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data]);
-
-  const submissions = useMemo(() => {
-    return [...(data?.submissions ?? [])]
-      .filter((s) => (!armId || s.class_arm === armId) && (!subjectId || s.subject === subjectId))
-      .sort((a, b) => {
-        const byStatus = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
-        if (byStatus !== 0) return byStatus;
-        const byClass = `${a.class_name}${a.arm_name}`.localeCompare(
-          `${b.class_name}${b.arm_name}`,
-        );
-        return byClass !== 0 ? byClass : a.subject_name.localeCompare(b.subject_name);
-      });
-  }, [data, armId, subjectId]);
-
-  const awaiting = submissions.filter((s) => s.status === "submitted").length;
+  const { subjects, filteredSubmissions, submissions, awaiting } = useReviewQueueView({
+    allSubmissions,
+    armId,
+    subjectId,
+    page,
+  });
   const filtered = !!armId || !!subjectId;
+
+  function resetPage() {
+    setPage(1);
+  }
 
   if (term.isPending || isPending) {
     return (
@@ -98,28 +82,34 @@ export function ReviewQueuePage() {
           <ReviewQueueFilters
             termGroups={term.groups}
             periodId={term.periodId}
-            onPeriodChange={term.setPeriodId}
+            onPeriodChange={(id) => { term.setPeriodId(id); resetPage(); }}
             armGroups={armGroups}
             armId={armId}
-            onArmChange={setArmId}
+            onArmChange={(id) => { setArmId(id); resetPage(); }}
             subjects={subjects}
             subjectId={subjectId}
-            onSubjectChange={setSubjectId}
+            onSubjectChange={(id) => { setSubjectId(id); resetPage(); }}
           />
-          {submissions.length === 0 ? (
+          {filteredSubmissions.length === 0 ? (
             <ReviewQueueEmpty filtered={filtered} />
           ) : (
-            <ReviewQueueList
-              submissions={submissions}
-              awaiting={awaiting}
-              fetched={data?.submissions.length ?? 0}
-              total={data?.total ?? 0}
-              isApproving={approve.isPending}
-              onView={setViewing}
-              onApprove={(s) => approve.mutate({ id: s.id })}
-              onSendBack={(s) => setAction({ kind: "reject", submission: s })}
-              onUnlock={(s) => setAction({ kind: "unlock", submission: s })}
-            />
+            <>
+              <ReviewQueueList
+                submissions={submissions}
+                awaiting={awaiting}
+                isApproving={approve.isPending}
+                onView={setViewing}
+                onApprove={(s) => approve.mutate({ id: s.id })}
+                onSendBack={(s) => setAction({ kind: "reject", submission: s })}
+                onUnlock={(s) => setAction({ kind: "unlock", submission: s })}
+              />
+              <PaginationControls
+                page={page}
+                pageSize={REVIEW_QUEUE_PAGE_SIZE}
+                count={filteredSubmissions.length}
+                onPageChange={setPage}
+              />
+            </>
           )}
         </>
       )}

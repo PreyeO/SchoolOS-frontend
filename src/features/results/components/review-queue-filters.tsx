@@ -23,9 +23,11 @@ interface Props {
 // Term, class and subject.
 //
 // Term is a SERVER filter — it keys the request, because a school's whole
-// history would blow past the 100-per-request cap the queue already warns about.
-// Class and subject filter the fetched term in place: one term is bounded by
-// classes × subjects, so it all arrives in one page anyway.
+// history across every term would be an unbounded fetch. Class and subject
+// filter the already-fetched term in place: useReviewQueue pages through the
+// backend to get the complete term regardless of its size (bounded by
+// classes × subjects, not by pupils), so narrowing here never hides a
+// submission that just didn't happen to load.
 export function ReviewQueueFilters({
   termGroups,
   periodId,

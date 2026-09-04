@@ -115,7 +115,10 @@ export function StudentDetailPage({ id }: { id: string }) {
         <StudentResultsSection studentId={student.id} />
       </div>
 
-      <StudentNotesSection studentId={student.id} />
+      <StudentNotesSection
+        studentId={student.id}
+        currentClassArmId={student.current_class?.class_arm_id ?? null}
+      />
 
       <StudentProfileCards student={student} canEdit={canEdit} />
 

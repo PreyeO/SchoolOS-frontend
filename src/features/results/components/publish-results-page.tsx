@@ -59,8 +59,7 @@ export function PublishResultsPage() {
   const selectedId = armId ?? allOptions[0]?.armId ?? null;
   const selected = allOptions.find((o) => o.armId === selectedId) ?? null;
 
-  const { data: submissionData } = useReviewQueue(term.periodId);
-  const submissions = submissionData?.submissions;
+  const { data: submissions } = useReviewQueue(term.periodId);
   const { data: batches } = useClassArmResults(term.periodId);
   const { data: roster, isPending: rosterLoading } = useRoster(selectedId);
   // The definitive list the backend locks against.

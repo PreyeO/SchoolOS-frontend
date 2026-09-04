@@ -975,6 +975,155 @@ goes straight to `mailto:hello@myschoolos.io` instead.
   Works" present, `#about` gone, `href="#"` count zero anywhere in the page,
   no "Blog"/"What's new" text, mailto present.
 
+**Teacher notes narrowed to form teachers, and collapsed to one running note
+per student (2026-09-03).** Was: any teacher could see and write notes on any
+student (the backend's own deliberate design — `StudentNoteService`'s
+docstring says so explicitly), rendered as a chronology of separately-composed
+entries behind an "Add note" click each time.
+- **Visibility now gated on being the CURRENT form teacher of the student's
+  class** — `useNotePermissions(currentClassArmId)` checks
+  `me.teacher.class_arms` (arms this teacher leads) against
+  `student.current_class.class_arm_id`, not against the note's own historical
+  class (which can differ after a transfer). This is a **frontend-only**
+  narrowing — the backend still permits any teacher to read/write, since that
+  policy lives in `StudentNoteService` and this workspace can't change it — so
+  the section simply doesn't render for a non-form-teacher rather than the API
+  refusing them; a direct API call would still work for them today.
+- **Admins keep view access, and that was a judgment call, not a spec.** The
+  ask said "only teachers that are form teachers"; nothing was said about
+  admins either way. Kept visible because admins already see everything else
+  on this page, already hold delete rights over any note
+  (`edit_students`), and are the only backstop if something needs review after
+  the writing teacher has rotated out. **Flagged, not assumed silently** — easy
+  to flip to admin-excluded if that's not what was meant.
+- **Verified with 9 fixture cases**, not just read: admin with/without a
+  current class, the exact-match form teacher, a form teacher of a *different*
+  arm (must be denied — this is the case that actually enforces "form teacher
+  of THIS class", not "a form teacher somewhere"), a subject-only teacher,
+  and a student with no current enrolment.
+- **One box, not a list of separately-triggered composers.** The "Add note"
+  button that revealed a composer is gone; a form teacher now sees the
+  textarea always present at the top of the same bordered card, and submitting
+  appends to the list below it in place — no modal, no toggle state. Past
+  entries still carry author/date (the backend has no other way to record who
+  said what when, and that provenance is real value two years later — losing
+  it to make the box look more "singular" would cost more than it gained), but
+  render as lines in one log rather than individually-triggered messages.
+- **1000-character cap**, matching `optionalLongText` in
+  `student-edit-schema.ts` (the same limit already used for allergies, hobbies,
+  chronic conditions) — picked for consistency with the rest of this student
+  record rather than a new number invented for this one field. Enforced via
+  the textarea's own `maxLength` (a hard stop, not just validation) plus a
+  live `n/1000` counter that turns clay-coloured past the limit.
+- Clean `tsc`, `eslint`, `build`. `NoteRow` now takes `permissions` as a prop
+  computed once by the parent, rather than calling the hook again per row.
+- **Not verified live** — same blocker as everything this session,
+  `school_os_web` still down on the missing AWS env vars. Worth a real
+  click-through once it's up: a subject teacher should see nothing, the
+  current form teacher should see one box, and a teacher who *used to* lead
+  that arm should also see nothing once they've rotated out — even though
+  their own past entries are still in it.
+
+**"How It Works" didn't scroll when clicked from the landing page itself
+(2026-09-03).** The id/href rename from the previous entry was correct and
+already verified in a production build — the actual bug was one level down,
+in how Next handles a `<Link href="/#section">` click when the visitor is
+**already on `/`**. Checked against this Next version's own docs rather than
+assumed (`node_modules/next/dist/docs/.../link.md`, "Scrolling to an id"): the
+built-in scroll-to-hash behaviour is described as firing **on navigation** —
+and a same-route, hash-only click isn't a navigation Next treats that way, so
+the URL updated and the page never moved. Cross-route hash links (e.g.
+`/book-demo` → `/#pricing`) were never affected, which is why the four anchors
+looked fine when that fix landed on 2026-08-30 — nobody had tested a click
+from the landing page to its own section before.
+- **Fixed with `useInPageAnchorClick`** (`lib/scroll-to-in-page-hash.ts`): on
+  click, compares the link's path against the current pathname; only when
+  they match (i.e. only the case Next doesn't handle) does it
+  `preventDefault`, `scrollIntoView` the target element directly, and
+  `history.pushState` to keep the address bar honest. A real cross-page link
+  falls through untouched — Next's own behaviour there was never broken.
+  `scrollIntoView` honours each section's existing `scroll-mt-24`, so the
+  fixed Navbar offset didn't need a second number to keep in sync.
+- **Wired into all three places a marketing anchor is clickable**: `Navbar`,
+  `MobileNav` (composed with its existing `onClose`, so the drawer still
+  closes even when the tap also scrolls the page under it), and `Footer`.
+  Not just the one link reported — the underlying mechanism was identical for
+  Features/Pricing/Product too, on every same-page click, so scoping the fix
+  to only "How It Works" would have left the same bug live under the other
+  three.
+- **`Footer` is now a client component**, which it wasn't before — the only
+  change needed to attach the click handler, matching the stated exception in
+  this repo's own "server components by default" rule.
+
+**Footer's Product/Company groups audited and reshaped, same request.** Asked
+directly: is the structure right, change what isn't.
+- **"Company" is gone as a heading.** It held "How It Works" (product
+  narrative, not company narrative — see the id-rename entry above) and
+  "Contact", which just duplicated the brand column's own
+  "Lagos, Nigeria · hello@myschoolos.io" as a link instead of plain text. There
+  is no About-the-company page, no blog, no careers page behind either
+  candidate for a real "Company" column, so rather than leave a column with one
+  thin, redundant link, it's gone: **How It Works moved into Product**
+  (matching where the navbar already puts it, right after Pricing), and the
+  brand column's email became a real `mailto:` link so there's exactly one
+  clickable contact line, not two representations of the same address.
+- **Grid rebalanced** from four columns (brand + 3 groups) to three (brand +
+  Product + Legal) — `md:grid-cols-[2fr_1fr_1fr]`, so Legal doesn't stretch
+  into a phantom fourth slot.
+- Clean `tsc`, `eslint`, `build`; verified in the compiled output on both `/`
+  and `/book-demo` — "Company" and the standalone "Contact" link gone from
+  both, "How It Works" present under Product on both, the brand-column email
+  is a `mailto:` link.
+- **Not verified in a real browser** — there is no browser automation here, so
+  the actual scroll-and-land behaviour (as opposed to the click being wired
+  correctly in the compiled JS) still wants one real click-through once the
+  dev server's up.
+
+**Result Review paginated (2026-09-03).** Same family of bug as the pending
+invites fix: `useReviewQueue` asked for `page_size=100` (the backend max), kept
+only the first page, and showed "Showing X of Y — exceeds the 100-per-request
+limit, so the queue is incomplete" for any term past that ceiling — with no
+way to reach the rest.
+- **Not a straightforward server-paginated fix, and here's why.** The queue's
+  own sort is deliberate and load-bearing: "submitted, awaiting review" items
+  surface first, everything else after (`STATUS_ORDER`, a comment that exists
+  specifically so nobody "fixes" it to alphabetical). `ClassArmSubjectResultSubmissionViewSet`
+  has no `ordering` param — confirmed against the viewset — so paging through
+  the server's own order would scatter "needs your review" items across pages
+  instead of surfacing them, undermining the one thing this screen is for.
+- **So `useReviewQueue` now loops every backend page** (100 at a time, via
+  `next`) and returns the complete term, and pagination happens client-side
+  over the correctly-sorted, correctly-filtered result. This is safe precisely
+  because a `ClassArmSubjectResultSubmission` row is created lazily — only once
+  a teacher has entered a score for that (class_arm, subject, period), per the
+  model's own docstring — so the true total is bounded by real submitted work
+  for one term, never pupil-scale. A handful of requests even for a large
+  school deep into a term.
+- **Class/subject filters moved conceptually from "narrow the fetched batch"
+  to "narrow the complete term"** — no code change to the filters themselves,
+  but they now correctly can't miss a submission that simply didn't make the
+  old 100-row cutoff. `filterset_fields` on the viewset already supported
+  `class_arm`/`subject`/`academic_period`, confirmed before relying on it.
+- **The "N awaiting your review" count and the subjects filter's option list
+  are both computed over the full term, not the visible page** — paging to
+  page 2 must not make the count look like work vanished, and the subject
+  dropdown must not change contents as someone pages through.
+- **Verified with 16 fixture cases**: the fetch loop at 0/1/100/101/250/300
+  rows (100 and 101 are the exact old ceiling and one past it), no duplicate
+  or dropped rows across the loop, status-first ordering holding across a set
+  bigger than one UI page, a class filter matching correctly against the full
+  300-row set rather than a truncated one, and a correct partial last page.
+- **Extracted `useReviewQueueView`** (`hooks/use-review-queue-view.ts`) — the
+  filter/sort/paginate derivation, no JSX — to bring `review-queue-page.tsx`
+  back under 150 lines after adding the pagination state; a real seam (pure
+  derivation vs. layout), not line-count theater.
+- Two other consumers of the old `{submissions, total}` shape
+  (`publish-results-page.tsx`, `use-results-progress.ts`) needed updating to
+  the new flat-array return — caught by `tsc`, not missed.
+- Clean `tsc`, `eslint`, `build`. **Not verified live** — same blocker as
+  everything this session, `school_os_web` still down on the missing AWS env
+  vars.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

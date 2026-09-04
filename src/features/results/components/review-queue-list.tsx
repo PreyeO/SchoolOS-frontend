@@ -4,13 +4,11 @@ import { ReviewQueueRow } from "./review-queue-row";
 import type { ResultSubmission } from "../types";
 
 interface Props {
+  // Already the current page's slice — ReviewQueuePage owns pagination over
+  // the complete, correctly-sorted term.
   submissions: ResultSubmission[];
+  // Counted over the whole term, not just this page — see ReviewQueuePage.
   awaiting: number;
-  // What the server actually returned for this term, before class/subject
-  // filtering — the truncation warning has to compare against this, not against
-  // what's on screen.
-  fetched: number;
-  total: number;
   isApproving: boolean;
   onView: (s: ResultSubmission) => void;
   onApprove: (s: ResultSubmission) => void;
@@ -21,8 +19,6 @@ interface Props {
 export function ReviewQueueList({
   submissions,
   awaiting,
-  fetched,
-  total,
   isApproving,
   onView,
   onApprove,
@@ -54,16 +50,6 @@ export function ReviewQueueList({
           />
         ))}
       </ul>
-
-      {/* Compared against what was FETCHED, not what's displayed — with a class
-          or subject filter on, displayed is always fewer, and comparing to that
-          would claim truncation on every filtered view. */}
-      {total > fetched && (
-        <p className="text-xs text-clay">
-          Showing {fetched} of {total} — this term exceeds the 100-per-request limit, so the
-          queue is incomplete.
-        </p>
-      )}
     </>
   );
 }
