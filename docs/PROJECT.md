@@ -1207,6 +1207,83 @@ Clean `tsc`, `eslint`, `build` across all three. **Not verified live** — same
 blocker as everything this session, `school_os_web` still down on the missing
 AWS env vars.
 
+**Three offline-UX bugs reported together, addressed with a mix of a
+root-cause fix and safety nets (2026-09-04).**
+
+**1. Attendance silently reverting to a previously-loaded date when the picker
+is used offline** — root cause identified with high confidence and fixed.
+`attendance/page.tsx` is an async Server Component that bakes `?arm=&date=`
+from `searchParams` into `initialArmId`/`initialDate` props — the same shape
+as `/fees`. `public/sw.js`'s `networkFirst` handler falls back to
+`cache.match(request, { ignoreSearch: true })` on a failed fetch, with a
+comment claiming this was safe because "the server returns the same document
+for /attendance whatever ?arm= says" — **false** against the current page,
+which is genuinely searchParams-dependent. Offline, picking a date never
+opened on this device triggers `attendance-page.tsx`'s URL-sync effect to
+`router.replace()` to that exact URL; the RSC fetch for it fails (nothing
+cached under that query), the service worker's `ignoreSearch` fallback matches
+*some other* cached `/attendance?...` entry instead, and its stale baked-in
+props overwrite the picker's own state — reading as a silent revert. Fixed by
+moving the `unavailableOffline` computation (`(savedPaused && !savedRecords)
+|| (rosterPaused && !roster)`, already used lower in the same component) ahead
+of the URL-sync effect and gating the `replace()` call on it: `attendance-page.tsx`
+now leaves the URL alone for a selection nothing local can satisfy, so the
+component's own existing "No saved copy of this date" message renders instead
+of being clobbered by a doomed navigation. Required reordering the `useRoster`/
+`useAttendance` hook calls and the `unavailableOffline`/`todayUnmarkedOffline`
+derivations above the effect — a pure reorder, no hook became conditional, and
+`unavailableOffline` is now computed before the component's one early return so
+the effect's closure can never read it uninitialized. **`public/sw.js` was
+deliberately left untouched** — CLAUDE.md/PROJECT.md flag this exact class of
+offline-critical code as fragile with no test safety net, and there is no
+browser in this session to verify a service-worker change actually works
+without risking currently-working offline scenarios (today's register,
+already-visited dates). The `ignoreSearch` comment's now-stale reasoning should
+get corrected whenever someone touches that file with a browser in hand.
+
+**2. Attendance showing the placeholder root error boundary ("Something went
+wrong.") instead of an explanation, opened offline on a device that's never
+loaded it** — confirmed: `app/error.tsx` is a literal, un-implemented
+placeholder (`// Placeholder error boundary. TODO (Phase 2): design and
+implement.`), and it's root-scoped, so any uncaught exception anywhere also
+takes out the sidebar. Added a shared `components/shared/route-error.tsx`
+that reads `navigator.onLine` directly (a one-shot snapshot at crash time, not
+the app's reactive `useOnlineStatus`/`onlineManager` — an error boundary's
+render only happens once per crash) and shows an honest "You're offline, and
+this hasn't finished loading on this device before" message when offline, or a
+generic retry button otherwise. Wired it into two new **route-segment**
+boundaries, `attendance/error.tsx` and `results/error.tsx` — segment-scoped,
+not root, so the dashboard shell survives instead of the whole page being
+replaced.
+
+**3. Score entry blank offline, only recovering on a manual refresh, even
+after having loaded the page before** — lower confidence than the other two.
+Read `score-entry-page.tsx`, `use-score-sheets.ts`, `route-access-guard.tsx`,
+and `sync-status-strip.tsx` in full looking for an unguarded render path and
+found none — every offline gate in this screen is already correctly ordered
+ahead of `isPending`/`isError`, matching this codebase's established
+convention. `results/page.tsx` itself is a plain synchronous component with no
+`searchParams`, ruling out the exact `/fees`/`/attendance` mechanism as a
+direct cause here. The best remaining hypothesis, unverified: a soft
+client-side navigation onto `/results` requests the RSC-payload format, which
+may not `Vary`-match what the service worker precached at `install` time via a
+plain HTML `fetch()` — if that fetch fails and falls outside the
+`fallbackToOfflinePage` path (only true for `request.mode === "navigate"`,
+which a soft RSC fetch is not), it throws with nothing rendered. Given the
+uncertainty, no change was made chasing this specific mechanism; `results/error.tsx`
+(above) is the safety net — if it recurs, the screen now explains itself
+instead of going blank. Worth a real click-through (load Score Entry once
+online, go offline, navigate away and back via a `<Link>` rather than a
+refresh) once the backend is up, to confirm or rule out the hypothesis
+properly.
+
+Clean `tsc`, `eslint`, `build` across all four touched/new files
+(`attendance-page.tsx`, `route-error.tsx`, `attendance/error.tsx`,
+`results/error.tsx`). **Not verified live** — same blocker as everything this
+session, `school_os_web` still down on the missing AWS env vars; bug 1's
+mechanism is well-supported by reading the service worker and page source
+side by side, bug 3's is an explicitly flagged guess.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
