@@ -7,10 +7,10 @@ import type { DemoRequest, DemoRequestFilters, DemoRequestStatus } from "../type
 // Same path the public form POSTs to, read here as a platform admin. The
 // backend serves both from one viewset with different permissions per action.
 //
-// page_size=100 with no pagination UI, matching the other platform lists: at
-// pilot scale the whole queue fits on a screen, and an admin working a lead
-// list wants to see it, not page through it. Revisit if leads pass 100.
-export async function getDemoRequests(filters: DemoRequestFilters): Promise<DemoRequest[]> {
+export async function getDemoRequests(
+  page: number,
+  filters: DemoRequestFilters,
+): Promise<PaginatedResponse<DemoRequest>> {
   const { data } = await apiClient.get<PaginatedResponse<DemoRequest>>(
     PILOT_ENDPOINTS.DEMO_REQUEST,
     {
@@ -18,7 +18,8 @@ export async function getDemoRequests(filters: DemoRequestFilters): Promise<Demo
       // unknown param but treats an empty one as a real filter on some field
       // types, so an empty string is never the same as "no filter".
       params: {
-        page_size: 100,
+        page,
+        page_size: 25,
         ...(filters.search ? { search: filters.search } : {}),
         ...(filters.status ? { status: filters.status } : {}),
         ...(filters.role ? { role: filters.role } : {}),
@@ -29,7 +30,7 @@ export async function getDemoRequests(filters: DemoRequestFilters): Promise<Demo
       },
     },
   );
-  return data.results;
+  return data;
 }
 
 // PATCH takes only { status }. Sending anything else is silently ignored rather

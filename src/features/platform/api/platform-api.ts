@@ -25,6 +25,24 @@ export async function getPlatformSchools(search?: string): Promise<PlatformSchoo
   return data.results;
 }
 
+// The Schools screen's own fetch — distinct from getPlatformSchools above,
+// which the Directory's school-picker uses to get every school in one go for
+// a <select> (that dropdown has nowhere to put page controls, and a search
+// box already narrows it). This one keeps the envelope so the list screen can
+// page through the platform's full roster rather than silently stopping at
+// whatever the page size happens to be.
+export async function getPlatformSchoolsPage(params: {
+  page: number;
+  page_size: number;
+  search?: string;
+}): Promise<PaginatedResponse<PlatformSchool>> {
+  const { data } = await apiClient.get<PaginatedResponse<PlatformSchool>>(
+    SCHOOL_ENDPOINTS.LIST(),
+    { params },
+  );
+  return data;
+}
+
 // The detail route, which unlike the list DOES carry billing fields for a
 // platform admin (_user_can_see_billing returns true for them unconditionally).
 export async function getPlatformSchool(id: string): Promise<SchoolDetailResponse> {

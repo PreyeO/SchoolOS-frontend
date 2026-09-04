@@ -17,11 +17,21 @@ export function useArmDefaulters(classArmId: string | null, academicPeriodId: st
   });
 }
 
-export function usePayments(page: number, pageSize: number, status: string | null) {
+export function usePayments(
+  page: number,
+  pageSize: number,
+  status: string | null,
+  feeItemId: string | null,
+) {
   return useQuery({
-    queryKey: [FEE_ITEMS_QUERY_KEY, "payment-log", page, pageSize, status],
+    queryKey: [FEE_ITEMS_QUERY_KEY, "payment-log", page, pageSize, status, feeItemId],
     queryFn: () =>
-      getPayments({ page, page_size: pageSize, ...(status ? { status } : {}) }),
+      getPayments({
+        page,
+        page_size: pageSize,
+        ...(status ? { status } : {}),
+        ...(feeItemId ? { fee_item: feeItemId } : {}),
+      }),
     // Keeps the previous page on screen while the next one loads, instead of
     // collapsing the table to a spinner on every page change.
     placeholderData: (previous) => previous,

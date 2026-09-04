@@ -5,17 +5,31 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { formatDate } from "@/lib/text/format-date";
 
-import { usePlatformSchools } from "../hooks/use-platform";
+import { usePlatformSchoolsPage } from "../hooks/use-platform";
 import { AccessBadge } from "./access-badge";
+
+const PAGE_SIZE = 25;
 
 export function SchoolsListPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search, 300);
-  const { data: schools, isPending, isError, error } = usePlatformSchools(debounced || undefined);
+  const { data, isPending, isError, error } = usePlatformSchoolsPage(
+    page,
+    PAGE_SIZE,
+    debounced || undefined,
+  );
+  const schools = data?.results;
+
+  function changeSearch(next: string) {
+    setSearch(next);
+    setPage(1);
+  }
 
   return (
     <div className="space-y-5">
@@ -30,7 +44,7 @@ export function SchoolsListPage() {
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-n-400" />
         <Input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => changeSearch(e.target.value)}
           placeholder="Search schools…"
           className="pl-9"
           aria-label="Search schools"
@@ -39,13 +53,14 @@ export function SchoolsListPage() {
 
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading schools…</p>
-      ) : isError ? (
+      ) : isError || !schools ? (
         <ErrorState error={error} resourceLabel="the school list" />
       ) : schools.length === 0 ? (
         <p className="rounded-xl border border-n-200 bg-white p-8 text-center text-sm text-n-400 italic">
           {debounced ? "No schools match that search." : "No schools yet."}
         </p>
       ) : (
+        <>
         <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead>
@@ -89,6 +104,13 @@ export function SchoolsListPage() {
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          page={page}
+          pageSize={PAGE_SIZE}
+          count={data.count}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   );

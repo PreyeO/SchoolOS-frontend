@@ -1350,6 +1350,92 @@ than changed:**
   Flagged back to the user rather than changed, since "intentional" and "what
   the user wants" aren't the same thing here.
 
+**Confirmed: offline "glitching" (Attendance/Score Entry/Dashboard all showing
+errors, unpredictably) traces to testing against `npm run dev`, not an app bug
+(2026-09-04).** `ServiceWorkerProvider.tsx` deliberately unregisters the
+service worker and deletes every offline cache on every page load outside
+production — its own comment already says so ("offline behaviour can only be
+exercised meaningfully against a production build... `npm run build && npm
+start`"), done on purpose because Turbopack's non-hashed dev chunks would
+otherwise get pinned by a live worker and break the app in a worse way. With
+no service worker, there is no offline fallback for the page shell at all, so
+a fresh offline visit can fail before any of this session's in-app offline
+logic (the "No saved copy" message, the new `RouteError` boundaries) ever gets
+a chance to run — and whether an old registration is still half-torn-down when
+you go offline is timing-dependent, which is why it looked intermittent.
+Checked the shell components most likely to be an alternative explanation
+(`DashboardShell`, `AppTopbar`, `AppSidebar`, `TermChip`, `SchoolSwitcher`,
+`UserMenu`, `RouteAccessGuard`, `AuthGuard`, `useSyncSchoolData`,
+`useAccessStatus`) — all correctly guard their pending/paused states, nothing
+else found. **Not independently confirmed** — no browser in this session to
+verify the glitching actually stops under `npm run build && npm start`;
+asked the user to try it.
+
+**Fee item filter added to the Payment log (2026-09-04).** `PaymentViewSet`
+already supports `?fee_item=` (`fees/views.py:160`, alongside `student` and
+`status`, the latter already wired up) — this just wires up the missing third
+one. Needed a school-wide (not per-class) fee-item list to populate the
+dropdown, which the existing `getFeeItems`/`useFeeItems` couldn't give (both
+require a `klassId`) — added `getFeeItemsForPeriod`/`useFeeItemsForPeriod`,
+which omit `klass` entirely rather than sending it empty (`FeeItemViewSet`'s
+`filterset_fields` treats each independently, so this is a supported query,
+not a workaround). Scoped to the school's current term specifically (own
+internal `useTermSelection()`, no picker shown) rather than every fee item the
+school has ever created, since payments themselves have no period filter on
+the backend at all — an unscoped fetch would grow every term forever, and the
+overwhelming majority of filtering happens against what's current anyway.
+Options are labelled `name — class_name` since a term's "Tuition" is a
+separate `FeeItem` row per class sharing that name. Clean `tsc`, `eslint`,
+`build`.
+
+**Pagination audit across the whole app, as asked (2026-09-04).** Confirmed
+DRF's global default (`CustomPagination`, 25/page, 100 max) applies to every
+list endpoint in `SchoolOS-backend` — grepped for `pagination_class` overrides
+anywhere in the backend and found none, so any list not paginated client-side
+is a choice made in a custom `@action` (bypasses `ListModelMixin` entirely,
+e.g. `class-arms/{id}/subjects/`) or a deliberate `page_size` cap, never a
+backend restriction.
+- **Already correct, no changes**: Students, Staff, Admins, Parents,
+  Invitations, Audit Logs, Payment Log and Result Review Queue all already
+  paginate properly — either real server paging with `PaginationControls`, or
+  (Review Queue) the documented full-fetch-then-client-sort exception. Also
+  checked and confirmed genuinely bounded, with existing reasoning comments
+  already explaining why no pagination UI is needed: fee items per class,
+  academic sessions, grading systems, subjects, classes, a student's waivers,
+  a student's payment history (`page_size=100`, explicitly reasoned — "a
+  student accumulating more than 100 payments would need one per week for two
+  years"), arm subjects/assignments (unpaginated custom actions by design),
+  and Platform Staff (created only via `manage.py createsuperuser` — a
+  handful of people, ever).
+- **Fixed — silently capped at one page with no way to see more:**
+  - **Platform → Schools** (`schools-list-page.tsx`): was `page_size=100`,
+    no UI, no disclosure of a larger total. Added `getPlatformSchoolsPage`/
+    `usePlatformSchoolsPage` (kept the old bare-array
+    `getPlatformSchools`/`usePlatformSchools` untouched — the Directory's
+    school-picker `<select>` still uses it and has nowhere to put page
+    controls) plus real `PaginationControls`.
+  - **Platform → Directory (People)** (`people-page.tsx`): was `page_size=50`
+    fixed to page 1, with an honest but dead-end "Showing 50 of 214 — narrow
+    with search" note and no way to actually see the rest. Added a `page`
+    param to `getPlatformPeople`, reset on school/kind/search change, replaced
+    the note with `PaginationControls`.
+  - **Platform → Demo requests** (`demo-requests-page.tsx`): was
+    `page_size=100`, no disclosure at all beyond it — the riskiest of the
+    three, since marketing leads are exactly the kind of list that grows with
+    the business. Same treatment: `page` param, envelope response, reset on
+    every filter change, `PaginationControls`.
+- **Flagged, not changed — needs a design decision, not a mechanical fix:**
+  **Announcements** (`announcements-page.tsx`) still fetches `page_size=100`
+  with no UI. Its own comment already explains why converting it isn't a
+  drop-in: the audience filter has no server equivalent and runs client-side
+  over the whole fetched set, and results are grouped by day across that same
+  set — paginating server-side would either silently hide audience-filtered
+  matches sitting on a page not yet fetched, or split a day's notices across
+  pages. Left as-is pending a decision on what the audience filter does once
+  this is server-paged (move it server-side, or accept it becomes
+  page-scoped).
+- Clean `tsc`, `eslint`, `build` across every touched file.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
