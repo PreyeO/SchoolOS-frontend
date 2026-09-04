@@ -62,23 +62,44 @@ export function useStudentFeesSelection(
     term.setPeriodId(initialPeriodId);
   }
 
+  // True for the window between arriving via ?student= and that id resolving
+  // (or failing) into a full record. Computed here, ahead of the URL-sync
+  // effect below, so that effect can tell "nothing selected yet" apart from
+  // "still resolving what was selected".
+  const isResolvingStudent = !!initialStudentId && !student && deepLinkedStudent.isPending;
+
   // Keeps the URL a live bookmark of what's on screen, so refreshing or
   // sharing the link returns to the same student and term rather than
   // resetting to a blank search box. replace, not push — this fires on every
   // selection change, and pushing would bury the previous view under history
   // entries for what is, from the user's perspective, one screen.
+  //
+  // Skipped while isResolvingStudent: `student` is still null in that window,
+  // so writing the URL here would strip ?student= out of it while the deep
+  // link is still being resolved. That in turn changes initialStudentId to
+  // undefined on the next props pass, which disables useStudentDetail AND
+  // changes its query key (both keyed off initialStudentId) — orphaning the
+  // in-flight fetch. The request itself still finishes and lands in the
+  // TanStack cache, just under a key this hook has since stopped watching, so
+  // the breakdown never appears — which is exactly the bug reported: silent
+  // on the first click, but working on a second click for the SAME student,
+  // because that retry found the id already warm in cache from the first,
+  // orphaned fetch and resolved before this effect got a chance to run.
+  // Waiting for isResolvingStudent to clear (success or failure) closes that
+  // race entirely.
   useEffect(() => {
+    if (isResolvingStudent) return;
     const params = new URLSearchParams();
     if (student) params.set("student", student.id);
     if (term.periodId) params.set("period", term.periodId);
     const next = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
     if (`${window.location.pathname}${window.location.search}` === next) return;
     router.replace(next, { scroll: false });
-  }, [student, term.periodId, pathname, router]);
+  }, [student, term.periodId, pathname, router, isResolvingStudent]);
 
   return {
     student,
     setStudent,
-    isResolvingStudent: !!initialStudentId && !student && deepLinkedStudent.isPending,
+    isResolvingStudent,
   };
 }
