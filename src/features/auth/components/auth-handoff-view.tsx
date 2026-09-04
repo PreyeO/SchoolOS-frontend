@@ -63,8 +63,19 @@ export function AuthHandoffView() {
     // useSyncSchoolData). Filling it here means the dashboard boots knowing
     // which school it is.
     //
-    // Both run together: neither depends on the other, and this page is already
-    // showing a "signing you in" state.
+    // Sequential, not "both run together" as this used to say: warmSchool's
+    // request goes through the same apiClient as everything else, so if it
+    // ever 401s for any reason, the ordinary response interceptor
+    // (token-refresh.ts) reacts to that independently — reading whatever
+    // refresh token is currently in the store and posting it to the same
+    // rotate endpoint THIS function is also about to call. Run in parallel,
+    // both calls can end up racing to rotate the identical one-time refresh
+    // token; the backend accepts whichever arrives first and rejects the
+    // second as blacklisted, and a rejected refresh is treated as a dead
+    // session — forceLogout() — moments after a successful sign-in. Awaiting
+    // rotate() first means the token has already turned over exactly once by
+    // the time warmSchool's request is even sent, so there is no window left
+    // for the two to collide.
     async function rotate() {
       try {
         const { data } = await apiClient.post<{ access: string; refresh?: string }>(
@@ -103,7 +114,8 @@ export function AuthHandoffView() {
     }
 
     async function settleThenContinue() {
-      await Promise.allSettled([rotate(), warmSchool()]);
+      await rotate();
+      await warmSchool();
       window.location.replace(next);
     }
 

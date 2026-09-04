@@ -1602,6 +1602,92 @@ cached, which should just work.
   online, go offline, reselect each) is the only way to be sure — please
   test before trusting this fully.
 
+**Three unrelated reports in one message, all fixed (2026-09-04).**
+
+**1. Random forced logouts, mid-session.** Reported alongside a real lead: the
+Network tab showed a failed call to the refresh endpoint right before the
+redirect to `/login`. Traced to exactly two places in the whole app that ever
+POST to `ENDPOINTS.REFRESH` — `token-refresh.ts`'s managed, single-flight
+interceptor, and `auth-handoff-view.tsx`'s own explicit `rotate()` call, which
+exists to blacklist the refresh token that travelled in the apex→subdomain
+handoff URL fragment as fast as possible. That page ran `rotate()` and
+`warmSchool()` (a `getSchoolDetail` call) via `Promise.allSettled`, genuinely
+in parallel — the comment justifying that called them independent, but
+they're not: `warmSchool()`'s request goes through the same `apiClient`, so
+if it ever 401s for any reason, the ordinary interceptor reacts by
+independently posting the *same* refresh token to the *same* rotate endpoint
+`rotate()` is also mid-flight on. The backend accepts whichever arrives
+first and rejects the second as blacklisted — and a rejected refresh reads as
+a dead session, triggering `forceLogout()` seconds after a successful
+sign-in.
+- **Fixed** by making it sequential — `await rotate(); await warmSchool();`
+  — so the token has already turned over exactly once by the time
+  `warmSchool()`'s request is even sent, closing the window where the two
+  could collide.
+- **Also hardened `token-refresh.ts` itself**, since the same shape of race
+  isn't confined to this one page: two tabs open at once, both reading the
+  same localStorage-persisted refresh token, can independently race to rotate
+  it the identical way. `refreshAccessToken()` now checks, on a rejected
+  refresh, whether the store's refresh token has since changed from the one
+  it just sent — if it has, someone else already won that race and rotated
+  successfully, so it recovers with the access token now sitting in the
+  store instead of forcing a logout on a token it already knows is stale. A
+  genuinely dead session (nothing else has touched the store) is unaffected
+  and still logs out exactly as before.
+- Checked that these are the *only* two `ENDPOINTS.REFRESH` call sites in the
+  frontend (grepped for it) — there is no third place carrying this same
+  risk today. Clean `tsc`, `eslint`. **Not verified live** — no browser, and
+  this is fundamentally a timing race; the reasoning is sound but only real
+  multi-tab / handoff testing would confirm the window is actually closed.
+
+**2. Behaviour trait creation rejected as a duplicate against its own
+deactivated predecessor.** Reported precisely: delete a trait that has
+ratings (backend deactivates rather than deletes — `TraitCategoryCard`'s own
+comment already says so), then add a new one with the same name at the same
+level — rejected with "One or more trait names/orders already exist for this
+level and category," even though the old one is `is_active: false`. Checked
+`results/services.py:1234-1243` directly: the backend's uniqueness check is
+explicitly scoped to `is_active=True`, confirming the user's own diagnosis
+exactly — this was a frontend bug, not a backend one.
+- **Root cause**: `trait-settings-page.tsx`'s `addTrait` computed the new
+  trait's `order` as `activeTraits.length + 1` — a count, not a maximum.
+  Deactivating a trait in the middle of the sequence (order 3 of 5, say)
+  leaves a gap without shrinking anyone else's order, so the active list
+  drops to 4 items but the highest real order in use is still 5. Counting
+  gave `4 + 1 = 5` — exactly the order an existing *active* trait already
+  holds, tripping the same validation the deactivation was supposed to have
+  cleared.
+- **Fixed** to `Math.max(0, ...activeOrders) + 1`, the same shape
+  `session-card.tsx` already uses correctly for adding a period to an
+  existing session — grepped the codebase for the same `.length + 1`
+  pattern elsewhere (`arm-utils.ts`, `use-add-session.ts`,
+  `grading-system-card.tsx`) and confirmed none of the others share this bug:
+  `arm-utils.ts` already maxes over letter codes, and the two grading/session
+  spots reassign a whole freshly-submitted array's indices rather than
+  extending a stale filtered view, so there's no gap to collide with. Isolated
+  to traits. Clean `tsc`, `eslint`.
+
+**3. Fee-item filter on payment history couldn't reach a previous term's fee
+items.** Confirmed by the user directly: fee items are scoped to (class,
+academic_period) and don't roll forward, so a past term's "Tuition" is a
+genuinely different record from this term's — and `useFeeItemsForPeriod` was
+only ever called with the *current* period, with no way to ask for another.
+- Added a `TermPicker` to `PaymentHistory`, shown alongside the fee-item
+  filter (bursar-only, same `canFilterByFeeItem` gate) — its own independent
+  term selection, not synced to the ledger's, matching the fee-items settings
+  page's own pattern. Changing term resets the fee-item selection, since the
+  previously-picked id wouldn't match any option in the new term's list.
+  Options now read `name · class_name · session_name academic_period_name`
+  (e.g. "Tuition · JSS 1 · 2024/2025 1st Term") instead of just
+  `name — class_name`, so it's clear which term's copy is selected once more
+  than one is in play. Filtering by a specific fee item still narrows
+  payments by that exact id, which is how a previous period's payments get
+  reached at all — payments themselves carry no period field or filter, as
+  the user's own note on the API confirmed.
+- Clean `tsc`, `eslint`.
+
+Full build across all three fixes pending — will confirm once it completes.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

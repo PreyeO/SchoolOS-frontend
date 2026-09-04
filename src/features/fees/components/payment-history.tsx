@@ -5,6 +5,7 @@ import { Download } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
+import { TermPicker } from "@/components/shared/term-picker";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { useTermSelection } from "@/lib/school/use-term-selection";
@@ -44,11 +45,14 @@ export function PaymentHistory({ studentId, canFilterByFeeItem = false }: Props)
   const payments = useStudentPayments(studentId, true, page, PAGE_SIZE, status, feeItemId);
   const download = useDownloadReceipt();
 
-  // Own term, only resolved (and only fetched) when the fee-item filter is
-  // actually offered — same reasoning as the Payment log's identical filter:
-  // scoped to what's current rather than every fee item across the school's
-  // whole history, since payments themselves have no period filter to narrow
-  // by otherwise.
+  // Own term — defaults to current, but changeable — only resolved (and only
+  // fetched) when the fee-item filter is actually offered. Fee items are
+  // scoped to (class, academic_period) and don't roll forward between terms,
+  // so a fee item from a past term is a different record than this term's
+  // same-named one; the picker is what lets the filter reach it. Payments
+  // themselves have no period field or filter on the backend at all — this
+  // is the only way to narrow by period, by picking a specific period's fee
+  // item rather than the period directly.
   const term = useTermSelection();
   const feeItems = useFeeItemsForPeriod(canFilterByFeeItem ? term.periodId : null);
   const feeItemOptions = [...(feeItems.data ?? [])].sort((a, b) =>
@@ -57,6 +61,15 @@ export function PaymentHistory({ studentId, canFilterByFeeItem = false }: Props)
 
   function changeStatus(next: string) {
     setStatus(next || null);
+    setPage(1);
+  }
+
+  function changeTerm(next: string) {
+    term.setPeriodId(next);
+    // Last term's selected fee item id means nothing against this term's
+    // options — it wouldn't match any of them, silently filtering to zero
+    // results rather than reading as an obvious leftover.
+    setFeeItemId(null);
     setPage(1);
   }
 
@@ -85,23 +98,26 @@ export function PaymentHistory({ studentId, canFilterByFeeItem = false }: Props)
           </Select>
         </label>
         {canFilterByFeeItem && (
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-n-500">Fee item</span>
-            <Select
-              value={feeItemId ?? ""}
-              onChange={(e) => changeFeeItem(e.target.value)}
-              aria-label="Fee item"
-              disabled={feeItems.isPending}
-              className="min-w-44"
-            >
-              <option value="">All</option>
-              {feeItemOptions.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} — {item.class_name}
-                </option>
-              ))}
-            </Select>
-          </label>
+          <>
+            <TermPicker groups={term.groups} value={term.periodId} onChange={changeTerm} />
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-n-500">Fee item</span>
+              <Select
+                value={feeItemId ?? ""}
+                onChange={(e) => changeFeeItem(e.target.value)}
+                aria-label="Fee item"
+                disabled={feeItems.isPending}
+                className="min-w-56"
+              >
+                <option value="">All</option>
+                {feeItemOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name} · {item.class_name} · {item.session_name} {item.academic_period_name}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </>
         )}
       </div>
 
