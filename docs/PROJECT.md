@@ -1079,6 +1079,51 @@ directly: is the structure right, change what isn't.
   correctly in the compiled JS) still wants one real click-through once the
   dev server's up.
 
+**Result Review paginated (2026-09-03).** Same family of bug as the pending
+invites fix: `useReviewQueue` asked for `page_size=100` (the backend max), kept
+only the first page, and showed "Showing X of Y — exceeds the 100-per-request
+limit, so the queue is incomplete" for any term past that ceiling — with no
+way to reach the rest.
+- **Not a straightforward server-paginated fix, and here's why.** The queue's
+  own sort is deliberate and load-bearing: "submitted, awaiting review" items
+  surface first, everything else after (`STATUS_ORDER`, a comment that exists
+  specifically so nobody "fixes" it to alphabetical). `ClassArmSubjectResultSubmissionViewSet`
+  has no `ordering` param — confirmed against the viewset — so paging through
+  the server's own order would scatter "needs your review" items across pages
+  instead of surfacing them, undermining the one thing this screen is for.
+- **So `useReviewQueue` now loops every backend page** (100 at a time, via
+  `next`) and returns the complete term, and pagination happens client-side
+  over the correctly-sorted, correctly-filtered result. This is safe precisely
+  because a `ClassArmSubjectResultSubmission` row is created lazily — only once
+  a teacher has entered a score for that (class_arm, subject, period), per the
+  model's own docstring — so the true total is bounded by real submitted work
+  for one term, never pupil-scale. A handful of requests even for a large
+  school deep into a term.
+- **Class/subject filters moved conceptually from "narrow the fetched batch"
+  to "narrow the complete term"** — no code change to the filters themselves,
+  but they now correctly can't miss a submission that simply didn't make the
+  old 100-row cutoff. `filterset_fields` on the viewset already supported
+  `class_arm`/`subject`/`academic_period`, confirmed before relying on it.
+- **The "N awaiting your review" count and the subjects filter's option list
+  are both computed over the full term, not the visible page** — paging to
+  page 2 must not make the count look like work vanished, and the subject
+  dropdown must not change contents as someone pages through.
+- **Verified with 16 fixture cases**: the fetch loop at 0/1/100/101/250/300
+  rows (100 and 101 are the exact old ceiling and one past it), no duplicate
+  or dropped rows across the loop, status-first ordering holding across a set
+  bigger than one UI page, a class filter matching correctly against the full
+  300-row set rather than a truncated one, and a correct partial last page.
+- **Extracted `useReviewQueueView`** (`hooks/use-review-queue-view.ts`) — the
+  filter/sort/paginate derivation, no JSX — to bring `review-queue-page.tsx`
+  back under 150 lines after adding the pagination state; a real seam (pure
+  derivation vs. layout), not line-count theater.
+- Two other consumers of the old `{submissions, total}` shape
+  (`publish-results-page.tsx`, `use-results-progress.ts`) needed updating to
+  the new flat-array return — caught by `tsc`, not missed.
+- Clean `tsc`, `eslint`, `build`. **Not verified live** — same blocker as
+  everything this session, `school_os_web` still down on the missing AWS env
+  vars.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

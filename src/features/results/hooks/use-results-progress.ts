@@ -19,7 +19,7 @@ export function useResultsProgress() {
   const { data: queue, isPending: queueLoading } = useReviewQueue(currentTerm?.id);
 
   return useMemo(() => {
-    const submissions = queue?.submissions ?? [];
+    const submissions = queue ?? [];
     const byStatus = (status: string) => submissions.filter((s) => s.status === status).length;
 
     // Arms that have ever been locked. An arm with no ClassArmResult row simply
