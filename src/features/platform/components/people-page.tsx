@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,8 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { getPlatformPeople, type PeopleKind } from "../api/platform-people-api";
 import { usePlatformSchools } from "../hooks/use-platform";
 import { PlatformPersonRow } from "./platform-person-row";
+
+const PAGE_SIZE = 50;
 
 const TABS: { value: PeopleKind; label: string }[] = [
   { value: "students", label: "Students" },
@@ -33,15 +36,32 @@ export function PlatformPeoplePage() {
   const [schoolId, setSchoolId] = useState<string | null>(null);
   const [kind, setKind] = useState<PeopleKind>("students");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search, 300);
 
   const selectedId = schoolId ?? schools?.[0]?.id ?? null;
 
   const query = useQuery({
-    queryKey: ["platform", "people", kind, selectedId, debounced],
-    queryFn: () => getPlatformPeople(kind, selectedId as string, debounced || undefined),
+    queryKey: ["platform", "people", kind, selectedId, page, debounced],
+    queryFn: () => getPlatformPeople(kind, selectedId as string, page, debounced || undefined),
     enabled: !!selectedId,
+    placeholderData: (previous) => previous,
   });
+
+  function changeSchool(next: string) {
+    setSchoolId(next);
+    setPage(1);
+  }
+
+  function changeSearch(next: string) {
+    setSearch(next);
+    setPage(1);
+  }
+
+  function changeKind(next: PeopleKind) {
+    setKind(next);
+    setPage(1);
+  }
 
   return (
     <div className="space-y-5">
@@ -57,7 +77,7 @@ export function PlatformPeoplePage() {
           <span className="block text-sm font-medium text-ink">School</span>
           <Select
             value={selectedId ?? ""}
-            onChange={(e) => setSchoolId(e.target.value)}
+            onChange={(e) => changeSchool(e.target.value)}
             disabled={schoolsLoading}
             className="min-w-56"
           >
@@ -73,7 +93,7 @@ export function PlatformPeoplePage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-n-400" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => changeSearch(e.target.value)}
             placeholder={kind === "students" ? "Search by admission number…" : "Search by name or email…"}
             className="pl-9"
             aria-label="Search people"
@@ -81,7 +101,7 @@ export function PlatformPeoplePage() {
         </div>
       </div>
 
-      <Tabs value={kind} onValueChange={(v) => setKind(v as PeopleKind)}>
+      <Tabs value={kind} onValueChange={(v) => changeKind(v as PeopleKind)}>
         <TabsList>
           {TABS.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
@@ -115,12 +135,14 @@ export function PlatformPeoplePage() {
                     <PlatformPersonRow key={person.id} person={person} kind={tab.value} />
                   ))}
                 </ul>
-                {query.data.total > query.data.people.length && (
-                  <p className="mt-2 text-xs text-n-400">
-                    Showing {query.data.people.length} of {query.data.total} — narrow with
-                    search.
-                  </p>
-                )}
+                <div className="mt-2">
+                  <PaginationControls
+                    page={page}
+                    pageSize={PAGE_SIZE}
+                    count={query.data.total}
+                    onPageChange={setPage}
+                  />
+                </div>
               </>
             )}
           </TabsContent>

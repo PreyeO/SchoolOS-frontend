@@ -12,6 +12,7 @@ import {
   getPlatformFinancials,
   getPlatformSchool,
   getPlatformSchools,
+  getPlatformSchoolsPage,
 } from "../api/platform-api";
 import type { ExtendAccessPayload } from "../types";
 
@@ -24,6 +25,16 @@ export function usePlatformSchools(search?: string) {
   return useQuery({
     queryKey: [PLATFORM_KEY, "schools", search ?? ""],
     queryFn: () => getPlatformSchools(search),
+  });
+}
+
+export function usePlatformSchoolsPage(page: number, pageSize: number, search?: string) {
+  return useQuery({
+    queryKey: [PLATFORM_KEY, "schools-page", page, pageSize, search ?? ""],
+    queryFn: () =>
+      getPlatformSchoolsPage({ page, page_size: pageSize, ...(search ? { search } : {}) }),
+    // Keeps the current page on screen while the next one loads.
+    placeholderData: (previous) => previous,
   });
 }
 

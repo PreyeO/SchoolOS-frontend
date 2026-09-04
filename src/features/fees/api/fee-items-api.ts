@@ -22,6 +22,21 @@ export async function getFeeItems(klassId: string, academicPeriodId: string): Pr
   return data.results;
 }
 
+// Every fee item for one term, across every class — `klass` is left off
+// entirely rather than sent empty, since FeeItemViewSet's filterset_fields
+// treats each field as independently optional. Used to populate the Payment
+// log's fee-item filter, where there's no single class in view.
+//
+// page_size=100 for the same reason as above: one term's worth of items across
+// a whole school is still a bounded, small set, not something that needs
+// pagination.
+export async function getFeeItemsForPeriod(academicPeriodId: string): Promise<FeeItem[]> {
+  const { data } = await apiClient.get<PaginatedResponse<FeeItem>>(FEE_ITEM_ENDPOINTS.LIST(), {
+    params: { academic_period: academicPeriodId, page_size: 100 },
+  });
+  return data.results;
+}
+
 // 400s when an active item of the same name already exists on this (class,
 // period) — the name is unique per pair, case-insensitively. The message says
 // so and reaches the user through the shared error toast.

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 
 import { ErrorState } from "@/components/shared/error-state";
+import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -16,6 +17,8 @@ import {
 } from "../types-demo-requests";
 import { DemoRequestFilterBar } from "./demo-request-filters";
 import { DemoRequestRow } from "./demo-request-row";
+
+const PAGE_SIZE = 25;
 
 const STATUS_LABELS: Record<DemoRequestStatus, string> = {
   pending: "Pending",
@@ -31,13 +34,30 @@ export function DemoRequestsPage() {
   const [search, setSearch] = useState("");
   // Everything except status and search, which have their own controls.
   const [filters, setFilters] = useState<DemoRequestFilters>({});
+  const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search, 300);
 
-  const { data: requests, isPending, isError, error } = useDemoRequests({
+  const { data, isPending, isError, error } = useDemoRequests(page, {
     ...filters,
     search: debounced || undefined,
     status: status === "all" ? undefined : status,
   });
+  const requests = data?.results;
+
+  function changeStatus(next: DemoRequestStatus | "all") {
+    setStatus(next);
+    setPage(1);
+  }
+
+  function changeSearch(next: string) {
+    setSearch(next);
+    setPage(1);
+  }
+
+  function changeFilters(next: DemoRequestFilters) {
+    setFilters(next);
+    setPage(1);
+  }
 
   const hasNarrowed = debounced.length > 0 || Object.values(filters).some(Boolean);
 
@@ -61,11 +81,11 @@ export function DemoRequestsPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-1.5">
-          <button type="button" onClick={() => setStatus("all")} className={tabClass(status === "all")}>
+          <button type="button" onClick={() => changeStatus("all")} className={tabClass(status === "all")}>
             All
           </button>
           {DEMO_REQUEST_STATUSES.map((s) => (
-            <button key={s} type="button" onClick={() => setStatus(s)} className={tabClass(status === s)}>
+            <button key={s} type="button" onClick={() => changeStatus(s)} className={tabClass(status === s)}>
               {STATUS_LABELS[s]}
             </button>
           ))}
@@ -75,7 +95,7 @@ export function DemoRequestsPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-n-400" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => changeSearch(e.target.value)}
             placeholder="Search name, school, email…"
             className="pl-9"
             aria-label="Search demo requests"
@@ -83,11 +103,11 @@ export function DemoRequestsPage() {
         </div>
       </div>
 
-      <DemoRequestFilterBar value={filters} onChange={setFilters} />
+      <DemoRequestFilterBar value={filters} onChange={changeFilters} />
 
       {isPending ? (
         <p className="text-sm text-n-400" role="status">Loading demo requests…</p>
-      ) : isError ? (
+      ) : isError || !requests ? (
         <ErrorState error={error} resourceLabel="the demo requests" />
       ) : requests.length === 0 ? (
         <p className="rounded-xl border border-n-200 bg-white p-8 text-center text-sm text-n-400 italic">
@@ -98,6 +118,7 @@ export function DemoRequestsPage() {
               : `Nothing ${STATUS_LABELS[status].toLowerCase()}.`}
         </p>
       ) : (
+        <>
         <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead>
@@ -118,6 +139,13 @@ export function DemoRequestsPage() {
             </tbody>
           </table>
         </div>
+        <PaginationControls
+          page={page}
+          pageSize={PAGE_SIZE}
+          count={data.count}
+          onPageChange={setPage}
+        />
+        </>
       )}
     </div>
   );

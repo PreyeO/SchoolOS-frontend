@@ -38,10 +38,11 @@ const ENDPOINT: Record<PeopleKind, () => string> = {
 export async function getPlatformPeople(
   kind: PeopleKind,
   schoolId: string,
+  page: number,
   search?: string,
 ): Promise<{ people: PlatformPerson[]; total: number }> {
   const { data } = await apiClient.get<PaginatedResponse<PlatformPerson>>(ENDPOINT[kind](), {
-    params: { school_id: schoolId, page_size: 50, ...(search ? { search } : {}) },
+    params: { school_id: schoolId, page, page_size: 50, ...(search ? { search } : {}) },
   });
   return { people: data.results, total: data.count };
 }

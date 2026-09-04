@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getFeeItems } from "../api/fee-items-api";
+import { getFeeItems, getFeeItemsForPeriod } from "../api/fee-items-api";
 
 // Keyed under its own "fees" prefix rather than "academic-structure": fee items
 // are financial records, and the broad academic invalidation fired by every
@@ -15,5 +15,15 @@ export function useFeeItems(klassId: string | null, academicPeriodId: string | n
     queryKey: [FEE_ITEMS_QUERY_KEY, "items", klassId, academicPeriodId],
     queryFn: () => getFeeItems(klassId as string, academicPeriodId as string),
     enabled: !!klassId && !!academicPeriodId,
+  });
+}
+
+// Every fee item for one term, school-wide — populates the Payment log's
+// fee-item filter, which isn't scoped to any one class.
+export function useFeeItemsForPeriod(academicPeriodId: string | null) {
+  return useQuery({
+    queryKey: [FEE_ITEMS_QUERY_KEY, "items", "all-classes", academicPeriodId],
+    queryFn: () => getFeeItemsForPeriod(academicPeriodId as string),
+    enabled: !!academicPeriodId,
   });
 }

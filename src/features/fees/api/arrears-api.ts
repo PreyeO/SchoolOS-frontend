@@ -30,6 +30,7 @@ export async function getPayments(params: {
   page: number;
   page_size: number;
   status?: string;
+  fee_item?: string;
 }): Promise<PaginatedResponse<Payment>> {
   const { data } = await apiClient.get<PaginatedResponse<Payment>>(PAYMENT_ENDPOINTS.LIST(), {
     params,

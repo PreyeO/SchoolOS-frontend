@@ -7,10 +7,12 @@ import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useTermSelection } from "@/lib/school/use-term-selection";
 import { formatNaira } from "@/lib/text/format-naira";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { usePayments } from "../hooks/use-arrears";
+import { useFeeItemsForPeriod } from "../hooks/use-fee-items";
 import { useDownloadReceipt } from "../hooks/use-payment-mutations";
 import { paymentMethodLabel } from "../lib/payment-methods";
 
@@ -25,11 +27,32 @@ const PAGE_SIZE = 25;
 export function PaymentLogTab() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<string | null>(null);
-  const payments = usePayments(page, PAGE_SIZE, status);
+  const [feeItemId, setFeeItemId] = useState<string | null>(null);
+  const payments = usePayments(page, PAGE_SIZE, status, feeItemId);
   const download = useDownloadReceipt();
+
+  // Its own term, independent of the "Who owes" tab's picker: this only
+  // decides which fee items populate the filter below, never which payments
+  // are shown (the backend has no period filter on payments at all — a
+  // school's whole history is one list). Defaults to whatever's current, same
+  // as every other silent term fallback in this codebase, so the dropdown
+  // starts full of the fee items a bursar is actually taking payments against
+  // right now rather than empty until they pick a term nobody asked to see.
+  const term = useTermSelection();
+  const feeItems = useFeeItemsForPeriod(term.periodId);
+  // Class name disambiguates: a term's "Tuition" is a separate FeeItem row per
+  // class, all sharing that name, and the filter matches one exact row.
+  const feeItemOptions = [...(feeItems.data ?? [])].sort((a, b) =>
+    a.name === b.name ? a.class_name.localeCompare(b.class_name) : a.name.localeCompare(b.name),
+  );
 
   function changeStatus(next: string) {
     setStatus(next || null);
+    setPage(1);
+  }
+
+  function changeFeeItem(next: string) {
+    setFeeItemId(next || null);
     setPage(1);
   }
 
@@ -50,6 +73,23 @@ export function PaymentLogTab() {
             <option value="failed">Failed</option>
           </Select>
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-n-500">Fee item</span>
+          <Select
+            value={feeItemId ?? ""}
+            onChange={(e) => changeFeeItem(e.target.value)}
+            aria-label="Fee item"
+            disabled={feeItems.isPending}
+            className="min-w-44"
+          >
+            <option value="">All</option>
+            {feeItemOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} — {item.class_name}
+              </option>
+            ))}
+          </Select>
+        </label>
       </div>
 
       {payments.isPending ? (
@@ -58,7 +98,7 @@ export function PaymentLogTab() {
         <ErrorState error={payments.error} resourceLabel="payments" />
       ) : payments.data.results.length === 0 ? (
         <p className="text-sm text-n-400 italic">
-          {status ? "No payments with that status." : "No payments recorded yet."}
+          {status || feeItemId ? "No payments match this filter." : "No payments recorded yet."}
         </p>
       ) : (
         <>
