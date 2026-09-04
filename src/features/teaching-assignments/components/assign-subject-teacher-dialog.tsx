@@ -87,6 +87,10 @@ export function AssignSubjectTeacherDialog({
             renderSubLabel={(t) =>
               `${teacherTypeLabel(t.teacher_type)}${t.specialization ? ` · ${t.specialization}` : ""}`
             }
+            excludedFrom={page?.results}
+            excludedReason={(t) =>
+              `${t.user.first_name} ${t.user.last_name} is already assigned to teach ${subject.name} for ${armLabel}.`
+            }
             emptyState={
               <p className="text-sm text-n-500">
                 {alreadyAssignedIds.length > 0

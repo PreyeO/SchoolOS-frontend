@@ -25,6 +25,15 @@ interface Props {
   // and specialization, the other which other arms they already lead.
   renderSubLabel: (teacher: TeacherListItem) => ReactNode;
   className?: string;
+  // The pool `teachers` was narrowed FROM, before the caller's own exclusion —
+  // optional, and only worth passing when that narrowing can hide someone a
+  // search would otherwise find. Lets a search that matches someone real, but
+  // excluded, explain why instead of reading as "no such teacher" — see
+  // excludedReason.
+  excludedFrom?: TeacherListItem[];
+  // Why one specific match in `excludedFrom` (but not `teachers`) isn't
+  // offered. Required whenever `excludedFrom` is passed.
+  excludedReason?: (teacher: TeacherListItem) => ReactNode;
 }
 
 // Search-and-pick one teacher from a list already in hand.
@@ -43,16 +52,31 @@ export function TeacherPicker({
   emptyState,
   renderSubLabel,
   className,
+  excludedFrom,
+  excludedReason,
 }: Props) {
   const [search, setSearch] = useState("");
   const query = search.trim().toLowerCase();
 
-  const matches = teachers.filter(
-    (t) =>
+  function matchesQuery(t: TeacherListItem): boolean {
+    return (
       !query ||
       `${t.user.first_name} ${t.user.last_name}`.toLowerCase().includes(query) ||
-      t.user.email.toLowerCase().includes(query),
-  );
+      t.user.email.toLowerCase().includes(query)
+    );
+  }
+
+  const matches = teachers.filter(matchesQuery);
+
+  // Only reached once a search has genuinely come up empty — checked against
+  // the wider pool the caller narrowed from, so a real person the search finds
+  // there gets a specific reason instead of the generic "no teachers match".
+  // Picks the first match rather than every one: this is explaining why a
+  // search came up empty, not offering a second list to choose from.
+  const excludedMatch =
+    query && matches.length === 0
+      ? excludedFrom?.find((t) => matchesQuery(t) && !teachers.some((e) => e.id === t.id))
+      : undefined;
 
   return (
     <div className="space-y-3">
@@ -76,7 +100,11 @@ export function TeacherPicker({
       ) : matches.length === 0 ? (
         <div className="py-6 text-center">
           {query ? (
-            <p className="text-sm text-n-500">No teachers match that search.</p>
+            excludedMatch && excludedReason ? (
+              <p className="text-sm text-n-500">{excludedReason(excludedMatch)}</p>
+            ) : (
+              <p className="text-sm text-n-500">No teachers match that search.</p>
+            )
           ) : (
             emptyState
           )}

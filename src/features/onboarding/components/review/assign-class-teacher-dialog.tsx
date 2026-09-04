@@ -35,7 +35,7 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
 
   // Only fetch once the dialog is actually opened — this sits on every arm row,
   // and a class list can hold dozens of them.
-  const { data: teachers, isPending, isError, error } = useClassTeacherCandidates(open);
+  const { data: candidates, isPending, isError, error } = useClassTeacherCandidates(open);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -75,7 +75,7 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
         </DialogHeader>
 
         <TeacherPicker
-          teachers={teachers ?? []}
+          teachers={candidates?.eligible ?? []}
           isPending={isPending}
           isError={isError}
           error={error}
@@ -88,6 +88,10 @@ export function AssignClassTeacherDialog({ arm, trigger, label }: Props) {
               ? `Already form teacher of ${leads.map((a) => a.name).join(", ")}`
               : teacher.user.email;
           }}
+          excludedFrom={candidates?.all}
+          excludedReason={(teacher) =>
+            `${teacher.user.first_name} ${teacher.user.last_name} is a ${teacherTypeLabel(teacher.teacher_type).toLowerCase()} only — only a "${teacherTypeLabel("class")}" or "${teacherTypeLabel("both")}" teacher can lead a class. Change their type in Staff to assign them here.`
+          }
           emptyState={
             <div className="space-y-1">
               <p className="text-sm text-n-500">No teachers to choose from yet.</p>
