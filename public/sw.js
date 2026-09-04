@@ -105,17 +105,29 @@ async function networkFirst(request, { fallbackToOfflinePage }) {
     // — so a document request can't be answered with an RSC payload, or the
     // reverse, even though both live under the same URL.
     //
-    // ignoreSearch is what makes the register reachable at all. Every link into
-    // it carries the arm id — /attendance?arm=<uuid> — while what's cached is
-    // the bare /attendance from precache. Cache matching includes the query
-    // string by default, so those never matched and every "Take register" tap
-    // landed on the offline page claiming the route had never been opened.
-    //
-    // Safe here because the query string is only ever read client-side after
-    // hydration: the server returns the same document for /attendance whatever
-    // ?arm= says. It would be wrong for any future route whose server output
-    // depends on its query.
-    const cached = await cache.match(request, { ignoreSearch: true });
+    // Exact match first. The comment this replaced claimed "the server returns
+    // the same document for /attendance whatever ?arm= says" — that was wrong:
+    // both /attendance and /fees read searchParams server-side and bake
+    // ?arm=/?date= (or ?student=/?period=) into the props they render, so two
+    // different query strings genuinely are two different documents once
+    // fetched. Matching with ignoreSearch conflated them — after a teacher
+    // opened several dates' registers while online, offline reselecting any
+    // ALREADY-cached date still resolved to whichever entry ignoreSearch
+    // happened to hit first (in practice, the precached bare /attendance,
+    // baked with today's date) instead of that date's own correctly-cached
+    // copy, snapping the picker back to today every time.
+    let cached = await cache.match(request);
+
+    // ignoreSearch stays as a last-resort fallback, not removed outright: a
+    // device that has never opened this EXACT arm/date at all — the case the
+    // old comment described, cold and offline from the start — still needs
+    // something in-app to render rather than falling through to the generic
+    // offline page below. This can still serve a different date/arm's content
+    // in that narrow case; it's the same imprecision as before, just no
+    // longer reached when an exact copy already exists.
+    if (!cached) {
+      cached = await cache.match(request, { ignoreSearch: true });
+    }
     if (cached) return cached;
 
     if (fallbackToOfflinePage) {
