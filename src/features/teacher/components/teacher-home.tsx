@@ -113,11 +113,18 @@ export function TeacherHome() {
             <section className="rounded-xl border border-n-200 bg-white p-5 lg:col-span-3">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-base font-semibold text-ink">Today&rsquo;s registers</h2>
-                <Button type="button" size="sm" asChild>
-                  <Link href="/attendance">
-                    Take register <ArrowRight className="size-3.5 ml-1" />
-                  </Link>
-                </Button>
+                {/* Same gate as the "still to take" line above: registers, not
+                    classes. A subject-only teacher has no register of their
+                    own to take, so the button that invites them to isn't
+                    shown either — RegisterStatusList's own empty state below
+                    already explains why. */}
+                {registers.length > 0 && (
+                  <Button type="button" size="sm" asChild>
+                    <Link href="/attendance">
+                      Take register <ArrowRight className="size-3.5 ml-1" />
+                    </Link>
+                  </Button>
+                )}
               </div>
               <p className="text-xs text-n-400">{todayLabel()}</p>
               <div className="mt-2">

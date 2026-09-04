@@ -1436,6 +1436,69 @@ backend restriction.
   page-scoped).
 - Clean `tsc`, `eslint`, `build` across every touched file.
 
+**"Take register" showing for subject-only teachers, plus a systemic fix for
+slow-feeling navigation (2026-09-04).**
+
+**1. The register button.** `register-status-list.tsx` (the dashboard's
+"Today's registers" card body) was already correctly filtered to form classes
+only — its own comment says so, and `use-teacher-overview.ts` explicitly
+filters `registers` on `isFormClass` before handing it over, with a comment
+explaining why: "the backend authorises any teacher to mark any arm... but the
+daily register belongs to the form teacher." Two places right next to that
+correct filtering didn't get the same treatment:
+- `teacher-home.tsx`'s card **header** button ("Take register", linking to
+  bare `/attendance`) was gated on `classes.length > 0`, not
+  `registers.length > 0` — so a subject-only teacher (zero form classes, empty
+  `registers`) still saw the button, even though the exact same screen's
+  greeting line above it was already correctly gated on `registers` for this
+  exact reason. Fixed to match.
+- `my-classes-page.tsx` rendered a "Take register" button on **every** class
+  card unconditionally, form or subject-only. Gated on `klass.isFormClass`,
+  consistent with the same principle stated in `register-status-list.tsx`.
+
+**2. Slow-feeling navigation, scanned app-wide as asked.** Read
+`attendance/page.tsx` and `my-classes/page.tsx` looking for server-side
+backend calls that could block a route transition — found none; both are
+cheap (`await searchParams` or nothing at all), so the delay isn't a slow
+fetch blocking the server render. The actual cause: **zero `loading.tsx`
+files existed anywhere in this app** (`find src/app -name loading.tsx` —
+nothing). Every route under `(dashboard)` and `platform` reads `searchParams`
+server-side (the established pattern this session's own earlier work relied
+on for `/attendance` and `/fees`), which makes each one a dynamic page Next
+has to render on the server before it can send anything back — and with no
+`loading.tsx`, there is no Suspense fallback for that wait, so the OLD screen
+just sits there giving no indication a click did anything until the ENTIRE
+new page arrives. Confirmed in Next's own docs
+(`file-conventions/loading.md`): `loading.tsx` wraps `page.tsx` in an implicit
+`<Suspense>` and its fallback is prefetched, showing immediately on
+navigation rather than after the wait. (`unstable_instant`/Cache Components,
+also in the docs, would go further but requires `cacheComponents: true` in
+`next.config.ts`, which this app doesn't have — out of scope for what was
+asked here.)
+- Added `components/shared/route-loading.tsx` (a small centered spinner —
+  `loading.tsx` takes no props, so it can't name the resource the way in-page
+  "Loading fees…" text elsewhere does) and a `loading.tsx` re-exporting it in
+  **every** route segment under `(dashboard)` (71) and `platform` (8) — 79
+  files, generated from one template since the content is identical in each;
+  this is new-file creation, not the regex-rewrite-of-existing-JSX pattern
+  CLAUDE.md warns against, so the usual hand-edit-every-hunk caution doesn't
+  apply the same way here. `(auth)` routes (login, signup, etc.) were left
+  alone — lightweight forms, not part of the reported flow, and not
+  `searchParams`-driven the same way.
+- **Secondary, unfixed observation**: `useTeacherOverview()` (the dashboard's
+  own data hook) fires one `getAttendance` plus one `getRoster` request **per
+  class** the teacher has, in parallel — already reasoned about in its own
+  comment as "bounded by their own teaching load," which is true, but Django's
+  dev server (`runserver`) handles requests serially by default, so a handful
+  of classes can genuinely queue up behind each other locally in a way that
+  wouldn't happen against a production WSGI/ASGI server with real concurrency.
+  Not changed — no code bug, and batching this into one backend endpoint would
+  be a `SchoolOS-backend` change outside this workspace — but worth knowing if
+  the dashboard specifically (as opposed to the routing-delay fixed above)
+  still feels slow after testing against a production build.
+- Clean `tsc`, `eslint`, `build` across all 79 new files plus the two touched
+  components.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
