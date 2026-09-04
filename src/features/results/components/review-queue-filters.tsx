@@ -6,7 +6,7 @@ import { Select } from "@/components/ui/select";
 import type { ArmOptionGroup } from "@/lib/school/arm-options";
 import type { PeriodOptionGroup } from "@/lib/school/period-options";
 
-import type { ReviewQueueSubjectOption } from "../hooks/use-review-queue-view";
+import type { ReviewQueueSubjectOption } from "../hooks/use-review-queue-subjects";
 
 interface Props {
   termGroups: PeriodOptionGroup[];
@@ -20,16 +20,12 @@ interface Props {
   subjects: ReviewQueueSubjectOption[];
   subjectId: string;
   onSubjectChange: (id: string) => void;
+  subjectsPending: boolean;
 }
 
-// Term, class and subject.
-//
-// Term is a SERVER filter — it keys the request, because a school's whole
-// history across every term would be an unbounded fetch. Class and subject
-// filter the already-fetched term in place: useReviewQueue pages through the
-// backend to get the complete term regardless of its size (bounded by
-// classes × subjects, not by pupils), so narrowing here never hides a
-// submission that just didn't happen to load.
+// Term, class and subject — all three are SERVER filters now
+// (2026-09-05): each keys the submissions request directly, so narrowing here
+// never hides a row that just didn't happen to load on the current page.
 export function ReviewQueueFilters({
   termGroups,
   periodId,
@@ -40,6 +36,7 @@ export function ReviewQueueFilters({
   subjects,
   subjectId,
   onSubjectChange,
+  subjectsPending,
 }: Props) {
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-xl border border-n-200 bg-white p-4">
@@ -55,16 +52,17 @@ export function ReviewQueueFilters({
 
       <label className="flex items-center gap-2 text-sm">
         <span className="text-n-500">Subject</span>
-        {/* Built from the submissions actually returned, not the school's whole
-            subject list — offering a subject nobody has submitted would filter
-            to an empty table with nothing to explain it. Narrows to the picked
-            class's own subjects once one is chosen, and disambiguator (set only
-            on an actual name collision — see useReviewQueueView) tells apart two
-            different subjects that would otherwise render identically. */}
+        {/* The school's own subjects (or the picked class's own, once one is
+            chosen) — not derived from submissions, so this never depends on
+            which page of them happens to be loaded. disambiguator (set only
+            on an actual name collision — see useReviewQueueSubjects) tells
+            apart two different subjects that would otherwise render
+            identically. */}
         <Select
           value={subjectId}
           onChange={(e) => onSubjectChange(e.target.value)}
           aria-label="Filter by subject"
+          disabled={subjectsPending}
           className="min-w-44"
         >
           <option value="">All subjects</option>

@@ -8,8 +8,9 @@ import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
-import { useReviewQueue } from "../hooks/use-review-queue";
-import { REVIEW_QUEUE_PAGE_SIZE, useReviewQueueView } from "../hooks/use-review-queue-view";
+import { REVIEW_QUEUE_PAGE_SIZE, useReviewQueuePage } from "../hooks/use-review-queue";
+import { useReviewQueueSubjects } from "../hooks/use-review-queue-subjects";
+import { useReviewQueueView } from "../hooks/use-review-queue-view";
 import {
   useApproveResult,
   useRejectResult,
@@ -25,13 +26,18 @@ import { SubmissionScoresDialog } from "./submission-scores-dialog";
 import { TermBadge } from "./term-badge";
 
 export function ReviewQueuePage() {
-  // Term keys the request; class and subject narrow what came back.
+  // Term, class and subject all key the request now — see use-review-queue.ts.
   const term = useTermSelection();
   const { data: classes } = useClasses();
-  const { data: allSubmissions, isPending, isError, error } = useReviewQueue(term.periodId);
   const [armId, setArmId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [page, setPage] = useState(1);
+  const {
+    data: queuePage,
+    isPending,
+    isError,
+    error,
+  } = useReviewQueuePage(term.periodId, page, { classArmId: armId || undefined, subjectId: subjectId || undefined });
   const approve = useApproveResult();
   const reject = useRejectResult();
   const unlock = useUnlockResult();
@@ -39,12 +45,8 @@ export function ReviewQueuePage() {
   const [viewing, setViewing] = useState<ResultSubmission | null>(null);
 
   const armGroups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
-  const { subjects, filteredSubmissions, submissions, awaiting } = useReviewQueueView({
-    allSubmissions,
-    armId,
-    subjectId,
-    page,
-  });
+  const { subjects, isPending: subjectsPending } = useReviewQueueSubjects(armId);
+  const { submissions, awaiting } = useReviewQueueView({ submissions: queuePage?.results });
   const filtered = !!armId || !!subjectId;
 
   function resetPage() {
@@ -86,15 +88,16 @@ export function ReviewQueuePage() {
             armGroups={armGroups}
             armId={armId}
             // Clears the subject pick too: the dropdown's own options just
-            // narrowed to this arm (see useReviewQueueView), and a subject
+            // narrowed to this arm (see useReviewQueueSubjects), and a subject
             // that isn't taught here would otherwise sit selected but absent
             // from its own list.
             onArmChange={(id) => { setArmId(id); setSubjectId(""); resetPage(); }}
             subjects={subjects}
             subjectId={subjectId}
             onSubjectChange={(id) => { setSubjectId(id); resetPage(); }}
+            subjectsPending={subjectsPending}
           />
-          {filteredSubmissions.length === 0 ? (
+          {submissions.length === 0 ? (
             <ReviewQueueEmpty filtered={filtered} />
           ) : (
             <>
@@ -110,7 +113,7 @@ export function ReviewQueuePage() {
               <PaginationControls
                 page={page}
                 pageSize={REVIEW_QUEUE_PAGE_SIZE}
-                count={filteredSubmissions.length}
+                count={queuePage?.count ?? 0}
                 onPageChange={setPage}
               />
             </>

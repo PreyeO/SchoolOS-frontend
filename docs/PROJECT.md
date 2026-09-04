@@ -1719,6 +1719,62 @@ Clean `build` too, across all three fixes.
   selection absent from its own now-narrower dropdown.
 - Clean `tsc`, `eslint`, `build`.
 
+**Result Review switched from fetch-the-whole-term to real server pagination,
+at the user's explicit request (2026-09-05).** Reported plainly: the review
+queue was calling every page of the term before rendering anything, and
+should call one page, render, and only fetch the next on a Next click. This
+directly reverses a design decision made and explained earlier the same day
+(2026-09-03/04) — the user chose real pagination over that design's guarantee
+with the tradeoff already understood, so this implements it rather than
+re-litigating it.
+- **What's genuinely lost, and why it can't be worked around**: the queue's
+  priority sort (submitted-and-awaiting first, across the whole term) and the
+  "N awaiting your review" figure both depended on holding the complete term
+  in memory. Checked `ClassArmSubjectResultSubmissionViewSet` directly
+  (`results/views.py:108-109`): `filterset_fields = ['class_arm', 'subject',
+  'academic_period']` — no `status`, and no ordering param at all — so there
+  is no cheap request that returns "how many are submitted" or "sorted by
+  what needs review" across the full term without fetching all of it, which
+  is exactly what was asked not to do. Both are now scoped to whatever page
+  is loaded: still sorted within a page (`useReviewQueueView`), and the label
+  reads "N awaiting your review **on this page**" rather than an unqualified
+  total, so it doesn't overclaim. Logged as a backend ask (add `status` to
+  `filterset_fields`, and/or an ordering param) for whoever picks it up.
+- **Split into two hooks in `use-review-queue.ts`** rather than replacing the
+  old one outright: `useReviewQueue(periodId)` — the original fetch-every-page
+  loop — turned out to be load-bearing for two OTHER screens that genuinely
+  need the whole term (`useResultsProgress`'s outstanding/awaiting/approved
+  counts on the admin/teacher home screens, and Publish Results' own progress
+  reasoning) — caught by `tsc`, not missed. Left untouched. New
+  `useReviewQueuePage(periodId, page, filters)` is what the review queue's own
+  table now uses — one page, filtered server-side (`class_arm`/`subject` are
+  in `filterset_fields`, so narrowing by either is a real query param, not a
+  client-side slice).
+- **The Subject filter's options needed a new source entirely**, since they
+  used to be derived from the very submissions list this rework removed.
+  Reused two already-cheap, already-existing sources instead of adding a new
+  endpoint: the school's own subject catalog (`useSubjects`) when no class is
+  picked, or that specific class arm's own subjects
+  (`useArmSubjects` → `GET /class-arms/{id}/subjects/`, already used by
+  Teaching Assignments, needs no permission beyond school membership) once
+  one is. The arm-scoped case is more precise than filtering the catalog by
+  level would have been — a class doesn't necessarily offer every subject its
+  level defines. New file: `use-review-queue-subjects.ts`.
+- Clean `tsc`, `eslint`, `build`. Answering the same question this session
+  already established as the right one to ask up front: no new backend
+  contract was needed anywhere in this rework — everything came from
+  endpoints and fields already confirmed to exist.
+
+**Privacy/Terms acceptance added to signup (2026-09-05).** Checked
+`UserRegistrationSerializer` (`accounts/serializers.py:40`) first — no field
+for this exists on the backend, so it's a client-side-only gate: a required
+checkbox linking to `/terms` and `/privacy` (both live pages already), added
+to `signupSchema` as a `.refine` alongside the existing password-match check.
+`accepted_terms` is deliberately never sent to the server — `signup()` in
+`auth-api.ts` already builds its POST body by explicitly naming each field
+rather than spreading the form values, so adding the field to the schema and
+form didn't require touching the payload construction to keep it out.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
@@ -1748,6 +1804,17 @@ What still needs backend work the frontend cannot do alone. Re-verified
   `Payment.gateway_reference` is written by nothing, and there is no webhook
   endpoint. A gateway-integration project (initiate, verify, webhook,
   idempotent recording), not an addition.
+- **`ClassArmSubjectResultSubmissionViewSet` has no `status` filter and no
+  ordering param** (`results/views.py:108-109`: `filterset_fields =
+  ['class_arm', 'subject', 'academic_period']` only). Result Review moved to
+  real server pagination on 2026-09-05 specifically to stop fetching the
+  whole term up front, which cost it two things that request could no longer
+  ask for: an accurate "N awaiting your review" count across the full term,
+  and the submitted-first priority sort. Adding `status` to `filterset_fields`
+  would restore the count (a cheap `?status=submitted` request's `count`
+  field); an ordering param (even a fixed one that puts `submitted` first)
+  would restore the sort. Neither is a frontend gap — there's nothing left to
+  build there without one of these.
 - **Seven school permissions gate nothing server-side** — `delete_students`,
   `delete_staff`, `delete_fees`, `edit_staff`, `edit_attendance`,
   `export_fees`, `send_sms`. They're grantable in the Roles editor and grant
