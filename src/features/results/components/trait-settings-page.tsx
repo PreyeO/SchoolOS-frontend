@@ -59,9 +59,17 @@ export function TraitSettingsPage() {
   function addTrait(category: TraitCategory) {
     const name = drafts[category].trim();
     if (!name || !activeLevel) return;
-    // order is 1-based and must be unique within (level, category), so it
-    // continues from whatever is already there rather than restarting.
-    const nextOrder = (byCategory.get(category)?.length ?? 0) + 1;
+    // order must be unique within (level, category) — but only among ACTIVE
+    // traits; the backend validates against those, not the full history. This
+    // has to be the highest existing order plus one, not a count of how many
+    // active traits there are: deactivating one (see TraitCategoryCard's own
+    // comment — the backend deactivates rather than deletes once a trait has
+    // ratings) leaves a gap in the numbering without shrinking anyone else's
+    // order, so counting active rows undercounts and reissues an order a
+    // still-active trait already holds. Same shape as session-card.tsx's
+    // nextOrder for adding a period to an existing session.
+    const existingOrders = (byCategory.get(category) ?? []).map((t) => t.order);
+    const nextOrder = Math.max(0, ...existingOrders) + 1;
     createTraits.mutate(
       { level: activeLevel, category, traits: [{ name, order: nextOrder }] },
       { onSuccess: () => setDrafts((prev) => ({ ...prev, [category]: "" })) },

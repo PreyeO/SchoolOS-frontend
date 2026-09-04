@@ -53,6 +53,19 @@ export function installTokenRefresh(
       useAuthStore.getState().setTokens({ access: data.access, refresh: data.refresh ?? refresh });
       return { token: data.access, unreachable: false };
     } catch (error) {
+      // A rejected refresh isn't always a dead session — it's also what a
+      // one-time refresh token looks like the moment AFTER something else
+      // (auth-handoff's own rotate() call, or this same interceptor running in
+      // another tab against the same localStorage-persisted store) has already
+      // rotated it out from under us. If the store's refresh token has since
+      // changed from the one we just sent, someone else won that race and the
+      // session is fine — recover with whatever access token they landed
+      // instead of forcing a logout on a token we already know is stale.
+      const current = useAuthStore.getState().tokens;
+      if (current && current.refresh !== refresh && current.access) {
+        return { token: current.access, unreachable: false };
+      }
+
       // True when the refresh never reached the server. The session may be
       // perfectly valid — we simply couldn't ask. Distinguished from a rejected
       // refresh token so a working user isn't logged out over a dropped
