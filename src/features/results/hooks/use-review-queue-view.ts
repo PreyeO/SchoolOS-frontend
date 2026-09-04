@@ -4,6 +4,16 @@ import { useMemo } from "react";
 
 import type { ResultSubmission, SubmissionStatus } from "../types";
 
+export interface ReviewQueueSubjectOption {
+  id: string;
+  name: string;
+  // Set only when this name collides with another subject's in the current
+  // option list — see the comment on `subjects` below for why that happens.
+  // The classes this id's submissions actually span, so the label never
+  // implies a narrower scope than is real.
+  disambiguator?: string;
+}
+
 // Ordered by what needs doing, not alphabetically. Anything waiting on the admin
 // comes first; approved work sinks to the bottom because it needs nothing.
 const STATUS_ORDER: SubmissionStatus[] = ["submitted", "rejected", "draft", "approved"];
@@ -30,13 +40,50 @@ export function useReviewQueueView({ allSubmissions, armId, subjectId, page }: A
   // nobody has submitted would filter to an empty table with nothing to
   // explain it. Built from the full fetched set, not the current page, so the
   // option list doesn't change as someone pages through.
-  const subjects = useMemo(() => {
-    const seen = new Map<string, string>();
-    (allSubmissions ?? []).forEach((s) => seen.set(s.subject, s.subject_name));
-    return [...seen.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allSubmissions]);
+  //
+  // Scoped by the arm filter too, once one is picked — Subject is level-scoped
+  // in the backend (academic/models.py), not arm-scoped, so a class's own
+  // subject list is genuinely a subset of the school-wide one once an arm
+  // narrows it, rather than every subject anyone teaches anywhere.
+  //
+  // Two different subjects can render identically here even after that: the
+  // same reason two rows can share a name at all — a school-defined subject is
+  // unique per (school, name, level) only while ACTIVE, so a deactivated
+  // subject (kept for its historical scores, same shape as behaviour traits)
+  // can collide in name with its own active replacement, and two genuinely
+  // different levels can each define their own "Mathematics" with no relation
+  // to one another. Both are different ids with no way to tell apart from the
+  // name alone — so when a name collides with another in the current option
+  // list, this appends every class its OWN submissions span, never just one:
+  // Subject isn't arm-scoped, so a single id routinely spans several arms
+  // (and can span several classes) already, and naming only one would imply a
+  // narrower scope than picking it actually filters to.
+  const subjects = useMemo<ReviewQueueSubjectOption[]>(() => {
+    const scoped = (allSubmissions ?? []).filter((s) => !armId || s.class_arm === armId);
+
+    const bySubject = new Map<string, { name: string; classes: Set<string> }>();
+    scoped.forEach((s) => {
+      const entry = bySubject.get(s.subject) ?? { name: s.subject_name, classes: new Set<string>() };
+      entry.classes.add(s.class_name);
+      bySubject.set(s.subject, entry);
+    });
+
+    const nameCounts = new Map<string, number>();
+    bySubject.forEach(({ name }) => nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1));
+
+    return [...bySubject.entries()]
+      .map(([id, { name, classes }]) => ({
+        id,
+        name,
+        disambiguator:
+          (nameCounts.get(name) ?? 0) > 1 ? [...classes].sort().join(", ") : undefined,
+      }))
+      .sort((a, b) =>
+        a.name === b.name
+          ? (a.disambiguator ?? "").localeCompare(b.disambiguator ?? "")
+          : a.name.localeCompare(b.name),
+      );
+  }, [allSubmissions, armId]);
 
   // Filtered and sorted over the COMPLETE term (useReviewQueue fetches every
   // page), so "submitted, awaiting review" items surface first across the
