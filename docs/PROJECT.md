@@ -1775,6 +1775,36 @@ to `signupSchema` as a `.refine` alongside the existing password-match check.
 rather than spreading the form values, so adding the field to the schema and
 form didn't require touching the payload construction to keep it out.
 
+**TeacherPicker now explains why a searched-for teacher doesn't appear
+(2026-09-05).** Reported precisely: assigning a form teacher on a class arm,
+searching for someone who's really a subject-only teacher, the backend
+genuinely has that person (`getTeachers` returns them, active and real) but
+the picker silently shows nothing — indistinguishable from "no such teacher."
+- **Root cause**: `TeacherPicker` is a shared, load-once/filter-locally
+  component (used here and, separately, for assigning a subject teacher) —
+  its own comment already said each caller pre-narrows the list before
+  handing it over. `useClassTeacherCandidates` fetches every active teacher,
+  then `.filter(canBeClassTeacher)`s it down to `teacher_type` "class"/"both"
+  only (the backend genuinely rejects "subject" —
+  `AcademicService.assign_class_teacher`, so this restriction itself is
+  correct) — but discarded the excluded ones entirely rather than keeping
+  them, so the picker's own search had nothing left to explain a miss with.
+- **Fixed generically on `TeacherPicker` itself**, not just the one caller:
+  two new optional props, `excludedFrom` (the wider pool the caller narrowed
+  `teachers` from) and `excludedReason` (why one specific match there isn't
+  offered). When a search comes up empty against `teachers`, it now also
+  checks `excludedFrom` — a real match there renders the specific reason
+  instead of the generic "No teachers match that search."
+  `useClassTeacherCandidates` now returns `{ eligible, all }` instead of
+  discarding `all` (same single fetch, zero extra requests — the data was
+  already in hand), and the form-teacher dialog explains "X is a subject
+  teacher only — only a 'Form teacher' or 'Both' teacher can lead a class."
+  Applied the identical fix to the OTHER `TeacherPicker` caller
+  (`assign-subject-teacher-dialog.tsx`, assigning a subject teacher) for the
+  same class of miss — searching for a teacher already assigned to that exact
+  subject-and-arm used to look the same way; it now says so.
+- Clean `tsc`, `eslint`, `build`.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
