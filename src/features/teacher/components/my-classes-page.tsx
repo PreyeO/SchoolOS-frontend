@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, ClipboardCheck, School } from "lucide-react";
+import { BookOpen, ClipboardCheck, NotebookPen, School } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
@@ -93,19 +93,53 @@ export function MyClassesPage() {
                 )}
               </div>
 
-              {/* Form classes only — the daily register belongs to the form
-                  teacher (see register-status-list.tsx's identical gate on
-                  the dashboard). The backend authorises any teacher to mark
-                  any arm, but inviting a subject-only teacher to "take
-                  register" here manufactures an obligation that isn't
-                  theirs. */}
-              {klass.isFormClass && (
-                <Button type="button" variant="outline" size="sm" asChild className="mt-4 w-full">
-                  <Link href={`/attendance?arm=${klass.classArmId}`}>
-                    <ClipboardCheck className="size-3.5 mr-1.5" />
-                    Take register
-                  </Link>
-                </Button>
+              {/* One CTA per hat the teacher wears here, not a single fixed
+                  button — a class card can mean either or both. Register:
+                  form classes only, since the daily register belongs to the
+                  form teacher (see register-status-list.tsx's identical
+                  gate on the dashboard) — the backend authorises any
+                  teacher to mark any arm, but inviting a subject-only
+                  teacher to "take register" manufactures an obligation
+                  that isn't theirs. Scores: only once they actually teach a
+                  subject here, which is exactly klass.subjects being
+                  non-empty. Side by side, not stacked, when both apply —
+                  two short labels read fine at half width and it keeps the
+                  card from growing taller just because a teacher happens to
+                  hold both roles in it. */}
+              {(klass.isFormClass || klass.subjects.length > 0) && (
+                <div className="mt-4 flex gap-2">
+                  {klass.isFormClass && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="flex-1"
+                    >
+                      <Link href={`/attendance?arm=${klass.classArmId}`}>
+                        <ClipboardCheck className="size-3.5 mr-1.5" />
+                        Take register
+                      </Link>
+                    </Button>
+                  )}
+                  {klass.subjects.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="flex-1"
+                    >
+                      {/* No ?arm= — score entry has no deep-link support yet
+                          (unlike attendance), so this lands on the picker's
+                          own default rather than a doomed query param. */}
+                      <Link href="/results">
+                        <NotebookPen className="size-3.5 mr-1.5" />
+                        Enter scores
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           ))}
