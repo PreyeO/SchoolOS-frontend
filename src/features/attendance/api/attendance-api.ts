@@ -8,11 +8,26 @@ import type { AttendanceRecord, BulkMarkPayload, BulkMarkResponse } from "../typ
 // The register's roster. page_size=100 (backend max) covers any realistic arm —
 // a class of more than 100 would need paging here, which a register shouldn't
 // have, so getRoster reports the overflow rather than silently truncating.
+//
+// academicPeriodId is optional and, deliberately, not passed by attendance:
+// omitted, the backend resolves the roster from the CURRENT session, which is
+// exactly right for a register (today's arm, today's students) and for the
+// plain student directory. A caller showing a PAST term instead — Publish
+// Results, a historical submission's score grid — has to pass it, or the
+// backend hands back who's in the arm TODAY rather than who was there for the
+// term actually being shown: a student promoted out since then goes missing
+// from the old arm's list and turns up, wrongly, in the new one's.
 export async function getRoster(
   classArmId: string,
+  academicPeriodId?: string,
 ): Promise<{ students: StudentListItem[]; total: number }> {
   const { data } = await apiClient.get<PaginatedResponse<StudentListItem>>(STUDENT_ENDPOINTS.LIST(), {
-    params: { class_arm_id: classArmId, is_active: true, page_size: 100 },
+    params: {
+      class_arm_id: classArmId,
+      is_active: true,
+      page_size: 100,
+      ...(academicPeriodId ? { academic_period_id: academicPeriodId } : {}),
+    },
   });
   return { students: data.results, total: data.count };
 }

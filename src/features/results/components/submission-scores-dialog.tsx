@@ -51,7 +51,13 @@ export function SubmissionScoresDialog({
   };
 
   const { data: scoreData, isPending, isError, error } = useScores(open ? filters : {});
-  const { data: roster } = useRoster(open ? submission.class_arm : null);
+  // Period-scoped for the same reason Publish Results is: this submission can
+  // be from a past term, and the CURRENT roster for this arm is not
+  // necessarily who was actually in it back then.
+  const { data: roster } = useRoster(
+    open ? submission.class_arm : null,
+    open ? submission.academic_period : null,
+  );
   const { data: classes } = useClasses();
   const { data: gradingSystems } = useGradingSystems();
 
