@@ -1846,6 +1846,48 @@ a teacher at both Blossom Academy and FGGC, signed in on
   same static-analysis caveat as every session change to auth/token-handling
   code this app already has.
 
+**Roster wasn't period-scoped, so a past-term screen showed today's students
+instead of who was actually in the arm that term (2026-09-05) — backend
+change landed same day, frontend side here.** Reported precisely, backend
+first: `GET /api/students/?class_arm_id=` always resolved the CURRENT
+session's roster, with no way to ask for a past one. A student promoted
+Creche 2 → Nursery 1 disappeared from last term's Creche 2 roster on Publish
+Results (their real class that term) and wrongly appeared in Nursery 1's
+instead — unpublish itself was correct (it keys off class_arm + academic
+period, not the roster), only the displayed list was wrong. Backend now
+accepts an optional `academic_period_id` alongside `class_arm_id`: omitted,
+current session (unchanged, correct for attendance and the plain directory);
+passed, that period's actual enrollment.
+- `getRoster`/`useRoster` (`attendance-api.ts`, `use-register.ts`) gained an
+  optional `academicPeriodId` param, left out of the query key entirely when
+  absent rather than appended as `undefined` — so attendance's own call,
+  which must never pass it, keeps the exact cache key it always had; nothing
+  about its offline behavior changes.
+- **Fixed**: `publish-results-page.tsx` now passes `term.periodId` — the
+  screen this was reported against, and the one with a real term picker.
+  `submission-scores-dialog.tsx` (Review Queue's "view scores" dialog) had the
+  identical bug, not named in the report but found while checking every
+  `useRoster` call site: it already reads `submission.academic_period` for
+  the scores query on the very next line and simply never passed it to the
+  roster call beside it. A reviewer opening an old submission would see
+  today's class list rather than who actually sat that subject the term it
+  was submitted — fixed the same way.
+- **Deliberately left unchanged**: `attendance-page.tsx` (explicitly
+  instructed not to), and `score-entry-page.tsx` / `behaviour-page.tsx` /
+  `principal-remarks-page.tsx` — the report named these as candidates only
+  "if they pick a past term," and checked each directly: none has a term
+  picker at all (`grep` for `TermPicker`/`useTermSelection` — none), all three
+  are current-term-only by the same design already established for score
+  entry ("a score always belongs to the term that is current... back-dating
+  is a correction, not routine entry"). Current session and current period
+  necessarily agree for these, so passing the param would be a no-op change
+  to files that don't need it.
+- Publish Results' own empty-state copy ("No students are enrolled in
+  {class} for this term") already said "for this term" before this fix — it
+  just wasn't true yet. No copy change needed; the data fix is what makes it
+  accurate.
+- Clean `tsc`, `eslint`, `build`.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

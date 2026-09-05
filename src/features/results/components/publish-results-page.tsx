@@ -61,7 +61,11 @@ export function PublishResultsPage() {
 
   const { data: submissions } = useReviewQueue(term.periodId);
   const { data: batches } = useClassArmResults(term.periodId);
-  const { data: roster, isPending: rosterLoading } = useRoster(selectedId);
+  // Period-scoped: publishing a past term must show who was ACTUALLY in this
+  // arm that term, not today's roster — a student promoted since (Creche 2 →
+  // Nursery 1, say) would otherwise vanish from last term's Creche 2 list and
+  // wrongly turn up in Nursery 1's.
+  const { data: roster, isPending: rosterLoading } = useRoster(selectedId, term.periodId);
   // The definitive list the backend locks against.
   const { data: offerings } = useArmSubjects(selectedId);
   // Only to explain *why* a subject has no scores yet.

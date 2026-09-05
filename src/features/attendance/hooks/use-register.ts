@@ -4,10 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getAttendance, getRoster } from "../api/attendance-api";
 
-export function useRoster(classArmId: string | null) {
+// academicPeriodId: see getRoster's own comment. Left out of the query key
+// when absent, rather than always appended as undefined, so attendance's own
+// call — which never passes it — keeps the exact cache key it always had.
+export function useRoster(classArmId: string | null, academicPeriodId?: string | null) {
   return useQuery({
-    queryKey: ["attendance", "roster", classArmId],
-    queryFn: () => getRoster(classArmId as string),
+    queryKey: academicPeriodId
+      ? ["attendance", "roster", classArmId, academicPeriodId]
+      : ["attendance", "roster", classArmId],
+    queryFn: () => getRoster(classArmId as string, academicPeriodId ?? undefined),
     enabled: !!classArmId,
   });
 }
