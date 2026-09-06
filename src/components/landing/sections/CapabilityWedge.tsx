@@ -45,6 +45,7 @@ export function CapabilityWedge({ wedge, active, onClick }: Props) {
           </ul>
           <a
             href={wedge.cta.href}
+            {...(wedge.cta.newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className="inline-block mt-2 text-sm font-medium text-brand underline underline-offset-4 hover:text-brand/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             {wedge.cta.label}

@@ -28,7 +28,10 @@ export const CAPABILITY_WEDGES = [
       "Approve-and-release workflow",
       "Class teacher & principal remarks",
     ],
-    cta: { label: "See a sample report card", href: "#demo" },
+    // Opens in a new tab rather than scrolling in-page like the other two
+    // CTAs below — it's a real file, not an anchor, and a visitor shouldn't
+    // lose their place on the landing page to view it.
+    cta: { label: "See a sample report card", href: "/sample-report-card.pdf", newTab: true },
   },
   {
     id: "fees",
@@ -42,7 +45,7 @@ export const CAPABILITY_WEDGES = [
       "Defaulter list per class & term",
       "Downloadable payment receipts",
     ],
-    cta: { label: "See how it works", href: "#demo" },
+    cta: { label: "See how it works", href: "#demo", newTab: false },
   },
   {
     id: "attendance",
@@ -56,7 +59,7 @@ export const CAPABILITY_WEDGES = [
       "Parents track it in their portal",
       "Works on cheap Android phones",
     ],
-    cta: { label: "Book a demo", href: "/book-demo" },
+    cta: { label: "Book a demo", href: "/book-demo", newTab: false },
   },
 ] as const;
 
