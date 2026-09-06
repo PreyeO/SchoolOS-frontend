@@ -7,13 +7,13 @@
  * byte-for-byte and are never compiled, so this has no build step and no
  * TypeScript. Keep it plain and dependency-free.
  *
- * Scope: attendance and score entry — the two screens TanStack Query
- * persistence has data for (see lib/api/query-persistence.ts). The job is to
- * get the app shell to load with no network so a teacher can open a register
- * or a score sheet. API responses are deliberately NOT cached here — TanStack
- * Query persistence owns that data, and a second copy in the SW would be a
- * competing source of truth that could serve a stale roster behind the app's
- * back.
+ * Scope: PRECACHE_URLS below, kept deliberately narrow — see the comment
+ * there for which routes qualify and why. The job is to get the app shell to
+ * load with no network so a teacher can open a register or a score sheet.
+ * API responses are deliberately NOT cached here — TanStack Query
+ * persistence (lib/api/query-persistence.ts) owns that data, and a second
+ * copy in the SW would be a competing source of truth that could serve a
+ * stale roster behind the app's back.
  */
 
 // Read off this worker's own URL, which ServiceWorkerProvider stamps with the
@@ -31,7 +31,24 @@ const OFFLINE_URL = "/offline";
 // client-side navigation — the browser never requests the /attendance or
 // /results document at all, so nothing would be cached to serve on a later
 // cold start.
-const PRECACHE_URLS = [OFFLINE_URL, "/attendance", "/dashboard", "/my-classes", "/results"];
+//
+// Deliberately narrow, not "every route": each entry here needs its own
+// offline-draft/paused-mutation handling to actually be usable once served
+// from this cache, or a teacher just gets a page that loads but hangs on its
+// data fetch instead of a clear "you're offline" message — worse than not
+// precaching it at all. /results/behaviour has that (a local draft plus a
+// paused-mutation queue, the same shape as score entry). The rest of Results
+// (review, publish, broadsheet, remarks, leaderboard) are admin desk-tasks
+// with no such handling, and Announcements has none either — neither belongs
+// here.
+const PRECACHE_URLS = [
+  OFFLINE_URL,
+  "/attendance",
+  "/dashboard",
+  "/my-classes",
+  "/results",
+  "/results/behaviour",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

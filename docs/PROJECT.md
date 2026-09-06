@@ -1957,6 +1957,142 @@ was the user's own preferred framing.
   refetch once `/me` landed.
 - Clean `tsc`, `eslint`, `build`.
 
+**`/announcements` added to the service worker precache (2026-09-05).** Not
+reported as a bug in words — shown as two DevTools screenshots: one on
+`/dashboard` (online, mid-prefetch of `/announcements`), the next navigating
+to `/announcements` while genuinely offline and landing on the generic
+`/offline` fallback page — sidebar and all gone, not the in-app "hasn't
+loaded here before" experience the other precached routes get. Checked
+`PRECACHE_URLS` directly: `["/offline", "/attendance", "/dashboard",
+"/my-classes", "/results"]` — `/announcements` was simply never in it, so a
+first-ever offline visit has nothing cached to fall back to at all, and
+`networkFirst`'s `fallbackToOfflinePage` branch is the only thing left to
+serve.
+
+**Reverted, then resolved differently, once the user clarified two things
+(2026-09-05):** Announcements was never meant to work offline at all —
+initially added it to `PRECACHE_URLS` on the reasonable-looking assumption
+that "lightweight, frequently-visited" was the bar every other entry met, but
+that's not actually the criterion; reverted once corrected. The real bar,
+confirmed by checking each candidate's hooks directly: does the screen have
+its own offline-draft/paused-mutation handling at all? Without one, serving
+the page shell from cache while genuinely offline just trades a clear "you're
+offline" message for a page that loads and then hangs on its own data fetch —
+worse, not better. Announcements has no such handling. Asked which scope was
+intended rather than guessing further, since this is a product decision, not
+a technical one: kept today's four as-is and added `/results/behaviour`,
+which — confirmed directly — has the identical local-draft-plus-paused-queue
+shape as score entry (and was fixed for a real draft bug earlier this same
+session), unlike the rest of Results (review, publish, broadsheet, remarks,
+leaderboard), which are admin desk-tasks with no offline handling built in at
+all and were explicitly ruled out for the same reason Announcements was.
+Updated the file's top header comment too, which had been stale since before
+this session (still said "attendance and score entry" as the whole scope,
+predating Dashboard/My Classes already being in `PRECACHE_URLS`) — now points
+at `PRECACHE_URLS`'s own comment instead of restating it, so the two can't
+drift apart again.
+
+**Separately: the second screenshot's report of "he said he was online and
+still got the offline page" is a real, understood characteristic, not a new
+bug** — confirmed by reading `networkFirst()` itself. It makes exactly one
+`fetch()` attempt with no retry, and does not check `navigator.onLine` at
+all; ANY failure (a dropped packet, a slow DNS lookup, one flaky moment on a
+weak connection — not necessarily "no network" in the OS sense) is caught by
+the identical `catch` block that handles genuine offline, with no way to
+tell the two apart. So a person whose device reports "online" but whose
+network is momentarily degraded sees precisely the same fallback as someone
+who is truly offline — the user's own "maybe it's his network" read is very
+likely the correct explanation. Not changed: a fix (checking
+`self.navigator.onLine` before deciding whether a failure means "truly
+offline" vs. "retry once, this might be transient") is a real, scoped
+possible improvement, but wasn't asked for here and touches the same
+fragile, untested file again — flagged rather than built speculatively.
+
+`node --check public/sw.js` confirms valid syntax throughout. **Not verified
+live** — same caveat as every change to this file this session.
+
+**Landing page: "See a sample report card" wired to a real file
+(2026-09-05).** Was `href: "#demo"` — an in-page anchor to the book-a-demo
+section, not an actual sample. Recommended keeping "See" over "Download" and
+opening in a new tab (PDFs render natively in-browser; a visitor can still
+save it themselves from there, and forcing a download is more friction for a
+"let me peek at this" CTA than the ask warrants) — user agreed.
+- `data/capabilities.ts`: report-card wedge's `cta.href` now
+  `/sample-report-card.pdf`, plus a new `newTab: true`/`false` field added
+  to all three wedges' `cta` objects (uniformly, not just the one that needs
+  it — the array is `as const`, so giving only one entry the extra field
+  would have turned `CapabilityWedge`'s inferred type into a union missing
+  the property on the other two branches).
+  `CapabilityWedge.tsx` spreads `{ target: "_blank", rel: "noopener
+  noreferrer" }` onto the anchor only when `newTab` is set, so the other two
+  CTAs (`#demo` anchor, `/book-demo` route) are unaffected.
+- **File still needs to be placed by the user**: `public/sample-report-card.pdf`
+  — outside this session's file access (it exists on the user's machine, not
+  yet in the repo). The code is correct and ready the moment it lands there;
+  nothing else needs to change.
+- Clean `tsc`, `eslint`, `build`.
+
+**Capabilities section redesigned to show real product screenshots
+(2026-09-05).** Prompted by 8 screenshots pasted into chat (Broadsheet,
+Attendance, Dashboard, Audit Log, Announcements, Payments, Result Review,
+Leaderboard) with an open question — which matter, and where. Asked which of
+three placements before touching anything (the hero mockup, a new standalone
+section, or the existing Capabilities tabs), recommending the third: the
+hero's animated mockup (`HeroSurface.tsx`) is a well-crafted, on-brand,
+reduced-motion-aware illustration, not a screenshot, and swapping it for a
+real one (browser chrome, generic tables) would look less polished, not
+more — while `CapabilitiesClient`'s three tabs (Results/Fees/Attendance)
+showed text only when clicked, with no visual at all, which is the actual
+gap. User agreed.
+- **Split `CapabilityWedge` in two.** It used to be one card per tab, holding
+  everything — eyebrow, heading, and (once active) body, bullets, and CTA —
+  growing taller in place inside a 3-column grid. New shape: `CapabilityWedge`
+  is now just the compact tab (eyebrow + heading, always the same height,
+  whichever is active highlighted); a new `CapabilityDetail` holds the body,
+  bullets, CTA, and — new — a screenshot, rendered once beside the tab list
+  rather than inside whichever card happens to be open. Same tabs-beside-a-
+  screenshot pattern most SaaS sites with a features section already use.
+  `CapabilitiesClient` now lays the two out `lg:grid-cols-[minmax(0,320px)_1fr]`
+  — tabs in a narrow left column on desktop, detail panel filling the rest;
+  `sm:grid-cols-3` for the tabs on mobile, where the detail panel sits below.
+- **Mapped the three wedges to specific screenshots** (from the eight
+  shared): Results → Broadsheet ("every student, every subject, for the
+  term" — the screenshot that most directly backs the wedge's own claim
+  about computing positions and averages), Fees → Payments (the payment log
+  with method/amount/receipt), Attendance → the register itself
+  (Present/Absent/Late/Excused). Added `image`/`imageAlt` to each wedge in
+  `data/capabilities.ts`, referencing `public/product/*.jpeg` paths (corrected
+  from an initial `.png` guess once the user confirmed the actual files are
+  `.jpeg`). Dashboard, Audit Log, Announcements, Result Review, and
+  Leaderboard weren't used — the brief was "what matters," and these three
+  are the ones the existing wedge copy is already about; the rest could be a
+  good candidate for a future fourth wedge or a separate section, not folded
+  in here without being asked.
+- Plain `<img>`, not `next/image` — nothing else in this codebase uses it
+  (every other image is a presigned S3 URL via a plain `<img>`, same as
+  `school-logo.tsx`), so this stays consistent rather than introducing the
+  one exception.
+- **Files still need to be placed by the user**, same situation as the
+  sample report card: pasted chat images don't land on disk as files this
+  session can read or copy — `public/product/results-broadsheet.jpeg`,
+  `public/product/fees-payments.jpeg`, `public/product/attendance-register.jpeg`
+  (cropped to the app content, without the browser/DevTools chrome visible in
+  the originals). The code is correct and ready the moment they land there;
+  nothing else needs to change.
+- Clean `tsc`, `eslint`, `build`.
+
+**Reverted, same day, before any image was ever placed.** Asked to remove the
+images and put the Capabilities section back exactly how it was. Restored
+`CapabilityWedge.tsx` to the single-card, inline-expand version (eyebrow,
+heading, and — once active — body/bullets/CTA all in one card, no split),
+`CapabilitiesClient.tsx` back to the plain `md:grid-cols-3` layout, deleted
+`CapabilityDetail.tsx` outright (confirmed no remaining references), and
+removed `image`/`imageAlt` from all three wedges in `data/capabilities.ts`.
+Kept the `newTab` field and the sample-report-card `href` change from
+earlier the same day — those were a separate, already-confirmed request, not
+part of "the images," and nothing here touched them. Clean `tsc`, `eslint`,
+`build` again after reverting.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
