@@ -2,6 +2,7 @@
 
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
+import { ErrorState } from "@/components/shared/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useOverviewStats } from "../hooks/use-overview-stats";
@@ -46,13 +47,47 @@ function KpiSkeleton() {
 }
 
 export function KpiCards() {
-  const { data, isPending } = useOverviewStats();
+  const { data, isPending, isError, error } = useOverviewStats();
+
+  if (isPending) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <KpiSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  // Was missing entirely: this render only ever checked isPending, so a
+  // rejected query (Students/Staff 403ing for an admin missing
+  // view_students/view_staff, before permission was checked client-side
+  // below) looked identical to "still loading" — skeletons, forever, which
+  // is the exact "keeps trying to load" symptom this was reported as.
+  if (isError || !data) {
+    return <ErrorState error={error} resourceLabel="the school overview" />;
+  }
+
+  const visible = Object.values(data).filter((stat) => stat.permitted);
+
+  if (visible.length === 0) {
+    // Every figure needs a permission this admin's role doesn't grant — most
+    // often a roleless admin (is_admin persona, no SchoolAdminRole
+    // permissions at all). Said plainly rather than an empty grid with no
+    // explanation.
+    return (
+      <p className="rounded-xl border border-n-200 bg-white px-4 py-6 text-center text-sm text-n-500">
+        You don&rsquo;t have permission to view the school overview. Ask an administrator to
+        grant your role the relevant permissions.
+      </p>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {isPending || !data
-        ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
-        : Object.values(data).map((stat) => <KpiCard key={stat.label} stat={stat} />)}
+      {visible.map((stat) => (
+        <KpiCard key={stat.label} stat={stat} />
+      ))}
     </div>
   );
 }

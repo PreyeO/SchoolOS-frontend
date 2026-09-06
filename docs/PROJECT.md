@@ -1888,6 +1888,75 @@ passed, that period's actual enrollment.
   accurate.
 - Clean `tsc`, `eslint`, `build`.
 
+**Two unrelated reports, both fixed (2026-09-05).**
+
+**1. Behaviour ratings lost on category tab switch.** Reported precisely:
+rate a student in Affective, don't save, toggle to Psychomotor and back —
+the Affective entries are gone.
+- **Root cause**: `behaviour-page.tsx`'s `seedKey` (the render-time draft-seed
+  key, same pattern as the score/register drafts) was
+  `` `${arm.classArmId}|${currentTerm.id}|${category}` `` — including
+  `category`. Switching tabs changed the key, which the seeding logic reads
+  as "different data source, reseed from the server" — and a reseed replaces
+  the WHOLE draft object with server-confirmed values only, not just the
+  traits the new category happens to show. But `useTraitRatings` fetches
+  both categories together in one request (a trait carries its own category;
+  the ratings query doesn't take one), and `draft` is keyed by
+  `"studentId|traitId"`, so entries from both categories already coexisted in
+  it without collision. Category was never a second data source — it's a
+  pure display filter (`visibleTraits`) over the one draft — so keying the
+  reseed on it was wiping out whichever category's unsaved ratings weren't
+  just saved, on every single tab switch.
+- **Fixed** by dropping `category` from `seedKey`. The draft now only reseeds
+  when the arm or term actually changes, exactly as intended; switching
+  category tabs no longer touches it at all.
+- Clean `tsc`, `eslint`.
+
+**2. Admin dashboard KPI cards stuck "loading" forever for an admin missing
+the permission behind them.** Reported with a concrete, better-than-asked-for
+UX call to make: friendly message, or show only what the admin can see —
+recommended and built the latter, since it's the more polished of the two and
+was the user's own preferred framing.
+- **Root cause, two parts**. First: `getOverviewStats()` fired all four KPI
+  fetches in one bare `Promise.all` with no permission awareness. Total
+  Students and Total Staff go through `StudentProfileViewSet`/
+  `TeacherProfileViewSet`, both gated on `HasSchoolPermission` — so either
+  one 403s outright for an admin missing `view_students`/`view_staff`, which
+  rejects the WHOLE `Promise.all` (Fee Collection was already the one
+  exception, with its own try/catch returning `[]` on a 403 — its comment
+  says exactly why: "an empty chart is the right answer for 'not allowed'").
+  Second, and what actually produced the stuck-forever symptom:
+  `KpiCards`' render check was `isPending || !data` — it never looked at
+  `isError` at all, so a rejected query and a still-loading one rendered
+  identically: four skeletons, permanently. Confirmed the trigger is the
+  ordinary case, not an edge one: `DashboardHome`'s own admin check is
+  `personas.includes("admin")`, with no permission floor — a roleless admin
+  (a real, named case in this codebase: "a roleless admin has no
+  permissions") reaches this exact screen.
+- **Fixed two ways together**: each KPI now checks its own school permission
+  client-side FIRST (`useHasSchoolPermission`, the same mechanism every other
+  screen in this app already uses to decide what an admin can do) and simply
+  never fetches a figure the caller's role doesn't grant, rather than
+  fetching it and hiding the result after a refusal — `getOverviewStats` now
+  takes a `permissions` argument and returns `permitted: false` for whichever
+  it was told to skip. Attendance Today got the same treatment even though it
+  doesn't literally 403 (`AttendanceRecordViewSet` has no permission-string
+  gate, just a queryset that returns nothing for an admin without
+  `view_attendance`) — showing "0% today" to someone who can't see any
+  attendance record is the identical problem in a different shape.
+  `KpiCards` now filters to `permitted` tiles, shows a plain "you don't have
+  permission to view the school overview" message if that leaves nothing at
+  all (the roleless-admin case), and — independently, since this protects
+  against ANY unexpected failure, not just a permission one — finally checks
+  `isError` and renders the shared `ErrorState` instead of looping forever on
+  a genuine server error too.
+- `useOverviewStats` waits on `/me` (`enabled: !mePending`) before firing,
+  since `useHasSchoolPermission` reads `false` while `/me` is still loading —
+  without that wait, an admin who DOES hold every permission would still
+  fetch nothing on the very first pass and need a second, permission-aware
+  refetch once `/me` landed.
+- Clean `tsc`, `eslint`, `build`.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

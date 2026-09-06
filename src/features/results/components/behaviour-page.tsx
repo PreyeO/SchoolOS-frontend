@@ -138,7 +138,17 @@ export function BehaviourPage() {
   // The exact values the last seed produced — what separates a genuine local
   // change from one that merely predates a refetch.
   const [seededValues, setSeededValues] = useState<Record<string, number>>({});
-  const seedKey = arm && currentTerm ? `${arm.classArmId}|${currentTerm.id}|${category}` : null;
+  // NOT keyed on category, even though the toolbar reads as "switch data set" —
+  // useTraitRatings fetches both categories together (a trait carries its own
+  // category; the ratings request doesn't take one), and draft is keyed by
+  // "studentId|traitId", so entries from both categories already coexist in it
+  // without colliding. Category is a pure display filter (visibleTraits,
+  // below) over that one draft, not a second data source. Including it here
+  // used to force a reseed back to server-only values on every tab switch —
+  // wiping out whichever category's unsaved ratings weren't just clicked
+  // Save on, since a reseed replaces the WHOLE draft, not just the traits
+  // the new category happens to show.
+  const seedKey = arm && currentTerm ? `${arm.classArmId}|${currentTerm.id}` : null;
 
   const serverValues = useMemo(() => {
     const base: Record<string, number> = {};
