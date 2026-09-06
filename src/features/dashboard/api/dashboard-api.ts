@@ -11,6 +11,16 @@ export interface KpiStat {
   value: string;
   trend: { direction: "up" | "down" | "flat"; label: string };
   hasData: boolean;
+  // False when the caller's role doesn't carry the school permission this
+  // figure needs at all (view_students / view_staff / view_attendance /
+  // view_analytics — accounts/permissions.py) — a different case from
+  // hasData: false, which means "you can see this, there's just nothing here
+  // yet". A roleless admin (is_admin persona, no SchoolAdminRole permissions)
+  // reaches the same dashboard as any other admin, so this is the ordinary
+  // case, not an edge one. KpiCards hides a tile with permitted: false rather
+  // than show an empty or perpetually-loading one for data nobody granted the
+  // right to see.
+  permitted: boolean;
 }
 
 export interface OverviewStats {
@@ -19,6 +29,20 @@ export interface OverviewStats {
   feeCollectionPct: KpiStat;
   attendanceTodayPct: KpiStat;
 }
+
+export interface OverviewStatsPermissions {
+  viewStudents: boolean;
+  viewStaff: boolean;
+  viewAttendance: boolean;
+  viewAnalytics: boolean;
+}
+
+const NOT_PERMITTED = {
+  value: "",
+  trend: { direction: "flat" as const, label: "" },
+  hasData: false,
+  permitted: false,
+};
 
 async function countOf(url: string, params: Record<string, unknown> = {}): Promise<number> {
   const { data } = await apiClient.get<PaginatedResponse<unknown>>(url, {
@@ -55,7 +79,7 @@ function feeCollectionStat(summary: FeeCollectionPoint[]): KpiStat {
   const billed = current ? current.collected + current.outstanding : 0;
 
   if (!current || billed === 0) {
-    return { label: "Fee Collection", value: "—", trend: { direction: "flat", label: "" }, hasData: false };
+    return { label: "Fee Collection", value: "—", trend: { direction: "flat", label: "" }, hasData: false, permitted: true };
   }
 
   return {
@@ -65,55 +89,83 @@ function feeCollectionStat(summary: FeeCollectionPoint[]): KpiStat {
     // different rosters, so "+6% on last term" would compare unlike things.
     trend: { direction: "flat", label: current.term },
     hasData: true,
+    permitted: true,
   };
 }
 
-export async function getOverviewStats(): Promise<OverviewStats> {
+// Which figures to even ask for, checked BEFORE fetching rather than caught
+// after a refusal — the same way every other screen in this app decides what
+// an admin can do (useHasSchoolPermission), so a tile nobody granted the
+// right to see is never fetched at all rather than fetched and then hidden.
+// Was a bare Promise.all with no permission awareness: Students and Staff
+// (StudentProfileViewSet/TeacherProfileViewSet, both HasSchoolPermission) 403
+// outright for an admin missing view_students/view_staff, which rejected the
+// WHOLE Promise.all — and KpiCards' render check (isPending || !data) never
+// looked at isError, so a rejected query and a still-loading one rendered
+// identically: skeletons, forever. Attendance doesn't 403 the same way
+// (AttendanceRecordViewSet has no permission-string gate, just a queryset
+// that returns nothing an admin without view_attendance can't see) but is
+// checked here too for the same reason Fee Collection already was — showing
+// "0% attendance today" to someone who genuinely can't see any attendance
+// record is a different flavour of the identical problem.
+export async function getOverviewStats(permissions: OverviewStatsPermissions): Promise<OverviewStats> {
   const today = toLocalIsoDate();
 
   const [students, staff, todaysAttendance, feeSummary] = await Promise.all([
-    countOf(STUDENT_ENDPOINTS.LIST(), { is_active: true }),
-    countOf(TEACHER_ENDPOINTS.LIST(), { is_active: true }),
-    apiClient
-      .get<PaginatedResponse<AttendanceRecord>>(ATTENDANCE_ENDPOINTS.LIST(), {
-        params: { date: today, page_size: 100 },
-      })
-      .then((r) => r.data.results),
-    // Returns [] rather than throwing on a 403 (view_analytics, which this
-    // caller may not hold), so the whole KPI row doesn't fail over one tile.
-    getCollectionSummary(),
+    permissions.viewStudents ? countOf(STUDENT_ENDPOINTS.LIST(), { is_active: true }) : null,
+    permissions.viewStaff ? countOf(TEACHER_ENDPOINTS.LIST(), { is_active: true }) : null,
+    permissions.viewAttendance
+      ? apiClient
+          .get<PaginatedResponse<AttendanceRecord>>(ATTENDANCE_ENDPOINTS.LIST(), {
+            params: { date: today, page_size: 100 },
+          })
+          .then((r) => r.data.results)
+      : null,
+    // Also still returns [] rather than throwing on a 403, defensively — a
+    // role can change between /me landing and this request going out.
+    permissions.viewAnalytics ? getCollectionSummary() : null,
   ]);
 
   // "Late" still means present for the day.
-  const present = todaysAttendance.filter(
-    (r) => r.status === "present" || r.status === "late",
-  ).length;
-  const marked = todaysAttendance.length;
+  const present = todaysAttendance?.filter((r) => r.status === "present" || r.status === "late").length ?? 0;
+  const marked = todaysAttendance?.length ?? 0;
   const attendancePct = marked > 0 ? Math.round((present / marked) * 100) : 0;
 
   return {
-    students: {
-      label: "Total Students",
-      value: String(students),
-      trend: { direction: "flat", label: students === 1 ? "enrolled" : "enrolled" },
-      hasData: students > 0,
-    },
-    staff: {
-      label: "Total Staff",
-      value: String(staff),
-      trend: { direction: "flat", label: "teachers" },
-      hasData: staff > 0,
-    },
-    feeCollectionPct: feeCollectionStat(feeSummary),
-    attendanceTodayPct: {
-      label: "Attendance Today",
-      value: `${attendancePct}%`,
-      trend: {
-        direction: "flat",
-        label: `${present} of ${marked} marked`,
-      },
-      hasData: marked > 0,
-    },
+    students:
+      students === null
+        ? { label: "Total Students", ...NOT_PERMITTED }
+        : {
+            label: "Total Students",
+            value: String(students),
+            trend: { direction: "flat", label: "enrolled" },
+            hasData: students > 0,
+            permitted: true,
+          },
+    staff:
+      staff === null
+        ? { label: "Total Staff", ...NOT_PERMITTED }
+        : {
+            label: "Total Staff",
+            value: String(staff),
+            trend: { direction: "flat", label: "teachers" },
+            hasData: staff > 0,
+            permitted: true,
+          },
+    feeCollectionPct: feeSummary === null ? { label: "Fee Collection", ...NOT_PERMITTED } : feeCollectionStat(feeSummary),
+    attendanceTodayPct:
+      todaysAttendance === null
+        ? { label: "Attendance Today", ...NOT_PERMITTED }
+        : {
+            label: "Attendance Today",
+            value: `${attendancePct}%`,
+            trend: {
+              direction: "flat",
+              label: `${present} of ${marked} marked`,
+            },
+            hasData: marked > 0,
+            permitted: true,
+          },
   };
 }
 
