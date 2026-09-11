@@ -155,6 +155,15 @@
   body { @apply bg-background text-foreground; }
   h1, h2, h3 { font-family: var(--font-bricolage), var(--font-sans); }
 
+  /* Installed as a standalone PWA, the webview runs edge-to-edge and nothing
+     here reserves room for the iOS home-indicator gesture area the way a
+     Safari tab's chrome would. Scoped to display-mode: standalone so an
+     ordinary mobile-browser tab (which already has its own chrome down
+     there) never gets padding it doesn't need. */
+  @media (display-mode: standalone) {
+    body { padding-bottom: env(safe-area-inset-bottom); }
+  }
+
   /* Anything you can click gets the hand.
      ────────────────────────────────────────────────────────────────
      Tailwind v3's Preflight set `cursor: pointer` on buttons; v4's DROPPED
@@ -292,6 +301,50 @@
   height: 0;
   pointer-events: none;
   color: var(--n-400);
+}
+
+/* ─── Touch targets ──────────────────────────────────────────────
+   This is a PWA meant to be run one-handed, mid-classroom, on a phone — not
+   just looked at on one. The design system's control sizes are tuned for a
+   mouse-driven admin desktop (Linear/Vercel-style density) and several fall
+   well under the ~44px tap target every platform's own guidelines recommend.
+
+   Grows the real box, not an invisible hit-slop overlay: several of these
+   (Edit/Delete icon-button pairs, especially) sit only 4px apart, and an
+   overlay big enough to matter would make the two hit zones overlap — a
+   mis-tap between "edit" and "delete" is worse than the small-target problem
+   it would be fixing. A real size increase just pushes the flex gap apart
+   instead, so adjacent controls stay unambiguous.
+
+   Scoped to (pointer: coarse) so a mouse/trackpad session keeps the compact
+   sizing this design was actually tuned for — only a touch-primary device
+   pays the (small) density cost.
+
+   Targets each component's own data-slot/data-size, set once in
+   components/ui/*, so this covers every call site without touching them —
+   the alternative given "no bulk JSX rewrites" (see PROJECT.md) would be
+   hand-editing dozens of individual usages. !important because a handful of
+   call sites pass a one-off className="h-9" override, which has the same
+   selector specificity as an attribute selector and must not silently win
+   back the smaller size — same reasoning as the print block below. */
+@media (pointer: coarse) {
+  [data-slot="button"][data-size="icon-xs"] { width: 2.125rem !important; height: 2.125rem !important; }
+  [data-slot="button"][data-size="icon-sm"] { width: 2.25rem !important; height: 2.25rem !important; }
+  [data-slot="button"][data-size="icon"] { width: 2.5rem !important; height: 2.5rem !important; }
+  [data-slot="button"][data-size="icon-lg"] { width: 2.625rem !important; height: 2.625rem !important; }
+  [data-slot="button"][data-size="xs"] { height: 1.875rem !important; }
+  [data-slot="button"][data-size="sm"] { height: 2.125rem !important; }
+  [data-slot="button"][data-size="default"] { height: 2.375rem !important; }
+  [data-slot="button"][data-size="lg"] { height: 2.625rem !important; }
+
+  [data-slot="input"] { height: 2.375rem !important; }
+  [data-slot="select"] { height: 2.625rem !important; }
+
+  /* TabsTrigger's own height is h-[calc(100%-1px)] — relative to this, so
+     bumping the list is enough to carry the trigger along with it. */
+  [data-slot="tabs-list"] { height: 2.375rem !important; }
+
+  [data-slot="dropdown-menu-item"] { padding-block: 0.625rem !important; }
 }
 
 /* ─── Print ──────────────────────────────────────────────────────

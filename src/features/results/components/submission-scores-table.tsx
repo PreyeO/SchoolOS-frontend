@@ -44,7 +44,7 @@ export function SubmissionScoresTable({ components, rows }: Props) {
         </p>
       )}
 
-      <div className="max-h-[26rem] overflow-auto rounded-lg border border-n-200">
+      <div className="max-h-104 overflow-auto rounded-lg border border-n-200">
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-n-50">
             <tr className="text-left">

@@ -35,8 +35,14 @@ export function StatusToggle({ value, onChange, disabled, studentName }: Props) 
             disabled={disabled}
             onClick={() => onChange(status)}
             className={cn(
-              "border-l border-n-200 px-2.5 py-1.5 text-xs font-medium transition-colors first:border-l-0",
-              "focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary",
+              // Sized for a thumb first: this is the control a teacher repeats
+              // for every student in the register, on a phone, often one-handed.
+              // Below sm (where labels collapse to a single letter) each segment
+              // is close to the 44px touch-target minimum; sm+ reverts to the
+              // denser desktop sizing, matching the same breakpoint the
+              // label/short-label swap already uses just below.
+              "border-l border-n-200 px-3.5 py-3 text-xs font-medium transition-colors first:border-l-0 sm:px-2.5 sm:py-1.5",
+              "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
               disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
               isSelected
                 ? meta.selected
