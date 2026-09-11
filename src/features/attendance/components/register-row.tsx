@@ -49,7 +49,7 @@ export function RegisterRow({ student, entry, savedRecord, canMark, onStatus, on
           aria-label={`${entry.note ? "Edit" : "Add"} note for ${name}`}
           aria-expanded={showNote}
           className={cn(
-            "cursor-pointer rounded-md p-1.5 transition-colors",
+            "cursor-pointer rounded-md p-2.5 transition-colors sm:p-1.5",
             entry.note ? "text-primary" : "text-n-400 hover:text-n-600",
           )}
         >

@@ -21,7 +21,9 @@ export function SidebarGroupHeader({ group, isOpen, hasActiveChild, onToggle }: 
       onClick={onToggle}
       aria-expanded={isOpen}
       className={cn(
-        "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.12em] transition-colors",
+        // Same mobile-drawer-vs-fixed-sidebar sizing as SidebarNavItem — see
+        // its comment.
+        "flex w-full items-center gap-2 rounded-lg px-2.5 py-3 font-mono text-[10px] font-medium uppercase tracking-[0.12em] transition-colors lg:py-2",
         hasActiveChild ? "text-foreground/70" : "text-foreground/35 hover:text-foreground/60",
       )}
     >

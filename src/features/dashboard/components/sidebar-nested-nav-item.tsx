@@ -46,7 +46,9 @@ export function SidebarNestedNavItem({ item, pathname, onNavigate }: Props) {
         onClick={() => setIsOpen((v) => !v)}
         aria-expanded={isOpen}
         className={cn(
-          "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+          // Same mobile-drawer-vs-fixed-sidebar sizing as SidebarNavItem — see
+          // its comment.
+          "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-3 text-sm font-medium transition-colors lg:py-2",
           "focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none",
           hasActiveChild
             ? "text-foreground"

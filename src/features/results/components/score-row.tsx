@@ -69,7 +69,12 @@ export function ScoreRow({
           aria-label={`Score for ${name}, out of ${max}`}
           aria-invalid={!!error}
           className={cn(
-            "h-9 w-16 rounded-lg border bg-background px-2 text-right text-sm tabular-nums text-ink",
+            // text-base, not text-sm: this bypasses the shared Input component
+            // (a bespoke compact cell), so it also has to carry the iOS-zoom
+            // fix by hand — a focused control under 16px makes Safari zoom the
+            // whole page, and this is the field a teacher taps 30+ times in a
+            // row entering a class's scores.
+            "h-9 w-16 rounded-lg border bg-background px-2 text-right text-base tabular-nums text-ink md:text-sm",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             "disabled:cursor-not-allowed disabled:bg-n-50 disabled:text-n-400",
             error ? "border-clay" : "border-input",
