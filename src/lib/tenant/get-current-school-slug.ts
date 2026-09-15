@@ -1,21 +1,17 @@
 import { env } from "@/config/env";
 
-// Derives the school slug from the current hostname when on a school subdomain
-// (e.g. gcu.myschoolos.io → "gcu", or gcu.lvh.me for local testing). Returns null
-// on the apex domain, localhost, or the www subdomain.
+import { parseHost } from "./tenant-host";
+
+// The school slug the current hostname addresses — "fggc" on
+// fggc.myschoolos.io, on fggc-dev.myschoolos.io (hosted dev inserts a `-dev`
+// hosting suffix the backend strips from the slug), and on fggc.lvh.me for
+// local subdomain testing. Null on the apex, on localhost, on preview deploys,
+// and on platform hosts like frontend-dev.myschoolos.io.
+//
+// Shares parseHost with the proxy deliberately: this answer and "does the root
+// of this host redirect to /login" have to agree, and when they were computed
+// by separate rules they didn't.
 export function getCurrentSchoolSlug(): string | null {
   if (typeof window === "undefined") return null;
-
-  const host = window.location.hostname;
-  if (host === "localhost" || host === "127.0.0.1") return null;
-
-  const bases = [env.SCHOOL_DOMAIN, "lvh.me"];
-  for (const base of bases) {
-    if (host === base) return null;
-    if (host.endsWith(`.${base}`)) {
-      const sub = host.slice(0, -(base.length + 1)).split(".")[0];
-      return sub && sub !== "www" ? sub : null;
-    }
-  }
-  return null;
+  return parseHost(window.location.hostname, env.SCHOOL_DOMAIN).slug;
 }

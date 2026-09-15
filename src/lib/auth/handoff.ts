@@ -1,4 +1,5 @@
 import { env } from "@/config/env";
+import { hostingEnvironment } from "@/lib/tenant/tenant-host";
 
 // Moving a session from the apex to a school's own subdomain, so signing in at
 // www.myschoolos.io lands on fgc.myschoolos.io/dashboard.
@@ -43,5 +44,20 @@ export function buildHandoffUrl(slug: string, access: string, refresh: string, n
     [HANDOFF_PARAMS.refresh]: refresh,
     [HANDOFF_PARAMS.next]: safeNextPath(next),
   });
-  return `https://${slug}.${env.SCHOOL_DOMAIN}${HANDOFF_PATH}#${params.toString()}`;
+
+  // Same hosting environment as the page we're leaving, not always production.
+  //
+  // The backend computes School.subdomain as {slug}{SCHOOL_SUBDOMAIN_SUFFIX}.
+  // {SCHOOL_DOMAIN}, and hosted backend-dev sets that suffix to "-dev" — so
+  // fgc's real dev tenant is fgc-dev.myschoolos.io, not fgc.myschoolos.io.
+  // NEXT_PUBLIC_SCHOOL_DOMAIN is the same value in every environment (there's
+  // no NEXT_PUBLIC_SCHOOL_SUBDOMAIN_SUFFIX), so building the URL from env alone
+  // always produces the production shape — on frontend-dev that hands the
+  // session to a host with no matching school (or, worse, a real production
+  // school that happens to share the slug). Reading the suffix off the current
+  // hostname instead means the hand-off always stays inside the deployment it
+  // started in.
+  const environment = typeof window !== "undefined" ? hostingEnvironment(window.location.hostname) : "";
+
+  return `https://${slug}${environment}.${env.SCHOOL_DOMAIN}${HANDOFF_PATH}#${params.toString()}`;
 }
