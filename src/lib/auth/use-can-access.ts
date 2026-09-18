@@ -1,7 +1,7 @@
 "use client";
 
-import { canAccessPath, isPersona, type Persona } from "@/data/navigation";
-import { useAuthStore } from "@/stores/auth-store";
+import { canAccessPath } from "@/data/navigation";
+import { useActivePersona } from "./use-active-persona";
 import { useSchoolPermissions } from "./use-school-permissions";
 
 // Whether this user may open a route — the same question RouteAccessGuard asks,
@@ -19,12 +19,11 @@ import { useSchoolPermissions } from "./use-school-permissions";
 // staff mid-development, and a hardcoded useIsSchoolAdmin() would have silently
 // kept hiding things from the teachers who could now use them.
 //
-// Same ["admin"] fallback as useNavGroups and RouteAccessGuard: an owner who
-// created a school this session has no decoded personas yet and must not be
-// treated as having none.
+// Answers for the active persona, same as the sidebar and the guard: an admin
+// working as a teacher isn't offered admin links, since the guard would refuse
+// them on arrival.
 export function useCanAccess(href: string): boolean {
-  const claims = useAuthStore((s) => s.claims);
+  const persona = useActivePersona();
   const permissions = useSchoolPermissions();
-  const known: Persona[] = (claims?.personas ?? []).filter(isPersona);
-  return canAccessPath(href, known.length > 0 ? known : ["admin"], permissions);
+  return canAccessPath(href, [persona], permissions);
 }

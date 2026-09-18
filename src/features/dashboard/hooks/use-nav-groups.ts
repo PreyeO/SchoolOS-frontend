@@ -1,18 +1,17 @@
 "use client";
 
-import { useAuthStore } from "@/stores/auth-store";
+import { useActivePersona } from "@/lib/auth/use-active-persona";
 import { useSchoolPermissions } from "@/lib/auth/use-school-permissions";
-import { getNavGroupsForPersonas, isPersona, type Persona } from "@/data/navigation";
+import { getNavGroupsForPersonas } from "@/data/navigation";
 
-// School owners created via create-school have no decoded claims yet (no login
-// round-trip), so default to "admin" — the same fallback dashboard-home uses.
+// The sidebar for the persona the member is working as — not the union of
+// every persona they hold. An admin who also teaches used to get both sets of
+// nav at once; they now get one and switch between them from the user menu.
 //
-// Uses every persona the token carries, not just the first. A user who is both
-// an admin and a teacher gets both sets of nav; picking personas[0] gave them
-// whichever the backend happened to list first.
+// useActivePersona already carries the "admin" fallback for an owner fresh from
+// create-school, so there's no empty list to guard against here.
 export function useNavGroups() {
-  const personas = useAuthStore((s) => s.claims?.personas);
+  const persona = useActivePersona();
   const permissions = useSchoolPermissions();
-  const known: Persona[] = (personas ?? []).filter(isPersona);
-  return getNavGroupsForPersonas(known.length > 0 ? known : ["admin"], permissions);
+  return getNavGroupsForPersonas([persona], permissions);
 }
