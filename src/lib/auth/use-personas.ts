@@ -1,19 +1,26 @@
 "use client";
 
-import { useAuthStore } from "@/stores/auth-store";
+import type { SwitchablePersona } from "./active-persona";
+import { useActivePersona } from "./use-active-persona";
 
-// Personas the JWT carries for the current school membership. accounts/tokens.py
-// emits any of 'admin', 'owner', 'teacher', 'parent', 'student' — they're not
-// exclusive, so one person can be both an admin and a teacher.
-export function usePersonas(): string[] {
-  return useAuthStore((s) => s.claims?.personas) ?? [];
+// The personas in effect right now — always exactly one, the active persona.
+//
+// Personas aren't exclusive on the membership (one person can be both an admin
+// and a teacher), but the app works as one at a time: someone in teacher mode
+// gets teacher screens, teacher copy and teacher gates, even though /me still
+// lists the admin role. Every hook below answers "is this the mode they're in",
+// not "do they hold this persona at all" — for the latter, and only to offer a
+// switch, use useAvailablePersonas.
+export function usePersonas(): SwitchablePersona[] {
+  return [useActivePersona()];
 }
 
 // Whether this user can mark a register. AttendanceService._authorize_marker
 // permits teachers only, deliberately and with no admin override — so an admin
-// who isn't also a teacher can view attendance but never record it.
+// who isn't also a teacher can view attendance but never record it, and one who
+// is has to be working as their teacher persona to do it.
 export function useCanMarkAttendance(): boolean {
-  return usePersonas().includes("teacher");
+  return useActivePersona() === "teacher";
 }
 
 // Whether to offer an administrative fix at all.
@@ -23,25 +30,24 @@ export function useCanMarkAttendance(): boolean {
 // sends them somewhere they can't act and, until RouteAccessGuard, somewhere
 // they shouldn't even see. The explanation is still worth giving; the link isn't.
 //
-// "owner" always travels with "admin" in the token, so testing for admin alone
-// covers both.
+// An owner works as the admin persona, so this covers owners too.
 export function useIsSchoolAdmin(): boolean {
-  return usePersonas().includes("admin");
+  return useActivePersona() === "admin";
 }
 
-// Holds a teacher profile at this school. Distinct from useCanMarkAttendance
-// only in intent: that one asks "may this person write a register", this one
-// asks "do the teacher-scoped endpoints apply at all" — several endpoints
+// Working as the teacher persona. Distinct from useCanMarkAttendance only in
+// intent: that one asks "may this person write a register", this one asks "do
+// the teacher-scoped endpoints apply at all" — several endpoints
 // (/subject-assignments/my-assignments among them) raise for a non-teacher
 // rather than returning nothing.
 export function useIsTeacher(): boolean {
-  return usePersonas().includes("teacher");
+  return useActivePersona() === "teacher";
 }
 
 export function useIsParent(): boolean {
-  return usePersonas().includes("parent");
+  return useActivePersona() === "parent";
 }
 
 export function useIsStudent(): boolean {
-  return usePersonas().includes("student");
+  return useActivePersona() === "student";
 }

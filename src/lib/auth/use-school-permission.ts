@@ -1,6 +1,6 @@
 "use client";
 
-import { useMe } from "@/features/me/hooks/use-me";
+import { useSchoolPermissions } from "./use-school-permissions";
 
 // Whether the signed-in admin's role carries a given school permission.
 //
@@ -10,9 +10,12 @@ import { useMe } from "@/features/me/hooks/use-me";
 // like manage_remarks or lock_results, and an admin without one can reach the
 // page (they're an admin) but do nothing on it.
 //
+// Honours the active persona via useSchoolPermissions: an admin working as a
+// teacher gets false, so admin-only actions (enrolling, reissuing a password,
+// recording a payment) drop out of the teacher view with the admin sidebar.
+//
 // Returns false while /me is loading, so a gated screen never flashes its
 // contents before being withdrawn.
 export function useHasSchoolPermission(permission: string): boolean {
-  const { data: me } = useMe();
-  return me?.admin?.school_admin_role?.permissions?.includes(permission) ?? false;
+  return useSchoolPermissions()?.includes(permission) ?? false;
 }
