@@ -62,6 +62,16 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
         <Select
           id={`classes.${ci}.level`}
           aria-label="Level"
+          // Select's own base style is w-full, which — unconstrained in a flex
+          // row — computes as this item's flex-basis and wins the space fight
+          // against the name Input's flex-1 (basis 0%), squeezing the name
+          // field down to almost nothing regardless of screen size. Every
+          // other Input+Select row in the app (e.g. GradeComponentRow) pairs
+          // flex-1 with an explicit fixed width on the secondary control;
+          // this is that same fix. truncate covers "Junior Secondary (JSS)"
+          // at the narrower mobile width, which is otherwise wider than the
+          // box and would clip mid-word with no ellipsis.
+          className="w-24 shrink-0 truncate sm:w-40"
           aria-invalid={!!classErrors?.level}
           {...register(`classes.${ci}.level`)}>
           <option value="">Level…</option>
@@ -105,7 +115,11 @@ export function ClassRow({ control, register, errors, classIndex: ci, schoolLeve
               <span className="shrink-0 text-xs text-n-400 w-8">Arm</span>
               <Input
                 id={`classes.${ci}.arms.${ai}.name`}
-                className="h-8 text-sm flex-1"
+                // text-base md:text-sm, not bare text-sm: Input's own base
+                // style already sets this specifically so a focused control
+                // never renders under 16px on mobile, which is what makes iOS
+                // Safari zoom the whole page. Bare text-sm here undid that.
+                className="h-8 text-base md:text-sm flex-1"
                 aria-invalid={!!armError}
                 aria-describedby={armError ? `classes.${ci}.arms.${ai}.name-error` : undefined}
                 {...register(`classes.${ci}.arms.${ai}.name`)}
