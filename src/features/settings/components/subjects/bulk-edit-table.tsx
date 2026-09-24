@@ -44,7 +44,11 @@ export function BulkEditTable({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
-      <table className="w-full text-left">
+      {/* min-w gives the table a floor so it scrolls sideways (the wrapper
+          already does) rather than squashing: with the Level and Type columns
+          fixed at 13rem + 7rem, the Subject column was left ~40px on a phone
+          and its input showed "Crea". */}
+      <table className="w-full min-w-xl text-left">
         <thead>
           <tr className="border-b border-n-200 text-xs uppercase tracking-wide text-n-400">
             <th className="py-2.5 pl-3 pr-1 font-medium">
@@ -59,7 +63,7 @@ export function BulkEditTable({
                 aria-label={allSelected ? "Deselect all shown" : "Select all shown"}
               />
             </th>
-            <th className="px-2 py-2.5 font-medium">Subject</th>
+            <th className="min-w-48 px-2 py-2.5 font-medium">Subject</th>
             <th className="w-52 px-2 py-2.5 font-medium">Level</th>
             <th className="w-28 px-2 py-2.5 font-medium">Type</th>
           </tr>

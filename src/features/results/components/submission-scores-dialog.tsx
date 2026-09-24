@@ -106,29 +106,40 @@ export function SubmissionScoresDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
+      {/* Chrome pinned, table scrolls — same shape as ReportCardPreviewDialog.
+          The default DialogContent scrolls as a whole, and its close button is
+          absolutely positioned inside that scroller, so on a phone scrolling
+          the marks carried the title and the X out of reach with them. Here
+          the content itself never scrolls (overflow-hidden), so the header,
+          close button and the Approve / Send back footer stay put and only the
+          table's own box moves, in both directions. */}
+      <DialogContent className="flex max-w-3xl flex-col overflow-hidden">
+        {/* pr-8 keeps a long subject + class title clear of the absolutely
+            positioned close button. */}
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>
             {submission.subject_name} — {armDisplayName({ name: submission.arm_name }, submission.class_name)}
           </DialogTitle>
         </DialogHeader>
 
-        {isPending ? (
-          <p className="py-8 text-center text-sm text-n-400" role="status">Loading scores…</p>
-        ) : isError ? (
-          <ErrorState error={error} resourceLabel="these scores" />
-        ) : rows.length === 0 ? (
-          <p className="py-8 text-center text-sm text-n-400 italic">
-            No scores have been entered for this subject.
-          </p>
-        ) : (
-          <SubmissionScoresTable components={components} rows={rows} />
-        )}
+        <div className="flex min-h-0 flex-1 flex-col">
+          {isPending ? (
+            <p className="py-8 text-center text-sm text-n-400" role="status">Loading scores…</p>
+          ) : isError ? (
+            <ErrorState error={error} resourceLabel="these scores" />
+          ) : rows.length === 0 ? (
+            <p className="py-8 text-center text-sm text-n-400 italic">
+              No scores have been entered for this subject.
+            </p>
+          ) : (
+            <SubmissionScoresTable components={components} rows={rows} />
+          )}
+        </div>
 
         {/* The decision lives with the evidence. Sending it back from here means
             the reviewer can name the exact gap they just spotted. */}
         {submission.status === "submitted" && (
-          <DialogFooter className="sm:justify-between">
+          <DialogFooter className="shrink-0 sm:justify-between">
             <Button
               type="button"
               variant="ghost"

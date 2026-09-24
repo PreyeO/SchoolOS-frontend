@@ -19,12 +19,17 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2">
+      {/* Wraps on a phone. Grade + min + max + remark + delete add up to more than
+          the dialog is wide (~290px), so the flex-1 remark box was squeezed to a
+          sliver and the dialog scrolled sideways, clipping its own title. Now the
+          numbers and delete share the first line and the remark takes the second
+          (order-last + full width); from sm up it's one row again. */}
+      <div className="flex flex-wrap items-center gap-2">
         {/* ids are the react-hook-form paths so focusFirstError() can target them. */}
         <Input
           id={`ranges.${i}.grade`}
           placeholder="Grade (e.g. A1)"
-          className="w-24"
+          className="w-20 sm:w-24"
           aria-invalid={!!rowErrors?.grade}
           {...register(`ranges.${i}.grade`)}
         />
@@ -34,7 +39,7 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
           min={0}
           max={100}
           placeholder="Min"
-          className="w-20"
+          className="w-16 sm:w-20"
           aria-label="Minimum score"
           aria-invalid={!!rowErrors?.min_score}
           {...register(`ranges.${i}.min_score`, { valueAsNumber: true })}
@@ -46,7 +51,7 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
           min={0}
           max={100}
           placeholder="Max"
-          className="w-20"
+          className="w-16 sm:w-20"
           aria-label="Maximum score"
           aria-invalid={!!rowErrors?.max_score}
           {...register(`ranges.${i}.max_score`, { valueAsNumber: true })}
@@ -54,7 +59,7 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
         <Input
           id={`ranges.${i}.remark`}
           placeholder="Remark (e.g. Excellent)"
-          className="flex-1"
+          className="order-last sm:order-0 sm:flex-1"
           aria-invalid={!!rowErrors?.remark}
           {...register(`ranges.${i}.remark`)}
         />
@@ -62,7 +67,7 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
           type="button"
           onClick={onRemove}
           aria-label={`Remove grade range ${i + 1}`}
-          className="shrink-0 text-n-400 hover:text-clay transition-colors"
+          className="ml-auto shrink-0 text-n-400 hover:text-clay transition-colors sm:ml-0"
         >
           <Trash2 className="size-4" />
         </button>

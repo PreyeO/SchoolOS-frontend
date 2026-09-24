@@ -301,7 +301,10 @@ export function PublishResultsPage() {
 
           <div className="rounded-xl border border-n-200 bg-white">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-n-100 px-5 py-3">
-              <p className="mr-auto text-xs text-n-500">
+              {/* Own line on a phone (basis-full), so the two export buttons sit
+                  together beneath it instead of one beside the title and one
+                  stranded on a third line. */}
+              <p className="mr-auto basis-full text-xs text-n-500 sm:basis-auto">
                 Report cards {isLocked ? "" : "— preview only until published"}
               </p>
               {students && students.length > 0 && term.periodId && selectedId && (
@@ -324,9 +327,12 @@ export function PublishResultsPage() {
                   const name = `${student.user.first_name} ${student.user.last_name}`;
                   return (
                     <li key={student.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-ink">{name}</span>
-                        <span className="block truncate font-mono text-[11px] text-n-400">
+                      {/* Full line on a phone: the three buttons beside it
+                          left the name ~90px and cut it to "Ifeanyi O…", with
+                          PDF orphaned on its own line. They wrap beneath now. */}
+                      <span className="min-w-0 basis-full sm:flex-1 sm:basis-0">
+                        <span className="block text-sm text-ink sm:truncate">{name}</span>
+                        <span className="block font-mono text-[11px] text-n-400 sm:truncate">
                           {student.admission_number}
                         </span>
                       </span>

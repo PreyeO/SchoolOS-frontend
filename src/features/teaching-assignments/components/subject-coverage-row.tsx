@@ -28,8 +28,10 @@ export function SubjectCoverageRow({ subject, assignments, armLabel, offeringId,
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
-      <span className="flex min-w-0 flex-1 items-center gap-2">
-        <span className={`truncate text-sm ${isActiveSubject(subject) ? "text-ink" : "text-n-500"}`}>
+      {/* Full line on a phone, so the subject name isn't cut to "Infor…" by the
+          teacher chips and buttons beside it; they wrap onto the line below. */}
+      <span className="flex min-w-0 basis-full items-center gap-2 sm:flex-1 sm:basis-0">
+        <span className={`text-sm sm:truncate ${isActiveSubject(subject) ? "text-ink" : "text-n-500"}`}>
           {subject.name}
         </span>
         {/* A subject deactivated after it was offered here still shows on the

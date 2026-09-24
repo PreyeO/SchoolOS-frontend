@@ -39,9 +39,13 @@ export function ReviewQueueRow({
 }: Props) {
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3.5">
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-ink">{s.subject_name}</span>
-        <span className="block truncate text-xs text-n-400">
+      {/* Its own full line on a phone (basis-full), so the subject and class read
+          in full and the status and actions wrap beneath. Beside them it was
+          left ~90px and truncated to "Agricultur…". Truncation stays from sm up,
+          where the row is one line and there's room for all of it. */}
+      <span className="min-w-0 basis-full sm:flex-1 sm:basis-0">
+        <span className="block text-sm font-medium text-ink sm:truncate">{s.subject_name}</span>
+        <span className="block text-xs text-n-400 sm:truncate">
           {armDisplayName({ name: s.arm_name }, s.class_name)}
           {s.submitted_at && s.submitted_by && (
             <>

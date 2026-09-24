@@ -32,9 +32,12 @@ export function SubmissionScoresTable({ components, rows }: Props) {
   const incomplete = rows.filter((r) => !r.complete).length;
 
   return (
-    <div className="space-y-3">
+    // A flex column rather than space-y so the box below can take whatever
+    // height the dialog leaves and scroll inside it, with the warning above
+    // staying put instead of scrolling away with the rows.
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {incomplete > 0 && (
-        <p className="flex items-start gap-2 rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
+        <p className="flex shrink-0 items-start gap-2 rounded-lg border border-amber/40 bg-amber/10 px-3.5 py-2.5 text-xs text-ink">
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber" />
           <span>
             {incomplete} of {rows.length} student{rows.length === 1 ? "" : "s"}{" "}
@@ -44,7 +47,9 @@ export function SubmissionScoresTable({ components, rows }: Props) {
         </p>
       )}
 
-      <div className="max-h-104 overflow-auto rounded-lg border border-n-200">
+      {/* No max-h of its own any more: the dialog's height cap bounds it, and a
+          second cap inside that made two nested scrollers on a phone. */}
+      <div className="min-h-0 overflow-auto rounded-lg border border-n-200">
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-n-50">
             <tr className="text-left">
