@@ -33,10 +33,14 @@ export function ScoreRow({
   const name = `${student.user.first_name} ${student.user.last_name}`;
 
   return (
-    <li className="flex items-center gap-3 py-2">
+    // flex-wrap so a validation message can drop to its own line on a phone
+    // instead of sitting in an 80px column beside the field (see the error
+    // below). Nothing wraps otherwise — name, total and field fit one line.
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+      {/* Wraps on a phone, truncates from sm up. */}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm text-ink">{name}</span>
-        <span className="block truncate font-mono text-[11px] text-n-400">
+        <span className="block text-sm text-ink sm:truncate">{name}</span>
+        <span className="block font-mono text-[11px] text-n-400 sm:truncate">
           {student.admission_number}
         </span>
       </span>
@@ -83,8 +87,12 @@ export function ScoreRow({
         <span className="w-8 font-mono text-[11px] text-n-400">/{max}</span>
       </span>
 
+      {/* Its own full-width line under the field on a phone, right-aligned to sit
+          beneath it. In the 80px column it took beside the field, the message
+          wrapped over several lines and pushed the name down to almost nothing
+          — the moment a teacher most needs to read both. */}
       {error && (
-        <span role="alert" className="w-20 shrink-0 text-[11px] text-clay">
+        <span role="alert" className="w-full text-right text-[11px] text-clay sm:w-20 sm:shrink-0 sm:text-left">
           {error}
         </span>
       )}

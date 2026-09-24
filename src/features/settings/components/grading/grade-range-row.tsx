@@ -18,7 +18,12 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
   const rowError = rowErrors?.grade ?? rowErrors?.min_score ?? rowErrors?.max_score ?? rowErrors?.remark;
 
   return (
-    <div className="space-y-1">
+    // A hairline between ranges below sm. Each range is two lines on a phone
+    // (numbers, then remark), so without a rule the remark of one range sits as
+    // close to the numbers of the next as to its own and the pairs blur together.
+    // last: drops it after the final range, sm: drops it entirely — on desktop a
+    // range is one line and needs no separator.
+    <div className="space-y-1 border-b border-n-100 pb-3 last:border-b-0 last:pb-0 sm:border-b-0 sm:pb-0">
       {/* Wraps on a phone. Grade + min + max + remark + delete add up to more than
           the dialog is wide (~290px), so the flex-1 remark box was squeezed to a
           sliver and the dialog scrolled sideways, clipping its own title. Now the
@@ -28,7 +33,11 @@ export function GradeRangeRow({ index: i, register, errors, onRemove }: Props) {
         {/* ids are the react-hook-form paths so focusFirstError() can target them. */}
         <Input
           id={`ranges.${i}.grade`}
-          placeholder="Grade (e.g. A1)"
+          // Just "Grade": "Grade (e.g. A1)" is wider than the 80px box on a phone
+          // and showed as "Grade (e.". The example is lost only on a freshly added
+          // blank range; the pre-filled defaults already show real grades.
+          placeholder="Grade"
+          aria-label="Grade"
           className="w-20 sm:w-24"
           aria-invalid={!!rowErrors?.grade}
           {...register(`ranges.${i}.grade`)}

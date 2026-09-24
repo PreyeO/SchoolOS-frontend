@@ -2147,9 +2147,28 @@ summed to more than the dialog, which also scrolled it sideways.
   *viewport*, so a "phone" panel inside a wide window silently renders the
   desktop layout — put each version in an iframe of the target width; and the
   first, coarse zoom made a 286px card unreadably small.
-- **Not done:** other screens built the same way (`register-row`, `score-row`,
-  leaderboard and broadsheet tables, `needs-attention-list`) — not in the
-  screenshots, so not touched blind.
+- **Second round, same day: register, score entry, leaderboard, broadsheet.**
+  Rendered before touching them (static copies of the markup, compiled against
+  the real `globals.css`, each in an iframe of the target width). That showed
+  the problems were not all the same: the **register** really did truncate
+  (`Ifean…`, `gda/06…`) because the four-way toggle (~150px) plus avatar and note
+  button left the name ~40px, so the toggle now takes its own line under the
+  name (rows are taller on a phone — the price of a readable name); the
+  **broadsheet** did not truncate at all, its sticky name column grew to the
+  longest name and covered over half the screen, so it is now a fixed 144px
+  below `sm:` with names wrapping; the **leaderboard** and **score entry** were
+  already fine at 360px with ordinary names and only got the same wrap-on-mobile
+  treatment plus score entry's validation message moving under the field.
+- **Grading dialog:** a hairline between ranges below `sm:` (each range is two
+  lines there, so pairs blurred together) and the Grade placeholder shortened to
+  "Grade" — "Grade (e.g. A1)" was clipped in its 80px box.
+- **Recent activity** gained an "All activity →" link to the Audit Log, gated on
+  `useCanAccess('/settings/audit-log')` (needs `view_audit_logs`). The counts stay
+  at 5 activity / 3 announcements: measured side by side at desktop width, that
+  pair ends level, while 3/3 leaves ~100px of dead space under activity and 5/5
+  ~170px.
+- **Still not done:** `needs-attention-list` and the platform screens use the
+  same truncated-row pattern but weren't in the screenshots.
 
 ## Next up
 
