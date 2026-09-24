@@ -11,7 +11,7 @@ import { QuickActions } from "./quick-actions";
 import { ResultsProgressCard } from "./results-progress-card";
 import { OverviewCharts } from "./overview-charts";
 import { ActivityFeed } from "./activity-feed";
-import { UpcomingEvents } from "./upcoming-events";
+import { RecentAnnouncements } from "./recent-announcements";
 
 // The home for whichever persona the member is working as. Someone who is both
 // an admin and a teacher used to always land on the admin overview, because
@@ -36,7 +36,7 @@ export function DashboardHome() {
       <OverviewCharts />
       <div className="grid lg:grid-cols-2 gap-4">
         <ActivityFeed />
-        <UpcomingEvents />
+        <RecentAnnouncements />
       </div>
     </div>
   );

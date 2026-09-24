@@ -2093,6 +2093,28 @@ earlier the same day — those were a separate, already-confirmed request, not
 part of "the images," and nothing here touched them. Clean `tsc`, `eslint`,
 `build` again after reverting.
 
+**Upcoming events replaced by Recent announcements on the admin home
+(2026-09-24).** The card had no backend — there is no calendar/events module —
+so it could only ever show "No upcoming events". The slot now shows the three
+newest announcements (`dashboard/RecentAnnouncements`), which is the nearest
+real thing: the `event` announcement category already lets a school announce a
+PTA meeting or sports day, and the badge shows it. Three, not five, because a
+notice row is three lines against Recent activity's two, so three of them is
+about the height of that card's five and the pair sits level.
+- Same `useAnnouncements` query as the board, so no extra request. A
+  `post_notices` holder sees every notice in the school, including ones aimed at
+  audiences they aren't in — right for an admin's "what has gone out" digest.
+- Unlike `RecentNotices` (parent/student home), which returns null when empty,
+  this card always renders: loading skeletons, `ErrorState` on failure, and an
+  empty state that offers "Post one" to anyone holding `post_notices`. A hidden
+  card would leave a blank cell beside Recent activity.
+- The row and the tag-stripping helper were pulled out of `RecentNotices` into
+  `communication/NoticeDigestItem` and `lib/plain-text.ts`, so the two digests
+  share one row. `RecentNotices`' output is unchanged (diffed, not assumed).
+- Removed as dead: `UpcomingEvents`, `useUpcomingEvents`, and the stub
+  `getUpcomingEvents`. When a calendar module exists it is a new build, not a
+  revival of these. Not verified in a browser — `tsc` and `eslint` only.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
