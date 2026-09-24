@@ -22,14 +22,23 @@ export function TermRow({ period, otherPeriods, canDelete }: Props) {
 
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border border-n-100 px-3 py-2">
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="truncate text-sm font-medium text-ink">{period.name}</span>
-        {period.is_current && (
-          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-            Current
-          </span>
-        )}
-        <span className="shrink-0 text-xs text-n-400">{formatDateRange(period.start_date, period.end_date)}</span>
+      {/* Name and dates stack on a phone. In one line the name was the only thing
+          allowed to shrink, so beside the date, the Current badge and up to
+          three action buttons it was squeezed to nothing — "1st…" for the
+          current term and a blank for every other. Stacked, the name shares a
+          line with only its badge. One line again from sm up. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-medium text-ink">{period.name}</span>
+          {period.is_current && (
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+              Current
+            </span>
+          )}
+        </span>
+        <span className="text-xs text-n-400 sm:shrink-0">
+          {formatDateRange(period.start_date, period.end_date)}
+        </span>
       </div>
       <span className="flex shrink-0 items-center gap-1">
         {/* Term rollover is a recurring chore, so it gets a direct action rather

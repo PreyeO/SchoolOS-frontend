@@ -2115,6 +2115,42 @@ about the height of that card's five and the pair sits level.
   `getUpcomingEvents`. When a calendar module exists it is a new build, not a
   revival of these. Not verified in a browser — `tsc` and `eslint` only.
 
+**Mobile fluidity pass (2026-09-24), from phone screenshots.** Two causes
+covered nearly all of it. (1) A row with the name as the only shrinkable item,
+beside a date, badge, dropdown or buttons that can't shrink: on a phone the name
+was left ~90px and truncated. Fixed by giving the name its own line
+(`basis-full sm:flex-1 sm:basis-0`, truncation from `sm:` up) on Result Review,
+Teaching Assignments, Publish Results, Promotion and Sessions & Terms. (2)
+Tables squeezing to fit instead of scrolling: Fees payment history now
+`whitespace-nowrap`, subjects bulk edit has a `min-w-xl` floor. The grading
+dialog's range row wraps (Remark drops to its own line) — five fixed widths
+summed to more than the dialog, which also scrolled it sideways.
+- **Dialogs that scroll as a whole carry their close button away with them**:
+  `DialogContent` is `overflow-y-auto` and the X is absolutely positioned inside
+  it. For a dialog with a table, use the `ReportCardPreviewDialog` shape instead
+  (`flex flex-col overflow-hidden`, header/footer `shrink-0`, the table's own box
+  `min-h-0 overflow-auto`). Done for the Result Review scores dialog.
+- **The report-card preview overflowed because it is an A4 print template** —
+  0.8cm padding then 5–8 column tables — in a ~290px iframe, so Grade fell off
+  the right edge. The backend is read-only and the template is shared with the
+  PDF, so `results/lib/fit-report-card-preview.ts` injects a stylesheet into the
+  preview only: `html { zoom }` in steps keyed to the iframe's width (media
+  queries inside an iframe read the iframe's width), aiming at a 420px layout.
+  Scaling the whole document, rather than shrinking padding, is deliberate:
+  `bold_header`'s header bleeds to the border with a hard-coded `-0.8cm` margin
+  that no selector can scope to that template. The `compact` template's
+  side-by-side tables are stacked below 420px.
+- **Verified in headless Chrome, not just `tsc`.** Chrome is installed here, so
+  the fit CSS was tested against the backend's *real* template CSS (read from
+  `results/templates/report_cards/`) for all five templates at 286–340px, with a
+  seven-column table. Two traps in doing this: a Tailwind breakpoint reads the
+  *viewport*, so a "phone" panel inside a wide window silently renders the
+  desktop layout — put each version in an iframe of the target width; and the
+  first, coarse zoom made a 286px card unreadably small.
+- **Not done:** other screens built the same way (`register-row`, `score-row`,
+  leaderboard and broadsheet tables, `needs-attention-list`) — not in the
+  screenshots, so not touched blind.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
 import { useReportCardPreview } from "../hooks/use-report-card";
+import { fitReportCardPreview } from "../lib/fit-report-card-preview";
 
 interface Props {
   open: boolean;
@@ -52,7 +53,10 @@ export function ReportCardPreviewDialog({
           the printed PDF, which paginates differently.
         </p>
 
-        <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-n-200 bg-n-50">
+        {/* -mx-3 below sm: the dialog's own 1.25rem padding is ~40px of a 360px
+            phone, and this is the one box that needs every pixel — it buys the
+            card about 24px, enough to keep it at a readable scale. */}
+        <div className="-mx-3 min-h-0 flex-1 overflow-hidden rounded-lg border border-n-200 bg-n-50 sm:mx-0">
           {isPending ? (
             <p className="p-8 text-center text-sm text-n-400" role="status">
               Rendering preview…
@@ -62,7 +66,7 @@ export function ReportCardPreviewDialog({
           ) : (
             <iframe
               title={`${studentName} report card preview`}
-              srcDoc={html}
+              srcDoc={fitReportCardPreview(html)}
               sandbox=""
               className="size-full border-0 bg-white"
             />
