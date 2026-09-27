@@ -41,9 +41,12 @@ export function PromotionRow({ row, armGroups, onDestinationChange, onToggle }: 
         className="size-4 shrink-0 accent-primary disabled:opacity-40"
       />
 
+      {/* Wraps rather than truncating on a phone: the destination picker below
+          has a 208px minimum, so beside it the name was left ~90px and cut to
+          "Hauwa …". Truncation returns from sm up, where they share one line. */}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm text-ink">{name}</span>
-        <span className="block truncate font-mono text-[11px] text-n-400">
+        <span className="block text-sm text-ink sm:truncate">{name}</span>
+        <span className="block font-mono text-[11px] text-n-400 sm:truncate">
           {item.student.admission_number} · {item.current_class_name}
         </span>
       </span>
@@ -54,7 +57,10 @@ export function PromotionRow({ row, armGroups, onDestinationChange, onToggle }: 
           Promoted
         </span>
       ) : (
-        <span className="flex shrink-0 items-center gap-2">
+        // basis-full drops the picker onto its own line under the name on a phone;
+        // pl-7 (checkbox 16px + the 12px gap) lines it up beneath the name rather
+        // than under the checkbox. From sm up it sits at the end of the row again.
+        <span className="flex basis-full items-center gap-2 pl-7 sm:basis-auto sm:shrink-0 sm:pl-0">
           {!destinationArmId && (
             <span className="flex items-center gap-1 text-xs text-amber">
               <TriangleAlert className="size-3.5" />

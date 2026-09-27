@@ -20,7 +20,8 @@ export function GradeRangesField({ control, register, errors }: Props) {
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-ink">Grade ranges</p>
-      <div className="space-y-2">
+      {/* space-y-3 below sm to sit with the hairline each row now draws there. */}
+      <div className="space-y-3 sm:space-y-2">
         {fields.map((field, i) => (
           <GradeRangeRow key={field.id} index={i} register={register} errors={errors} onRemove={() => remove(i)} />
         ))}

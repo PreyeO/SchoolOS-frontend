@@ -78,7 +78,9 @@ export function PromotionList({
             </span>
           )}
         </span>
-        <span className="flex items-center gap-2">
+        {/* Stacked on a phone: the picker's 208px minimum left "Send everyone
+            to" squeezed into two lines beside it. */}
+        <span className="flex w-full flex-col items-start gap-1 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
           <span className="text-xs text-n-500">Send everyone to</span>
           <ArmPicker
             id="promotion-set-all"

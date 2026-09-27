@@ -18,9 +18,15 @@ export function BroadsheetTable({ columns, rows }: Props) {
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-n-200">
+            {/* w-36 (min and max too) below sm: the name column is sticky, and left
+                to size itself it grew to the longest name (~190px), so on a
+                phone it covered over half the screen and one subject column
+                was all that scrolled beside it. Fixed narrow, names wrap
+                inside it and two or three subjects stay in view. From sm up it
+                sizes itself again. */}
             <th
               scope="col"
-              className="sticky left-0 z-10 bg-white px-4 py-2.5 text-left font-medium text-n-500 print:static"
+              className="sticky left-0 z-10 w-36 min-w-36 max-w-36 bg-white px-3 py-2.5 text-left font-medium text-n-500 print:static sm:w-auto sm:max-w-none sm:px-4"
             >
               Student
             </th>
@@ -58,10 +64,13 @@ export function BroadsheetTable({ columns, rows }: Props) {
                   survives printing — browsers drop backgrounds by default. */}
               <th
                 scope="row"
-                className="sticky left-0 z-10 bg-white px-4 py-2 text-left font-normal print:static"
+                className="sticky left-0 z-10 w-36 min-w-36 max-w-36 bg-white px-3 py-2 text-left font-normal print:static sm:w-auto sm:max-w-none sm:px-4"
               >
-                <span className="block truncate text-ink">{row.name}</span>
-                <span className="block truncate font-mono text-[11px] text-n-400">
+                {/* Wraps below sm (wrap-break-word for a name with no spaces to
+                    break on); truncation only matters from sm up, where the
+                    column sizes itself and this rarely bites. */}
+                <span className="block wrap-break-word text-ink sm:truncate">{row.name}</span>
+                <span className="block font-mono text-[11px] text-n-400 sm:truncate">
                   {row.admissionNumber}
                   {row.isEmpty && <span className="ml-1.5 text-amber">no scores</span>}
                 </span>

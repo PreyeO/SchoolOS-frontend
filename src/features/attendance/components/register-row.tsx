@@ -37,9 +37,13 @@ export function RegisterRow({ student, entry, savedRecord, canMark, onStatus, on
         className="size-8"
       />
 
+      {/* Wraps rather than truncating on a phone. With the four-way toggle beside
+          it (~150px), the avatar and the note button, the name was left ~40px
+          and read "Ifeanyi O…". The toggle now takes its own line below (see the
+          wrapper), which leaves the name a whole line. */}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm text-ink">{name}</span>
-        <span className="block truncate font-mono text-[11px] text-n-400">{student.admission_number}</span>
+        <span className="block text-sm text-ink sm:truncate">{name}</span>
+        <span className="block font-mono text-[11px] text-n-400 sm:truncate">{student.admission_number}</span>
       </span>
 
       {canMark && entry && (
@@ -57,12 +61,18 @@ export function RegisterRow({ student, entry, savedRecord, canMark, onStatus, on
         </button>
       )}
 
-      <StatusToggle
-        value={entry?.status ?? null}
-        onChange={onStatus}
-        disabled={!canMark}
-        studentName={name}
-      />
+      {/* Own line below sm, indented (pl-11 = avatar 32px + the 12px gap) to sit
+          under the name, the same indent the note field below uses. From sm up
+          it rejoins the row. The toggle itself is untouched — same segments,
+          same touch targets. */}
+      <div className="basis-full pl-11 sm:basis-auto sm:pl-0">
+        <StatusToggle
+          value={entry?.status ?? null}
+          onChange={onStatus}
+          disabled={!canMark}
+          studentName={name}
+        />
+      </div>
 
       {showNote && canMark && (
         <div className="w-full pl-11">

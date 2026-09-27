@@ -132,7 +132,11 @@ export function PaymentHistory({ studentId, canFilterByFeeItem = false }: Props)
       ) : (
         <>
           <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
-            <table className="w-full text-left">
+            {/* whitespace-nowrap, inherited by every cell: the wrapper already
+                scrolls sideways, but with wrapping allowed the table squeezed
+                itself to fit instead, stacking "Sep 7, 2026, 1:00 PM" over four
+                lines. Nowrap makes it scroll, which is what it's there for. */}
+            <table className="w-full whitespace-nowrap text-left">
               <thead>
                 <tr className="border-b border-n-200 text-xs uppercase tracking-wide text-n-400">
                   <th className="px-3 py-2.5 font-medium">Receipt</th>

@@ -2093,6 +2093,83 @@ earlier the same day — those were a separate, already-confirmed request, not
 part of "the images," and nothing here touched them. Clean `tsc`, `eslint`,
 `build` again after reverting.
 
+**Upcoming events replaced by Recent announcements on the admin home
+(2026-09-24).** The card had no backend — there is no calendar/events module —
+so it could only ever show "No upcoming events". The slot now shows the three
+newest announcements (`dashboard/RecentAnnouncements`), which is the nearest
+real thing: the `event` announcement category already lets a school announce a
+PTA meeting or sports day, and the badge shows it. Three, not five, because a
+notice row is three lines against Recent activity's two, so three of them is
+about the height of that card's five and the pair sits level.
+- Same `useAnnouncements` query as the board, so no extra request. A
+  `post_notices` holder sees every notice in the school, including ones aimed at
+  audiences they aren't in — right for an admin's "what has gone out" digest.
+- Unlike `RecentNotices` (parent/student home), which returns null when empty,
+  this card always renders: loading skeletons, `ErrorState` on failure, and an
+  empty state that offers "Post one" to anyone holding `post_notices`. A hidden
+  card would leave a blank cell beside Recent activity.
+- The row and the tag-stripping helper were pulled out of `RecentNotices` into
+  `communication/NoticeDigestItem` and `lib/plain-text.ts`, so the two digests
+  share one row. `RecentNotices`' output is unchanged (diffed, not assumed).
+- Removed as dead: `UpcomingEvents`, `useUpcomingEvents`, and the stub
+  `getUpcomingEvents`. When a calendar module exists it is a new build, not a
+  revival of these. Not verified in a browser — `tsc` and `eslint` only.
+
+**Mobile fluidity pass (2026-09-24), from phone screenshots.** Two causes
+covered nearly all of it. (1) A row with the name as the only shrinkable item,
+beside a date, badge, dropdown or buttons that can't shrink: on a phone the name
+was left ~90px and truncated. Fixed by giving the name its own line
+(`basis-full sm:flex-1 sm:basis-0`, truncation from `sm:` up) on Result Review,
+Teaching Assignments, Publish Results, Promotion and Sessions & Terms. (2)
+Tables squeezing to fit instead of scrolling: Fees payment history now
+`whitespace-nowrap`, subjects bulk edit has a `min-w-xl` floor. The grading
+dialog's range row wraps (Remark drops to its own line) — five fixed widths
+summed to more than the dialog, which also scrolled it sideways.
+- **Dialogs that scroll as a whole carry their close button away with them**:
+  `DialogContent` is `overflow-y-auto` and the X is absolutely positioned inside
+  it. For a dialog with a table, use the `ReportCardPreviewDialog` shape instead
+  (`flex flex-col overflow-hidden`, header/footer `shrink-0`, the table's own box
+  `min-h-0 overflow-auto`). Done for the Result Review scores dialog.
+- **The report-card preview overflowed because it is an A4 print template** —
+  0.8cm padding then 5–8 column tables — in a ~290px iframe, so Grade fell off
+  the right edge. The backend is read-only and the template is shared with the
+  PDF, so `results/lib/fit-report-card-preview.ts` injects a stylesheet into the
+  preview only: `html { zoom }` in steps keyed to the iframe's width (media
+  queries inside an iframe read the iframe's width), aiming at a 420px layout.
+  Scaling the whole document, rather than shrinking padding, is deliberate:
+  `bold_header`'s header bleeds to the border with a hard-coded `-0.8cm` margin
+  that no selector can scope to that template. The `compact` template's
+  side-by-side tables are stacked below 420px.
+- **Verified in headless Chrome, not just `tsc`.** Chrome is installed here, so
+  the fit CSS was tested against the backend's *real* template CSS (read from
+  `results/templates/report_cards/`) for all five templates at 286–340px, with a
+  seven-column table. Two traps in doing this: a Tailwind breakpoint reads the
+  *viewport*, so a "phone" panel inside a wide window silently renders the
+  desktop layout — put each version in an iframe of the target width; and the
+  first, coarse zoom made a 286px card unreadably small.
+- **Second round, same day: register, score entry, leaderboard, broadsheet.**
+  Rendered before touching them (static copies of the markup, compiled against
+  the real `globals.css`, each in an iframe of the target width). That showed
+  the problems were not all the same: the **register** really did truncate
+  (`Ifean…`, `gda/06…`) because the four-way toggle (~150px) plus avatar and note
+  button left the name ~40px, so the toggle now takes its own line under the
+  name (rows are taller on a phone — the price of a readable name); the
+  **broadsheet** did not truncate at all, its sticky name column grew to the
+  longest name and covered over half the screen, so it is now a fixed 144px
+  below `sm:` with names wrapping; the **leaderboard** and **score entry** were
+  already fine at 360px with ordinary names and only got the same wrap-on-mobile
+  treatment plus score entry's validation message moving under the field.
+- **Grading dialog:** a hairline between ranges below `sm:` (each range is two
+  lines there, so pairs blurred together) and the Grade placeholder shortened to
+  "Grade" — "Grade (e.g. A1)" was clipped in its 80px box.
+- **Recent activity** gained an "All activity →" link to the Audit Log, gated on
+  `useCanAccess('/settings/audit-log')` (needs `view_audit_logs`). The counts stay
+  at 5 activity / 3 announcements: measured side by side at desktop width, that
+  pair ends level, while 3/3 leaves ~100px of dead space under activity and 5/5
+  ~170px.
+- **Still not done:** `needs-attention-list` and the platform screens use the
+  same truncated-row pattern but weren't in the screenshots.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

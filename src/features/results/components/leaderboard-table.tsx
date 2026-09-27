@@ -27,11 +27,15 @@ export function LeaderboardTable({ rows, unit, showArm }: Props) {
           >
             {row.rank}
           </span>
+          {/* Wraps on a phone, truncates from sm up. The second line carries the
+              arm as well when ranking across a class ("gda/0675/2026 · Primary 3
+              A"), which is wider than the space left beside the rank, grade and
+              score, and was cut off mid-way. */}
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm text-ink">
+            <span className="block text-sm text-ink sm:truncate">
               {row.student.user.first_name} {row.student.user.last_name}
             </span>
-            <span className="block truncate font-mono text-[11px] text-n-400">
+            <span className="block font-mono text-[11px] text-n-400 sm:truncate">
               {row.student.admission_number}
               {showArm && row.armLabel && <span className="ml-1.5">· {row.armLabel}</span>}
             </span>

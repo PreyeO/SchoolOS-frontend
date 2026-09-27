@@ -3,27 +3,10 @@
 import Link from "next/link";
 import { ArrowRight, Megaphone } from "lucide-react";
 
-import { formatRelativeTime } from "@/lib/text/format-relative-time";
-
 import { useAnnouncements } from "../hooks/use-announcements";
-import { categoryMeta } from "../lib/categories";
+import { NoticeDigestItem } from "./notice-digest-item";
 
 const PREVIEW_COUNT = 3;
-
-// Strips tags for a one-line preview. body_html is already bleach-sanitized
-// server-side to a fixed allowlist, so this is about flattening structure for a
-// single line, not about safety — and the result goes into a text node, never
-// back into dangerouslySetInnerHTML.
-function plainText(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 // The school's latest notices, as a digest rather than the full board — used on
 // the parent and student home screens.
@@ -33,6 +16,9 @@ function plainText(html: string): string {
 // them and none of the board's manager affordances apply. That's also why this
 // is safe on any persona's home: it can never surface a notice they shouldn't
 // see, whatever screen embeds it.
+//
+// The admin overview has its own card (dashboard/RecentAnnouncements) — same
+// rows, but it has to say something when there are none, where this hides.
 export function RecentNotices() {
   const { data, isPending, isError } = useAnnouncements();
   const notices = (data ?? []).slice(0, PREVIEW_COUNT);
@@ -59,38 +45,9 @@ export function RecentNotices() {
       </div>
 
       <ul className="divide-y divide-n-100">
-        {notices.map((notice) => {
-          const kind = categoryMeta(notice.category);
-          const KindIcon = kind.icon;
-          const body = plainText(notice.body_html);
-
-          return (
-            <li key={notice.id}>
-              <Link
-                href="/announcements"
-                className="block px-4 py-3 transition-colors hover:bg-n-50"
-              >
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
-                    {notice.title}
-                  </p>
-                  {KindIcon && (
-                    <span
-                      className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${kind.badge}`}
-                    >
-                      <KindIcon className="size-3" />
-                      {kind.label}
-                    </span>
-                  )}
-                </div>
-                {body && <p className="mt-0.5 truncate text-xs text-n-500">{body}</p>}
-                <p className="mt-1 text-[11px] text-n-400">
-                  {formatRelativeTime(notice.created_at)}
-                </p>
-              </Link>
-            </li>
-          );
-        })}
+        {notices.map((notice) => (
+          <NoticeDigestItem key={notice.id} notice={notice} />
+        ))}
       </ul>
     </section>
   );
