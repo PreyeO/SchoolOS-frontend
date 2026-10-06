@@ -20,7 +20,10 @@ export function EditAdmissionDialog({ student }: { student: StudentDetail }) {
   const update = useUpdateStudent(student.id);
 
   const defaults: AdmissionFormValues = {
-    gender: student.gender,
+    // The form only offers male/female, but a legacy record may still hold
+    // "other". It falls back to the first option so the select shows what will
+    // actually be saved, rather than a blank the schema would then reject.
+    gender: student.gender === "female" ? "female" : "male",
     enrollment_status: student.enrollment_status,
     // <input type="date"> needs "" for empty, never null.
     date_of_birth: student.date_of_birth ?? "",

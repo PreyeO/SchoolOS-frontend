@@ -4,7 +4,7 @@ import type { ArmOptionGroup } from "@/lib/school/arm-options";
 import { enrollmentStatusLabel, genderLabel } from "../lib/labels";
 import type { EnrollmentStatus, Gender } from "../types";
 
-const GENDERS: Gender[] = ["male", "female", "other"];
+const GENDERS: Gender[] = ["male", "female"];
 const STATUSES: EnrollmentStatus[] = ["active", "graduated", "transferred", "withdrawn", "suspended", "expelled"];
 
 interface Props {
