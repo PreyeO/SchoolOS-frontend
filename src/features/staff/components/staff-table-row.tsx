@@ -19,8 +19,6 @@ export function StaffTableRow({ teacher }: { teacher: TeacherListItem }) {
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-sm text-n-500">{user.email}</td>
       <td className="whitespace-nowrap px-3 py-2.5 text-sm text-n-500">{teacher.employee_id ?? "—"}</td>
-      <td className="whitespace-nowrap px-3 py-2.5 text-sm text-n-500">{teacherTypeLabel(teacher.teacher_type)}</td>
-      <td className="whitespace-nowrap px-3 py-2.5 text-sm text-n-500">{teacher.specialization ?? "—"}</td>
-    </tr>
+      <td className="whitespace-nowrap px-3 py-2.5 text-sm text-n-500">{teacherTypeLabel(teacher.teacher_type)}</td>    </tr>
   );
 }

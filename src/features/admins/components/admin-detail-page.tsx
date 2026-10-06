@@ -52,7 +52,7 @@ export function AdminDetailPage({ id }: { id: string }) {
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-ink">Role</h2>
         <DetailField
-          label="Joined this school"
+          label="Account activated"
           value={admin.date_joined_school ? formatDate(admin.date_joined_school) : null}
         />
         <div className="mt-4 flex items-center justify-between gap-3">

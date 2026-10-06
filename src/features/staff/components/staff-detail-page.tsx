@@ -55,7 +55,7 @@ export function StaffDetailPage({ id }: { id: string }) {
           <DetailField label="Qualification" value={teacher.qualification} />
           <DetailField label="Specialization" value={teacher.specialization} />
           <DetailField
-            label="Joined this school"
+            label="Account activated"
             value={teacher.date_joined_school ? formatDate(teacher.date_joined_school) : null}
           />
         </div>
