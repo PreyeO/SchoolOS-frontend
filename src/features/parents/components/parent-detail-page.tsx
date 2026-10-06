@@ -54,7 +54,7 @@ export function ParentDetailPage({ id }: { id: string }) {
           <DetailField label="City" value={parent.city} />
           <DetailField label="State" value={parent.state} />
           <DetailField
-            label="Joined this school"
+            label="Account activated"
             value={parent.date_joined_school ? formatDate(parent.date_joined_school) : null}
           />
         </div>

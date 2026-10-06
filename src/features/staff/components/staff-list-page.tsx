@@ -37,7 +37,7 @@ export function StaffListPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink">Teachers</h1>
-          <p className="mt-1 text-sm text-n-500">Teachers at your school, their type, and their specialization.</p>
+          <p className="mt-1 text-sm text-n-500">Teachers at your school, and their type.</p>
         </div>
         <Button type="button" asChild>
           <Link href={inviteHref("teacher")}>Invite teacher</Link>

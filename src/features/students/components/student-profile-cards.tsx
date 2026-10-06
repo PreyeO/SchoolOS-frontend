@@ -35,7 +35,7 @@ export function StudentProfileCards({
           value={student.date_of_birth ? formatDate(student.date_of_birth) : null}
         />
         <DetailField
-          label="Date of admission"
+          label="Added to SchoolOS"
           value={student.date_of_admission ? formatDate(student.date_of_admission) : null}
         />
         <DetailField label="Previous school" value={student.previous_school} />

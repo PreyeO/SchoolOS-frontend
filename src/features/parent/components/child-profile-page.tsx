@@ -92,7 +92,7 @@ export function ChildProfilePage() {
                     value={student ? genderLabel(student.gender) : null}
                   />
                   <DetailField
-                    label="Date of admission"
+                    label="Added to SchoolOS"
                     value={
                       student?.date_of_admission ? formatDate(student.date_of_admission) : null
                     }

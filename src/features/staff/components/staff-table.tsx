@@ -18,9 +18,7 @@ export function StaffTable({ teachers }: { teachers: TeacherListItem[] }) {
             <th className="px-3 py-2.5 font-medium">Name</th>
             <th className="px-3 py-2.5 font-medium">Email</th>
             <th className="px-3 py-2.5 font-medium">Employee ID</th>
-            <th className="px-3 py-2.5 font-medium">Type</th>
-            <th className="px-3 py-2.5 font-medium">Specialization</th>
-          </tr>
+            <th className="px-3 py-2.5 font-medium">Type</th>          </tr>
         </thead>
         <tbody>
           {teachers.map((teacher) => (

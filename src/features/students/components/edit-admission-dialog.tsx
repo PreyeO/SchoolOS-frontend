@@ -87,7 +87,7 @@ export function EditAdmissionDialog({ student }: { student: StudentDetail }) {
         />
         <TextField
           id="edit-doa"
-          label="Date of admission"
+          label="Added to SchoolOS"
           type="date"
           error={errors.date_of_admission}
           registration={register("date_of_admission")}
