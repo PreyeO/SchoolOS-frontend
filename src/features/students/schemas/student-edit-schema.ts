@@ -30,7 +30,7 @@ const nationalityCode = z
   .refine((v) => v === "" || COUNTRY_CODES.has(v), "Choose a country from the list");
 
 export const admissionSchema = z.object({
-  gender: z.enum(["male", "female", "other"]),
+  gender: z.enum(["male", "female"]),
   enrollment_status: z.enum([
     "active",
     "graduated",

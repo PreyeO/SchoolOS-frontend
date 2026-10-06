@@ -137,7 +137,7 @@ export function TeacherPicker({
                     <span className="block truncate text-sm text-ink">
                       {teacher.user.first_name} {teacher.user.last_name}
                     </span>
-                    <span className="block truncate text-xs text-n-400">
+                    <span className="line-clamp-2 break-words text-xs text-n-400">
                       {renderSubLabel(teacher)}
                     </span>
                   </span>

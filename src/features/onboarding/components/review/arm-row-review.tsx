@@ -30,7 +30,10 @@ export function ArmRowReview({ arm, href }: { arm: ArmResponse; href?: string })
   const active = isActiveArm(arm);
 
   return (
-    <li className="flex items-center gap-3 py-1.5">
+    // On narrow screens the name + actions share the first line and the teacher
+    // pill drops to its own full-width line below, so the arm name isn't
+    // squeezed down to "O…". From sm up it's the single row it always was.
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 sm:flex-nowrap">
       {href ? (
         <Link
           href={href}
@@ -46,7 +49,11 @@ export function ArmRowReview({ arm, href }: { arm: ArmResponse; href?: string })
 
       {!active && <DeactivatedBadge />}
 
-      {active && <ClassTeacherCell arm={arm} />}
+      {active && (
+        <div className="order-3 flex min-w-0 max-w-full basis-full sm:order-none sm:basis-auto">
+          <ClassTeacherCell arm={arm} />
+        </div>
+      )}
 
       <span className="flex shrink-0 items-center">
         {active && (
