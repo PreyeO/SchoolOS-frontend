@@ -9,13 +9,19 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 
+// One description for the search snippet, Open Graph and Twitter so the three
+// never drift apart. Kept under ~160 characters: WhatsApp and LinkedIn cut
+// longer previews off mid-sentence.
+const DESCRIPTION =
+  "SchoolOS helps Nigerian schools compile results, collect fees and track attendance in one place, built for three terms and NERDC subjects.";
+const SHARE_TITLE = "SchoolOS: School management built for Nigeria";
+
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "https://myschoolos.io",
   ),
   title: { default: "SchoolOS", template: "%s | SchoolOS" },
-  description:
-    "The operating system for Nigerian K–12 schools. Results, fees, attendance, all in one place.",
+  description: DESCRIPTION,
   keywords: [
     "school management software Nigeria",
     "school management system",
@@ -45,18 +51,20 @@ export const metadata: Metadata = {
     title: "SchoolOS",
     statusBarStyle: "default",
   },
+  // og:image comes from app/opengraph-image.tsx (1200x630), picked up by file
+  // convention — don't also list `images` here or it's emitted twice.
   openGraph: {
     type: "website",
     siteName: "SchoolOS",
-    title: "SchoolOS: School management built for Nigeria",
-    description:
-      "Compile a term's results in an afternoon. Track every naira of fees. Mark attendance with one tap. Built for three terms, NERDC subjects, and the Nigerian school year.",
+    url: "/",
+    locale: "en_NG",
+    title: SHARE_TITLE,
+    description: DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "SchoolOS: School management built for Nigeria",
-    description:
-      "Compile a term's results in an afternoon. Track every naira of fees. Mark attendance with one tap.",
+    title: SHARE_TITLE,
+    description: DESCRIPTION,
   },
   robots: { index: true, follow: true },
 };
