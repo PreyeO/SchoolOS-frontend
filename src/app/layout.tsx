@@ -13,22 +13,22 @@ import { Toaster } from "@/components/ui/sonner";
 // never drift apart. Kept under ~160 characters: WhatsApp and LinkedIn cut
 // longer previews off mid-sentence.
 const DESCRIPTION =
-  "SchoolOS helps Nigerian schools compile results, collect fees and track attendance in one place, built for three terms and NERDC subjects.";
-const SHARE_TITLE = "SchoolOS: School management built for Nigeria";
+  "SchoolOS is school management software built for Nigerian K-12 schools. Results and report cards, fees, offline attendance and parent access, all in one place.";
+const SITE_TITLE = "SchoolOS: School Management Software for Nigerian Schools";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "https://myschoolos.io",
   ),
-  title: { default: "SchoolOS", template: "%s | SchoolOS" },
+  title: { default: SITE_TITLE, template: "%s | SchoolOS" },
   description: DESCRIPTION,
   keywords: [
-    "school management software Nigeria",
-    "school management system",
-    "Nigerian school software",
-    "results management",
-    "school fees collection",
-    "attendance tracking",
+    "school management software",
+    "Nigerian schools",
+    "result and report card software",
+    "school fees management",
+    "student attendance",
+    "SchoolOS",
     "NERDC",
     "WAEC",
     "NECO",
@@ -58,15 +58,16 @@ export const metadata: Metadata = {
     siteName: "SchoolOS",
     url: "/",
     locale: "en_NG",
-    title: SHARE_TITLE,
+    title: SITE_TITLE,
     description: DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: SHARE_TITLE,
+    title: SITE_TITLE,
     description: DESCRIPTION,
   },
   robots: { index: true, follow: true },
+  verification: { google: "jPtOo_ChR0qfP7Jn1GaTe3BSFyHX20wL_0jm9y2Uj70" },
 };
 
 export const viewport: Viewport = {
