@@ -51,6 +51,22 @@ export interface StudentParentLink {
   email: string;
   relationship: RelationshipType;
   is_primary_contact: boolean;
+  // False once that parent has been offboarded. The link is kept as history,
+  // but they are no longer a contact and their parent access is gone.
+  is_parent: boolean;
+}
+
+// POST /students/bulk-update-status/. All-or-nothing, so `skipped` is always
+// empty — kept by the backend only for shape parity with the other bulk routes.
+export interface BulkStatusUpdatePayload {
+  status: EnrollmentStatus;
+  reason: string;
+  student_ids: string[];
+}
+
+export interface BulkStatusUpdateResult {
+  applied: StudentListItem[];
+  skipped: unknown[];
 }
 
 export interface StudentDetail {

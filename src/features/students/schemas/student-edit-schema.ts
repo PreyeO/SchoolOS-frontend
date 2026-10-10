@@ -7,6 +7,11 @@ import { COUNTRIES } from "@/data/countries";
 // number is the student's identity across the school and is deliberately fixed
 // after creation.
 //
+// enrollment_status left the whitelist on 2026-10-09 and must never come back
+// here: DRF drops unknown fields without a word, so sending it would show
+// "Student updated" while changing nothing. Status changes go through
+// ChangeStatusDialog (bulk-update-status), which requires a reason.
+//
 // Every optional text field is nullable on the model, and the API treats "" and
 // null differently on read (an empty string renders as a blank value, null as
 // "not recorded"). Blank inputs are therefore normalised to null on submit —
@@ -31,14 +36,6 @@ const nationalityCode = z
 
 export const admissionSchema = z.object({
   gender: z.enum(["male", "female"]),
-  enrollment_status: z.enum([
-    "active",
-    "graduated",
-    "transferred",
-    "withdrawn",
-    "suspended",
-    "expelled",
-  ]),
   date_of_birth: z.string(),
   date_of_admission: z.string(),
   nationality: nationalityCode,

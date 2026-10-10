@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useEnrollmentHistory } from "../hooks/use-enrollment";
-import type { CurrentClass } from "../types";
+import { isTerminalStatus } from "../lib/enrollment-status";
+import { enrollmentStatusLabel } from "../lib/labels";
+import type { CurrentClass, EnrollmentStatus } from "../types";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 
 import { EnrollStudentDialog } from "./enroll-student-dialog";
@@ -17,16 +19,22 @@ interface Props {
   studentId: string;
   studentName: string;
   currentClass: CurrentClass | null;
+  status: EnrollmentStatus;
 }
 
-export function EnrollmentCard({ studentId, studentName, currentClass }: Props) {
+export function EnrollmentCard({ studentId, studentName, currentClass, status }: Props) {
   // Enrolling and moving a class both hit POST /students/<id>/enroll/, which
   // requires edit_students through HasSchoolPermission — and that permission
   // class hard-requires is_admin. So a teacher 403s on it (verified live) even
   // though they may edit the profile itself via CanEditStudentProfile. The two
   // are genuinely different rights, and the button is hidden rather than left
   // to fail. Enrollment HISTORY below stays visible: a teacher gets 200 on it.
-  const canEnroll = useHasSchoolPermission("edit_students");
+  //
+  // A student who has left (terminal status) is refused by enroll outright,
+  // so the button goes for them too, and the "not enrolled" warning — which
+  // asks someone to act — becomes a plain statement that they've left.
+  const hasLeft = isTerminalStatus(status);
+  const canEnroll = useHasSchoolPermission("edit_students") && !hasLeft;
   const [showHistory, setShowHistory] = useState(false);
   const { data: history, isPending } = useEnrollmentHistory(studentId);
 
@@ -44,6 +52,10 @@ export function EnrollmentCard({ studentId, studentName, currentClass }: Props) 
                 {armDisplayName({ name: currentClass.arm_name, is_default: currentClass.is_default }, currentClass.class_name)}
               </span>
               <span className="text-n-400"> · {currentClass.session}</span>
+            </p>
+          ) : hasLeft ? (
+            <p className="mt-1 text-sm text-n-500">
+              No longer at the school ({enrollmentStatusLabel(status).toLowerCase()})
             </p>
           ) : (
             // Not cosmetic: with no enrolment they appear in no register, and
@@ -69,9 +81,18 @@ export function EnrollmentCard({ studentId, studentName, currentClass }: Props) 
         )}
       </div>
 
-      {!currentClass && (
+      {!currentClass && !hasLeft && (
         <p className="mt-2 text-xs text-n-500">
           They won&rsquo;t appear on any register until they&rsquo;re enrolled in a class arm.
+        </p>
+      )}
+      {/* current_class is the latest enrollment this session, which a
+          withdrawal doesn't remove — so a terminal student can still show a
+          class here. Say what that row now means. */}
+      {currentClass && hasLeft && (
+        <p className="mt-2 text-xs text-n-500">
+          Their last class. They&rsquo;re no longer on its register or this session&rsquo;s
+          broadsheet, and can&rsquo;t be moved or promoted.
         </p>
       )}
 

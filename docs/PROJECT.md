@@ -2170,6 +2170,77 @@ summed to more than the dialog, which also scrolled it sideways.
 - **Still not done:** `needs-attention-list` and the platform screens use the
   same truncated-row pattern but weren't in the screenshots.
 
+**Student lifecycle, offboarding, open passwords (2026-10-10).** Built against
+backend `development` (`31108f6`, `6f91d3d`, both 2026-10-09; not on backend
+`main` at the time). Handoff: `SchoolOS-backend/docs/student-lifecycle-frontend-handoff.md`,
+checked line by line against the views and services.
+- **Status changes moved off the profile PATCH.** `enrollment_status` left
+  `StudentProfileUpdateSerializer`, and DRF drops unknown fields silently, so
+  the old Edit Admission picker would have shown "Student updated" while
+  changing nothing. It's gone. Status now goes through `ChangeStatusDialog` →
+  `POST /students/bulk-update-status/`. That's one dialog for a single student
+  (header "Change status") and for a batch (directory checkboxes →
+  `BulkStatusBar`). The reason is required (`ReasonDialog`).
+- **Legal moves are computed, not left to the 400.** `lib/enrollment-status.ts`
+  mirrors `_is_legal_status_transition`: terminal (graduated / transferred /
+  withdrawn / expelled) is one-way, and a no-op move is illegal. The endpoint is
+  all-or-nothing, so the dialog offers only targets legal for *every* selected
+  row (`commonTargets`), and a batch with anyone terminal is blocked in the bar
+  with an explanation. Suspended is not terminal: still current, still billed.
+- **Terminal students:** no status button, no Enrol / Move class. The class
+  card says they've left. `current_class` still returns their last arm (no
+  status filter in `get_current_enrollment`), so the card explains what that
+  row now means instead of hiding it.
+- **Correct name** (`PATCH update-name/`, `edit_students`) and **Delete**
+  (`DELETE /students/:id/`, `delete_students`) are in `StudentHeaderActions`.
+  Delete is for a mistaken create only. The backend refuses anyone with history,
+  and its 400 already says to use a status, so it's surfaced verbatim.
+- **Offboarding** via the shared `OffboardDialog` on teacher (`edit_staff`),
+  admin (`manage_roles`) and parent (`add_students`) detail pages. The copy
+  says whether this removes their last persona, because that's when the backend
+  deactivates the membership and they can't sign in. **The backend has no
+  self-check:** an admin could offboard their own admin persona and lock
+  themselves out, so `AdminOffboardAction` withholds it for yourself and for the
+  Owner (whose `is_owner` comes from the cached roles list, because the role
+  summary on the admin detail lacks it). Teacher and admin profiles are deleted
+  by offboarding, so those pages navigate away. The parent profile survives,
+  so that page reloads as a former parent.
+- **Navigate-away mutations invalidate with `refetchType: "none"`** (student
+  delete, teacher/admin offboard). An immediate refetch would hit the
+  still-mounted detail query, 404, and flash `ErrorState` before the redirect.
+  Lists refetch on mount because they're stale.
+- **Former parents:** `GET /parents/` returns current parents only, and
+  `?is_parent=false` returns *only* former ones, for detail as well as list.
+  The parent directory has Current / Former tabs (`?view=former`), and a former
+  parent's detail is `/parents/:id?former=1`. The Former tab sends **no**
+  `is_active` filter: offboarding a parent-only member deactivates them, so the
+  default "active only" would hide most of the list. Student detail badges
+  `is_parent: false` links "Former parent" and drops "Primary contact". The
+  student's own profile lists current guardians only. Former parents' links
+  are read-only. Parent link/unlink on the parent page is now gated on
+  `add_students` (it wasn't gated before, though the backend always required it).
+- **Passwords: any non-empty password.** The backend emptied
+  `AUTH_PASSWORD_VALIDATORS` and dropped every `min_length=8`. Five schemas
+  each carried their own 8-char/upper/lower/digit/symbol rule, which would have
+  rejected passwords the server accepts. They now share
+  `lib/validations/password.ts` (`min(1)` only, since DRF still rejects blank).
+- **Audit catalog 82 → 97, zero drift** (re-diffed against `audit/enums.py`
+  programmatically, not by eye). Seven are from this backend change. Eight had
+  drifted earlier: `student_note.*`, `class_arm.deactivated`,
+  `subject.deactivated`, `school.access_extended`, `demo_request.*`. New
+  `offboarding` category.
+- **Re-admission** is a new profile. The add-student form now hints to use a
+  new admission number and a blank email, since the old profile still holds
+  both.
+- `lib/api/endpoints/people.ts` passed 150 lines, so the student and
+  student-note groups moved to `endpoints/students.ts` behind the same barrel.
+- **Not verified live.** Docker Desktop wasn't running. `tsc`, `eslint` and a
+  full `next build` are clean, but no request has gone to the backend. To check
+  once it's up: a status change and bulk change (including the all-or-nothing
+  400), delete on a fresh vs. a scored student, each offboard (especially that
+  `is_active` goes false for a single-persona member), the Former parents tab,
+  and that Edit Admission no longer sends status.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
@@ -2210,15 +2281,16 @@ What still needs backend work the frontend cannot do alone. Re-verified
   field); an ordering param (even a fixed one that puts `submitted` first)
   would restore the sort. Neither is a frontend gap — there's nothing left to
   build there without one of these.
-- **Seven school permissions gate nothing server-side** — `delete_students`,
-  `delete_staff`, `delete_fees`, `edit_staff`, `edit_attendance`,
-  `export_fees`, `send_sms`. They're grantable in the Roles editor and grant
-  nothing. `edit_attendance` is the most misleading: marking is teacher-only by
-  design, so no admin can ever mark a register whatever is ticked. Backend's
-  call whether to implement or drop them.
+- **Five school permissions gate nothing server-side** — `delete_staff`,
+  `delete_fees`, `edit_attendance`, `export_fees`, `send_sms`. They're grantable
+  in the Roles editor and grant nothing. `edit_attendance` is the most
+  misleading: marking is teacher-only by design, so no admin can ever mark a
+  register whatever is ticked. Backend's call whether to implement or drop them.
+  (Was seven until 2026-10-09: `delete_students` now gates student delete and
+  `edit_staff` gates teacher offboarding.)
 - **Audit log:** no export endpoint (the NDPA-compliance ask); no `target_type`
   filter, so "every change to Students" isn't expressible; `search` covers the
-  actor only, not who was affected; and the 82 action strings are hardcoded in
+  actor only, not who was affected; and the 97 action strings are hardcoded in
   `features/audit-logs/lib/actions/` — a catalog endpoint like
   `school-admin-roles/permissions/` would remove that coupling.
 - **`PUT /subjects/bulk-update/` 500s on a name swap.** The service's own

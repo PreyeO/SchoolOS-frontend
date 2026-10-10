@@ -5,6 +5,8 @@ export interface ParentListItem {
   id: string;
   user: UserMinimal;
   occupation: string | null;
+  // False for an offboarded (former) parent.
+  is_parent: boolean;
   created_at: string;
 }
 
@@ -36,5 +38,7 @@ export interface ParentFilters {
   search?: string;
   state?: string;
   is_active?: boolean;
+  // Omit for current parents (the backend default); false for former ones.
+  is_parent?: boolean;
   page?: number;
 }

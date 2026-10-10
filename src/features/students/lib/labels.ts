@@ -53,8 +53,8 @@ export function bloodGroupLabel(b: BloodGroup): string {
 
 // Option lists for the edit form's pickers, derived from the same records the
 // read-only labels use so a value can never render one way and pick another.
-// Object.entries preserves declaration order, which is deliberate for
-// enrollment status — "Enrolled" first, then the ways a student leaves.
+// (Enrollment status has no option list: it's changed only through
+// ChangeStatusDialog, which offers just the legal moves.)
 function options<T extends string>(labels: Record<T, string>): { value: T; label: string }[] {
   return (Object.entries(labels) as [T, string][]).map(([value, label]) => ({ value, label }));
 }
@@ -62,7 +62,6 @@ function options<T extends string>(labels: Record<T, string>): { value: T; label
 // Only male/female are offered for input. GENDER_LABELS keeps "other" purely so
 // legacy records created before this restriction still render.
 export const GENDER_OPTIONS = options({ male: GENDER_LABELS.male, female: GENDER_LABELS.female });
-export const ENROLLMENT_STATUS_OPTIONS = options(ENROLLMENT_STATUS_LABELS);
 export const RELIGION_OPTIONS = options(RELIGION_LABELS);
 export const GENOTYPE_OPTIONS = options(GENOTYPE_LABELS);
 export const BLOOD_GROUP_OPTIONS = options(BLOOD_GROUP_LABELS);

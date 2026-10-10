@@ -8,7 +8,8 @@ interface Props {
   state: string;
   onStateChange: (value: string) => void;
   showInactive: boolean;
-  onShowInactiveChange: (value: boolean) => void;
+  // Omitted to hide the toggle — the Former view has no active/inactive split.
+  onShowInactiveChange?: (value: boolean) => void;
 }
 
 export function ParentFilters({
@@ -34,15 +35,17 @@ export function ParentFilters({
         ))}
       </Select>
 
-      <label className="flex items-center gap-1.5 text-sm text-n-500">
-        <input
-          type="checkbox"
-          className="accent-primary"
-          checked={showInactive}
-          onChange={(e) => onShowInactiveChange(e.target.checked)}
-        />
-        Show inactive
-      </label>
+      {onShowInactiveChange && (
+        <label className="flex items-center gap-1.5 text-sm text-n-500">
+          <input
+            type="checkbox"
+            className="accent-primary"
+            checked={showInactive}
+            onChange={(e) => onShowInactiveChange(e.target.checked)}
+          />
+          Show inactive
+        </label>
+      )}
 
       <Input
         placeholder="Search by name or email…"

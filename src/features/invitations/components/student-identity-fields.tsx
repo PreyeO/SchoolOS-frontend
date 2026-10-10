@@ -47,6 +47,9 @@ export function StudentIdentityFields({ register, errors }: Props) {
         id="student-admission"
         label="Admission number"
         error={errors.admission_number?.message}
+        // Re-admission is a new profile (the old one stays as history), so a
+        // returning student needs a number the old profile doesn't hold.
+        hint="Re-admitting someone who left? Give them a new admission number."
         required
       >
         <Input
@@ -87,7 +90,9 @@ export function StudentIdentityFields({ register, errors }: Props) {
         id="student-email"
         label="Email"
         error={errors.email?.message}
-        hint="Optional — leave blank to use a generated school email"
+        // A returning student's old email is still held by their old profile,
+        // which the backend rejects — blank is the way through.
+        hint="Optional — leave blank to use a generated school email (do this when re-admitting)"
       >
         <Input id="student-email" type="email" {...register("email")} />
       </FieldWrapper>

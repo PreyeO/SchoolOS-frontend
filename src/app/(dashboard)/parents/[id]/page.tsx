@@ -4,7 +4,18 @@ import { ParentDetailPage } from "@/features/parents/components/parent-detail-pa
 
 export const metadata: Metadata = { title: "Parent profile" };
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+// ?former=1 marks an offboarded parent, whose detail 404s unless the request
+// carries ?is_parent=false. Set by the Former parents list and by a student's
+// "Former parent" link. Read server-side, same as the fees and attendance
+// routes, to avoid a Suspense boundary.
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ former?: string }>;
+}) {
   const { id } = await params;
-  return <ParentDetailPage id={id} />;
+  const { former } = await searchParams;
+  return <ParentDetailPage id={id} former={former === "1"} />;
 }

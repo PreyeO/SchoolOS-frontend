@@ -25,6 +25,9 @@ interface Props {
   // Only the About dialog has a file field. Saving while bytes are in flight
   // would PATCH the previous photo_key, which reads as the upload doing nothing.
   isUploading?: boolean;
+  // Defaults to the cards' small pencil "Edit". The name correction overrides
+  // it, since it sits in the page header rather than on a card.
+  trigger?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -40,14 +43,17 @@ export function StudentEditShell({
   onSubmit,
   isPending,
   isUploading = false,
+  trigger,
   children,
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-xs">
-          <Pencil className="size-3.5 mr-1" /> Edit
-        </Button>
+        {trigger ?? (
+          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs">
+            <Pencil className="size-3.5 mr-1" /> Edit
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
         <DialogHeader>

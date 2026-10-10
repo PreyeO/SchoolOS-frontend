@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { ADMIN_ENDPOINTS } from "@/lib/api/endpoints";
+import type { MembershipSummary } from "@/lib/api/profile-summary";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 import type { AdminDetail, AdminFilters, AdminListItem } from "../types";
@@ -23,5 +24,12 @@ export async function assignRole(id: string, roleId: string): Promise<AdminDetai
 
 export async function unassignRole(id: string): Promise<AdminDetail> {
   const { data } = await apiClient.post<AdminDetail>(ADMIN_ENDPOINTS.UNASSIGN_ROLE(id));
+  return data;
+}
+
+// manage_roles. Removes the role and deletes the admin profile — this id 404s
+// afterwards. 400s for the Owner.
+export async function offboardAdmin(id: string, reason: string): Promise<MembershipSummary> {
+  const { data } = await apiClient.post<MembershipSummary>(ADMIN_ENDPOINTS.OFFBOARD(id), { reason });
   return data;
 }

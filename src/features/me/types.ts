@@ -71,6 +71,8 @@ export interface MeGuardianLink {
   email: string;
   relationship: RelationshipType;
   is_primary_contact: boolean;
+  // False for an offboarded parent — the link survives as history only.
+  is_parent: boolean;
 }
 
 export interface MeStudentBlock {

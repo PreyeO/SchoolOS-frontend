@@ -51,7 +51,9 @@ export function StudentParentLinks({ studentId, links, canUnlink }: Props) {
                 as plain text for anyone who can't follow it. */}
             {canOpenParents ? (
               <Link
-                href={`/parents/${link.parent_id}`}
+                // A former parent's detail 404s without ?is_parent=false;
+                // ?former=1 tells the detail page to ask for it.
+                href={`/parents/${link.parent_id}${link.is_parent ? "" : "?former=1"}`}
                 className="text-sm font-medium text-ink hover:underline"
               >
                 {link.parent_name}
@@ -65,11 +67,18 @@ export function StudentParentLinks({ studentId, links, canUnlink }: Props) {
             <span className="rounded-full bg-n-100 px-2 py-0.5 text-[11px] text-n-500 capitalize">
               {link.relationship}
             </span>
-            {link.is_primary_contact && (
+            {/* An offboarded parent keeps the link as history but is no longer
+                a contact — their parent access is gone. Badge them, and drop
+                "Primary contact", which would tell staff to call them. */}
+            {!link.is_parent ? (
+              <span className="rounded-full border border-n-200 px-2 py-0.5 text-[11px] text-n-500">
+                Former parent
+              </span>
+            ) : link.is_primary_contact ? (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                 Primary contact
               </span>
-            )}
+            ) : null}
             {canUnlink && (
               <ConfirmDeleteDialog
                 trigger={

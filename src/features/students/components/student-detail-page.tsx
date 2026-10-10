@@ -12,14 +12,13 @@ import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 
 import { useCanEditStudent } from "../hooks/use-update-student";
-import { isSyntheticEmail } from "../lib/is-synthetic-email";
 import { studentPhoto } from "../lib/student-photo";
 import { EditStudentPhotoDialog } from "./edit-student-photo-dialog";
 import { EnrollmentCard } from "./enrollment-card";
 import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 import { LinkParentDialog } from "./link-parent-dialog";
 import { MedicalAlerts } from "./medical-alerts";
-import { ReissuePasswordDialog } from "./reissue-password-dialog";
+import { StudentHeaderActions } from "./student-header-actions";
 import { StudentParentLinks } from "./student-parent-links";
 import { StudentNotesSection } from "./notes/student-notes-section";
 import { StudentProfileCards } from "./student-profile-cards";
@@ -32,15 +31,14 @@ export function StudentDetailPage({ id }: { id: string }) {
   // is eighteen fields and PATCH is partial: nobody should have to open a
   // full-profile form to correct one allergy.
   const canEdit = useCanEditStudent();
-  // Three actions on this page need MORE than CanEditStudentProfile, and a
-  // teacher holds none of them — all three 403 for a teacher (verified live),
-  // so they're hidden rather than left to fail on click:
-  //   reissue-password + enroll  -> edit_students
-  //   parent links (add/remove)  -> add_students
+  // Several actions on this page need MORE than CanEditStudentProfile, and a
+  // teacher holds none of them, so they're hidden rather than left to 403:
+  //   header actions (reissue, name, status, delete) -> StudentHeaderActions
+  //   enroll                                          -> EnrollmentCard
+  //   parent links (add/remove)                       -> add_students
   // HasSchoolPermission hard-requires is_admin, so these are false for any
   // teacher and for an admin whose role lacks the permission.
   const canOpenDirectory = useCanAccess("/students");
-  const canManageAccount = useHasSchoolPermission("edit_students");
   const canManageLinks = useHasSchoolPermission("add_students");
 
   if (isPending) {
@@ -97,9 +95,7 @@ export function StudentDetailPage({ id }: { id: string }) {
             <p className="mt-0.5 text-sm text-n-500">{user.email}</p>
           </div>
         </div>
-        {canManageAccount && isSyntheticEmail(user.email) && (
-          <ReissuePasswordDialog studentId={student.id} />
-        )}
+        <StudentHeaderActions student={student} />
       </div>
 
       <MedicalAlerts student={student} />
@@ -108,6 +104,7 @@ export function StudentDetailPage({ id }: { id: string }) {
         studentId={student.id}
         studentName={`${user.first_name} ${user.last_name}`}
         currentClass={student.current_class}
+        status={student.enrollment_status}
       />
 
       <div className="rounded-xl border border-n-200 bg-white p-5">

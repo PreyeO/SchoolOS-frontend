@@ -1,18 +1,14 @@
 import { z } from "zod";
 
+import { passwordField } from "@/lib/validations/password";
+
 import { nameField } from "./shared";
 
 export const addStudentSchema = z.object({
   first_name: nameField,
   last_name: nameField,
   admission_number: z.string().min(1, "Required"),
-  password: z
-    .string()
-    .min(8, "At least 8 characters")
-    .regex(/[A-Z]/, "Must contain an uppercase letter")
-    .regex(/[a-z]/, "Must contain a lowercase letter")
-    .regex(/[0-9]/, "Must contain a number")
-    .regex(/[^A-Za-z0-9]/, "Must contain a special character"),
+  password: passwordField,
   gender: z.enum(["male", "female"]),
   date_of_birth: z
     .string()
