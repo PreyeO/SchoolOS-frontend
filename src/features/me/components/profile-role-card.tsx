@@ -84,11 +84,16 @@ export function ProfileRoleCards({ me }: { me: MeResponse }) {
                 : "Not enrolled"
             }
           />
+          {/* Current guardians only. An offboarded parent's link is kept as
+              school history, but they're no longer this student's guardian here. */}
           <DetailField
             label="Guardians"
             value={
-              me.student.parent_links.length > 0
-                ? me.student.parent_links.map((link) => link.parent_name).join(", ")
+              me.student.parent_links.some((link) => link.is_parent)
+                ? me.student.parent_links
+                    .filter((link) => link.is_parent)
+                    .map((link) => link.parent_name)
+                    .join(", ")
                 : "None linked"
             }
           />

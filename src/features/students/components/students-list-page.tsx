@@ -10,10 +10,13 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { inviteHref } from "@/features/invitations/lib/invite-persona-param";
 import { useClasses } from "@/features/settings/hooks/use-classes";
+import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { useSchoolStore } from "@/stores/school-store";
 
+import { useStudentSelection } from "../hooks/use-student-selection";
 import { useStudents } from "../hooks/use-students";
 import type { EnrollmentStatus, Gender, StudentFilters } from "../types";
+import { BulkStatusBar } from "./bulk-status-bar";
 import { StudentFilters as StudentFiltersBar } from "./student-filters";
 import { StudentsTable } from "./students-table";
 
@@ -48,6 +51,10 @@ export function StudentsListPage() {
   };
 
   const { data, isPending, isError, error } = useStudents(filters);
+  // Bulk status change needs edit_students; without it there's no checkbox
+  // column at all rather than one that leads to a 403.
+  const canChangeStatus = useHasSchoolPermission("edit_students");
+  const bulk = useStudentSelection();
 
   function resetPage() {
     setPage(1);
@@ -103,7 +110,8 @@ export function StudentsListPage() {
         <ErrorState error={error} resourceLabel="students" />
       ) : (
         <>
-          <StudentsTable students={data.results} />
+          {canChangeStatus && bulk.count > 0 && <BulkStatusBar students={bulk.students} onClear={bulk.clear} />}
+          <StudentsTable students={data.results} selection={canChangeStatus ? bulk.selection : undefined} />
           <PaginationControls page={page} pageSize={PAGE_SIZE} count={data.count} onPageChange={setPage} />
         </>
       )}

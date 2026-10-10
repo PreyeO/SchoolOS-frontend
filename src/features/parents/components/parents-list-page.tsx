@@ -16,17 +16,24 @@ import { ParentsTable } from "./parents-table";
 
 const PAGE_SIZE = 25;
 
-export function ParentsListPage() {
+export type ParentsView = "current" | "former";
+
+export function ParentsListPage({ initialView = "current" }: { initialView?: ParentsView }) {
+  const [view, setView] = useState<ParentsView>(initialView);
   const [search, setSearch] = useState("");
   const [state, setState] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 300);
+  const former = view === "former";
 
   const filters: Filters = {
     page,
     ...(state ? { state } : {}),
-    ...(showInactive ? {} : { is_active: true }),
+    // Former parents: is_parent=false. And no is_active filter — offboarding
+    // someone whose only role was parent deactivates their membership, so
+    // the default "active only" would hide most of this list.
+    ...(former ? { is_parent: false } : showInactive ? {} : { is_active: true }),
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
   };
 
@@ -41,11 +48,30 @@ export function ParentsListPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink">Parents & Guardians</h1>
-          <p className="mt-1 text-sm text-n-500">Parent and guardian accounts and their linked children.</p>
+          <p className="mt-1 text-sm text-n-500">
+            {former
+              ? "Parents who were offboarded. Their links to children are kept as history."
+              : "Parent and guardian accounts and their linked children."}
+          </p>
         </div>
         <Button type="button" asChild>
           <Link href={inviteHref("parent")}>Invite parent</Link>
         </Button>
+      </div>
+
+      <div role="tablist" aria-label="Which parents" className="inline-flex rounded-lg border border-n-200 bg-white p-0.5">
+        {(["current", "former"] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={view === v}
+            onClick={() => { setView(v); resetPage(); }}
+            className={`cursor-pointer rounded-md px-3 py-1 text-sm ${view === v ? "bg-primary text-primary-foreground" : "text-n-500 hover:text-ink"}`}
+          >
+            {v === "current" ? "Current" : "Former"}
+          </button>
+        ))}
       </div>
 
       <ParentFilters
@@ -54,7 +80,7 @@ export function ParentsListPage() {
         state={state}
         onStateChange={(v) => { setState(v); resetPage(); }}
         showInactive={showInactive}
-        onShowInactiveChange={(v) => { setShowInactive(v); resetPage(); }}
+        onShowInactiveChange={former ? undefined : (v) => { setShowInactive(v); resetPage(); }}
       />
 
       {isPending ? (

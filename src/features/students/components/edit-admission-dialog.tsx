@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { COUNTRIES } from "@/data/countries";
 
 import { useUpdateStudent } from "../hooks/use-update-student";
-import { ENROLLMENT_STATUS_OPTIONS, GENDER_OPTIONS } from "../lib/labels";
+import { GENDER_OPTIONS } from "../lib/labels";
 import { admissionSchema, toPayload, type AdmissionFormValues } from "../schemas/student-edit-schema";
 import type { StudentDetail } from "../types";
 import { SelectField, TextField } from "./student-field";
@@ -15,6 +15,8 @@ import { StudentEditShell } from "./student-edit-shell";
 
 // Admission number is absent on purpose — it's excluded from the backend's
 // whitelist, because it identifies the student across the whole school.
+// Enrollment status is absent too: it has its own audited endpoint (see
+// ChangeStatusDialog), and this PATCH silently ignores it.
 export function EditAdmissionDialog({ student }: { student: StudentDetail }) {
   const [open, setOpen] = useState(false);
   const update = useUpdateStudent(student.id);
@@ -24,7 +26,6 @@ export function EditAdmissionDialog({ student }: { student: StudentDetail }) {
     // "other". It falls back to the first option so the select shows what will
     // actually be saved, rather than a blank the schema would then reject.
     gender: student.gender === "female" ? "female" : "male",
-    enrollment_status: student.enrollment_status,
     // <input type="date"> needs "" for empty, never null.
     date_of_birth: student.date_of_birth ?? "",
     date_of_admission: student.date_of_admission ?? "",
@@ -69,14 +70,6 @@ export function EditAdmissionDialog({ student }: { student: StudentDetail }) {
           options={GENDER_OPTIONS}
           error={errors.gender}
           registration={register("gender")}
-        />
-        <SelectField
-          id="edit-enrollment-status"
-          label="Enrollment status"
-          options={ENROLLMENT_STATUS_OPTIONS}
-          error={errors.enrollment_status}
-          registration={register("enrollment_status")}
-          hint="Whether they're still in a class — separate from whether they can sign in."
         />
         <TextField
           id="edit-dob"

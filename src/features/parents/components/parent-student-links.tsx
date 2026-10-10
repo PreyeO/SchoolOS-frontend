@@ -14,9 +14,12 @@ import type { ParentStudentLink } from "../types";
 interface Props {
   parentId: string;
   links: ParentStudentLink[];
+  // No unlink control: a former parent's links are history, and unlinking
+  // needs add_students anyway.
+  readOnly?: boolean;
 }
 
-export function ParentStudentLinks({ parentId, links }: Props) {
+export function ParentStudentLinks({ parentId, links, readOnly = false }: Props) {
   const deleteLink = useDeleteParentStudentLink();
   const queryClient = useQueryClient();
 
@@ -49,18 +52,20 @@ export function ParentStudentLinks({ parentId, links }: Props) {
                 Primary contact
               </span>
             )}
-            <ConfirmDeleteDialog
-              trigger={
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={`Unlink ${link.student_name}`}>
-                  <Trash2 className="size-3.5" />
-                </Button>
-              }
-              title={`Unlink ${link.student_name}?`}
-              description="This removes the connection between this parent and student. It can be re-linked later."
-              confirmLabel="Unlink"
-              isPending={deleteLink.isPending}
-              onConfirm={() => handleUnlink(link.id)}
-            />
+            {!readOnly && (
+              <ConfirmDeleteDialog
+                trigger={
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label={`Unlink ${link.student_name}`}>
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                }
+                title={`Unlink ${link.student_name}?`}
+                description="This removes the connection between this parent and student. It can be re-linked later."
+                confirmLabel="Unlink"
+                isPending={deleteLink.isPending}
+                onConfirm={() => handleUnlink(link.id)}
+              />
+            )}
           </div>
         </li>
       ))}

@@ -13,14 +13,30 @@ import { EnrollmentStatusBadge } from "./enrollment-status-badge";
 export function StudentTableRow({
   student,
   basePath = "/students",
+  isSelected,
+  onToggle,
 }: {
   student: StudentListItem;
   basePath?: string;
+  // Both present only when the table offers selection — see StudentsTable.
+  isSelected?: boolean;
+  onToggle?: () => void;
 }) {
   const { user } = student;
 
   return (
     <tr className="border-b border-n-100 last:border-0">
+      {onToggle && (
+        <td className="w-10 px-3 py-2.5">
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            aria-label={`Select ${user.first_name} ${user.last_name}`}
+            checked={!!isSelected}
+            onChange={onToggle}
+          />
+        </td>
+      )}
       <td className="px-3 py-2.5">
         <Link href={`${basePath}/${student.id}`} className="flex items-center gap-2.5 hover:underline">
           <PersonAvatar

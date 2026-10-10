@@ -1,5 +1,8 @@
 import type { ActionMeta } from "../action-catalog-data";
 
+// "Note on …" → "note on …", so it reads mid-sentence.
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
 // Academic structure — classes, subjects, sessions, grading.
 // Grouped by the backend app that emits the action, which is the seam the
 // action strings themselves already follow.
@@ -17,10 +20,18 @@ export const ACADEMIC_ACTIONS: Record<string, ActionMeta> = {
   "class_arm.created": { category: "classes", rest: (t) => `added arm ${t}` },
   "class_arm.updated": { category: "classes", rest: (t) => `updated arm ${t}` },
   "class_arm.deleted": { category: "classes", rest: (t) => `deleted arm ${t}` },
+  // Soft delete: the arm had history, so it was retired rather than removed.
+  "class_arm.deactivated": { category: "classes", rest: (t) => `retired arm ${t}` },
 
   "subject.created": { category: "subjects", rest: (t) => `added subject ${t}` },
   "subject.updated": { category: "subjects", rest: (t) => `updated subject ${t}` },
   "subject.deleted": { category: "subjects", rest: (t) => `deleted subject ${t}` },
+  "subject.deactivated": { category: "subjects", rest: (t) => `retired subject ${t}` },
+
+  // Repr "Note on ADM by Author Name". Notes are staff-internal.
+  "student_note.created": { category: "students", rest: (t) => `added a ${lowerFirst(t)}` },
+  "student_note.updated": { category: "students", rest: (t) => `edited a ${lowerFirst(t)}` },
+  "student_note.deleted": { category: "students", rest: (t) => `deleted a ${lowerFirst(t)}` },
 
   // Which subjects an arm actually takes — a prerequisite of assigning a teacher
   // to one. The repr is "Maths @ Primary 1 - Primary 1 A", so it names the arm

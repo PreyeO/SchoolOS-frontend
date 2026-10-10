@@ -17,6 +17,7 @@ import {
   Star,
   UserCheck,
   UserCog,
+  UserMinus,
   UserRoundPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -40,7 +41,8 @@ export type AuditCategoryKey =
   | "school"
   | "fees"
   | "payments"
-  | "announcements";
+  | "announcements"
+  | "offboarding";
 
 // Purely presentational: gives each entry in the timeline an icon and a
 // hover label so the log can be scanned by kind of change. Filtering is done
@@ -74,6 +76,9 @@ export const AUDIT_CATEGORIES: AuditCategory[] = [
   { key: "fees", label: "Fee structure", icon: Receipt },
   { key: "payments", label: "Payments & waivers", icon: HandCoins },
   { key: "announcements", label: "Announcements", icon: Megaphone },
+  // Teachers, admins and parents leaving, and memberships switched off as a
+  // result. Students leaving are status changes under "students".
+  { key: "offboarding", label: "Offboarding", icon: UserMinus },
 ];
 
 export function categoryByKey(key: AuditCategoryKey | undefined): AuditCategory | undefined {

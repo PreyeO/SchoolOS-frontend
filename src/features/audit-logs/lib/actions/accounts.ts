@@ -27,6 +27,19 @@ export const ACCOUNTS_ACTIONS: Record<string, ActionMeta> = {
   // the point, since this covers medical and personal details.
   "student_profile.updated": { category: "students", rest: (t) => `updated student ${t}` },
   "student_profile.password_reissued": { category: "students", rest: (t) => `reissued the password for ${t}` },
+  // Repr "ADM (First Last)" — the name AFTER the fix; the diff shows the old one.
+  "student_profile.name_updated": { category: "students", rest: (t) => `corrected the name of ${t}` },
+  // Repr "First Last (ADM): active → withdrawn" — no "@ School", so the colon
+  // survives cleanTargetRepr and the move reads whole. The reason is in the diff.
+  "student_profile.status_updated": { category: "students", rest: (t) => `changed the status of ${t}` },
+  "student_profile.deleted": { category: "students", rest: (t) => `deleted student ${t}` },
+
+  // Offboarding. Repr is the person's email. "deactivated" follows any
+  // offboard that left the membership with no role, so they can't sign in.
+  "membership.teacher_offboarded": { category: "offboarding", rest: (t) => `offboarded ${t} as a teacher` },
+  "membership.admin_offboarded": { category: "offboarding", rest: (t) => `offboarded ${t} as an admin` },
+  "membership.parent_offboarded": { category: "offboarding", rest: (t) => `offboarded ${t} as a parent` },
+  "membership.deactivated": { category: "offboarding", rest: (t) => `closed school access for ${t}` },
 
   // The repr already begins "enrollment of …", so the sentence completes it
   // rather than repeating the word. Fires both when a student is first added and
@@ -46,4 +59,11 @@ export const ACCOUNTS_ACTIONS: Record<string, ActionMeta> = {
 
   "school.created": { category: "school", rest: () => "created the school" },
   "school.updated": { category: "school", rest: () => "updated the school profile" },
+  // Actor is SchoolOS platform staff, extending a trial or subscription.
+  "school.access_extended": { category: "school", rest: () => "extended the school's access" },
+
+  // Platform-scoped (school=None), so these never reach a school's own log.
+  // Catalogued anyway so the catalog matches audit/enums.py exactly.
+  "demo_request.created": { rest: (t) => `requested a demo: ${t}` },
+  "demo_request.status_updated": { rest: (t) => `updated the demo request from ${t}` },
 };

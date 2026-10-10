@@ -1,21 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { DetailField } from "@/components/shared/detail-field";
 import { ErrorState } from "@/components/shared/error-state";
+import { OffboardDialog, otherPersonasOf } from "@/components/shared/offboard-dialog";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 import { armDisplayName } from "@/lib/school/arm-display-name";
 import { formatDate } from "@/lib/text/format-date";
 import { TeacherSubjectAssignments } from "@/features/teaching-assignments/components/teacher-subject-assignments";
 
+import { useOffboardTeacher } from "../hooks/use-offboard-teacher";
 import { useTeacherDetail } from "../hooks/use-teacher-detail";
 import { teacherTypeLabel } from "../lib/teacher-type-label";
 
 export function StaffDetailPage({ id }: { id: string }) {
   const { data: teacher, isPending, isError, error } = useTeacherDetail(id);
+  const router = useRouter();
+  const canOffboard = useHasSchoolPermission("edit_staff");
+  const offboard = useOffboardTeacher(id);
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading teacher profile…</p>;
@@ -33,18 +40,32 @@ export function StaffDetailPage({ id }: { id: string }) {
         <ArrowLeft className="size-4" /> Back to teachers
       </Link>
 
-      <div className="flex items-center gap-4 rounded-xl border border-n-200 bg-white p-5">
-        <PersonAvatar firstName={user.first_name} lastName={user.last_name} photo={user.photo} className="size-14" />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="font-display text-xl font-bold text-ink truncate">
-              {user.first_name} {user.last_name}
-            </h1>
-            <ActiveBadge isActive={teacher.membership.is_active} />
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-n-200 bg-white p-5">
+        <div className="flex min-w-0 items-center gap-4">
+          <PersonAvatar firstName={user.first_name} lastName={user.last_name} photo={user.photo} className="size-14" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="font-display text-xl font-bold text-ink truncate">
+                {user.first_name} {user.last_name}
+              </h1>
+              <ActiveBadge isActive={teacher.membership.is_active} />
+            </div>
+            <p className="mt-0.5 text-sm text-n-500">{user.email}</p>
+            {user.phone_number && <p className="text-sm text-n-500">{user.phone_number}</p>}
           </div>
-          <p className="mt-0.5 text-sm text-n-500">{user.email}</p>
-          {user.phone_number && <p className="text-sm text-n-500">{user.phone_number}</p>}
         </div>
+        {/* edit_staff. Offboarding your own teacher persona is allowed: you
+            keep the admin access you're using to do it. */}
+        {canOffboard && (
+          <OffboardDialog
+            personName={`${user.first_name} ${user.last_name}`}
+            role="teacher"
+            consequence="They'll be removed as form teacher and from every subject they teach. Scores they entered and notes they wrote stay on record."
+            otherPersonas={otherPersonasOf(teacher.membership, "teacher")}
+            isPending={offboard.isPending}
+            onConfirm={(reason) => offboard.mutateAsync(reason).then(() => router.push("/staff"))}
+          />
+        )}
       </div>
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
