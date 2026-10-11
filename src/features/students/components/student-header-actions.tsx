@@ -32,7 +32,8 @@ export function StudentHeaderActions({ student }: { student: StudentDetail }) {
   if (!canEdit && !canDelete) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    // A fragment: ProfileHeaderCard owns the wrapping row.
+    <>
       {canEdit && isSyntheticEmail(student.user.email) && <ReissuePasswordDialog studentId={student.id} />}
       {canEdit && <EditNameDialog student={student} />}
       {canChangeStatus && (
@@ -61,6 +62,6 @@ export function StudentHeaderActions({ student }: { student: StudentDetail }) {
           onConfirm={() => remove.mutate(undefined, { onSuccess: () => router.push("/students") })}
         />
       )}
-    </div>
+    </>
   );
 }
