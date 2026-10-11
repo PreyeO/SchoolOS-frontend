@@ -9,7 +9,9 @@ import { formatDate } from "@/lib/text/format-date";
 import { formatNaira } from "@/lib/text/format-naira";
 
 import { useSchoolProfile } from "../hooks/use-school-profile";
+import { useSeatUsage } from "../hooks/use-seat-usage";
 import { AccessStatusBadge } from "./access-status-badge";
+import { SeatUsageMeter } from "./seat-usage-meter";
 import { UpdateCapacityDialog } from "./update-capacity-dialog";
 
 // Subscription & billing, as far as it exists.
@@ -23,6 +25,11 @@ export function SubscriptionPage() {
   // Same permission the endpoint enforces. An admin without it sees the state
   // but no control, rather than a button that 403s.
   const canManage = useHasSchoolPermission("manage_school_settings");
+  // Seats used are counted off the student directory, which needs
+  // view_students. Without it the page shows capacity alone, as before.
+  const canCountStudents = useHasSchoolPermission("view_students");
+  const { data: usage, isPending: usagePending } = useSeatUsage(canCountStudents);
+  const usageLoading = canCountStudents && usagePending;
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading…</p>;
@@ -85,20 +92,32 @@ export function SubscriptionPage() {
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
               <Users2 className="size-5 text-primary" />
             </span>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-ink">Student capacity</p>
-              <p className="mt-0.5 font-display text-2xl font-bold tabular-nums text-ink">
-                {school.student_capacity}
-              </p>
-              <p className="mt-1 max-w-md text-xs text-n-500">
-                The most students this school can hold. Adding students beyond it — including
-                by CSV import — is refused until capacity is raised.
-              </p>
+              {usage ? (
+                <div className="mt-1">
+                  <SeatUsageMeter usage={usage} capacity={school.student_capacity} />
+                </div>
+              ) : (
+                // No usage: still loading, the count failed, or this admin
+                // can't read the directory. Capacity alone is still true.
+                <>
+                  <p className="mt-0.5 font-display text-2xl font-bold tabular-nums text-ink">
+                    {school.student_capacity}
+                  </p>
+                  <p className="mt-1 max-w-md text-xs text-n-500">
+                    {usageLoading
+                      ? "Counting students…"
+                      : "The most students this school can hold. Adding students beyond it — including by CSV import — is refused until capacity is raised."}
+                  </p>
+                </>
+              )}
             </div>
           </div>
           {canManage && (
             <UpdateCapacityDialog
               school={school}
+              seatsUsed={usage ? usage.active + usage.suspended : undefined}
               trigger={
                 <Button type="button" variant="outline" size="sm">
                   Change
