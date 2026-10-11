@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { ActiveBadge } from "@/components/shared/active-badge";
 import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { ProfileHeaderCard } from "@/components/shared/profile-header-card";
 
 import { useStudentDetail } from "../hooks/use-student-detail";
 import { useCanAccess } from "@/lib/auth/use-can-access";
@@ -65,12 +66,12 @@ export function StudentDetailPage({ id }: { id: string }) {
         {canOpenDirectory ? "Back to students" : "Back to my students"}
       </Link>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-n-200 bg-white p-5">
-        <div className="flex items-center gap-4">
-          {/* The avatar itself is the photo control for anyone who may edit —
-              see EditStudentPhotoDialog. A reader who may not gets the plain
-              avatar, with no affordance promising an action they'd be refused. */}
-          {canEdit ? (
+      <ProfileHeaderCard
+        // The avatar itself is the photo control for anyone who may edit —
+        // see EditStudentPhotoDialog. A reader who may not gets the plain
+        // avatar, with no affordance promising an action they'd be refused.
+        avatar={
+          canEdit ? (
             <EditStudentPhotoDialog student={student} />
           ) : (
             <PersonAvatar
@@ -79,24 +80,22 @@ export function StudentDetailPage({ id }: { id: string }) {
               photo={studentPhoto(student)}
               className="size-14"
             />
-          )}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="font-display text-xl font-bold text-ink truncate">
-                {user.first_name} {user.last_name}
-              </h1>
-              {/* The account badge only when it's news. An active account
-                  alongside an enrolment badge adds nothing — both just mean "in
-                  good standing" — whereas a deactivated account sitting next to
-                  "Enrolled" is exactly the contradiction worth showing. */}
-              {!student.membership.is_active && <ActiveBadge isActive={false} />}
-              <EnrollmentStatusBadge status={student.enrollment_status} />
-            </div>
-            <p className="mt-0.5 text-sm text-n-500">{user.email}</p>
-          </div>
-        </div>
-        <StudentHeaderActions student={student} />
-      </div>
+          )
+        }
+        name={`${user.first_name} ${user.last_name}`}
+        // The account badge only when it's news. An active account alongside
+        // an enrolment badge adds nothing — both just mean "in good standing" —
+        // whereas a deactivated account sitting next to "Enrolled" is exactly
+        // the contradiction worth showing.
+        badges={
+          <>
+            {!student.membership.is_active && <ActiveBadge isActive={false} />}
+            <EnrollmentStatusBadge status={student.enrollment_status} />
+          </>
+        }
+        details={[user.email]}
+        actions={<StudentHeaderActions student={student} />}
+      />
 
       <MedicalAlerts student={student} />
 

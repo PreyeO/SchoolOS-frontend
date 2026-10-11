@@ -24,6 +24,9 @@ import { useUpdateCapacity } from "../hooks/use-update-capacity";
 interface Props {
   school: SchoolDetailResponse;
   trigger: React.ReactNode;
+  // Seats in use (see useSeatUsage), when known. The backend refuses a
+  // capacity below it; knowing it here turns that 400 into a stated floor.
+  seatsUsed?: number;
 }
 
 // Changing how many students the school is licensed for.
@@ -34,13 +37,14 @@ interface Props {
 // the authoritative number only exists in the response, by which point the
 // charge is already recorded. The response's own figure is then shown as the
 // confirmed one.
-export function UpdateCapacityDialog({ school, trigger }: Props) {
+export function UpdateCapacityDialog({ school, trigger, seatsUsed }: Props) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(String(school.student_capacity ?? ""));
   const update = useUpdateCapacity();
 
   const parsed = Number(value);
-  const isValid = Number.isInteger(parsed) && parsed >= 1;
+  const belowUsed = seatsUsed !== undefined && parsed < seatsUsed;
+  const isValid = Number.isInteger(parsed) && parsed >= 1 && !belowUsed;
   const unchanged = parsed === school.student_capacity;
   const estimate = isValid ? estimateProration(school, parsed) : null;
 
@@ -76,10 +80,18 @@ export function UpdateCapacityDialog({ school, trigger }: Props) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />
-            <p className="text-xs text-n-400">
-              Currently {school.student_capacity}. It can&rsquo;t be set below the number of
-              students already enrolled.
-            </p>
+            {belowUsed ? (
+              <p className="text-xs text-destructive">
+                {seatsUsed} students are using a seat, so capacity can&rsquo;t go below{" "}
+                {seatsUsed}.
+              </p>
+            ) : (
+              <p className="text-xs text-n-400">
+                Currently {school.student_capacity}
+                {seatsUsed !== undefined ? `, with ${seatsUsed} in use` : ""}. It can&rsquo;t be
+                set below the number of students using a seat.
+              </p>
+            )}
           </div>
 
           {estimate && (

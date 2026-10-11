@@ -2241,6 +2241,18 @@ checked line by line against the views and services.
   `is_active` goes false for a single-persona member), the Former parents tab,
   and that Edit Admission no longer sends status.
 
+**Seat usage on Subscription (2026-10-11).** Capacity now reads "350 / 500
+seats used" with a bar: amber from 90%, red when full, and the refusal stated
+outright. The capacity dialog shows the in-use count and blocks values below it
+before the server's 400. The backend's count (`_get_student_count`: active +
+suspended, terminal excluded) is only exposed on the platform financials route,
+so `getSeatUsage` rebuilds it from two `page_size=1` directory counts over the
+same queryset. That needs `view_students`; without it the page shows capacity
+alone, as before. Keyed under `["students"]` so every add, import, status
+change or delete refreshes it. **Backend ask:** a `student_count` on the school
+detail (it's already computed for financials) would replace the two requests.
+Not verified live (Docker down); `tsc` + `eslint` clean.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
