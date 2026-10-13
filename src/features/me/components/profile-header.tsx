@@ -2,6 +2,7 @@ import { BadgeCheck } from "lucide-react";
 
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { ActiveBadge } from "@/components/shared/active-badge";
+import { EditTeacherPhotoDialog } from "@/features/staff/components/edit-teacher-photo-dialog";
 import type { MeResponse } from "../types";
 import { activePersonas } from "../lib/personas";
 
@@ -12,12 +13,24 @@ export function ProfileHeader({ me }: { me: MeResponse }) {
 
   return (
     <div className="flex flex-wrap items-start gap-4 rounded-xl border border-n-200 bg-white p-5">
-      <PersonAvatar
-        firstName={user.first_name}
-        lastName={user.last_name}
-        photo={user.photo}
-        className="size-16"
-      />
+      {/* A teacher can set their own photo (PATCH /teachers/:id/ photo_key);
+          nobody else has a route for it, so they get the plain avatar. */}
+      {me.teacher ? (
+        <EditTeacherPhotoDialog
+          teacherId={me.teacher.id}
+          firstName={user.first_name}
+          lastName={user.last_name}
+          photo={user.photo}
+          className="size-16"
+        />
+      ) : (
+        <PersonAvatar
+          firstName={user.first_name}
+          lastName={user.last_name}
+          photo={user.photo}
+          className="size-16"
+        />
+      )}
 
       <div className="min-w-0 flex-1">
         <h2 className="flex flex-wrap items-center gap-2 font-display text-lg font-semibold text-ink">

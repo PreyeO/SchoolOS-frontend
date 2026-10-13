@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
 
 import { useDeleteStudent } from "../hooks/use-student-lifecycle";
+import { useCanEditStudent } from "../hooks/use-update-student";
 import { isTerminalStatus } from "../lib/enrollment-status";
 import { isSyntheticEmail } from "../lib/is-synthetic-email";
 import type { StudentDetail } from "../types";
@@ -15,12 +16,15 @@ import { ChangeStatusDialog } from "./change-status-dialog";
 import { EditNameDialog } from "./edit-name-dialog";
 import { ReissuePasswordDialog } from "./reissue-password-dialog";
 
-// The student header's account-level actions. None is open to a teacher:
-// reissue, name and status need edit_students, delete needs delete_students.
-// HasSchoolPermission hard-requires is_admin, so every one would 403 for a
-// teacher and is hidden instead.
+// The student header's account-level actions. Two different gates:
+//   - Correct name rides the profile PATCH, so it follows CanEditStudentProfile:
+//     an admin with edit_students OR any teacher (useCanEditStudent).
+//   - Reissue and status need edit_students, delete needs delete_students.
+//     HasSchoolPermission hard-requires is_admin, so a teacher would 403 on
+//     each and they're hidden instead.
 export function StudentHeaderActions({ student }: { student: StudentDetail }) {
   const router = useRouter();
+  const canEditProfile = useCanEditStudent();
   const canEdit = useHasSchoolPermission("edit_students");
   const canDelete = useHasSchoolPermission("delete_students");
   const remove = useDeleteStudent(student.id);
@@ -29,13 +33,13 @@ export function StudentHeaderActions({ student }: { student: StudentDetail }) {
   // picker. Shown only while there's somewhere to go.
   const canChangeStatus = canEdit && !isTerminalStatus(student.enrollment_status);
 
-  if (!canEdit && !canDelete) return null;
+  if (!canEditProfile && !canEdit && !canDelete) return null;
 
   return (
     // A fragment: ProfileHeaderCard owns the wrapping row.
     <>
       {canEdit && isSyntheticEmail(student.user.email) && <ReissuePasswordDialog studentId={student.id} />}
-      {canEdit && <EditNameDialog student={student} />}
+      {canEditProfile && <EditNameDialog student={student} />}
       {canChangeStatus && (
         <ChangeStatusDialog
           subject={name}

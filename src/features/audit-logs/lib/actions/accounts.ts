@@ -27,8 +27,14 @@ export const ACCOUNTS_ACTIONS: Record<string, ActionMeta> = {
   // the point, since this covers medical and personal details.
   "student_profile.updated": { category: "students", rest: (t) => `updated student ${t}` },
   "student_profile.password_reissued": { category: "students", rest: (t) => `reissued the password for ${t}` },
-  // Repr "ADM (First Last)" — the name AFTER the fix; the diff shows the old one.
+  // No longer emitted since 2026-10-13 (update-name/ was removed; renames are
+  // now a student_profile.updated with a name diff). Still in the backend enum,
+  // and older log rows carry it. Repr "ADM (First Last)".
   "student_profile.name_updated": { category: "students", rest: (t) => `corrected the name of ${t}` },
+  // Repr "First Last" or "First Last (EMPLOYEE_ID)". Covers both the user and
+  // staff-record halves of the PATCH in one diff; the actor may be the
+  // teacher themselves.
+  "teacher_profile.updated": { category: "staff", rest: (t) => `updated teacher ${t}` },
   // Repr "First Last (ADM): active → withdrawn" — no "@ School", so the colon
   // survives cleanTargetRepr and the move reads whole. The reason is in the diff.
   "student_profile.status_updated": { category: "students", rest: (t) => `changed the status of ${t}` },

@@ -68,6 +68,9 @@ export const INVITE_ENDPOINTS = {
 // teacher -> edit_staff, admin -> manage_roles, parent -> add_students.
 export const TEACHER_ENDPOINTS = {
   LIST: () => `/api/teachers/`,
+  // GET needs view_staff. PATCH (2026-10-13, no PUT) is CanEditTeacherProfile:
+  // an admin with edit_staff sends user + staff-record fields; the teacher
+  // themselves sends user fields only (a staff-record field 403s the lot).
   DETAIL: (id: string) => `/api/teachers/${id}/`,
   // Unassigns every class-teacher and subject assignment, then DELETES the
   // teacher profile — DETAIL 404s afterwards.

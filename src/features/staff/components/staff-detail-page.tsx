@@ -18,11 +18,16 @@ import { TeacherSubjectAssignments } from "@/features/teaching-assignments/compo
 import { useOffboardTeacher } from "../hooks/use-offboard-teacher";
 import { useTeacherDetail } from "../hooks/use-teacher-detail";
 import { teacherTypeLabel } from "../lib/teacher-type-label";
+import { EditTeacherPhotoDialog } from "./edit-teacher-photo-dialog";
+import { TeacherEditButton } from "./teacher-edit-button";
 
 export function StaffDetailPage({ id }: { id: string }) {
   const { data: teacher, isPending, isError, error } = useTeacherDetail(id);
   const router = useRouter();
-  const canOffboard = useHasSchoolPermission("edit_staff");
+  // edit_staff gates offboarding AND editing someone else's profile. (A
+  // teacher can't open this page at all — GET needs view_staff — so their
+  // own edits live on /profile.)
+  const canManage = useHasSchoolPermission("edit_staff");
   const offboard = useOffboardTeacher(id);
 
   if (isPending) {
@@ -42,22 +47,31 @@ export function StaffDetailPage({ id }: { id: string }) {
       </Link>
 
       <ProfileHeaderCard
-        avatar={<PersonAvatar firstName={user.first_name} lastName={user.last_name} photo={user.photo} className="size-14" />}
+        avatar={
+          canManage ? (
+            <EditTeacherPhotoDialog teacherId={teacher.id} firstName={user.first_name} lastName={user.last_name} photo={user.photo} />
+          ) : (
+            <PersonAvatar firstName={user.first_name} lastName={user.last_name} photo={user.photo} className="size-14" />
+          )
+        }
         name={`${user.first_name} ${user.last_name}`}
         badges={<ActiveBadge isActive={teacher.membership.is_active} />}
         details={[user.email, user.phone_number]}
-        // edit_staff. Offboarding your own teacher persona is allowed: you
-        // keep the admin access you're using to do it.
+        // Offboarding your own teacher persona is allowed: you keep the admin
+        // access you're using to do it.
         actions={
-          canOffboard && (
-            <OffboardDialog
-              personName={`${user.first_name} ${user.last_name}`}
-              role="teacher"
-              consequence="They'll be removed as form teacher and from every subject they teach. Scores they entered and notes they wrote stay on record."
-              otherPersonas={otherPersonasOf(teacher.membership, "teacher")}
-              isPending={offboard.isPending}
-              onConfirm={(reason) => offboard.mutateAsync(reason).then(() => router.push("/staff"))}
-            />
+          canManage && (
+            <>
+              <TeacherEditButton teacher={teacher} />
+              <OffboardDialog
+                personName={`${user.first_name} ${user.last_name}`}
+                role="teacher"
+                consequence="They'll be removed as form teacher and from every subject they teach. Scores they entered and notes they wrote stay on record."
+                otherPersonas={otherPersonasOf(teacher.membership, "teacher")}
+                isPending={offboard.isPending}
+                onConfirm={(reason) => offboard.mutateAsync(reason).then(() => router.push("/staff"))}
+              />
+            </>
           )
         }
       />

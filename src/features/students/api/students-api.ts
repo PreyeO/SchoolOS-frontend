@@ -33,7 +33,8 @@ export async function getStudentDetail(id: string): Promise<StudentDetail> {
 // permission string alone.
 //
 // admission_number is NOT editable and isn't in the whitelist; it's the
-// student's identity across the school.
+// student's identity across the school. first_name/last_name ARE accepted
+// (since 2026-10-13, replacing update-name/) and land on `user`.
 export async function updateStudent(
   id: string,
   payload: Record<string, unknown>,
@@ -51,14 +52,6 @@ export async function reissueStudentPassword(id: string, password: string): Prom
 // and the whole batch 400s with nothing written.
 export async function bulkUpdateStudentStatus(payload: BulkStatusUpdatePayload): Promise<BulkStatusUpdateResult> {
   const { data } = await apiClient.post<BulkStatusUpdateResult>(STUDENT_ENDPOINTS.BULK_UPDATE_STATUS(), payload);
-  return data;
-}
-
-export async function updateStudentName(
-  id: string,
-  payload: { first_name: string; last_name: string },
-): Promise<StudentDetail> {
-  const { data } = await apiClient.patch<StudentDetail>(STUDENT_ENDPOINTS.UPDATE_NAME(id), payload);
   return data;
 }
 
