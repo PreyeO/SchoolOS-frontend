@@ -6,18 +6,19 @@ import { SCHOOL_LEVELS } from "@/data/school-levels";
 import { formatIsoDate } from "@/lib/text/format-date";
 
 import { useMe } from "../hooks/use-me";
+import { EditOwnDetailsButton } from "./edit-own-details-button";
 import { ProfileCard } from "./profile-card";
 import { ProfileHeader } from "./profile-header";
 import { ProfileRoleCards } from "./profile-role-card";
 
 // The signed-in person's own record.
 //
-// Read-only by necessity as much as by choice: /api/users/ is POST-only and
-// there is no self-update endpoint, so nothing here can be edited yet. That
-// makes this a page about what the school already knows about you, which is
-// also what it should be — an account settings page promising password and
-// notification controls, as the old placeholder did, would be promising
-// screens that don't exist.
+// Mostly read-only by necessity: /api/users/ is POST-only, and the only
+// self-update route is the teacher's (PATCH /teachers/:id/, 2026-10-13), which
+// covers name, phone and photo. So a teacher gets Edit on Account and a photo
+// control on the avatar; admins, parents and students still get a page about
+// what the school knows about them. No password or notification controls —
+// promising screens that don't exist is worse than their absence.
 //
 // Everything comes from the /me the app already has cached, so this page adds
 // no request of its own.
@@ -51,7 +52,7 @@ export function ProfilePage() {
 
       <ProfileHeader me={me} />
 
-      <ProfileCard title="Account">
+      <ProfileCard title="Account" action={<EditOwnDetailsButton me={me} />}>
         <DetailField label="First name" value={me.user.first_name} />
         <DetailField label="Last name" value={me.user.last_name} />
         <DetailField label="Email" value={me.user.email} />

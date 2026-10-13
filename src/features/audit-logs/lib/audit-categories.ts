@@ -6,6 +6,7 @@ import {
   FileCheck2,
   GraduationCap,
   HandCoins,
+  IdCard,
   LayoutGrid,
   Link2,
   Mail,
@@ -42,7 +43,8 @@ export type AuditCategoryKey =
   | "fees"
   | "payments"
   | "announcements"
-  | "offboarding";
+  | "offboarding"
+  | "staff";
 
 // Purely presentational: gives each entry in the timeline an icon and a
 // hover label so the log can be scanned by kind of change. Filtering is done
@@ -79,6 +81,8 @@ export const AUDIT_CATEGORIES: AuditCategory[] = [
   // Teachers, admins and parents leaving, and memberships switched off as a
   // result. Students leaving are status changes under "students".
   { key: "offboarding", label: "Offboarding", icon: UserMinus },
+  // Edits to a teacher's own record (name, phone, photo, staff fields).
+  { key: "staff", label: "Teacher records", icon: IdCard },
 ];
 
 export function categoryByKey(key: AuditCategoryKey | undefined): AuditCategory | undefined {

@@ -47,6 +47,26 @@ export interface TeacherDetail {
   created_at: string;
 }
 
+// PATCH /teachers/:id/ body. Send only what changed. The first group is the
+// teacher's User; the second is the staff record, which needs edit_staff —
+// a teacher editing themselves who includes any of it gets a 403 and
+// nothing is saved. phone_number "" clears it; photo_key "" removes the photo.
+export interface TeacherUserFields {
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  photo_key?: string;
+}
+
+export interface TeacherStaffFields {
+  employee_id?: string;
+  qualification?: string;
+  specialization?: string;
+  teacher_type?: TeacherType;
+}
+
+export type TeacherUpdatePayload = TeacherUserFields & TeacherStaffFields;
+
 export interface TeacherFilters {
   search?: string;
   teacher_type?: TeacherType;

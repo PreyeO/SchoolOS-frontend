@@ -5,7 +5,8 @@ import { COUNTRIES } from "@/data/countries";
 // Mirrors StudentProfileUpdateSerializer's whitelist. admission_number and
 // membership are excluded server-side and so are absent here — an admission
 // number is the student's identity across the school and is deliberately fixed
-// after creation.
+// after creation. first_name/last_name are in the whitelist too (2026-10-13)
+// but edited from EditNameDialog, not these card forms.
 //
 // enrollment_status left the whitelist on 2026-10-09 and must never come back
 // here: DRF drops unknown fields without a word, so sending it would show

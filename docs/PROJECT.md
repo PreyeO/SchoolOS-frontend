@@ -2253,6 +2253,37 @@ change or delete refreshes it. **Backend ask:** a `student_count` on the school
 detail (it's already computed for financials) would replace the two requests.
 Not verified live (Docker down); `tsc` + `eslint` clean.
 
+**Teacher profile update + student names on the profile PATCH (2026-10-13).**
+Backend `development` `2e221e5`. Handoff:
+`SchoolOS-backend/docs/teacher-profile-update-frontend-handoff.md`.
+- **`students/:id/update-name/` is gone.** `EditNameDialog` now sends
+  `first_name`/`last_name` on the ordinary `PATCH /students/:id/`, so it
+  follows that route's gate: `useCanEditStudent` (edit_students admin OR any
+  teacher). A teacher sees "Correct name" now. `student_profile.name_updated`
+  is no longer emitted (renames are a `student_profile.updated` diff), but it
+  stays catalogued for older rows.
+- **`PATCH /teachers/:id/`**, one call for User fields (name, phone, photo)
+  and staff-record fields (employee ID, qualification, specialization, type).
+  `EditTeacherDialog` serves both callers: **admin** mode on `/staff/:id`
+  (edit_staff, everything) and **self** mode on `/profile`. A teacher can't
+  open `/staff/:id` (GET needs view_staff), so self-edit lives on `/profile`
+  (name and phone only). `toTeacherPayload` sends only changed keys, and in
+  self mode never a staff-record key, because one would 403 the whole request.
+- **Teacher photos** are `User.photo_key` via the same PATCH. That's the first
+  write path for user photos, so the `user-photos` upload prefix is enabled
+  (it was held back to avoid orphaned uploads). `EditTeacherPhotoDialog` is
+  the avatar-as-control, on `/staff/:id` and on `/profile`. Removing a photo
+  sends `""` (the serializer allows blank, not null).
+- **teacher_type guards** (can't go form-only while teaching subjects, or
+  subject-only while leading a class; `both` always allowed) are previewed in
+  the dialog as a warning, **not** a disabled Save. The detail's `class_arms`
+  is active-only like the server's check, but the assignments list includes
+  retired arms, which the server ignores, so a hard block could be wrong. The
+  server's 400 is the final word and is toasted verbatim.
+- `teacher_profile.updated` catalogued under a new **Teacher records**
+  category. Audit catalog: 98/98, zero drift.
+- Not verified live (Docker down). `tsc`, `eslint`, `next build` are clean.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
@@ -2312,10 +2343,11 @@ What still needs backend work the frontend cannot do alone. Re-verified
 - **Platform admins receive full student records** for every school — name,
   email, gender, photo, class. The panel now displays only admission number and
   class, but that's display-only. See `docs/asks/platform-student-exposure.md`.
-- **Profile update endpoints don't exist.** `TeacherProfile`/`ParentProfile`/
-  `SchoolAdminProfile` have no update route, and `/api/users/` is POST-only —
-  so nobody can edit their own name or phone. That's why `/profile` is
-  read-only.
+- **Only teachers can edit their own profile.** `PATCH /teachers/:id/`
+  (2026-10-13) covers a teacher's name, phone and photo. `ParentProfile` and
+  `SchoolAdminProfile` still have no update route and `/api/users/` is
+  POST-only, so an admin-only, parent or student account still can't change
+  its own name, phone or photo, and `/profile` is read-only for them.
 - **`school_os_web` will not boot without four AWS env vars.**
   `config/settings/base.py:161-164` reads `AWS_ACCESS_KEY_ID`,
   `AWS_SECRET_ACCESS_KEY`, `AWS_STORAGE_BUCKET_NAME` and `AWS_S3_REGION_NAME`

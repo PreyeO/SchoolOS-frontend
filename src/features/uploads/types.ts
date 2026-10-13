@@ -13,12 +13,11 @@
 // backend derives owner_id from the caller's school itself, so these are the
 // only part of the key a client chooses.
 //
-// `user-photos` is deliberately absent: the presigned endpoint accepts it and
-// User.photo is already returned on user serializers, but there is NO attach
-// endpoint for User.photo_key. Requesting one would produce an orphaned S3
-// object and nowhere to put the key. Add it here when the backend adds the
-// write path, and not before.
-export type UploadPrefix = "school-logos" | "student-photos";
+// `user-photos` was held back until User.photo_key had a write path, so no
+// upload could be orphaned. It has one since 2026-10-13: PATCH /teachers/:id/
+// accepts photo_key. That's still the ONLY writer — admins and parents have no
+// photo route — so request this prefix only on the way to that PATCH.
+export type UploadPrefix = "school-logos" | "student-photos" | "user-photos";
 
 export interface PresignedUploadRequest {
   prefix: UploadPrefix;

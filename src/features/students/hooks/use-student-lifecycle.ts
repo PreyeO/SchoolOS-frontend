@@ -5,11 +5,11 @@ import { toast } from "sonner";
 
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
-import { bulkUpdateStudentStatus, deleteStudent, updateStudentName } from "../api/students-api";
+import { bulkUpdateStudentStatus, deleteStudent } from "../api/students-api";
 import { enrollmentStatusLabel } from "../lib/labels";
 import type { BulkStatusUpdatePayload } from "../types";
 
-// Status, name and delete all change what the directory, detail page, roster
+// Status and delete both change what the directory, detail page, roster
 // and promotion screens show, so each one invalidates the whole ["students"]
 // tree rather than guessing which keys are affected.
 
@@ -23,19 +23,6 @@ export function useBulkUpdateStudentStatus() {
       const n = result.applied.length;
       const who = n === 1 ? "1 student" : `${n} students`;
       toast.success(`${who} marked ${enrollmentStatusLabel(payload.status).toLowerCase()}`);
-    },
-    onError: (error) => toast.error(getErrorMessage(error)),
-  });
-}
-
-export function useUpdateStudentName(id: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: { first_name: string; last_name: string }) => updateStudentName(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      toast.success("Name corrected");
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });

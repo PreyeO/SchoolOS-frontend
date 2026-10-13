@@ -4,16 +4,15 @@
 
 export const STUDENT_ENDPOINTS = {
   LIST: () => `/api/students/`,
-  // GET, PATCH (profile whitelist — no longer accepts enrollment_status), and
-  // DELETE (delete_students; 400s unless the profile has no history at all).
+  // GET, PATCH (profile whitelist plus first_name/last_name since 2026-10-13 —
+  // no longer accepts enrollment_status), and DELETE (delete_students; 400s
+  // unless the profile has no history at all).
   DETAIL: (id: string) => `/api/students/${id}/`,
   REISSUE_PASSWORD: (id: string) => `/api/students/${id}/reissue-password/`,
   // The only way to change enrollment_status. edit_students; one status + one
   // reason per batch; all-or-nothing — any bad id or illegal move 400s the lot.
   BULK_UPDATE_STATUS: () => `/api/students/bulk-update-status/`,
-  // PATCH first_name and/or last_name. edit_students. A data-entry fix, kept
-  // apart from the profile PATCH because a teacher can reach that one.
-  UPDATE_NAME: (id: string) => `/api/students/${id}/update-name/`,
+  // (update-name/ was removed 2026-10-13 — names go on DETAIL's PATCH.)
   // Enrolls into a class arm for the CURRENT session — used for first placement,
   // mid-session transfers and promotions alike. Needs edit_students, and 400s if
   // no period is marked is_current, or if the student is already in that arm this

@@ -3,14 +3,20 @@
 // read as a different app.
 export function ProfileCard({
   title,
+  action,
   children,
 }: {
   title: string;
+  // e.g. the Account card's Edit, offered only where an update route exists.
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-n-200 bg-white p-5">
-      <h3 className="text-sm font-semibold text-ink">{title}</h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-ink">{title}</h3>
+        {action}
+      </div>
       <div className="mt-3 grid gap-4 sm:grid-cols-2">{children}</div>
     </div>
   );
