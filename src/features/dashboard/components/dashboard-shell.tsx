@@ -48,7 +48,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div ref={setShellEl} data-dashboard-shell className="flex min-h-screen bg-background" style={shellStyle}>
           <AppSidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
           <div className="flex flex-1 flex-col min-w-0">
-            <AppTopbar open={menuOpen} setOpen={setMenuOpen} />
+            <AppTopbar
+              open={menuOpen}
+              setOpen={setMenuOpen}
+              hasMoreTab={tabs.some((t) => t.href === "more")}
+            />
             {/* With a bottom bar, the page needs room beneath it (bar ~56px +
                 breathing space) or its last row sits under the bar. lg and up
                 have no bar, so the usual padding returns there. */}

@@ -2316,8 +2316,15 @@ existing routes**:
 
 **Phone bottom bar for parents and teachers (2026-10-14).** Below `lg` (the
 same breakpoint where the sidebar becomes a drawer), parents get Home ·
-Results · Fees · Attendance · Notices, and teachers get Home · Register ·
-Scores · Classes · More. Admins and students keep the drawer only.
+Results · Fees · Notices · More, and teachers get Home · Register · Scores ·
+Classes · More. A parent's Attendance and Child profile live under More.
+Admins and students keep the drawer only.
+- **No hamburger for bar users.** When the bar has a More tab, `AppTopbar`
+  (`hasMoreTab`) drops the ☰ below `lg`, since two buttons opening one drawer
+  read as two menus. The freed space shows the **school's logo and name**
+  instead of the page title, which the page's own h1 repeats directly below.
+  The phone version is deliberately not a heading. At `lg`+ the topbar is
+  unchanged (page title, sidebar alongside).
 - **Config** is `data/nav/mobile-tabs.ts`: hrefs plus short labels.
   `useMobileTabs` resolves them against the live nav groups, borrowing each
   item's icon. A tab whose route isn't in the persona's nav is dropped, so the

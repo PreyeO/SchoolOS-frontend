@@ -37,7 +37,8 @@ export function MobileTabBar({ tabs, onOpenMore }: { tabs: ResolvedTab[]; onOpen
   }, [typing]);
 
   // "More" is active when the current screen isn't one of the tabs, so the
-  // bar always says where you are — e.g. Broadsheet lights up More.
+  // bar always says where you are — e.g. Broadsheet, or a parent's
+  // Attendance, lights up More.
   const onATab = tabs.some((t) => t.href !== "more" && isNavActive(t.href, pathname));
 
   return (
