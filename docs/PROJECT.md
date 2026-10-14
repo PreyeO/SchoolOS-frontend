@@ -2284,6 +2284,36 @@ Backend `development` `2e221e5`. Handoff:
   category. Audit catalog: 98/98, zero drift.
 - Not verified live (Docker down). `tsc`, `eslint`, `next build` are clean.
 
+**Platform overview rebuilt (2026-10-14).** `/platform` went from three tiles
+plus "needs attention" to a real picture of the business, using **only
+existing routes**:
+- **Headline:** schools (with subscribed / trial / expired split), students
+  (with licensed seats), teachers (plus school admins), parents, and reach
+  (states and cities). The projected term revenue moved to a smaller figure
+  in the header.
+- **Cards:** Needs attention (unchanged logic, its own component) · Schools
+  (biggest first, seats used vs capacity) · Demo requests by stage, with "new"
+  emphasised · Reach by state (ranked, one bar scale) · Platform mix (access
+  split, levels served).
+- **Sources:** `buildPlatformReach` derives students, capacity, states,
+  cities, access and levels from the one financials payload. Teachers,
+  parents, admins and the four demo stages are `page_size=1` list counts
+  (`platform-stats-api.ts`), all `is_active=true`. Each count is `null` on
+  failure, never 0, because they're separate platform permissions and "no
+  access" must not read as "nobody". Cities are de-duplicated per state,
+  case- and space-insensitively.
+- **Students = sum of `student_count`** (enrolled + suspended). Students who
+  have left aren't in it.
+- **Backend asks, none blocking:** (1) a single platform stats endpoint
+  would replace the seven count requests and could add per-school teacher
+  counts, which today would mean one request per school. (2) **Usage**:
+  logins, registers marked and scores entered per week. That's the real
+  "are schools actually using it" signal, and nothing records it in a
+  queryable form today. (3) Expiry dates on the financials rows, so
+  "expiring soon" works without a detail request per school.
+- Not verified live (Docker down). The aggregation was run against sample
+  rows; `tsc`, `eslint`, `build` clean.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
