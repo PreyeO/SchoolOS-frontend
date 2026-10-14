@@ -82,7 +82,7 @@ export function ChildProfilePage() {
               </div>
 
               <div className="rounded-xl border border-n-200 bg-white p-5">
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <DetailField
                     label="Admission number"
                     value={selected.child!.admission_number}

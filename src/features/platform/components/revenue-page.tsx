@@ -34,7 +34,7 @@ export function PlatformRevenuePage() {
         </p>
       </div>
 
-      <dl className="grid gap-3 sm:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Total label="Schools" value={String(data.school_count)} />
         <Total label="Subscribed" value={String(data.subscribed_school_count)} />
         <Total

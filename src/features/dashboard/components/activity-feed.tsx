@@ -38,8 +38,13 @@ export function ActivityFeed() {
       ) : data && data.length > 0 ? (
         <ul className="space-y-3">
           {data.map((item) => (
-            <li key={item.id} className="text-sm">
-              <p className="text-ink leading-snug">{item.text}</p>
+            <li key={item.id} className="min-w-0 text-sm">
+              {/* Entries name people by email ("linked qa.four@example.com -
+                  preshsuku6@gmail.com"), and an email has no break points, so
+                  it can only wrap if told it may break anywhere. Two lines at
+                  most: a digest row shouldn't grow a card unboundedly — the
+                  full entry is one click away in the Audit Log. */}
+              <p className="line-clamp-2 leading-snug text-ink wrap-break-word">{item.text}</p>
               <p className="text-xs text-n-400 mt-0.5">{item.timestamp}</p>
             </li>
           ))}

@@ -6,7 +6,7 @@ export function FAQ() {
   return (
     <section className="bg-paper py-12 md:py-24">
       <Container>
-        <div className="grid gap-8 md:gap-16 lg:grid-cols-[1fr_2fr] lg:gap-24 items-start">
+        <div className="grid grid-cols-1 gap-8 md:gap-16 lg:grid-cols-[1fr_2fr] lg:gap-24 items-start">
           <div>
             <SectionLabel className="mb-4 text-n-500">FAQ</SectionLabel>
             <h2 className="font-display text-3xl md:text-4xl font-semibold text-ink leading-tight">

@@ -48,7 +48,7 @@ export function Footer() {
   return (
     <footer className="bg-ink text-paper/60 border-t border-paper/10">
       <Container>
-        <div className="py-10 md:py-14 grid gap-8 md:gap-10 md:grid-cols-[2fr_1fr_1fr]">
+        <div className="py-10 md:py-14 grid grid-cols-1 gap-8 md:gap-10 md:grid-cols-[2fr_1fr_1fr]">
           <div>
             <p className="font-display text-xl font-semibold text-paper mb-3">
               School<span className="text-brand">OS</span>

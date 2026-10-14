@@ -46,7 +46,7 @@ export function MyClassesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {classes.map((klass) => (
             <div key={klass.classArmId} className="flex flex-col rounded-xl border border-n-200 bg-white p-4">
               <div className="flex items-start justify-between gap-2">
@@ -105,16 +105,23 @@ export function MyClassesPage() {
                   non-empty. Side by side, not stacked, when both apply —
                   two short labels read fine at half width and it keeps the
                   card from growing taller just because a teacher happens to
-                  hold both roles in it. */}
+                  hold both roles in it.
+
+                  flex-wrap + basis-32: side by side when the card has room,
+                  stacked when it doesn't. Buttons never shrink below their
+                  label (whitespace-nowrap), so in the 3-column layout on a
+                  ~1024–1280px laptop, where a card is ~230px, "Take register"
+                  + "Enter scores" (~270px) used to push the second button out
+                  past the card's edge. */}
               {(klass.isFormClass || klass.subjects.length > 0) && (
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {klass.isFormClass && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       asChild
-                      className="flex-1"
+                      className="flex-1 basis-32"
                     >
                       <Link href={`/attendance?arm=${klass.classArmId}`}>
                         <ClipboardCheck className="size-3.5 mr-1.5" />
@@ -128,7 +135,7 @@ export function MyClassesPage() {
                       variant="outline"
                       size="sm"
                       asChild
-                      className="flex-1"
+                      className="flex-1 basis-32"
                     >
                       {/* No ?arm= — score entry has no deep-link support yet
                           (unlike attendance), so this lands on the picker's

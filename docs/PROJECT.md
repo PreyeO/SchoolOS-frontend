@@ -2318,7 +2318,17 @@ existing routes**:
 same breakpoint where the sidebar becomes a drawer), parents get Home ·
 Results · Fees · Notices · More, and teachers get Home · Register · Scores ·
 Classes · More. A parent's Attendance and Child profile live under More.
-Admins and students keep the drawer only.
+**Extended the same day to students and admins.** Students get Home ·
+Results · Fees · Notices · More. Admins get a **priority list**: Students,
+Fees, Review, Notices. `useMobileTabs` drops tabs the role can't open, keeps
+the first `MAX_LINK_TABS` (4), then adds More. A full role gets Students ·
+Fees · Review, a fees-only role gets Fees · Review · Notices, and a roleless
+admin gets Review · Notices (no gap, no tab that 403s). Checked against
+`getNavGroupsForPersonas` for each role shape, and live as FGC's Owner and a
+real student. While `/me` loads, permissions are unknown and all tabs count
+as allowed (same as the sidebar), so a restricted role's bar settles once.
+The order came from "what admins do on a phone": look-ups and approvals,
+not setup. Revisit it with what training shows they actually open.
 - **No hamburger for bar users.** When the bar has a More tab, `AppTopbar`
   (`hasMoreTab`) drops the ☰ below `lg`, since two buttons opening one drawer
   read as two menus. The freed space shows the **school's logo and name**

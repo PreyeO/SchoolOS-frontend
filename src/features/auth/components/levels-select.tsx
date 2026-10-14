@@ -24,7 +24,7 @@ export function LevelsSelect({ value, onChange, error }: LevelsSelectProps) {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {SCHOOL_LEVELS.map((level) => {
           const checked = value.includes(level.value as SchoolLevel);
           return (

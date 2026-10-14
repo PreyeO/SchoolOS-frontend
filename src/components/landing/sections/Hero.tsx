@@ -20,7 +20,7 @@ export function Hero() {
       />
 
       <Container className="relative">
-        <div className="grid lg:grid-cols-[1fr_440px] gap-12 xl:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-12 xl:gap-20 items-center">
           {/* Left: copy */}
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.1em] uppercase text-brand mb-5 md:mb-7">

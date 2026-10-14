@@ -10,7 +10,7 @@ export function PainRelief() {
       <Container>
         <SectionLabel className="mb-6 md:mb-10 text-paper">{PAIN_RELIEF.eyebrow}</SectionLabel>
 
-        <div className="grid gap-8 md:gap-16 lg:grid-cols-2 lg:gap-24 items-start">
+        <div className="grid grid-cols-1 gap-8 md:gap-16 lg:grid-cols-2 lg:gap-24 items-start">
           <div>
             <p className="font-display text-3xl md:text-4xl xl:text-5xl font-semibold leading-tight text-paper/70">
               {PAIN_RELIEF.pain}

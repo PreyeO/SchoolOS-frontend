@@ -35,7 +35,7 @@ export function MedicalAlerts({ student }: { student: StudentDetail }) {
         <TriangleAlert className="size-4 shrink-0 text-clay" />
         Medical notes
       </p>
-      <dl className="mt-2.5 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+      <dl className="mt-2.5 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
         {alerts.map((alert) => (
           <div key={alert.label}>
             <dt className="text-xs font-medium text-n-500">{alert.label}</dt>

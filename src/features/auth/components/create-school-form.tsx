@@ -65,7 +65,7 @@ export function CreateSchoolForm() {
     <form onSubmit={handleSubmit((v) => mutate(v))} noValidate className="space-y-8">
       <Section>
         <SectionLabel>School details</SectionLabel>
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FieldWrapper id="name" label="School name" error={errors.name?.message} required>
             <Input id="name" autoComplete="organization" {...register("name")} />
           </FieldWrapper>

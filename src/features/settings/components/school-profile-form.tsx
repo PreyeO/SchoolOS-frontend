@@ -68,7 +68,7 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
         <FieldWrapper id="address" label="Address" error={errors.address?.message}>
           <Input id="address" {...register("address")} />
         </FieldWrapper>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <FieldWrapper id="city" label="City" error={errors.city?.message}>
             <Input id="city" {...register("city")} />
           </FieldWrapper>
@@ -103,7 +103,7 @@ export function SchoolProfileForm({ school }: { school: SchoolDetailResponse }) 
           />
         </FieldWrapper>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="space-y-3">
             <p className="font-medium text-ink">Primary colour</p>
             <Controller

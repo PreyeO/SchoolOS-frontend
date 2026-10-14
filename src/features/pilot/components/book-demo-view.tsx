@@ -19,7 +19,7 @@ export function BookDemoView() {
   return (
     <section className="py-14 md:py-20">
       <Container>
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-16">
           <BookDemoIntro />
 
           <div className="lg:pt-1">

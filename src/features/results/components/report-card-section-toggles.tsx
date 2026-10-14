@@ -29,7 +29,7 @@ export function ReportCardSectionToggles({
         Turn off anything your school doesn&rsquo;t report. The school name, logo and motto
         always print.
       </p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {sections.map((section) => {
           const on = enabled.includes(section.key);
           return (

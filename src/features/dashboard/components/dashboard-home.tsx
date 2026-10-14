@@ -34,7 +34,12 @@ export function DashboardHome() {
       <QuickActions />
       <ResultsProgressCard />
       <OverviewCharts />
-      <div className="grid lg:grid-cols-2 gap-4">
+      {/* grid-cols-1, not an implicit track: an implicit column is sized
+          `auto`, so one long unbreakable line (a notice preview is
+          white-space: nowrap, an email in an activity entry) widened the whole
+          column past the screen on phones instead of letting truncate work.
+          grid-cols-1 is minmax(0, 1fr), which lets the cards shrink. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ActivityFeed />
         <RecentAnnouncements />
       </div>

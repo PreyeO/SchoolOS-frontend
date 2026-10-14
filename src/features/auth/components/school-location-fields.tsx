@@ -23,7 +23,7 @@ export function SchoolLocationFields({ register, errors }: Props) {
     <>
       <Section>
         <SectionLabel>Location</SectionLabel>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FieldWrapper id="state" label="State" error={errors.state?.message} required>
             <StateSelect hasError={!!errors.state} {...register("state")} />
           </FieldWrapper>
@@ -38,7 +38,7 @@ export function SchoolLocationFields({ register, errors }: Props) {
 
       <Section>
         <SectionLabel>Contact &amp; capacity</SectionLabel>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FieldWrapper
             id="phone_number"
             label="School phone"

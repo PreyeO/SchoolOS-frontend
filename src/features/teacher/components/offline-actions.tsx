@@ -61,7 +61,7 @@ export function OfflineActions() {
         </div>
       </div>
 
-      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+      <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           return (

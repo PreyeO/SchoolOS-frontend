@@ -64,7 +64,7 @@ export function DemoRequestRow({ request }: { request: DemoRequest }) {
       {open && (
         <tr className="border-b border-n-100 bg-n-50/60">
           <td colSpan={7} className="px-3 py-3">
-            <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
               <div>
                 <dt className="text-xs font-medium text-n-400">Levels</dt>
                 <dd className="text-sm text-ink">{levels}</dd>
