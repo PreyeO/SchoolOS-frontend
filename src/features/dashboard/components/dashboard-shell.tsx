@@ -10,11 +10,18 @@ import { pickReadableForeground } from "@/lib/contrast";
 import { useSchoolStore } from "@/stores/school-store";
 import { AppSidebar } from "./app-sidebar";
 import { AppTopbar } from "./app-topbar";
+import { MobileTabBar } from "./mobile-tab-bar";
+import { useMobileTabs } from "../hooks/use-mobile-tabs";
 import { useSyncSchoolData } from "../hooks/use-sync-school-data";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  // The phone nav drawer. Shared by the topbar's hamburger and the bottom
+  // bar's "More" tab, so both open the one menu.
+  const [menuOpen, setMenuOpen] = useState(false);
   const [shellEl, setShellEl] = useState<HTMLDivElement | null>(null);
+  // Parents and teachers get a bottom bar on phones; [] for everyone else.
+  const tabs = useMobileTabs();
   useSyncSchoolData();
   const primaryColor = useSchoolStore((s) => s.currentSchool?.primaryColor);
   const accentColor = useSchoolStore((s) => s.currentSchool?.accentColor);
@@ -41,8 +48,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div ref={setShellEl} data-dashboard-shell className="flex min-h-screen bg-background" style={shellStyle}>
           <AppSidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
           <div className="flex flex-1 flex-col min-w-0">
-            <AppTopbar />
-            <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
+            <AppTopbar
+              open={menuOpen}
+              setOpen={setMenuOpen}
+              hasMoreTab={tabs.some((t) => t.href === "more")}
+            />
+            {/* With a bottom bar, the page needs room beneath it (bar ~56px +
+                breathing space) or its last row sits under the bar. lg and up
+                have no bar, so the usual padding returns there. */}
+            <main className={`flex-1 px-4 pt-6 lg:px-8 lg:py-8 ${tabs.length > 0 ? "pb-24" : "pb-6"}`}>
               {/* Inside the shell, not around it: someone who lands on a page
                   that isn't theirs still needs the sidebar to get somewhere
                   that is. */}
@@ -51,6 +65,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </div>
             </main>
           </div>
+          {tabs.length > 0 && <MobileTabBar tabs={tabs} onOpenMore={() => setMenuOpen(true)} />}
         </div>
       </PortalContainerProvider>
     </AuthGuard>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
@@ -33,8 +32,20 @@ const OFF_NAV_TITLES: Record<string, string> = {
   "/profile": "Profile",
 };
 
-export function AppTopbar() {
-  const [open, setOpen] = useState(false);
+interface Props {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  // True when the phone bottom bar has a "More" tab (parents, teachers).
+  // Below lg that tab IS the menu, so the hamburger goes — two buttons opening
+  // one drawer read as two different menus — and the freed left side shows
+  // the school's logo and name instead of a title the page's own heading
+  // already repeats. At lg and up nothing changes.
+  hasMoreTab?: boolean;
+}
+
+// The drawer's open state lives in DashboardShell, not here: the phone bottom
+// bar's "More" tab opens this same drawer.
+export function AppTopbar({ open, setOpen, hasMoreTab = false }: Props) {
   const pathname = usePathname();
   const school = useSchoolStore((s) => s.currentSchool);
   const navGroups = useNavGroups();
@@ -50,15 +61,17 @@ export function AppTopbar() {
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background px-4 lg:px-6">
       <Sheet open={open} onOpenChange={setOpen}>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          aria-label="Open menu"
-          onClick={() => setOpen(true)}
-        >
-          <Menu className="size-5" />
-        </Button>
+        {!hasMoreTab && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            aria-label="Open menu"
+            onClick={() => setOpen(true)}
+          >
+            <Menu className="size-5" />
+          </Button>
+        )}
         <SheetContent side="left" data-surface="ink" className="w-72 p-0 border-none">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div className="flex h-14 items-center gap-2.5 px-4 border-b border-border">
@@ -83,7 +96,21 @@ export function AppTopbar() {
         </SheetContent>
       </Sheet>
 
-      <h1 className="font-display font-semibold text-base text-ink truncate">{pageTitle}</h1>
+      {hasMoreTab ? (
+        <>
+          {/* Phone: the school, not the page. Not a heading — the page's
+              own h1 sits directly below and names the screen. */}
+          <div className="flex min-w-0 items-center gap-2 lg:hidden">
+            <SchoolLogo school={school} className="size-7 shrink-0" />
+            <span className="truncate font-display text-sm font-semibold text-ink">
+              {school?.name ?? "SchoolOS"}
+            </span>
+          </div>
+          <h1 className="hidden truncate font-display text-base font-semibold text-ink lg:block">{pageTitle}</h1>
+        </>
+      ) : (
+        <h1 className="font-display font-semibold text-base text-ink truncate">{pageTitle}</h1>
+      )}
 
       {/* ml-auto still does the work that TopbarSearch's flex-1 used to: the
           title stays left, these stay right. */}
