@@ -75,7 +75,7 @@ export function EditTeacherDialog({ teacherId, initial, mode, counts, trigger }:
           <DialogTitle>{isAdmin ? "Edit teacher" : "Edit your details"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submit)} noValidate className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextField id="teacher-first" label="First name" error={errors.first_name} registration={register("first_name")} />
             <TextField id="teacher-last" label="Last name" error={errors.last_name} registration={register("last_name")} />
             <TextField
@@ -89,7 +89,7 @@ export function EditTeacherDialog({ teacherId, initial, mode, counts, trigger }:
           </div>
 
           {isAdmin && (
-            <div className="grid gap-4 border-t border-n-100 pt-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 border-t border-n-100 pt-4 sm:grid-cols-2">
               <TextField id="teacher-employee-id" label="Employee ID" error={errors.employee_id} registration={register("employee_id")} />
               <SelectField
                 id="teacher-type"

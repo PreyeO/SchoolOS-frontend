@@ -65,7 +65,7 @@ export function EditNameDialog({ student }: { student: StudentDetail }) {
         </Button>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField id="name-first" label="First name" error={errors.first_name} registration={register("first_name")} />
         <TextField id="name-last" label="Last name" error={errors.last_name} registration={register("last_name")} />
       </div>

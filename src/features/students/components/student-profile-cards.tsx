@@ -89,7 +89,7 @@ function Card({
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
         {action}
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">{children}</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{children}</div>
     </div>
   );
 }

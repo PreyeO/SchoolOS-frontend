@@ -78,7 +78,7 @@ export function StaffDetailPage({ id }: { id: string }) {
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-ink">Employment</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <DetailField label="Employee ID" value={teacher.employee_id} />
           <DetailField label="Type" value={teacherTypeLabel(teacher.teacher_type)} />
           <DetailField label="Qualification" value={teacher.qualification} />

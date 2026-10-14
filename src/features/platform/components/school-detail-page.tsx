@@ -63,7 +63,7 @@ export function PlatformSchoolDetailPage({ schoolId }: { schoolId: string }) {
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-ink">Access &amp; billing</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <DetailField
             label="Student capacity"
             value={school.student_capacity != null ? String(school.student_capacity) : null}
@@ -97,7 +97,7 @@ export function PlatformSchoolDetailPage({ schoolId }: { schoolId: string }) {
 
       <div className="rounded-xl border border-n-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-ink">School</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <DetailField label="Type" value={school.school_type.replace(/_/g, " ")} />
           <DetailField label="Levels" value={school.levels.join(", ")} />
           <DetailField label="City" value={school.city} />

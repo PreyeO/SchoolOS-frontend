@@ -38,7 +38,7 @@ export function InviteAdminForm() {
       noValidate
       className="space-y-4"
     >
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FieldWrapper id="admin-first-name" label="First name" error={errors.first_name?.message} required>
           <Input id="admin-first-name" autoComplete="given-name" {...register("first_name")} />
         </FieldWrapper>

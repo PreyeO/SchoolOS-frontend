@@ -109,7 +109,7 @@ export function TeacherHome() {
             latestRate={latestRate}
           />
 
-          <div className="grid gap-4 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
             <section className="rounded-xl border border-n-200 bg-white p-5 lg:col-span-3">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-display text-base font-semibold text-ink">Today&rsquo;s registers</h2>

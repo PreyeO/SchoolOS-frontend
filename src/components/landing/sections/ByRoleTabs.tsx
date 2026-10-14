@@ -21,7 +21,7 @@ export function ByRoleTabs() {
 
       {ROLES_DATA.map((role) => (
         <TabsContent key={role.id} value={role.id} className="mt-0">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-start">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-start">
             <div>
               <h3 className="font-display text-2xl md:text-3xl font-semibold text-ink mb-4 leading-snug">
                 {role.heading}

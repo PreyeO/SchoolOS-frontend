@@ -52,7 +52,7 @@ export function PlatformOverview() {
 
       <PlatformKpis schoolCount={data.school_count} reach={reach} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="min-w-0 space-y-6">
           <AttentionPanel rows={data.schools} />
           <SchoolsSnapshot rows={data.schools} />

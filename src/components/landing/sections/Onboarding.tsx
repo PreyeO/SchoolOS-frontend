@@ -13,7 +13,7 @@ export function Onboarding() {
           </h2>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {ONBOARDING.steps.map((step) => (
             <div key={step.number} className="flex gap-5">
               <div className="shrink-0">

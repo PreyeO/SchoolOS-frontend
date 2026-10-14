@@ -24,7 +24,7 @@ interface Props {
 export function StudentIdentityFields({ register, errors }: Props) {
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FieldWrapper
           id="student-first-name"
           label="First name"
@@ -69,7 +69,7 @@ export function StudentIdentityFields({ register, errors }: Props) {
         />
       </FieldWrapper>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FieldWrapper id="student-gender" label="Gender" error={errors.gender?.message} required>
           <Select id="student-gender" {...register("gender")}>
             <option value="male">Male</option>

@@ -19,7 +19,7 @@ export function BuiltForNigeria() {
           </p>
         </div>
 
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {BUILT_FOR_NIGERIA.proofPoints.map((point) => (
             <li
               key={point.label}

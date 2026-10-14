@@ -69,7 +69,7 @@ export function MySubjectsPage() {
           No subjects have been set for your class yet.
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {subjects.map((offering) => {
             const teacher = teacherBySubjectId.get(offering.subject.id);
             return (

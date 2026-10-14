@@ -17,7 +17,7 @@ export function ProfileCard({
         <h3 className="text-sm font-semibold text-ink">{title}</h3>
         {action}
       </div>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">{children}</div>
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
     </div>
   );
 }

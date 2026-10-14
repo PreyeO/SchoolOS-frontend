@@ -32,7 +32,7 @@ export function ReportCardAppearance({
   return (
     <section className="rounded-xl border border-n-200 bg-white p-5">
       <h2 className="font-display text-base font-semibold text-ink">Appearance</h2>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {pickers.map((picker) => (
           <label key={String(picker.field)} className="block">
             <span className="mb-1.5 block text-sm text-n-500">{picker.label}</span>
