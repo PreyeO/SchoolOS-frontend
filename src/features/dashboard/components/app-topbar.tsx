@@ -35,7 +35,7 @@ const OFF_NAV_TITLES: Record<string, string> = {
 interface Props {
   open: boolean;
   setOpen: (open: boolean) => void;
-  // True when the phone bottom bar has a "More" tab (parents, teachers).
+  // True when the phone bottom bar has a "More" tab — every persona's does.
   // Below lg that tab IS the menu, so the hamburger goes — two buttons opening
   // one drawer read as two different menus — and the freed left side shows
   // the school's logo and name instead of a title the page's own heading

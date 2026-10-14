@@ -8,7 +8,8 @@ import type { ResolvedTab } from "../hooks/use-mobile-tabs";
 import { useTypingOnPhone } from "../hooks/use-typing-on-phone";
 import { isNavActive } from "../lib/is-nav-active";
 
-// The phone bottom bar for parents and teachers. Below lg only — the same
+// The phone bottom bar, for every persona (tabs per persona in
+// data/nav/mobile-tabs.ts). Below lg only — the same
 // breakpoint where the sidebar becomes a drawer — so desktop is unchanged.
 //
 // Colour is the school's, never a per-tab rainbow: the active tab takes
