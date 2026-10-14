@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
@@ -33,8 +32,9 @@ const OFF_NAV_TITLES: Record<string, string> = {
   "/profile": "Profile",
 };
 
-export function AppTopbar() {
-  const [open, setOpen] = useState(false);
+// The drawer's open state lives in DashboardShell, not here: the phone bottom
+// bar's "More" tab opens this same drawer.
+export function AppTopbar({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
   const pathname = usePathname();
   const school = useSchoolStore((s) => s.currentSchool);
   const navGroups = useNavGroups();

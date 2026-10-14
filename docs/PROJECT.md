@@ -2314,6 +2314,35 @@ existing routes**:
 - Not verified live (Docker down). The aggregation was run against sample
   rows; `tsc`, `eslint`, `build` clean.
 
+**Phone bottom bar for parents and teachers (2026-10-14).** Below `lg` (the
+same breakpoint where the sidebar becomes a drawer), parents get Home ·
+Results · Fees · Attendance · Notices, and teachers get Home · Register ·
+Scores · Classes · More. Admins and students keep the drawer only.
+- **Config** is `data/nav/mobile-tabs.ts`: hrefs plus short labels.
+  `useMobileTabs` resolves them against the live nav groups, borrowing each
+  item's icon. A tab whose route isn't in the persona's nav is dropped, so the
+  bar can't offer a screen `RouteAccessGuard` would refuse.
+- **"More"** opens the existing drawer. Its open state moved from `AppTopbar`
+  into `DashboardShell` so the hamburger and More share it. More is the
+  active tab whenever the route isn't one of the others (e.g. Broadsheet).
+- **Active tab** uses `--primary`, i.e. the school's own colour, plus a short
+  top indicator, since colour alone is weak on a dim phone. Active matching
+  reuses `isNavActive`, so Scores (`/results`) doesn't light up on
+  `/results/broadsheet`.
+- **Hidden while typing** (`useTypingOnPhone`, focusin/focusout): on Android
+  the keyboard shrinks the viewport and a fixed bar rides up over the score
+  sheet. Moving field to field doesn't flash it back.
+- **Room for it:** `main` gets `pb-24` below `lg` when a bar exists. The bar
+  sets `--mobile-tab-bar-h` on `<html>` while visible, and the Toaster's
+  `mobileOffset` adds it, so toasts sit above the bar. It carries its own
+  `env(safe-area-inset-bottom)` for the iOS home indicator.
+- **Verified live** against the real backend (`fgc`, a real parent and
+  teacher, tokens minted in the shell and passed through `/auth-handoff`),
+  headless Chrome at 390×844: tabs, active state, More on a non-tab route,
+  absent at 1280 wide, hide/restore around text fields, toast offset. The
+  round "N" over the first tab in dev screenshots is Next's dev indicator,
+  not in production.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
