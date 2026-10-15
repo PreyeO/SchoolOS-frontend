@@ -10,11 +10,8 @@ function csvCell(value: string): string {
   return `"${safe.replace(/"/g, '""')}"`;
 }
 
-// A CSV of what a bulk import just created — the operational equivalent of
-// the single-student credentials slip (student-credentials-result.tsx), but
-// for however many rows one import creates, which printing one at a time
-// doesn't scale to.
-export function downloadBulkImportCredentials(rows: BulkImportAppliedRow[]) {
+// The file's text, kept apart from the download so it can be tested.
+export function buildBulkImportCredentialsCsv(rows: BulkImportAppliedRow[]): string {
   const header = ["first_name", "last_name", "admission_number", "email", "password", "note"];
   const lines = rows.map((r) => [
     r.first_name,
@@ -24,7 +21,15 @@ export function downloadBulkImportCredentials(rows: BulkImportAppliedRow[]) {
     r.password ?? "",
     r.password ? "" : (r.password_note ?? "Existing account kept"),
   ]);
-  const csv = [header, ...lines].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  return [header, ...lines].map((row) => row.map(csvCell).join(",")).join("\r\n");
+}
+
+// A CSV of what a bulk import just created — the operational equivalent of
+// the single-student credentials slip (student-credentials-result.tsx), but
+// for however many rows one import creates, which printing one at a time
+// doesn't scale to.
+export function downloadBulkImportCredentials(rows: BulkImportAppliedRow[]) {
+  const csv = buildBulkImportCredentialsCsv(rows);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 

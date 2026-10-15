@@ -42,7 +42,10 @@ Set up 2026-10-15. `npm run test` runs once; `npm run test:watch` while working.
   - `OffboardDialog` + `useOffboardTeacher`: the copy says whether they lose all access or keep another role; offboarding needs a non-blank reason, which is sent trimmed; the deleted profile is **not** refetched (the 404-flash fix); a refusal keeps the dialog and the typed reason.
   - **Gated links** (`src/lib/auth/gated-links.test.tsx`): one table of every teacher-reachable hint that links to an admin screen. A teacher gets the sentence without the link, an admin with the role gets the link, and a restricted admin doesn't. **When you add a `useCanAccess`-gated link, add a row to `CASES`.**
 
-  **Next candidates:** bulk import, the other two offboard hooks (admin, parent), and the score-entry page once it's split.
+  - **Bulk import** (`BulkImportPanel`): preview POSTs without committing and shows ready and skipped rows; confirm re-sends the same file to the commit route; the result shows the passwords-once warning and the download; a refused commit is toasted and stays on preview. `buildBulkImportCredentialsCsv` (pulled out of the download) covers quoting, the missing-password note, and formula escaping (`=`/`+`/`-`/`@` → tab prefix). The commit's **timeout** branch ("may still have completed") is not tested: it needs axios's real timeout in jsdom.
+  - `useOffboardParent`: no refetch of the current-parent lookup it just made 404 (see the bug fix below).
+
+  **Next candidates:** the score-entry page once it's split, the commit-timeout branch above, and `useOffboardAdmin`, which matches the tested teacher pattern but has no test of its own.
 - **Component-test helpers:**
   - `renderWithClient(ui)` (`src/test/render.tsx`) gives a fresh QueryClient (no retries) and a `user` from user-event.
   - `meResponse(membershipId, personas, permissions)` builds a `/me` body.
@@ -2246,9 +2249,13 @@ checked line by line against the views and services.
   by offboarding, so those pages navigate away. The parent profile survives,
   so that page reloads as a former parent.
 - **Navigate-away mutations invalidate with `refetchType: "none"`** (student
-  delete, teacher/admin offboard). An immediate refetch would hit the
+  delete, teacher/admin/parent offboard). An immediate refetch would hit the
   still-mounted detail query, 404, and flash `ErrorState` before the redirect.
-  Lists refetch on mount because they're stale.
+  Lists refetch on mount because they're stale. **The parent offboard was
+  missing this until 2026-10-15** (found by its new test). Its profile survives,
+  but the *current-parent* lookup 404s for a former parent. React Query keeps
+  the old data yet sets `isError`, and the page checks `isError` first, so it
+  showed ErrorState until `router.replace` reached `?former=1`.
 - **Former parents:** `GET /parents/` returns current parents only, and
   `?is_parent=false` returns *only* former ones, for detail as well as list.
   The parent directory has Current / Former tabs (`?view=former`), and a former
