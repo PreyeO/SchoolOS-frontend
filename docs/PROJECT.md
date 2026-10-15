@@ -31,6 +31,7 @@ src/hooks/  src/lib/{api,auth,tenant,validations,utils}  src/stores/  src/types/
 - **Server components by default;** add `'use client'` only where interactivity lives.
 - **Import via the `@/` alias.** File naming: components `PascalCase.tsx`, hooks `use-thing.ts` → `useThing`, others `kebab-case.ts`.
 - **Preserve trailing slashes exactly** as the backend defines them (some endpoints have them, some don't).
+- **Every grid gets a base column count** (`grid grid-cols-1 sm:grid-cols-2`, never bare `grid sm:grid-cols-2`). Without one, the phone layout uses an implicit `auto` track, which can't shrink below its widest unbreakable content. A long notice title or email then pushes the card about twice the phone's width, and the `truncate` inside does nothing. `grid-cols-1` is `minmax(0,1fr)`, so it can. Values that may be one long token (synthetic student emails, `student.<adm>.<slug>@internal…`) also need `break-all` or `wrap-break-word`, plus `min-w-0` on their flex/grid parent.
 
 ## Deliberate 150-line exceptions (counts re-checked 2026-09-01)
 
@@ -2359,6 +2360,31 @@ not setup. Revisit it with what training shows they actually open.
   absent at 1280 wide, hide/restore around text fields, toast offset. The
   round "N" over the first tab in dev screenshots is Next's dev indicator,
   not in production.
+
+### Mobile overflow sweep (2026-10-14)
+Reported: the dashboard's Recent activity / Recent announcements cards ran
+off the side on a phone, and My Classes' "Enter scores" poked out of the card
+on mid-size laptops.
+- **Root cause (home cards):** `grid gap-4 lg:grid-cols-2` had no base
+  columns (see Hard conventions). Fixed there and in **47 other grids**, each
+  verified to differ only by the inserted `grid-cols-1`. `app/(auth)/layout.tsx`
+  is left alone because it only becomes a grid at `lg`.
+- **Announcements card** keeps a one-line truncated title + body preview
+  (decided: enough to recognise a notice, and the full text is one tap away).
+  **Activity entries** clamp to 2 lines and break anywhere, so an email in the
+  sentence wraps rather than widening the list.
+- **My Classes:** the CTA row wraps (`flex-wrap`, buttons `flex-1 basis-32`).
+  In the 3-column layout at ~1024–1280px, each card is ~230px, which is too
+  narrow for both buttons side by side. No `min-w-0` on the buttons: it would
+  let the label overflow the button instead.
+- **Also caught by the sweep:** audit-log date filters (label|input grid below
+  `sm`), the student's own `/profile` header + Account card (synthetic email;
+  `DetailField` now wraps long values everywhere).
+- **How it was checked:** a headless-Chrome crawl of every built nav route
+  (plus detail pages) for admin, teacher, parent and student at
+  360/390/1024/1180px. It flags elements past the content column, elements
+  spilling out of a bordered card, and page-level horizontal scroll. Content
+  inside scroll containers (wide tables) is skipped on purpose.
 
 ## Next up
 

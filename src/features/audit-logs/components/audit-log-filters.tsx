@@ -55,7 +55,9 @@ export function AuditLogFilters({
           ))}
         </Select>
 
-        <div className="flex items-center gap-1.5">
+        {/* Two label/date pairs side by side are ~23px wider than a 360px
+            phone, so below sm they stack as a label | input grid instead. */}
+        <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:w-auto">
           <label htmlFor="audit-date-from" className="text-sm text-n-500">From</label>
           <Input
             id="audit-date-from"
@@ -63,7 +65,7 @@ export function AuditLogFilters({
             value={dateFrom}
             max={dateTo || today}
             onChange={(e) => onDateFromChange(e.target.value)}
-            className="h-9 w-auto"
+            className="h-9 w-full sm:w-auto"
           />
           <label htmlFor="audit-date-to" className="text-sm text-n-500">To</label>
           <Input
@@ -73,7 +75,7 @@ export function AuditLogFilters({
             min={dateFrom || undefined}
             max={today}
             onChange={(e) => onDateToChange(e.target.value)}
-            className="h-9 w-auto"
+            className="h-9 w-full sm:w-auto"
           />
         </div>
 

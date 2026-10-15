@@ -43,7 +43,10 @@ export function ProfileHeader({ me }: { me: MeResponse }) {
         </h2>
 
         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-n-500">
-          {user.email}
+          {/* break-all: a student's synthetic address
+              (student.<adm-no>.<slug>@internal…) has no break point and
+              pushed the whole page sideways on a 360px phone. */}
+          <span className="min-w-0 break-all">{user.email}</span>
           {/* Only shown when true. An unverified account can't reach this page
               at all — /me returns state "verify_email" and the shell redirects
               — so a "not verified" pill would be a state nobody can see. */}
