@@ -16,6 +16,10 @@ export default defineConfig({
     css: false,
     // A fake origin: any request without an MSW handler fails loudly instead
     // of reaching a real backend.
-    env: { NEXT_PUBLIC_API_BASE_URL: "http://api.test/api" },
+    env: { NEXT_PUBLIC_API_BASE_URL: "http://api.test" },
+    // jsdom's XMLHttpRequest enforces CORS, so a page on its default
+    // localhost origin can't read a mocked api.test response ("Network
+    // Error"). Same origin sidesteps it; CORS is the real backend's concern.
+    environmentOptions: { jsdom: { url: "http://api.test/" } },
   },
 });

@@ -19,6 +19,12 @@ afterEach(async () => {
     cleanup();
     localStorage.clear();
     sessionStorage.clear();
+    // Zustand stores are module singletons, so their in-memory state would
+    // otherwise carry from one test to the next within a file.
+    const { useAuthStore } = await import("@/stores/auth-store");
+    const { usePersonaStore } = await import("@/stores/persona-store");
+    useAuthStore.setState({ claims: null, tokens: null });
+    usePersonaStore.setState({ byMembership: {} });
   }
 });
 

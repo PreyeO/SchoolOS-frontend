@@ -19,7 +19,7 @@ Set up 2026-10-15. `npm run test` runs once; `npm run test:watch` while working.
 - **Stack:** Vitest 5 (`vitest.config.mts`), `@testing-library/react` + `user-event` + `jest-dom` for anything rendered, MSW 3 for the network. `@vitejs/plugin-react` is pinned to **v5**: v6 pulls in a Babel 8 RC that conflicts with shadcn's Babel 7. `@types/node` moved to `^22` for Vitest 5, which matches the Node 22 runtime.
 - **Colocate:** `foo.ts` → `foo.test.ts` beside it. Test files follow the 150-line rule too; split by behaviour.
 - **Node is the default environment** (pure logic, fast). A test that renders, or touches `window`/`localStorage`, starts with `// @vitest-environment jsdom`. Forgetting it fails loudly (`document is not defined`).
-- **Network:** never mock our own `lib/api` client. Mock the server with `server.use(http.get(\`${API}/path/\`, ...))` from `src/test/msw/server.ts`, so the real client, interceptors and `getErrorMessage` all run. An unmocked request **fails the test** (`onUnhandledFrame: "error"`; MSW 3 renamed it, and v2's `onUnhandledRequest` is silently ignored).
+- **Network:** never mock our own `lib/api` client. Mock the server with `server.use(http.patch(apiUrl(TEACHER_ENDPOINTS.DETAIL(id)), ...))` from `src/test/msw/server.ts`. Endpoint constants already start with `/api/` and carry the exact trailing slash, so build handler URLs from them, never by hand. That way the real client, interceptors and `getErrorMessage` all run. An unmocked request **fails the test** (`onUnhandledFrame: "error"`; MSW 3 renamed it, and v2's `onUnhandledRequest` is silently ignored).
 - **Prefer pure functions:** when logic sits inside a hook, extract it to a `lib/` function and test that (e.g. `resolveMobileTabs`, pulled out of `useMobileTabs`), rather than mocking hooks.
 - **What to assert:** behaviour the user or the server sees: rendered text by role or label, request payloads captured in an MSW handler, returned values. No snapshots.
 - **A bug fix gets a test that fails without the fix.** Check a new test by breaking the code once and watching it go red.
@@ -33,7 +33,20 @@ Set up 2026-10-15. `npm run test` runs once; `npm run test:watch` while working.
   - a queued save counts as committed, but its stored copy is not deleted until the server has it (the offline-refresh bug);
   - rejected register marks revert only after the refetch lands.
 
-  Each was checked by reintroducing the bug and watching the test fail. **Next:** Batch 3, dialogs and guards with RTL + MSW.
+  Each was checked by reintroducing the bug and watching the test fail.
+
+  **Batch 3 (components, RTL + MSW):**
+  - `RouteAccessGuard`, with a real-shaped `/me` served by MSW: a teacher is kept off admin URLs; an admin is kept off a screen their role lacks the permission for; an admin working as a teacher is offered "Switch to Admin", but only when that profile could open the page.
+  - `EditTeacherDialog`: self mode shows only name and phone; only changed keys are PATCHed; nothing is sent when nothing changed; a blank name is stopped client-side; an admin sees the teacher-type warning but Save stays enabled; the server's 400 text is toasted, and the dialog stays open.
+
+  **Next candidates:** `useCanAccess`-gated links on teacher-reachable empty states, offboard dialogs, and the bulk-import flow.
+- **Component-test helpers:**
+  - `renderWithClient(ui)` (`src/test/render.tsx`) gives a fresh QueryClient (no retries) and a `user` from user-event.
+  - `meResponse(membershipId, personas, permissions)` builds a `/me` body.
+  - Mock `next/navigation` per file with `vi.hoisted` + `vi.mock` (see `route-access-guard.test.tsx`).
+  - Mock `sonner` to assert toasts. That's a third-party UI side effect, not our code.
+  - `setup.ts` resets the auth and persona Zustand stores after each jsdom test.
+- **jsdom runs on the API's origin** (`environmentOptions.jsdom.url`). jsdom's XHR enforces CORS, so on its default localhost origin every mocked response failed as "Network Error". The trap: `/me` then never loads, permissions stay `null` ("unknown = allow"), and **access tests pass for the wrong reason**. If an "allowed" test is new, pair it with a "denied" one.
 - **Run time:** about 15s warm, up to a minute cold. Most of it is jsdom startup per file. `isolate: false` would save a few seconds but lets Zustand store state leak between files, so it stays off.
 
 ## Folder structure
