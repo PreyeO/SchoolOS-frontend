@@ -12,6 +12,29 @@ SchoolOS is a school-management SaaS for Nigerian K–12 schools (daycare/creche
 - **Zustand** = client/UI/auth state · **TanStack Query** = server state (never put server data in Zustand)
 - **react-hook-form + zod** = forms/validation · **axios** = HTTP · **sonner** = toasts · **jwt-decode** = token claims · **lucide-react** = icons · **recharts** = charts
 - **TipTap** = the announcement body editor, and the *only* rich-text surface in the app. Locked to the backend's bleach allowlist — see the Announcements block below before touching its config.
+- **Vitest** + **Testing Library** + **MSW** = unit tests (`npm run test`). See "Testing" below.
+
+## Testing
+Set up 2026-10-15. `npm run test` runs once; `npm run test:watch` while working.
+- **Stack:** Vitest 5 (`vitest.config.mts`), `@testing-library/react` + `user-event` + `jest-dom` for anything rendered, MSW 3 for the network. `@vitejs/plugin-react` is pinned to **v5**: v6 pulls in a Babel 8 RC that conflicts with shadcn's Babel 7. `@types/node` moved to `^22` for Vitest 5, which matches the Node 22 runtime.
+- **Colocate:** `foo.ts` → `foo.test.ts` beside it. Test files follow the 150-line rule too; split by behaviour.
+- **Node is the default environment** (pure logic, fast). A test that renders, or touches `window`/`localStorage`, starts with `// @vitest-environment jsdom`. Forgetting it fails loudly (`document is not defined`).
+- **Network:** never mock our own `lib/api` client. Mock the server with `server.use(http.get(\`${API}/path/\`, ...))` from `src/test/msw/server.ts`, so the real client, interceptors and `getErrorMessage` all run. An unmocked request **fails the test** (`onUnhandledFrame: "error"`; MSW 3 renamed it, and v2's `onUnhandledRequest` is silently ignored).
+- **Prefer pure functions:** when logic sits inside a hook, extract it to a `lib/` function and test that (e.g. `resolveMobileTabs`, pulled out of `useMobileTabs`), rather than mocking hooks.
+- **What to assert:** behaviour the user or the server sees: rendered text by role or label, request payloads captured in an MSW handler, returned values. No snapshots.
+- **A bug fix gets a test that fails without the fix.** Check a new test by breaking the code once and watching it go red.
+- **Fixtures:** `src/test/fixtures.ts` has minimal `student`/`roster`/`score`/`record` rows (only the fields the logic reads, cast on purpose) and `signInAs(membershipId)` for hooks that scope device storage by membership. Hooks that read the mutation cache need a `QueryClientProvider` wrapper. A queued-but-unsent save is simulated with `client.getMutationCache().build(...)` and a never-resolving `mutationFn` (see `use-score-draft.test.tsx`).
+- **Coverage so far.** **Batch 1 (pure logic):** nav access and matching (`data/navigation`, `isNavActive`), mobile tab resolution, `getErrorMessage` and its classifiers, `toTeacherPayload` / `teacherTypeBlocker`, `buildPlatformReach`, `estimateProration`, `isSyntheticEmail`. **Batch 2 (offline drafts):** `createDraftBook`, `useScoreDraftSync`, `useScoreDraft`, `useRegisterDraftSync`. These cover:
+  - seeding from the server, with stored edits on top after a reload;
+  - roster filtering;
+  - no wipe while data is still loading;
+  - columns and days kept apart;
+  - on fresher data, a colleague's entry shows while local typing is kept;
+  - a queued save counts as committed, but its stored copy is not deleted until the server has it (the offline-refresh bug);
+  - rejected register marks revert only after the refetch lands.
+
+  Each was checked by reintroducing the bug and watching the test fail. **Next:** Batch 3, dialogs and guards with RTL + MSW.
+- **Run time:** about 15s warm, up to a minute cold. Most of it is jsdom startup per file. `isolate: false` would save a few seconds but lets Zustand store state leak between files, so it stays off.
 
 ## Folder structure
 ```
@@ -44,9 +67,9 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 | `features/results/components/publish-results-page.tsx` | 418 |
 | `features/results/components/behaviour-page.tsx` | 343 |
 
-**Why:** all four carry offline state — draft seeding *during render*, paused-mutation queues, and reconciliation against a query's `dataUpdatedAt`. The order of those render-time state updates is load-bearing (see the comments in `use-register-draft-sync.ts` and `use-score-draft-sync.ts`). **There are no tests in this repo**, and `tsc`/`eslint`/`build` cannot detect a broken seed ordering, a dropped border, or marks that silently stop restoring after a reconnect — a bulk-refactor pass through these files in Aug 2026 shipped exactly such a styling regression, caught only by chance. Splitting them is a real risk with no safety net, and they are already densely commented on *why* each ordering is what it is, which is the part that's hard to reconstruct.
+**Why:** all four carry offline state — draft seeding *during render*, paused-mutation queues, and reconciliation against a query's `dataUpdatedAt`. The order of those render-time state updates is load-bearing (see the comments in `use-register-draft-sync.ts` and `use-score-draft-sync.ts`). **The draft hooks are now tested (2026-10-15, see Testing), but the screens themselves aren't**, and `tsc`/`eslint`/`build` cannot detect a broken seed ordering, a dropped border, or marks that silently stop restoring after a reconnect — a bulk-refactor pass through these files in Aug 2026 shipped exactly such a styling regression, caught only by chance. Splitting them is a real risk with no safety net, and they are already densely commented on *why* each ordering is what it is, which is the part that's hard to reconstruct.
 
-**When to revisit:** split them under cover of a feature change to that screen, when you're clicking through it to test anyway. If you want them compliant sooner, the honest prerequisite is a few tests around the draft hooks — seed on new column, re-seed on fresher server data, queued-counts-as-committed — after which the split is routine.
+**When to revisit:** split them under cover of a feature change to that screen, when you're clicking through it to test anyway. If you want them compliant sooner, the prerequisite was tests around the draft hooks (seed on new column, re-seed on fresher server data, queued-counts-as-committed). **Those exist as of 2026-10-15**, so a split that keeps the hooks' interfaces intact is now a routine refactor. Still click through offline save, refresh and reconnect afterwards, because the tests cover the hooks, not the page wiring.
 
 **Also:** never bulk-rewrite JSX with a script. Two regex passes in that same sweep went wrong (one silently no-op'd on multi-line attributes, the other stripped Tailwind classes from elements it wasn't targeting). Hand-edit, or verify every hunk.
 
@@ -2462,17 +2485,18 @@ What still needs backend work the frontend cannot do alone. Re-verified
   **Also needs the bucket's CORS to allow the frontend origin** — Django's
   `CORS_ALLOWED_ORIGINS` has no say over a direct-to-S3 POST, and a bucket
   rejection surfaces in the browser as an opaque `TypeError` with no response.
-- **No test suite anywhere in the frontend.** Not a backend gap, but the most
-  consequential absence in the repo: `tsc`/`eslint`/`build` all passed while
-  three borders were missing from score entry and while the offline cache was
-  deleting itself. Treat every "it builds" as unverified.
+- **Unit tests are new (2026-10-15) and cover pure logic only so far.** The
+  offline draft hooks and every screen are still untested: `tsc`/`eslint`/
+  `build` all passed while three borders were missing from score entry and
+  while the offline cache was deleting itself. Treat "it builds" as
+  unverified for anything outside the Testing section's coverage list.
 
 Open asks live in `docs/asks/`. Delete one when it ships.
 
 ## How to work in this repo
-- One concern per prompt. State your plan, then build. Run `lint` + `build` and show results before "done".
+- One concern per prompt. State your plan, then build. Run `lint` + `test` + `build` and show results before "done".
 - Read the backend code in `SchoolOS-backend` to confirm any contract rather than assuming — it changes between sessions, don't trust your own earlier read without a fresh check. Its `docs/*-frontend-handoff.md` files are useful for *flows and gates*, but the serializers, views and services are the contract; where they disagree, the code wins.
 - **Verify live where you can.** The backend runs under Docker (`docker compose up` from `SchoolOS-backend/`). To exercise an endpoint as a specific persona without a password, mint a token in the shell:
   `docker exec -i school_os_web python manage.py shell` → `SchoolAccessToken.for_membership(m.user, m)` (returns an `(access, refresh)` tuple; `str(access)` is the JWT). Test permission-sensitive endpoints with a **teacher-only** membership — several bugs here were invisible from an admin account.
 - Keep API calls isolated in `features/*/api/*` so a shape change is a one-file edit.
-- **`tsc` + `eslint` + `build` passing is not verification.** There are no tests. None of those three can see a missing border, wrong copy, a broken render-time seed ordering, or a cache that deletes itself. Say plainly what was and wasn't checked, and click through anything touching offline state, styling, or permissions.
+- **`tsc` + `eslint` + `build` passing is not verification.** Unit tests cover only pure logic so far (see Testing). None of those three can see a missing border, wrong copy, a broken render-time seed ordering, or a cache that deletes itself. Say plainly what was and wasn't checked, and click through anything touching offline state, styling, or permissions.
