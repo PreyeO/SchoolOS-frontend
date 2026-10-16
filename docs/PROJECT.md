@@ -12,6 +12,48 @@ SchoolOS is a school-management SaaS for Nigerian K–12 schools (daycare/creche
 - **Zustand** = client/UI/auth state · **TanStack Query** = server state (never put server data in Zustand)
 - **react-hook-form + zod** = forms/validation · **axios** = HTTP · **sonner** = toasts · **jwt-decode** = token claims · **lucide-react** = icons · **recharts** = charts
 - **TipTap** = the announcement body editor, and the *only* rich-text surface in the app. Locked to the backend's bleach allowlist — see the Announcements block below before touching its config.
+- **Vitest** + **Testing Library** + **MSW** = unit tests (`npm run test`). See "Testing" below.
+
+## Testing
+Set up 2026-10-15. `npm run test` runs once; `npm run test:watch` while working.
+- **Stack:** Vitest 5 (`vitest.config.mts`), `@testing-library/react` + `user-event` + `jest-dom` for anything rendered, MSW 3 for the network. `@vitejs/plugin-react` is pinned to **v5**: v6 pulls in a Babel 8 RC that conflicts with shadcn's Babel 7. `@types/node` moved to `^22` for Vitest 5, which matches the Node 22 runtime.
+- **Colocate:** `foo.ts` → `foo.test.ts` beside it. Test files follow the 150-line rule too; split by behaviour.
+- **Node is the default environment** (pure logic, fast). A test that renders, or touches `window`/`localStorage`, starts with `// @vitest-environment jsdom`. Forgetting it fails loudly (`document is not defined`).
+- **Network:** never mock our own `lib/api` client. Mock the server with `server.use(http.patch(apiUrl(TEACHER_ENDPOINTS.DETAIL(id)), ...))` from `src/test/msw/server.ts`. Endpoint constants already start with `/api/` and carry the exact trailing slash, so build handler URLs from them, never by hand. That way the real client, interceptors and `getErrorMessage` all run. An unmocked request **fails the test** (`onUnhandledFrame: "error"`; MSW 3 renamed it, and v2's `onUnhandledRequest` is silently ignored).
+- **Prefer pure functions:** when logic sits inside a hook, extract it to a `lib/` function and test that (e.g. `resolveMobileTabs`, pulled out of `useMobileTabs`), rather than mocking hooks.
+- **What to assert:** behaviour the user or the server sees: rendered text by role or label, request payloads captured in an MSW handler, returned values. No snapshots.
+- **A bug fix gets a test that fails without the fix.** Check a new test by breaking the code once and watching it go red.
+- **Fixtures:** `src/test/fixtures.ts` has minimal `student`/`roster`/`score`/`record` rows (only the fields the logic reads, cast on purpose) and `signInAs(membershipId)` for hooks that scope device storage by membership. Hooks that read the mutation cache need a `QueryClientProvider` wrapper. A queued-but-unsent save is simulated with `client.getMutationCache().build(...)` and a never-resolving `mutationFn` (see `use-score-draft.test.tsx`).
+- **Coverage so far.** **Batch 1 (pure logic):** nav access and matching (`data/navigation`, `isNavActive`), mobile tab resolution, `getErrorMessage` and its classifiers, `toTeacherPayload` / `teacherTypeBlocker`, `buildPlatformReach`, `estimateProration`, `isSyntheticEmail`. **Batch 2 (offline drafts):** `createDraftBook`, `useScoreDraftSync`, `useScoreDraft`, `useRegisterDraftSync`. These cover:
+  - seeding from the server, with stored edits on top after a reload;
+  - roster filtering;
+  - no wipe while data is still loading;
+  - columns and days kept apart;
+  - on fresher data, a colleague's entry shows while local typing is kept;
+  - a queued save counts as committed, but its stored copy is not deleted until the server has it (the offline-refresh bug);
+  - rejected register marks revert only after the refetch lands.
+
+  Each was checked by reintroducing the bug and watching the test fail.
+
+  **Batch 3 (components, RTL + MSW):**
+  - `RouteAccessGuard`, with a real-shaped `/me` served by MSW: a teacher is kept off admin URLs; an admin is kept off a screen their role lacks the permission for; an admin working as a teacher is offered "Switch to Admin", but only when that profile could open the page.
+  - `EditTeacherDialog`: self mode shows only name and phone; only changed keys are PATCHed; nothing is sent when nothing changed; a blank name is stopped client-side; an admin sees the teacher-type warning but Save stays enabled; the server's 400 text is toasted, and the dialog stays open.
+
+  - `OffboardDialog` + `useOffboardTeacher`: the copy says whether they lose all access or keep another role; offboarding needs a non-blank reason, which is sent trimmed; the deleted profile is **not** refetched (the 404-flash fix); a refusal keeps the dialog and the typed reason.
+  - **Gated links** (`src/lib/auth/gated-links.test.tsx`): one table of every teacher-reachable hint that links to an admin screen. A teacher gets the sentence without the link, an admin with the role gets the link, and a restricted admin doesn't. **When you add a `useCanAccess`-gated link, add a row to `CASES`.**
+
+  - **Bulk import** (`BulkImportPanel`): preview POSTs without committing and shows ready and skipped rows; confirm re-sends the same file to the commit route; the result shows the passwords-once warning and the download; a refused commit is toasted and stays on preview. `buildBulkImportCredentialsCsv` (pulled out of the download) covers quoting, the missing-password note, and formula escaping (`=`/`+`/`-`/`@` → tab prefix). The commit's **timeout** branch ("may still have completed") is not tested: it needs axios's real timeout in jsdom.
+  - `useOffboardParent`: no refetch of the current-parent lookup it just made 404 (see the bug fix below).
+
+  **Next candidates:** the score-entry page once it's split, the commit-timeout branch above, and `useOffboardAdmin`, which matches the tested teacher pattern but has no test of its own.
+- **Component-test helpers:**
+  - `renderWithClient(ui)` (`src/test/render.tsx`) gives a fresh QueryClient (no retries) and a `user` from user-event.
+  - `meResponse(membershipId, personas, permissions)` builds a `/me` body.
+  - Mock `next/navigation` per file with `vi.hoisted` + `vi.mock` (see `route-access-guard.test.tsx`).
+  - Mock `sonner` to assert toasts. That's a third-party UI side effect, not our code.
+  - `setup.ts` resets the auth and persona Zustand stores after each jsdom test.
+- **jsdom runs on the API's origin** (`environmentOptions.jsdom.url`). jsdom's XHR enforces CORS, so on its default localhost origin every mocked response failed as "Network Error". The trap: `/me` then never loads, permissions stay `null` ("unknown = allow"), and **access tests pass for the wrong reason**. If an "allowed" test is new, pair it with a "denied" one.
+- **Run time:** about 15s warm, up to a minute cold. Most of it is jsdom startup per file. `isolate: false` would save a few seconds but lets Zustand store state leak between files, so it stays off.
 
 ## Folder structure
 ```
@@ -25,12 +67,13 @@ src/hooks/  src/lib/{api,auth,tenant,validations,utils}  src/stores/  src/types/
 - **No file exceeds 150 lines.** Split along real seams (subcomponents, hooks) — never line-count theater. When a domain's `types.ts` or the endpoint registry outgrows it, split into a folder behind a barrel (`results/types/*` → `results/types.ts`, `lib/api/endpoints/*` → `lib/api/endpoints.ts`) so call sites don't change. **Four known exceptions — see "Deliberate 150-line exceptions" below.**
 - **DRY + separation:** schema / types / api call / TanStack hook / UI are separate files. No inline `fetch` in components.
 - **Reach for the shared primitive before hand-rolling.** `components/ui/` has `Input`, `Select`, `Button`, `Dialog`, `Sheet`; `components/shared/` has `ErrorState`, `OfflineNotice`, `ArmPicker`, `PersonSearchSelect`, `PaginationControls`, `ConfirmDeleteDialog`; `features/staff/components/teacher-picker.tsx` is the load-once/filter-locally/hold-a-selection teacher chooser (distinct from `PersonSearchSelect`, which is server-search and fires on click). Form controls must go through `Input`/`Select` — both set `text-base md:text-sm`, because iOS Safari zooms the whole page when a focused control is under 16px.
-- **Never link someone to a screen they can't open.** Any `<Link>` inside empty-state, error or hint copy on a screen a *teacher* can reach must be gated on `useCanAccess(href)` (`lib/auth/use-can-access.ts`), which asks the nav registry the same question `RouteAccessGuard` does. When it's false, rewrite the sentence — don't just drop the link ("An administrator adds the subjects a class takes" beats a dangling half-instruction). Eight of these leaked before the rule existed, including three in the persistent shell (sidebar footer Settings, user-menu Settings, topbar term chip), where every teacher saw them on every screen. Use `useCanAccess`, not `useIsSchoolAdmin` — routes change audience (the broadsheet went admin-only → staff mid-build) and a hardcoded persona check silently stops matching.
+- **Never link someone to a screen they can't open** (tested: add each new gated link to `CASES` in `src/lib/auth/gated-links.test.tsx`). Any `<Link>` inside empty-state, error or hint copy on a screen a *teacher* can reach must be gated on `useCanAccess(href)` (`lib/auth/use-can-access.ts`), which asks the nav registry the same question `RouteAccessGuard` does. When it's false, rewrite the sentence — don't just drop the link ("An administrator adds the subjects a class takes" beats a dangling half-instruction). Eight of these leaked before the rule existed, including three in the persistent shell (sidebar footer Settings, user-menu Settings, topbar term chip), where every teacher saw them on every screen. Use `useCanAccess`, not `useIsSchoolAdmin` — routes change audience (the broadsheet went admin-only → staff mid-build) and a hardcoded persona check silently stops matching.
 - **No hardcoded URLs/strings** in components — endpoints live in `lib/api/endpoints.ts`, colours/spacing come from design tokens, copy/config in `data/`/`config/`.
 - **Prefer a class-arm detail action over the equivalent flat filtered list.** Several pairs return the identical serializer but the flat list demands `manage_academic_structure` while the detail action requires nothing — so the list 403s for teachers. Confirmed for `class-arms/{id}/subjects/` and `class-arms/{id}/subject-assignments/`; assume it for any new pair and verify with a teacher token.
 - **Server components by default;** add `'use client'` only where interactivity lives.
 - **Import via the `@/` alias.** File naming: components `PascalCase.tsx`, hooks `use-thing.ts` → `useThing`, others `kebab-case.ts`.
 - **Preserve trailing slashes exactly** as the backend defines them (some endpoints have them, some don't).
+- **Every grid gets a base column count** (`grid grid-cols-1 sm:grid-cols-2`, never bare `grid sm:grid-cols-2`). Without one, the phone layout uses an implicit `auto` track, which can't shrink below its widest unbreakable content. A long notice title or email then pushes the card about twice the phone's width, and the `truncate` inside does nothing. `grid-cols-1` is `minmax(0,1fr)`, so it can. Values that may be one long token (synthetic student emails, `student.<adm>.<slug>@internal…`) also need `break-all` or `wrap-break-word`, plus `min-w-0` on their flex/grid parent.
 
 ## Deliberate 150-line exceptions (counts re-checked 2026-09-01)
 
@@ -43,9 +86,9 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 | `features/results/components/publish-results-page.tsx` | 418 |
 | `features/results/components/behaviour-page.tsx` | 343 |
 
-**Why:** all four carry offline state — draft seeding *during render*, paused-mutation queues, and reconciliation against a query's `dataUpdatedAt`. The order of those render-time state updates is load-bearing (see the comments in `use-register-draft-sync.ts` and `use-score-draft-sync.ts`). **There are no tests in this repo**, and `tsc`/`eslint`/`build` cannot detect a broken seed ordering, a dropped border, or marks that silently stop restoring after a reconnect — a bulk-refactor pass through these files in Aug 2026 shipped exactly such a styling regression, caught only by chance. Splitting them is a real risk with no safety net, and they are already densely commented on *why* each ordering is what it is, which is the part that's hard to reconstruct.
+**Why:** all four carry offline state — draft seeding *during render*, paused-mutation queues, and reconciliation against a query's `dataUpdatedAt`. The order of those render-time state updates is load-bearing (see the comments in `use-register-draft-sync.ts` and `use-score-draft-sync.ts`). **The draft hooks are now tested (2026-10-15, see Testing), but the screens themselves aren't**, and `tsc`/`eslint`/`build` cannot detect a broken seed ordering, a dropped border, or marks that silently stop restoring after a reconnect — a bulk-refactor pass through these files in Aug 2026 shipped exactly such a styling regression, caught only by chance. Splitting them is a real risk with no safety net, and they are already densely commented on *why* each ordering is what it is, which is the part that's hard to reconstruct.
 
-**When to revisit:** split them under cover of a feature change to that screen, when you're clicking through it to test anyway. If you want them compliant sooner, the honest prerequisite is a few tests around the draft hooks — seed on new column, re-seed on fresher server data, queued-counts-as-committed — after which the split is routine.
+**When to revisit:** split them under cover of a feature change to that screen, when you're clicking through it to test anyway. If you want them compliant sooner, the prerequisite was tests around the draft hooks (seed on new column, re-seed on fresher server data, queued-counts-as-committed). **Those exist as of 2026-10-15**, so a split that keeps the hooks' interfaces intact is now a routine refactor. Still click through offline save, refresh and reconnect afterwards, because the tests cover the hooks, not the page wiring.
 
 **Also:** never bulk-rewrite JSX with a script. Two regex passes in that same sweep went wrong (one silently no-op'd on multi-line attributes, the other stripped Tailwind classes from elements it wasn't targeting). Hand-edit, or verify every hunk.
 
@@ -2206,9 +2249,13 @@ checked line by line against the views and services.
   by offboarding, so those pages navigate away. The parent profile survives,
   so that page reloads as a former parent.
 - **Navigate-away mutations invalidate with `refetchType: "none"`** (student
-  delete, teacher/admin offboard). An immediate refetch would hit the
+  delete, teacher/admin/parent offboard). An immediate refetch would hit the
   still-mounted detail query, 404, and flash `ErrorState` before the redirect.
-  Lists refetch on mount because they're stale.
+  Lists refetch on mount because they're stale. **The parent offboard was
+  missing this until 2026-10-15** (found by its new test). Its profile survives,
+  but the *current-parent* lookup 404s for a former parent. React Query keeps
+  the old data yet sets `isError`, and the page checks `isError` first, so it
+  showed ErrorState until `router.replace` reached `?former=1`.
 - **Former parents:** `GET /parents/` returns current parents only, and
   `?is_parent=false` returns *only* former ones, for detail as well as list.
   The parent directory has Current / Former tabs (`?view=former`), and a former
@@ -2360,6 +2407,31 @@ not setup. Revisit it with what training shows they actually open.
   round "N" over the first tab in dev screenshots is Next's dev indicator,
   not in production.
 
+### Mobile overflow sweep (2026-10-14)
+Reported: the dashboard's Recent activity / Recent announcements cards ran
+off the side on a phone, and My Classes' "Enter scores" poked out of the card
+on mid-size laptops.
+- **Root cause (home cards):** `grid gap-4 lg:grid-cols-2` had no base
+  columns (see Hard conventions). Fixed there and in **47 other grids**, each
+  verified to differ only by the inserted `grid-cols-1`. `app/(auth)/layout.tsx`
+  is left alone because it only becomes a grid at `lg`.
+- **Announcements card** keeps a one-line truncated title + body preview
+  (decided: enough to recognise a notice, and the full text is one tap away).
+  **Activity entries** clamp to 2 lines and break anywhere, so an email in the
+  sentence wraps rather than widening the list.
+- **My Classes:** the CTA row wraps (`flex-wrap`, buttons `flex-1 basis-32`).
+  In the 3-column layout at ~1024–1280px, each card is ~230px, which is too
+  narrow for both buttons side by side. No `min-w-0` on the buttons: it would
+  let the label overflow the button instead.
+- **Also caught by the sweep:** audit-log date filters (label|input grid below
+  `sm`), the student's own `/profile` header + Account card (synthetic email;
+  `DetailField` now wraps long values everywhere).
+- **How it was checked:** a headless-Chrome crawl of every built nav route
+  (plus detail pages) for admin, teacher, parent and student at
+  360/390/1024/1180px. It flags elements past the content column, elements
+  spilling out of a bordered card, and page-level horizontal scroll. Content
+  inside scroll containers (wide tables) is skipped on purpose.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
@@ -2436,17 +2508,18 @@ What still needs backend work the frontend cannot do alone. Re-verified
   **Also needs the bucket's CORS to allow the frontend origin** — Django's
   `CORS_ALLOWED_ORIGINS` has no say over a direct-to-S3 POST, and a bucket
   rejection surfaces in the browser as an opaque `TypeError` with no response.
-- **No test suite anywhere in the frontend.** Not a backend gap, but the most
-  consequential absence in the repo: `tsc`/`eslint`/`build` all passed while
-  three borders were missing from score entry and while the offline cache was
-  deleting itself. Treat every "it builds" as unverified.
+- **Unit tests are new (2026-10-15) and cover pure logic only so far.** The
+  offline draft hooks and every screen are still untested: `tsc`/`eslint`/
+  `build` all passed while three borders were missing from score entry and
+  while the offline cache was deleting itself. Treat "it builds" as
+  unverified for anything outside the Testing section's coverage list.
 
 Open asks live in `docs/asks/`. Delete one when it ships.
 
 ## How to work in this repo
-- One concern per prompt. State your plan, then build. Run `lint` + `build` and show results before "done".
+- One concern per prompt. State your plan, then build. Run `lint` + `test` + `build` and show results before "done".
 - Read the backend code in `SchoolOS-backend` to confirm any contract rather than assuming — it changes between sessions, don't trust your own earlier read without a fresh check. Its `docs/*-frontend-handoff.md` files are useful for *flows and gates*, but the serializers, views and services are the contract; where they disagree, the code wins.
 - **Verify live where you can.** The backend runs under Docker (`docker compose up` from `SchoolOS-backend/`). To exercise an endpoint as a specific persona without a password, mint a token in the shell:
   `docker exec -i school_os_web python manage.py shell` → `SchoolAccessToken.for_membership(m.user, m)` (returns an `(access, refresh)` tuple; `str(access)` is the JWT). Test permission-sensitive endpoints with a **teacher-only** membership — several bugs here were invisible from an admin account.
 - Keep API calls isolated in `features/*/api/*` so a shape change is a one-file edit.
-- **`tsc` + `eslint` + `build` passing is not verification.** There are no tests. None of those three can see a missing border, wrong copy, a broken render-time seed ordering, or a cache that deletes itself. Say plainly what was and wasn't checked, and click through anything touching offline state, styling, or permissions.
+- **`tsc` + `eslint` + `build` passing is not verification.** Unit tests cover only pure logic so far (see Testing). None of those three can see a missing border, wrong copy, a broken render-time seed ordering, or a cache that deletes itself. Say plainly what was and wasn't checked, and click through anything touching offline state, styling, or permissions.
