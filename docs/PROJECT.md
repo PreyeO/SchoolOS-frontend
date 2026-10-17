@@ -82,7 +82,7 @@ Four files are knowingly over the limit. This is a decision, not an oversight 鈥
 | File | Lines |
 |---|---|
 | `features/results/components/score-entry-page.tsx` | 441 |
-| `features/attendance/components/attendance-page.tsx` | 462 |
+| `features/attendance/components/attendance-page.tsx` | 482 (re-counted 2026-10-17) |
 | `features/results/components/publish-results-page.tsx` | 418 |
 | `features/results/components/behaviour-page.tsx` | 343 |
 
@@ -2451,6 +2451,23 @@ resolver.
 
 What still needs backend work the frontend cannot do alone. Re-verified
 2026-09-01.
+
+- **Clearing an attendance register (asked 2026-10-17).** A school marked a
+  Saturday by mistake and had no way to undo it. `bulk-mark` rejects an empty
+  `records` list, every item needs a real status, and there is no delete. Asked
+  for: `POST /api/attendance/clear/` `{class_arm_id, date, reason, student_ids?}`
+  that deletes those records and audits one `attendance.cleared`. Plus an answer
+  on queued offline marks replaying after a clear: skip marks older than the
+  clear, or we block clearing while marks are unsynced. Frontend plan once it
+  exists:
+  - a "Clear register" button with a confirm that names the date, plus a reason;
+  - clear the device draft (`clearDraft`), or the marks return on refresh;
+  - disabled offline or while marks are queued;
+  - tests.
+
+  **Shipped meanwhile:** `WeekendNotice` (an amber "Saturday, Oct 11 is a
+  weekend" warning above the register, for markers only). It warns rather than
+  blocks, because some schools hold Saturday classes.
 
 - **No backend app at all:** Admissions 路 Expenses 路 Payroll 路 Messages 路
   SMS/WhatsApp 路 Events & Calendar 路 Timetable 路 CBT 路 Transport. These are the

@@ -28,6 +28,7 @@ import { ATTENDANCE_STATUSES, type AttendanceRecord } from "../types";
 import { RegisterRow } from "./register-row";
 import { SkippedMarksPanel } from "./skipped-marks-panel";
 import { SyncStatusStrip } from "./sync-status-strip";
+import { WeekendNotice } from "./weekend-notice";
 
 // The teacher's own arms, shaped like the picker's normal input. One group, not
 // grouped by level — /me doesn't carry a level per arm, and a teacher has a
@@ -353,6 +354,8 @@ export function AttendancePage({
               />
             </label>
           </div>
+
+          {canMark && <WeekendNotice date={date} />}
 
           <div className="rounded-xl border border-n-200 bg-white">
             {unavailableOffline ? (
