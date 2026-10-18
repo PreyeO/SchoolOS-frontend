@@ -49,3 +49,18 @@ export interface BulkMarkResponse {
   // for that student and date. Never an error; the request still succeeds.
   skipped: { student_id: string; reason: string }[];
 }
+
+// POST /api/attendance/bulk-clear/. cleared_at is the same last-write-wins
+// clock as marked_at: a mark newer than it survives and comes back in skipped.
+export interface BulkClearPayload {
+  class_arm_id: string;
+  date: string;
+  student_ids: string[];
+  cleared_at: string;
+}
+
+export interface BulkClearResponse {
+  // Student ids, not records — there is nothing left to return.
+  cleared: string[];
+  skipped: { student_id: string; reason: string }[];
+}

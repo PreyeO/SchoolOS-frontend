@@ -20,13 +20,15 @@ import { useMyClasses, type MyClass } from "@/features/teacher/hooks/use-my-clas
 import { useSchoolStore } from "@/stores/school-store";
 
 import { useBulkMark } from "../hooks/use-bulk-mark";
+import { clearRegisterStudentIds, useClearRegister } from "../hooks/use-clear-register";
 import { useAttendance, useRoster } from "../hooks/use-register";
 import { useRegisterDraft } from "../hooks/use-register-draft";
-import { useLastSkippedReport, usePendingMarks } from "../hooks/use-sync-status";
+import { useLastSkippedReport, useOnlineStatus, usePendingMarks } from "../hooks/use-sync-status";
 import { STATUS_META } from "../lib/status-meta";
 import { ATTENDANCE_STATUSES, type AttendanceRecord } from "../types";
 import { RegisterRow } from "./register-row";
 import { SkippedMarksPanel } from "./skipped-marks-panel";
+import { ClearRegisterButton } from "./clear-register-button";
 import { SyncStatusStrip } from "./sync-status-strip";
 import { WeekendNotice } from "./weekend-notice";
 
@@ -196,11 +198,23 @@ export function AttendancePage({
   const queuedCount = Object.keys(usePendingMarks(selectedId, date)).length;
 
   const students = roster?.students;
-  const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount, movedOut } =
+  const { draft, savedById, setStatus, setNote, markAllUnset, changed, unmarkedCount, movedOut, reset } =
     useRegisterDraft(selectedId, date, savedRecords, students, {
       skippedReportId: lastSkipped?.id ?? null,
       savedUpdatedAt,
     });
+  // reset drops the device draft, so the cleared marks can't seed back in.
+  const clearRegister = useClearRegister(selectedId, date, reset);
+  const online = useOnlineStatus();
+  // Online only, and never while this register's own marks are still queued:
+  // those would land after the clear and be skipped, silently losing them.
+  const clearBlocked = !online
+    ? "Connect to the internet to clear a register."
+    : queuedCount > 0
+      ? "Wait for this register's saved marks to sync first."
+      : isSubmitting
+        ? "Wait for the register to finish saving."
+        : null;
 
   const counts = useMemo(() => {
     const tally: Record<string, number> = {};
@@ -459,6 +473,18 @@ export function AttendancePage({
                           ? "Saved on this device — will sync when you're back online."
                           : "No unsaved changes."}
                     </span>
+                    {selectedId && (savedRecords?.length ?? 0) > 0 && (
+                      <ClearRegisterButton
+                        classArmId={selectedId}
+                        date={date}
+                        armLabel={selected?.label ?? `this ${unit.one}`}
+                        studentIds={clearRegisterStudentIds(students.map((s) => s.id), savedRecords)}
+                        markedCount={savedRecords?.length ?? 0}
+                        blockedReason={clearBlocked}
+                        isPending={clearRegister.isPending}
+                        onConfirm={(payload) => clearRegister.mutate(payload)}
+                      />
+                    )}
                     <Button
                       type="button"
                       onClick={submit}

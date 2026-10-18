@@ -19,6 +19,10 @@ export const ATTENDANCE_ENDPOINTS = {
   // server-side instead of paginating every record.
   LIST: () => `/api/attendance/`,
   BULK_MARK: () => `/api/attendance/bulk-mark/`,
+  // Teachers only, like BULK_MARK. Deletes the listed students' marks for one
+  // arm/date and leaves a tombstone, so an older queued mark can't recreate
+  // them. student_ids is required: "clear the register" means sending all.
+  BULK_CLEAR: () => `/api/attendance/bulk-clear/`,
   // One row per date: { date, present, total }. ?date_after=/?date_before=
   // default to the trailing 7 days — so a student whose last mark was a
   // fortnight ago gets [] unless an explicit range is passed. ?class_arm_id=
