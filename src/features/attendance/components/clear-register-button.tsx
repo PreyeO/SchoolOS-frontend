@@ -52,7 +52,7 @@ export function ClearRegisterButton({
       title={blockedReason ?? undefined}
       className="text-destructive"
     >
-      <Eraser className="size-3.5" /> {isPending ? "Clearing…" : "Clear register"}
+      <Eraser className="size-3.5" /> {isPending ? "Unmarking…" : "Unmark all"}
     </Button>
   );
 
@@ -62,9 +62,9 @@ export function ClearRegisterButton({
   return (
     <ConfirmDeleteDialog
       trigger={trigger}
-      title={`Clear ${armLabel}'s register for ${longDate(date)}?`}
-      description={`This removes ${markedCount} saved mark${markedCount === 1 ? "" : "s"}, as if the register was never taken that day. Unsaved changes on this device are discarded too. The clear is recorded in the audit log.`}
-      confirmLabel="Clear register"
+      title={`Unmark everyone in ${armLabel} for ${longDate(date)}?`}
+      description={`This removes ${markedCount} saved mark${markedCount === 1 ? "" : "s"}, as if the register was never taken that day. Unsaved changes on this device are discarded too. This is recorded in the audit log.`}
+      confirmLabel="Unmark all"
       isPending={isPending}
       onConfirm={() =>
         onConfirm({

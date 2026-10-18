@@ -80,7 +80,7 @@ describe("useClearRegister", () => {
     await waitFor(() => expect(result.current.register.draft).toEqual({}));
     expect(result.current.saved.data).toEqual([]);
     expect(readDraft("m1", draftKey("arm", SAT)) ?? {}).toEqual({});
-    expect(toast.success).toHaveBeenCalledWith("Register cleared for 2 students.");
+    expect(toast.success).toHaveBeenCalledWith("Register unmarked for 2 students.");
   });
 
   it("keeps a mark the server skipped, and says why", async () => {
@@ -91,7 +91,7 @@ describe("useClearRegister", () => {
     await clearAll(result);
 
     await waitFor(() => expect(result.current.register.draft).toEqual({ s2: { status: "absent", note: "" } }));
-    expect(toast.warning).toHaveBeenCalledWith("Cleared 1. 1 kept: a newer mark exists.");
+    expect(toast.warning).toHaveBeenCalledWith("Unmarked 1. 1 kept: a newer mark exists.");
   });
 
   it("shows the server's refusal and leaves the register alone", async () => {

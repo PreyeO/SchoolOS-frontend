@@ -2452,9 +2452,9 @@ resolver.
 What still needs backend work the frontend cannot do alone. Re-verified
 2026-09-01.
 
-- ~~Clearing an attendance register~~ **Shipped 2026-10-18**, see "Clear register" below.
+- ~~Clearing an attendance register~~ **Shipped 2026-10-18**, see "Clear register (Unmark all)" below.
 
-### Clear register (2026-10-18, backend 4d8a9aa)
+### Clear register, labelled "Unmark all" (2026-10-18, backend 4d8a9aa)
 A school marked a Saturday by mistake and had no way to undo it.
 - **Backend:** `POST /api/attendance/bulk-clear/` `{class_arm_id, date,
   student_ids, cleared_at?}`, teachers only. It deletes those marks and writes an
@@ -2463,7 +2463,7 @@ A school marked a Saturday by mistake and had no way to undo it.
   `{cleared: [ids], skipped: [{student_id, reason}]}`. There's **no reason
   field** (we had asked for one); the audit log records each deleted mark.
 - **Frontend:**
-  - `ClearRegisterButton` sits in the register footer when the date has saved
+  - `ClearRegisterButton` (labelled **"Unmark all"**, matching the screen's "Mark N remaining present"; "Clear" read as discarding unsaved typing) sits in the register footer when the date has saved
     marks. Its confirm names the arm and the full date, weekday included.
   - `useClearRegister` is **online only** (`networkMode: "always"`, not on the
     offline queue). It's disabled offline, while this register's marks are

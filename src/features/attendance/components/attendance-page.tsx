@@ -209,7 +209,7 @@ export function AttendancePage({
   // Online only, and never while this register's own marks are still queued:
   // those would land after the clear and be skipped, silently losing them.
   const clearBlocked = !online
-    ? "Connect to the internet to clear a register."
+    ? "Connect to the internet to unmark a register."
     : queuedCount > 0
       ? "Wait for this register's saved marks to sync first."
       : isSubmitting

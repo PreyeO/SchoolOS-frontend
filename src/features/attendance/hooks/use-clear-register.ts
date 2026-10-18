@@ -43,10 +43,10 @@ export function useClearRegister(classArmId: string | null, date: string, onClea
         // The server's own reasons ("a newer mark exists", "marked in a
         // different class arm"), de-duplicated, rather than a guess at them.
         const reasons = Array.from(new Set(result.skipped.map((s) => s.reason))).join("; ");
-        toast.warning(`Cleared ${removed}. ${result.skipped.length} kept: ${reasons}.`);
+        toast.warning(`Unmarked ${removed}. ${result.skipped.length} kept: ${reasons}.`);
         return;
       }
-      toast.success(`Register cleared for ${removed} student${removed === 1 ? "" : "s"}.`);
+      toast.success(`Register unmarked for ${removed} student${removed === 1 ? "" : "s"}.`);
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
