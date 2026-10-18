@@ -82,7 +82,7 @@ Four files are knowingly over the limit. This is a decision, not an oversight �
 | File | Lines |
 |---|---|
 | `features/results/components/score-entry-page.tsx` | 441 |
-| `features/attendance/components/attendance-page.tsx` | 462 |
+| `features/attendance/components/attendance-page.tsx` | 508 (re-counted 2026-10-18) |
 | `features/results/components/publish-results-page.tsx` | 418 |
 | `features/results/components/behaviour-page.tsx` | 343 |
 
@@ -2451,6 +2451,37 @@ resolver.
 
 What still needs backend work the frontend cannot do alone. Re-verified
 2026-09-01.
+
+- ~~Clearing an attendance register~~ **Shipped 2026-10-18**, see "Clear register (Unmark all)" below.
+
+### Clear register, labelled "Unmark all" (2026-10-18, backend 4d8a9aa)
+A school marked a Saturday by mistake and had no way to undo it.
+- **Backend:** `POST /api/attendance/bulk-clear/` `{class_arm_id, date,
+  student_ids, cleared_at?}`, teachers only. It deletes those marks and writes an
+  `AttendanceClear` tombstone, so an older queued `bulk-mark` is skipped. A newer
+  one wins, on the same last-write-wins clock as `marked_at`. Response is
+  `{cleared: [ids], skipped: [{student_id, reason}]}`. There's **no reason
+  field** (we had asked for one); the audit log records each deleted mark.
+- **Frontend:**
+  - `ClearRegisterButton` (labelled **"Unmark all"**, matching the screen's "Mark N remaining present"; "Clear" read as discarding unsaved typing) sits in the register footer when the date has saved
+    marks. Its confirm names the arm and the full date, weekday included.
+  - `useClearRegister` is **online only** (`networkMode: "always"`, not on the
+    offline queue). It's disabled offline, while this register's marks are
+    queued (they'd land after the clear and be skipped), or while saving.
+  - `clearRegisterStudentIds` sends the roster **plus** anyone with a saved mark
+    here, so students who have since moved arm are cleared too.
+- **Order on success is load-bearing:** `setQueryData` removes the cleared marks
+  from the cached register *before* `onCleared` → `reset()` drops the device
+  draft. Reset alone reseeds from the stale cache, and the old marks reappear
+  (the draft doesn't reseed on a later refetch). Both were checked by breaking
+  them in `use-clear-register.test.tsx`.
+- **Not verified live:** local FGC's trial has expired (writes 403), and the
+  one subscribed local school has no enrolments. Extend FGC's local access to
+  click through it.
+
+**Shipped the day before:** `WeekendNotice`, an amber "Saturday, Oct 11 is a
+weekend" warning above the register, shown to markers only. It warns rather
+than blocks, because some schools hold Saturday classes.
 
 - **No backend app at all:** Admissions · Expenses · Payroll · Messages ·
   SMS/WhatsApp · Events & Calendar · Timetable · CBT · Transport. These are the

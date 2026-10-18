@@ -17,9 +17,13 @@ export function useRoster(classArmId: string | null, academicPeriodId?: string |
   });
 }
 
+// Exported so a write (see useClearRegister) can update this exact entry.
+export const attendanceRecordsKey = (classArmId: string | null, date: string) =>
+  ["attendance", "records", classArmId, date] as const;
+
 export function useAttendance(classArmId: string | null, date: string) {
   return useQuery({
-    queryKey: ["attendance", "records", classArmId, date],
+    queryKey: attendanceRecordsKey(classArmId, date),
     queryFn: () => getAttendance(classArmId as string, date),
     enabled: !!classArmId && !!date,
   });
