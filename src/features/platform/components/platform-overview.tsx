@@ -42,12 +42,21 @@ export function PlatformOverview() {
         </div>
         {/* Revenue stays visible but secondary — it's a projection, and the
             Revenue screen explains how it's built. */}
-        <p className="text-right text-xs text-n-500">
-          Projected this term{" "}
-          <span className="block font-display text-lg font-bold tabular-nums text-ink">
-            {formatNaira(data.estimated_termly_revenue_total)}
-          </span>
-        </p>
+        <div className="flex gap-6 text-right text-xs text-n-500">
+          <p>
+            Projected this term{" "}
+            <span className="block font-display text-lg font-bold tabular-nums text-ink">
+              {formatNaira(data.estimated_termly_revenue_total)}
+            </span>
+          </p>
+          {/* Collected, not projected — the one figure here that is real money. */}
+          <p>
+            Scratch cards collected{" "}
+            <span className="block font-display text-lg font-bold tabular-nums text-ink">
+              {formatNaira(data.scratch_card_revenue_total ?? 0)}
+            </span>
+          </p>
+        </div>
       </div>
 
       <PlatformKpis schoolCount={data.school_count} reach={reach} />

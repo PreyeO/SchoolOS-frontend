@@ -44,6 +44,12 @@ export interface SchoolFinancialRow {
   price_per_student: number;
   price_is_locked: boolean;
   estimated_termly_revenue: number;
+  // Scratch cards: money actually collected, unlike the projection above.
+  // activated counts a bound card even after it's revoked, plus its bound
+  // replacement, so it can exceed sold.
+  scratch_card_revenue: number;
+  scratch_cards_sold: number;
+  scratch_cards_activated: number;
 }
 
 export interface PlatformFinancials {
@@ -51,6 +57,7 @@ export interface PlatformFinancials {
   school_count: number;
   subscribed_school_count: number;
   estimated_termly_revenue_total: number;
+  scratch_card_revenue_total: number;
 }
 
 export interface PlatformAdminRole {

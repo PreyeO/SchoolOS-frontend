@@ -2432,6 +2432,64 @@ on mid-size laptops.
   spilling out of a bordered card, and page-level horizontal scroll. Content
   inside scroll containers (wide tables) is skipped on purpose.
 
+### Scratch cards, phase 1 (2026-10-18, backend e666bd4…67c6595)
+A school buys result-check cards from SchoolOS through Paystack and gives one
+to each family. Parents check results without an account. This is platform
+revenue, not a school fee. Contract: backend
+`docs/scratch-cards-frontend-handoff.md`. Code: `features/scratch-cards/`,
+endpoints in `lib/api/endpoints/scratch-cards.ts`.
+- **`/scratch-cards`** (Finance nav, `manage_scratch_cards`):
+  - buy form: session plus quantity, with the total quoted live from
+    `GET /card-purchases/price/`. No price is sent; the server snapshots it.
+    Then off to Paystack via `goToPayment` (stubbable; jsdom can't spy on
+    `location`).
+  - Card stock: All, Unused, Used or Locked; "Replaced" shows only under All,
+    since there's no server filter. Regenerate shows the new PIN once.
+  - Purchases history.
+- **`/scratch-cards/payment-complete`** is Paystack's return. **The backend's
+  `FRONTEND_SCRATCH_CARD_REDIRECT_URL` must be exactly this path** (it was empty
+  in the local `.env`). It passes Paystack's query through to
+  `/card-purchases/redirect/`; only `verification_api_verified` decides the
+  outcome (paid, failed or pending, with "Check again"). It then reveals the
+  PINs **once**: a ref guard survives StrictMode's double effect, which matters
+  because a second reveal returns `[]` and would blank an unsaved sheet. An
+  empty reveal explains itself and points at Regenerate. In local DEBUG the
+  backend skips this page and lands on the API's JSON instead.
+- **PIN handling:**
+  - PINs live in component state only.
+  - Reveal and regenerate are mutations with `networkMode: "always"` and
+    `gcTime: 0`. They never pause, and only paused mutations are persisted.
+  - No `scratch-cards` key is in the query-persistence allowlist.
+  - `PinsSheet` warns on leaving until the PINs are downloaded (CSV through the
+    shared `lib/text/csv-cell.ts` formula escaping) or printed. Printing opens
+    its own window of cut-out slips; a blocked popup falls back to a toast
+    pointing at the CSV.
+- **`/check-result`** (marketing group, public, works on any host):
+  - serial first, then `GET /scratch-cards-check/periods/?serial=` for that
+    card's terms; then term, admission number and PIN, POSTed to `verify/`
+    (the PIN is never in a URL).
+  - The result renders through the shared `ReportCardBody`, with a PDF
+    download.
+  - Errors show inline, and nothing retries, because every wrong attempt
+    counts toward the five-strike lock.
+  - The check endpoints and the payment return are on client.ts's
+    `PUBLIC_RULES`, so a stale stored token can't 401 them (tested).
+- **Platform:** the financials types gained `scratch_card_revenue`, `_sold` and
+  `_activated`, plus `scratch_card_revenue_total`. The Revenue page has a
+  separate "Scratch cards" section, labelled collected (unlike the
+  projection), and the overview shows the collected total beside it.
+- **Roles:** `manage_scratch_cards` is grouped as "Scratch cards" in the
+  permission checklist. Owner roles get it automatically on `migrate`
+  (backend signal).
+- **Verified:** 18 tests, with the reveal-once guard and the public-token rule
+  checked by breaking them. A live read-only contract check (price, lists,
+  unknown serial, unknown reference) passed. **Not verified:** a real Paystack
+  checkout. That needs the redirect env var, a test-mode key, and a school
+  whose trial hasn't expired (local FGC's has).
+- **Phase 2 (waiting on backend):** SMS delivery, parent contacts without
+  accounts, card assignment history and the mismatch flag. See the "Scratch
+  Cards by SMS" proposal.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

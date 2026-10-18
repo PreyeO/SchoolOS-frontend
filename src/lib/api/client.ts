@@ -3,7 +3,7 @@ import axios from "axios";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores/auth-store";
 
-import { ENDPOINTS, PILOT_ENDPOINTS } from "./endpoints";
+import { ENDPOINTS, PILOT_ENDPOINTS, RESULT_CHECK_ENDPOINTS, SCRATCH_CARD_ENDPOINTS } from "./endpoints";
 import { installTokenRefresh } from "./token-refresh";
 
 export const apiClient = axios.create({
@@ -49,6 +49,14 @@ const PUBLIC_RULES: readonly PublicRule[] = [
   // Bearer token to a pilot enquiry — but the platform panel reads and updates
   // those same leads on this path and must be authenticated.
   { path: PILOT_ENDPOINTS.DEMO_REQUEST, methods: ["post"] },
+  // The public result checker. DRF authenticates before AllowAny is even
+  // consulted, so a stale token on a parent's browser would 401 a page that
+  // needs no login at all. VERIFY also matches verify/pdf/ (substring match).
+  { path: RESULT_CHECK_ENDPOINTS.PERIODS() },
+  { path: RESULT_CHECK_ENDPOINTS.VERIFY() },
+  // Paystack's return to the school. Public by design; the reveal that follows
+  // is a separate, authenticated route.
+  { path: SCRATCH_CARD_ENDPOINTS.PAYMENT_RETURN() },
 ];
 
 export interface PublicRequestShape {

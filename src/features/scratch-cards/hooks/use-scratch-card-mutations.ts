@@ -1,0 +1,54 @@
+"use client";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { getErrorMessage } from "@/lib/api/get-error-message";
+
+import { regenerateCard, revealCardPins, startCardPurchase } from "../api/scratch-cards-api";
+import { goToPayment } from "../lib/go-to-payment";
+import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
+
+// All three run with networkMode "always": none of them may wait as a paused
+// mutation. A paused mutation is persisted to device storage along with its
+// result once it resumes, and two of these return plaintext PINs.
+
+// Starts checkout. On success the browser leaves for Paystack; nothing else
+// needs refreshing because no cards exist until the payment is verified.
+export function useStartCardPurchase() {
+  return useMutation({
+    mutationFn: startCardPurchase,
+    networkMode: "always",
+    onSuccess: (purchase) => {
+      if (purchase.payment_link) {
+        goToPayment(purchase.payment_link);
+      } else {
+        toast.error("Paystack didn't return a payment page. Please try again.");
+      }
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+// Returns the PINs once. The caller holds them in component state only.
+export function useRevealPins() {
+  return useMutation({
+    mutationFn: revealCardPins,
+    networkMode: "always",
+    // Drop the PINs from the mutation cache the moment nothing observes them.
+    gcTime: 0,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+// Issues a new serial and PIN for one card; the old serial stops working.
+export function useRegenerateCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: regenerateCard,
+    networkMode: "always",
+    gcTime: 0,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SCRATCH_CARDS_KEY }),
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}

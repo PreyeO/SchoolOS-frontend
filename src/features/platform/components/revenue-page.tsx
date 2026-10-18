@@ -7,11 +7,14 @@ import { formatNaira } from "@/lib/text/format-naira";
 
 import { usePlatformFinancials } from "../hooks/use-platform";
 import { AccessBadge } from "./access-badge";
+import { ScratchCardRevenue } from "./scratch-card-revenue";
 
 // Projected revenue, per school.
 //
-// "Projected" is doing real work in that word: there is no payment gateway, so
-// nothing here has been invoiced or collected. For an unsubscribed school the
+// "Projected" is doing real work in that word: subscriptions don't go through
+// a payment gateway, so none of the subscription figures has been invoiced or
+// collected. Scratch cards do (Paystack), which is why their real money sits
+// in a separate section rather than being added to the projection. For an unsubscribed school the
 // price is a default standing in for one they haven't agreed to — which is why
 // price_is_locked is surfaced per row rather than hidden. Without it the total
 // reads as money owed instead of money possible.
@@ -30,7 +33,8 @@ export function PlatformRevenuePage() {
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">Revenue</h1>
         <p className="mt-1 text-sm text-n-500">
-          Projected termly revenue by school. Nothing here has been invoiced or collected.
+          Projected subscription revenue by school, which hasn&rsquo;t been invoiced. Scratch-card money, which
+          has been collected, is listed separately below.
         </p>
       </div>
 
@@ -98,6 +102,8 @@ export function PlatformRevenuePage() {
         platform default is used as a projection. Schools are billed on declared capacity,
         not current headcount.
       </p>
+
+      <ScratchCardRevenue rows={data.schools} total={data.scratch_card_revenue_total ?? 0} />
     </div>
   );
 }
