@@ -1,72 +1,94 @@
 "use client";
 
 import { useState } from "react";
-import { Download } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { ReportCardBody } from "@/features/results/components/report-card-body";
-import { getErrorMessage } from "@/lib/api/get-error-message";
+import { Container } from "@/components/layout/Container";
 
-import { useCheckResult, useDownloadResultPdf } from "../hooks/use-result-check";
+import { useCheckPeriods, useCheckResult, useDownloadResultPdf, useResultPreview } from "../hooks/use-result-check";
 import type { CheckResultValues } from "../schemas/check-result-schema";
 import { CheckResultForm } from "./check-result-form";
+import { CheckResultHeading, CheckResultHelp } from "./check-result-intro";
+import { CheckResultView } from "./check-result-view";
 
-// The public result checker: a parent with a scratch card and no account.
-// The same report-card body logged-in parents see, so a school's result looks
-// the same whichever way it's opened. Nothing typed here is kept once the page
-// is left, and "Check another" forgets the PIN.
+// The public result checker: a parent with a card and no account.
+//
+// The check (JSON) comes first: it validates the card, binds it on first use,
+// and gives the name for the header. The school's branded report card (HTML)
+// follows for display. Nothing typed is kept once the page is left.
 export function CheckResultPage() {
   const check = useCheckResult();
+  const preview = useResultPreview();
   const pdf = useDownloadResultPdf();
   const [submitted, setSubmitted] = useState<CheckResultValues | null>(null);
+  // Card details kept for "Another term", which skips retyping them.
+  const [carryOver, setCarryOver] = useState<Omit<CheckResultValues, "academic_period_id"> | undefined>();
+  const periods = useCheckPeriods(submitted?.serial ?? null);
 
   function onCheck(values: CheckResultValues) {
     setSubmitted(values);
-    check.mutate(values);
+    check.mutate(values, { onSuccess: () => preview.mutate(values) });
   }
 
-  function reset() {
+  function backToForm(keepCard: boolean) {
+    setCarryOver(
+      keepCard && submitted
+        ? { serial: submitted.serial, pin: submitted.pin, admission_number: submitted.admission_number }
+        : undefined,
+    );
     check.reset();
+    preview.reset();
     pdf.reset();
     setSubmitted(null);
   }
 
   const report = check.data;
+  const term = periods.data?.periods.find((p) => p.id === submitted?.academic_period_id);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      {report && submitted ? (
-        <div className="space-y-5">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="font-display text-2xl font-bold text-ink">
-                {report.student.user.first_name} {report.student.user.last_name}
-              </h1>
-              <p className="font-mono text-xs text-n-500">{report.student.admission_number}</p>
+    <section className="py-12 md:py-16">
+      <Container>
+        {report && submitted ? (
+          <div className="mx-auto max-w-4xl">
+            <CheckResultView
+              report={report}
+              termName={term?.name ?? "Result"}
+              sessionName={periods.data?.session_name ?? ""}
+              previewHtml={preview.data ?? null}
+              // Not just isPending: there's a render between the check landing
+              // and the preview starting, which would flash the plain table.
+              previewLoading={!preview.data && !preview.isError}
+              onDownload={() => pdf.mutate(submitted)}
+              downloading={pdf.isPending}
+              downloadError={pdf.error}
+              onAnotherTerm={() => backToForm(true)}
+              onAnotherCard={() => backToForm(false)}
+            />
+          </div>
+        ) : (
+          // Phone: heading, form, help. Desktop: heading over help on the
+          // left, the form beside them on the right.
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-10">
+            <div className="lg:col-start-1 lg:row-start-1">
+              <CheckResultHeading />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" onClick={() => pdf.mutate(submitted)} disabled={pdf.isPending}>
-                <Download className="size-4" /> {pdf.isPending ? "Preparing PDF…" : "Download PDF"}
-              </Button>
-              <Button type="button" variant="outline" onClick={reset}>Check another</Button>
+            <div className="lg:col-start-1 lg:row-start-2">
+              <CheckResultHelp />
+            </div>
+            <div className="row-start-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-2">
+              <div className="rounded-2xl border border-n-200 bg-white p-5 shadow-sm sm:p-6">
+                {/* Keyed so "Another term" starts a fresh form seeded with the card. */}
+                <CheckResultForm
+                  key={carryOver ? `carry-${carryOver.serial}` : "fresh"}
+                  initial={carryOver}
+                  onCheck={onCheck}
+                  isChecking={check.isPending}
+                  checkError={check.error}
+                />
+              </div>
             </div>
           </div>
-          {pdf.isError && <p role="alert" className="text-sm text-clay">{getErrorMessage(pdf.error)}</p>}
-          <ReportCardBody data={report} />
-        </div>
-      ) : (
-        <div className="mx-auto max-w-md space-y-6">
-          <div className="space-y-2 text-center">
-            <h1 className="font-display text-3xl font-bold text-ink">Check a result</h1>
-            <p className="text-sm text-n-500">
-              Enter the details on the scratch card your child&rsquo;s school gave you. No account needed.
-            </p>
-          </div>
-          <div className="rounded-xl border border-n-200 bg-white p-5">
-            <CheckResultForm onCheck={onCheck} isChecking={check.isPending} checkError={check.error} />
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </Container>
+    </section>
   );
 }

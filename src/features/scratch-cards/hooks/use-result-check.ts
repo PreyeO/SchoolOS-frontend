@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { saveBlob } from "@/lib/api/save-blob";
 
-import { checkResult, checkResultPdf, getCheckPeriods } from "../api/result-check-api";
+import { checkResult, checkResultPdf, checkResultPreview, getCheckPeriods } from "../api/result-check-api";
 import type { CheckResultPayload } from "../types";
 
 // The public checker's three calls. Errors are shown inline on the page, not
@@ -26,6 +26,11 @@ export function useCheckPeriods(serial: string | null) {
 
 export function useCheckResult() {
   return useMutation({ mutationFn: checkResult, networkMode: "always", gcTime: 0 });
+}
+
+// The school's branded report card as HTML, fetched after a successful check.
+export function useResultPreview() {
+  return useMutation({ mutationFn: checkResultPreview, networkMode: "always", gcTime: 0 });
 }
 
 export function useDownloadResultPdf() {

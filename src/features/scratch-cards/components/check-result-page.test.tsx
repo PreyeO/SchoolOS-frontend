@@ -18,74 +18,92 @@ const report = {
   trait_ratings: [],
 };
 
-function serve(verify: () => Response = () => HttpResponse.json(report)) {
-  const seen = { periodsQuery: "", verifyBody: null as unknown, auth: [] as (string | null)[] };
+type Reply = () => Response;
+
+function serve({ verify, preview }: { verify?: Reply; preview?: Reply } = {}) {
+  const seen = { periodsQuery: "", verifyBodies: [] as unknown[], auth: [] as (string | null)[] };
   server.use(
     http.get(apiUrl(RESULT_CHECK_ENDPOINTS.PERIODS()), ({ request }) => {
       seen.periodsQuery = new URL(request.url).search;
       seen.auth.push(request.headers.get("authorization"));
-      return HttpResponse.json({ session_name: "2026/2027", periods: [{ id: "t1", name: "First Term", order: 1 }] });
+      return HttpResponse.json({
+        session_name: "2026/2027",
+        periods: [{ id: "t1", name: "First Term", order: 1 }, { id: "t2", name: "Second Term", order: 2 }],
+      });
     }),
     http.post(apiUrl(RESULT_CHECK_ENDPOINTS.VERIFY()), async ({ request }) => {
-      seen.verifyBody = await request.json();
+      seen.verifyBodies.push(await request.json());
       seen.auth.push(request.headers.get("authorization"));
-      return verify();
+      return verify ? verify() : HttpResponse.json(report);
     }),
+    http.post(apiUrl(RESULT_CHECK_ENDPOINTS.VERIFY_PREVIEW()), () =>
+      preview ? preview() : HttpResponse.text("<html><body>School report card</body></html>"),
+    ),
   );
   return seen;
 }
 
-async function fillAndCheck(user: ReturnType<typeof renderWithClient>["user"]) {
-  await user.type(screen.getByLabelText("Card serial number"), " abcd-efgh-ij ");
+async function fillAndCheck(user: ReturnType<typeof renderWithClient>["user"], term = "First Term") {
+  await user.type(screen.getByLabelText("Card serial number"), " abcd efgh ij ");
   await user.click(screen.getByRole("button", { name: "Continue" }));
-  await user.selectOptions(await screen.findByLabelText("Term"), "t1");
-  await user.type(screen.getByLabelText("Student's admission number"), "ADM-100");
+  await user.click(await screen.findByRole("radio", { name: term }));
+  await user.type(screen.getByLabelText("Admission number"), "ADM-100");
   await user.type(screen.getByLabelText("PIN"), "4821 930576");
   await user.click(screen.getByRole("button", { name: "Check result" }));
 }
 
 describe("CheckResultPage", () => {
-  it("finds the card's terms by serial, then shows the result", async () => {
+  it("formats the serial, finds the card's terms, then shows the school's report card", async () => {
     const seen = serve();
     const { user } = renderWithClient(<CheckResultPage />);
     await fillAndCheck(user);
 
     expect(await screen.findByRole("heading", { name: "Tolu Ade" })).toBeInTheDocument();
+    expect(screen.getByText("First Term · 2026/2027")).toBeInTheDocument();
+    expect(await screen.findByTitle("Tolu Ade report card")).toBeInTheDocument();
     expect(seen.periodsQuery).toBe("?serial=ABCD-EFGH-IJ");
-    expect(seen.verifyBody).toEqual({
-      serial: "ABCD-EFGH-IJ",
-      pin: "4821930576",
-      admission_number: "ADM-100",
-      academic_period_id: "t1",
-    });
+    expect(seen.verifyBodies).toEqual([
+      { serial: "ABCD-EFGH-IJ", pin: "4821930576", admission_number: "ADM-100", academic_period_id: "t1" },
+    ]);
   });
 
-  it("never puts the PIN in a URL", async () => {
-    const seen = serve();
+  it("falls back to the plain result if the branded card can't load", async () => {
+    serve({ preview: () => HttpResponse.json({ detail: "Rendering failed." }, { status: 500 }) });
     const { user } = renderWithClient(<CheckResultPage />);
     await fillAndCheck(user);
     await screen.findByRole("heading", { name: "Tolu Ade" });
-    expect(seen.periodsQuery).not.toContain("4821930576");
+    expect(await screen.findByText("No subject results yet for this term.")).toBeInTheDocument();
+    expect(screen.queryByTitle("Tolu Ade report card")).not.toBeInTheDocument();
+  });
+
+  it("checks another term without retyping the card", async () => {
+    const seen = serve();
+    const { user } = renderWithClient(<CheckResultPage />);
+    await fillAndCheck(user);
+    await user.click(await screen.findByRole("button", { name: /Another term/ }));
+
+    await user.click(await screen.findByRole("radio", { name: "Second Term" }));
+    await user.click(screen.getByRole("button", { name: "Check result" }));
+    await screen.findByRole("heading", { name: "Tolu Ade" });
+    expect(seen.verifyBodies[1]).toEqual({
+      serial: "ABCD-EFGH-IJ", pin: "4821930576", admission_number: "ADM-100", academic_period_id: "t2",
+    });
   });
 
   it("shows the server's refusal next to the form", async () => {
-    serve(() => HttpResponse.json({ detail: "Invalid scratch card, PIN, or student identifier." }, { status: 400 }));
+    serve({ verify: () => HttpResponse.json({ detail: "Invalid scratch card, PIN, or student identifier." }, { status: 400 }) });
     const { user } = renderWithClient(<CheckResultPage />);
     await fillAndCheck(user);
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid scratch card, PIN, or student identifier.");
   });
 
-  it("says when a serial isn't recognised", async () => {
-    server.use(
-      http.get(apiUrl(RESULT_CHECK_ENDPOINTS.PERIODS()), () =>
-        HttpResponse.json({ detail: "Scratch card not found." }, { status: 400 }),
-      ),
-    );
+  it("won't look up an incomplete serial, and says what one looks like", async () => {
+    const seen = serve();
     const { user } = renderWithClient(<CheckResultPage />);
-    await user.type(screen.getByLabelText("Card serial number"), "NOPE");
+    await user.type(screen.getByLabelText("Card serial number"), "ABCD");
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Scratch card not found.");
-    expect(screen.queryByLabelText("PIN")).not.toBeInTheDocument();
+    expect(screen.getByText(/10 letters and numbers/)).toBeInTheDocument();
+    expect(seen.periodsQuery).toBe("");
   });
 
   it("keeps a signed-in user's token off these public calls", async () => {

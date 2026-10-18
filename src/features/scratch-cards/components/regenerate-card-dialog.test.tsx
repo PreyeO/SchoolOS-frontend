@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 
@@ -28,28 +28,30 @@ function serve() {
 }
 
 describe("RegenerateCardDialog", () => {
-  it("warns that the old card dies, and that a used card stays with its student", async () => {
+  it("warns that the old card dies, and that a used card stays with its student", () => {
     serve();
-    const { user } = renderWithClient(<RegenerateCardDialog card={card(true)} />);
-    await user.click(screen.getByRole("button", { name: /Regenerate/ }));
+    renderWithClient(<RegenerateCardDialog card={card(true)} onClose={() => {}} />);
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent("stop working immediately");
     expect(dialog).toHaveTextContent("The new card stays with s1 Test.");
   });
 
-  it("shows the new serial and PIN once, and forgets them when closed", async () => {
+  it("shows the new serial and PIN once, then forgets them on Done", async () => {
     const calls = serve();
-    const { user } = renderWithClient(<RegenerateCardDialog card={card(false)} />);
-    await user.click(screen.getByRole("button", { name: /Regenerate/ }));
+    const onClose = vi.fn();
+    const { user, rerender } = renderWithClient(<RegenerateCardDialog card={card(false)} onClose={onClose} />);
     await user.click(screen.getByRole("button", { name: "Issue new card" }));
 
     expect(await screen.findByText("5550001111")).toBeInTheDocument();
     expect(screen.getByText("NEWS-ERIA-L2")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent("only time this PIN is shown");
     expect(calls.regenerate).toBe(1);
 
-    await user.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    await user.click(screen.getByRole("button", { name: /Regenerate/ }));
+    await user.click(screen.getByRole("button", { name: "Done" }));
+    expect(onClose).toHaveBeenCalled();
+
+    // Opening it again for the same card starts from the confirm step.
+    rerender(<RegenerateCardDialog card={card(false)} onClose={onClose} />);
     expect(screen.queryByText("5550001111")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Issue new card" })).toBeInTheDocument();
   });

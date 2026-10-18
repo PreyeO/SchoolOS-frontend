@@ -31,6 +31,8 @@ export const RESULT_CHECK_ENDPOINTS = {
   PERIODS: () => `/api/scratch-cards-check/periods/`,
   // POST { serial, pin, admission_number, academic_period_id } → report card JSON.
   VERIFY: () => `/api/scratch-cards-check/verify/`,
+  // Same body → the school's own report card template as HTML.
+  VERIFY_PREVIEW: () => `/api/scratch-cards-check/verify/preview/`,
   // Same body → PDF (inline).
   VERIFY_PDF: () => `/api/scratch-cards-check/verify/pdf/`,
 } as const;

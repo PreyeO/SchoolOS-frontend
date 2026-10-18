@@ -2447,8 +2447,14 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
     since there's no server filter. Regenerate shows the new PIN once.
   - Purchases history.
 - **`/scratch-cards/payment-complete`** is Paystack's return. **The backend's
-  `FRONTEND_SCRATCH_CARD_REDIRECT_URL` must be exactly this path** (it was empty
-  in the local `.env`). It passes Paystack's query through to
+  `FRONTEND_SCRATCH_CARD_REDIRECT_URL` should be exactly this path** (it was
+  empty in the local `.env`). The hosted dev backend had it set to
+  `/settings/scratch-cards/redirect`, which 404'd a real payment on
+  2026-10-18. That path is now an alias
+  (`app/(dashboard)/settings/scratch-cards/redirect`) that server-redirects
+  here with Paystack's query intact, so either value works. Inside the
+  streaming dashboard layout, Next sends that redirect as a 200 carrying a
+  `NEXT_REDIRECT` instruction rather than a 307; checked on a production build. It passes Paystack's query through to
   `/card-purchases/redirect/`; only `verification_api_verified` decides the
   outcome (paid, failed or pending, with "Check again"). It then reveals the
   PINs **once**: a ref guard survives StrictMode's double effect, which matters
@@ -2474,6 +2480,33 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
     counts toward the five-strike lock.
   - The check endpoints and the payment return are on client.ts's
     `PUBLIC_RULES`, so a stale stored token can't 401 them (tested).
+- **Rework (2026-10-19), after the user found both screens wanting:**
+  - **Regenerate bug.** The dialog lived inside the card's table row. The
+    refetch after a regenerate turned that row "Replaced", which renders no
+    dialog, so the new PIN vanished the instant it arrived.
+    `RegenerateCardDialog` is now controlled by `CardsTable` (the
+    `replacing` state), outside the rows. Regression test:
+    `cards-table.test.tsx`, which failed before the fix. The issued PIN is
+    shown large, with Copy and Download, and the dialog says it is the only
+    time it's shown.
+  - **`/check-result` redesigned.**
+    - Layout: two columns on desktop (heading and help on the left, form on
+      the right). On a phone, the form comes straight after the heading.
+    - A card picture shows where the serial and PIN are, plus three short
+      facts and a step indicator.
+    - The serial auto-formats to `XXXX-XXXX-XX` (`formatSerialInput`; the
+      backend generates 10 of A–Z0–9). The PIN accepts 10 digits only and has
+      a show/hide toggle.
+    - Terms are radio buttons. An incomplete serial is caught before any
+      lookup.
+    - The result shows the school's own branded report card (POST
+      `verify/preview/` into a `sandbox=""` iframe through
+      `fitReportCardPreview`), falling back to `ReportCardBody` if that
+      fails. "Another term" reuses the card details.
+    - Screenshotted at 390 and 1280px with mocked API responses: no
+      horizontal overflow.
+  - **`renderWithClient` now uses RTL's `wrapper`,** so `rerender()` keeps the
+    QueryClient (it used to drop it).
 - **Platform:** the financials types gained `scratch_card_revenue`, `_sold` and
   `_activated`, plus `scratch_card_revenue_total`. The Revenue page has a
   separate "Scratch cards" section, labelled collected (unlike the

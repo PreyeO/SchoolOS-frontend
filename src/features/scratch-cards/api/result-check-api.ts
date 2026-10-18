@@ -20,6 +20,15 @@ export async function checkResult(payload: CheckResultPayload): Promise<ReportCa
   return data;
 }
 
+// The school's own report-card template (fonts, colours, logo), the same HTML
+// the PDF is made from. Shown in a sandboxed iframe via srcDoc.
+export async function checkResultPreview(payload: CheckResultPayload): Promise<string> {
+  const { data } = await apiClient.post<string>(RESULT_CHECK_ENDPOINTS.VERIFY_PREVIEW(), payload, {
+    responseType: "text",
+  });
+  return data;
+}
+
 // A refusal on a blob request arrives as an unreadable Blob; readBlobError
 // parses it back so getErrorMessage shows the server's own words.
 export async function checkResultPdf(payload: CheckResultPayload): Promise<Blob> {

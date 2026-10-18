@@ -3,12 +3,15 @@
 import { useState } from "react";
 
 import { PaginationControls } from "@/components/shared/pagination-controls";
+import { RefreshCw } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useScratchCards } from "../hooks/use-scratch-card-queries";
 import { CARD_STATUS_META, cardStatus } from "../lib/card-status";
-import type { ScratchCardFilters } from "../types";
+import type { ScratchCard, ScratchCardFilters } from "../types";
 import { RegenerateCardDialog } from "./regenerate-card-dialog";
 
 // The two filters the backend has. Replaced cards show under "All" only:
@@ -24,6 +27,9 @@ const VIEWS: Record<string, { label: string; filters: ScratchCardFilters }> = {
 export function CardsTable() {
   const [view, setView] = useState("all");
   const [page, setPage] = useState(1);
+  // A snapshot of the card being replaced, outside the rows: the refetch after
+  // a regenerate turns that row "Replaced", and the dialog must outlive it.
+  const [replacing, setReplacing] = useState<ScratchCard | null>(null);
   const { data, isPending, isError } = useScratchCards({ ...VIEWS[view].filters, page });
 
   return (
@@ -91,7 +97,11 @@ export function CardsTable() {
                         {card.last_used_at ? formatTimestamp(card.last_used_at) : "—"}
                       </td>
                       <td className="px-3 py-2.5 text-right">
-                        {status !== "replaced" && <RegenerateCardDialog card={card} />}
+                        {status !== "replaced" && (
+                          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setReplacing(card)}>
+                            <RefreshCw className="size-3.5" /> Regenerate
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -102,6 +112,7 @@ export function CardsTable() {
           <PaginationControls page={page} pageSize={25} count={data.count} onPageChange={setPage} />
         </>
       )}
+      <RegenerateCardDialog card={replacing} onClose={() => setReplacing(null)} />
     </div>
   );
 }
