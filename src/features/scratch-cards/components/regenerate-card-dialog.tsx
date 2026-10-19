@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dialog";
 
 import { useRegenerateCard } from "../hooks/use-scratch-card-mutations";
-import { downloadPinsCsv } from "../lib/pins-csv";
+import { useSlipDetails } from "../hooks/use-slip-details";
+import { downloadPinsPdf } from "../lib/pins-pdf";
 import type { CardPin, ScratchCard } from "../types";
 
 interface Props {
@@ -31,6 +32,7 @@ interface Props {
 export function RegenerateCardDialog({ card, onClose }: Props) {
   const [issued, setIssued] = useState<CardPin | null>(null);
   const regenerate = useRegenerateCard();
+  const slip = useSlipDetails(card?.academic_session_name ?? "");
   const student = card?.student ? `${card.student.user.first_name} ${card.student.user.last_name}` : null;
 
   function close() {
@@ -83,8 +85,14 @@ export function RegenerateCardDialog({ card, onClose }: Props) {
               <Button type="button" variant="outline" onClick={() => copy(issued)}>
                 <Copy className="size-4" /> Copy
               </Button>
-              <Button type="button" variant="outline" onClick={() => downloadPinsCsv([issued], card.academic_session_name)}>
-                Download
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  downloadPinsPdf([issued], slip).catch(() => toast.error("Couldn't make the PDF. Copy the PIN instead."))
+                }
+              >
+                Download slip
               </Button>
               <Button type="button" onClick={close}>Done</Button>
             </DialogFooter>

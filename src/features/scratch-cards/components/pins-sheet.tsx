@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Printer, ShieldAlert } from "lucide-react";
+import { Download, FileSpreadsheet, Printer, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { env } from "@/config/env";
-import { useSchoolStore } from "@/stores/school-store";
 
+import { useSlipDetails } from "../hooks/use-slip-details";
 import { downloadPinsCsv } from "../lib/pins-csv";
+import { downloadPinsPdf } from "../lib/pins-pdf";
 import { printPinSlips } from "../lib/print-pins";
 import type { CardPin } from "../types";
 
@@ -21,8 +21,9 @@ interface Props {
 // (the server keeps only a hash) and can't be shown again, so the page warns
 // before leaving until they've been downloaded or printed.
 export function PinsSheet({ pins, sessionName }: Props) {
-  const schoolName = useSchoolStore((s) => s.currentSchool?.name) ?? "Your school";
+  const details = useSlipDetails(sessionName);
   const [saved, setSaved] = useState(false);
+  const [making, setMaking] = useState(false);
 
   useEffect(() => {
     if (saved) return;
@@ -31,19 +32,30 @@ export function PinsSheet({ pins, sessionName }: Props) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [saved]);
 
-  function download() {
+  // The PDF is the main way out: it opens on any phone, forwards on WhatsApp,
+  // and a print shop can run it. CSV is for whoever wants a spreadsheet.
+  async function downloadPdf() {
+    setMaking(true);
+    try {
+      await downloadPinsPdf(pins, details);
+      setSaved(true);
+    } catch {
+      toast.error("Couldn't make the PDF. Download the CSV instead, so the PINs aren't lost.");
+    } finally {
+      setMaking(false);
+    }
+  }
+
+  function downloadCsv() {
     downloadPinsCsv(pins, sessionName);
     setSaved(true);
   }
 
   function print() {
-    // The apex, not this school's subdomain: a card works from any host, and
-    // the bare domain is the shortest thing to print and type.
-    const checkUrl = `${env.SCHOOL_DOMAIN}/check-result`;
-    if (printPinSlips(pins, { schoolName, sessionName, checkUrl })) {
+    if (printPinSlips(pins, details)) {
       setSaved(true);
     } else {
-      toast.error("Your browser blocked the print window. Download the CSV instead, or allow pop-ups for this site.");
+      toast.error("Your browser blocked the print window. Download the PDF instead, or allow pop-ups for this site.");
     }
   }
 
@@ -57,12 +69,15 @@ export function PinsSheet({ pins, sessionName }: Props) {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={download}>
-          <Download className="size-4" /> Download CSV
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" onClick={downloadPdf} disabled={making}>
+          <Download className="size-4" /> {making ? "Making PDF…" : "Download PDF"}
         </Button>
         <Button type="button" variant="outline" onClick={print}>
           <Printer className="size-4" /> Print slips
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={downloadCsv} className="text-n-500">
+          <FileSpreadsheet className="size-4" /> CSV
         </Button>
       </div>
 

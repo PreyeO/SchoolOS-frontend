@@ -2512,6 +2512,19 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
     that name, so there's no old label to bridge). The parent-facing wording is "Result checker" / "PIN". Code
     names (`features/scratch-cards`, `/scratch-cards` routes,
     `manage_scratch_cards`) are unchanged, to match the backend.
+  - **PDF slips are the main download.** The backend only returns
+    serial/PIN JSON, so every format is built here. `buildPinsPdf`
+    (`lib/pins-pdf.ts`, jsPDF 4.2.1, **lazy-imported** so it isn't in any page
+    bundle) draws ten cut-out slips per A4 page (`lib/slip-layout.ts`, a pure
+    and tested layout), using only the built-in fonts so nothing is fetched.
+    Buttons: **Download PDF** (primary), Print slips, then CSV as a small
+    secondary option. Regenerate's "Download slip" makes the same one-slip
+    PDF. Slip text comes from `useSlipDetails` (school name, session, apex
+    `/check-result`). Checked by rendering a 12-card sample in Chrome:
+    2 pages, slips inside the margins, leading zeros kept.
+  - **`testTimeout` is 15s** (vitest.config): the form tests type whole
+    serials and PINs key by key, and one crossed the 5s default under a full
+    parallel run with nothing wrong.
   - **`renderWithClient` now uses RTL's `wrapper`,** so `rerender()` keeps the
     QueryClient (it used to drop it).
 - **Platform:** the financials types gained `scratch_card_revenue`, `_sold` and
