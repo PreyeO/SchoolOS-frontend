@@ -70,7 +70,7 @@ function drawSlip(doc: JsPDF, pin: CardPin, x: number, y: number, d: SlipDetails
 export async function buildPinsPdf(pins: CardPin[], details: SlipDetails, logo: PdfLogo | null = null): Promise<JsPDF> {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  doc.setProperties({ title: `Result PINs · ${details.sessionName}`, author: details.schoolName });
+  doc.setProperties({ title: `Result cards · ${details.sessionName}`, author: details.schoolName });
 
   pins.forEach((pin, i) => {
     const { page, x, y } = slipPosition(i);
@@ -83,5 +83,5 @@ export async function buildPinsPdf(pins: CardPin[], details: SlipDetails, logo: 
 export async function downloadPinsPdf(pins: CardPin[], details: SlipDetails): Promise<void> {
   const doc = await buildPinsPdf(pins, details, await loadLogo(details.logoUrl));
   const safeSession = details.sessionName.replace(/[^\w-]+/g, "-");
-  saveBlob(doc.output("blob"), `result-pins-${safeSession}.pdf`);
+  saveBlob(doc.output("blob"), `result-cards-${safeSession}.pdf`);
 }

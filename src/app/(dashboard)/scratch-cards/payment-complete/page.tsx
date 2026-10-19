@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PaymentCompletePage } from "@/features/scratch-cards/components/payment-complete-page";
 
-export const metadata: Metadata = { title: "Result PIN Payment" };
+export const metadata: Metadata = { title: "Result Card Payment" };
 
 // Paystack's return URL. The backend builds it from
 // FRONTEND_SCRATCH_CARD_REDIRECT_URL, which must be "/scratch-cards/payment-complete".

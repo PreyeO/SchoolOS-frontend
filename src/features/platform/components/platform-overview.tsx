@@ -51,7 +51,7 @@ export function PlatformOverview() {
           </p>
           {/* Collected, not projected — the one figure here that is real money. */}
           <p>
-            Result PINs collected{" "}
+            Result cards collected{" "}
             <span className="block font-display text-lg font-bold tabular-nums text-ink">
               {formatNaira(data.scratch_card_revenue_total ?? 0)}
             </span>

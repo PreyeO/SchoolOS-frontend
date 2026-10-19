@@ -36,7 +36,7 @@ export function printPinSlips(
     )
     .join("");
 
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Result PINs</title>
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Result cards</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 16px; color: #0E2A24; }
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }

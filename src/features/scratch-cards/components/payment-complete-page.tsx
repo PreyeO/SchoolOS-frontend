@@ -13,7 +13,7 @@ import { PinsSheet } from "./pins-sheet";
 
 const BACK = (
   <Link href="/scratch-cards" className="text-sm text-primary hover:underline">
-    Back to Result PINs
+    Back to Result Cards
   </Link>
 );
 
@@ -92,7 +92,7 @@ export function PaymentCompletePage({ params }: { params: Record<string, string>
 
   return (
     <div className="space-y-5">
-      <h1 className="font-display text-2xl font-bold text-ink">Result PIN payment</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">Result card payment</h1>
       {body}
     </div>
   );

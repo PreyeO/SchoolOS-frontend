@@ -2505,13 +2505,18 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
       fails. "Another term" reuses the card details.
     - Screenshotted at 390 and 1280px with mocked API responses: no
       horizontal overflow.
-  - **Renamed in the UI to "Result PINs"** (nav, page titles, Roles group,
-    platform revenue, print window). "Scratch card" is what parents already
-    know from WAEC/NECO, but it stops making sense once PINs go out by SMS.
-    Nothing in the UI mentions "scratch card" (it was never released under
-    that name, so there's no old label to bridge). The parent-facing wording is "Result checker" / "PIN". Code
-    names (`features/scratch-cards`, `/scratch-cards` routes,
+  - **Named "Result Cards" in the UI** (nav, page titles, Roles group,
+    platform revenue, PDF and print titles). Briefly "Result PINs", which
+    clashed with the page's own unit: every card *has* a PIN, so "PIN" can't
+    also be the thing bought. A card = one serial + one PIN, printed or texted,
+    like a recharge card. "Scratch card" was dropped because there's nothing to
+    scratch once PINs go out by SMS; it was never released, so no old label is
+    bridged. Code names (`features/scratch-cards`, `/scratch-cards` routes,
     `manage_scratch_cards`) are unchanged, to match the backend.
+  - **The cost is stated before checkout:** the page heading reads "Cards are
+    bought from SchoolOS at ₦X each, paid through Paystack", with the price
+    from `/card-purchases/price/`. The nav description and the empty Card
+    stock state say the same.
   - **PDF slips are the main download.** The backend only returns
     serial/PIN JSON, so every format is built here. `buildPinsPdf`
     (`lib/pins-pdf.ts`, jsPDF 4.2.1, **lazy-imported** so it isn't in any page

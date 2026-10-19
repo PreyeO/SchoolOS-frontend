@@ -16,14 +16,14 @@ export function ScratchCardRevenue({ rows, total }: { rows: SchoolFinancialRow[]
     <section className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-ink">Result PINs</h2>
+          <h2 className="text-sm font-semibold text-ink">Result cards</h2>
           <p className="text-xs text-n-500">Collected through Paystack. Unlike the projection above, this is real money.</p>
         </div>
         <p className="font-display text-xl font-bold tabular-nums text-ink">{formatNaira(total)}</p>
       </div>
 
       {buyers.length === 0 ? (
-        <p className="text-sm text-n-400 italic">No school has bought result PINs yet.</p>
+        <p className="text-sm text-n-400 italic">No school has bought result cards yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
           <table className="w-full text-left text-sm">

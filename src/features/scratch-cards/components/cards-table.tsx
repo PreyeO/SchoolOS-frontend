@@ -54,7 +54,9 @@ export function CardsTable() {
         <p className="text-sm text-clay">Couldn&rsquo;t load cards. Refresh to try again.</p>
       ) : data.results.length === 0 ? (
         <p className="text-sm text-n-400 italic">
-          {view === "all" ? "No cards yet. They appear here once a purchase is paid." : "No cards match this filter."}
+          {view === "all"
+            ? "You haven't bought any cards yet. Buy cards above; they appear here once the payment goes through."
+            : "No cards match this filter."}
         </p>
       ) : (
         <>
