@@ -14,11 +14,11 @@ export function ScratchCardsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-ink">Scratch cards</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">Result PINs</h1>
         <p className="mt-1 max-w-2xl text-sm text-n-500">
-          Parents use a card to check their child&rsquo;s results at{" "}
-          <span className="font-mono text-ink">{env.SCHOOL_DOMAIN}/check-result</span>, with no account
-          needed. A card locks to the first student it&rsquo;s used for and works for every term of its session.
+          Each card has a serial and a PIN that a parent uses to check their child&rsquo;s results at{" "}
+          <span className="font-mono text-ink">{env.SCHOOL_DOMAIN}/check-result</span>, with no account needed. A
+          card locks to the first student it&rsquo;s used for and works for every term of its session.
         </p>
       </div>
 

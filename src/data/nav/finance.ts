@@ -25,10 +25,10 @@ export const financeGroup: NavGroup = {
     // Bought from SchoolOS, not a school fee. /scratch-cards/payment-complete
     // (Paystack's return) resolves to this item too, so it's gated the same.
     adminItem({
-      label: "Scratch Cards",
+      label: "Result PINs",
       href: "/scratch-cards",
       icon: Ticket,
-      description: "Buy result-check cards for parents and manage the PINs.",
+      description: "Buy result-check PINs for parents and manage them.",
       permission: "manage_scratch_cards",
     }, false),
     adminItem({

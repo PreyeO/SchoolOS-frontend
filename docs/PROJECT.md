@@ -2505,6 +2505,13 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
       fails. "Another term" reuses the card details.
     - Screenshotted at 390 and 1280px with mocked API responses: no
       horizontal overflow.
+  - **Renamed in the UI to "Result PINs"** (nav, page titles, Roles group,
+    platform revenue, print window). "Scratch card" is what parents already
+    know from WAEC/NECO, but it stops making sense once PINs go out by SMS.
+    Nothing in the UI mentions "scratch card" (it was never released under
+    that name, so there's no old label to bridge). The parent-facing wording is "Result checker" / "PIN". Code
+    names (`features/scratch-cards`, `/scratch-cards` routes,
+    `manage_scratch_cards`) are unchanged, to match the backend.
   - **`renderWithClient` now uses RTL's `wrapper`,** so `rerender()` keeps the
     QueryClient (it used to drop it).
 - **Platform:** the financials types gained `scratch_card_revenue`, `_sold` and

@@ -33,7 +33,7 @@ export function PlatformRevenuePage() {
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">Revenue</h1>
         <p className="mt-1 text-sm text-n-500">
-          Projected subscription revenue by school, which hasn&rsquo;t been invoiced. Scratch-card money, which
+          Projected subscription revenue by school, which hasn&rsquo;t been invoiced. Result PIN money, which
           has been collected, is listed separately below.
         </p>
       </div>

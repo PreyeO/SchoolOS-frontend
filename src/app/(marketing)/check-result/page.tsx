@@ -4,7 +4,7 @@ import { CheckResultPage } from "@/features/scratch-cards/components/check-resul
 
 export const metadata: Metadata = {
   title: "Check a result",
-  description: "Check your child's school result with the scratch card from their school. No account needed.",
+  description: "Check your child's school result with the serial and PIN from their school. No account needed.",
 };
 
 // Public: no AuthGuard and no token (client.ts keeps any stored one off these
