@@ -10,5 +10,8 @@ import type { SlipDetails } from "../lib/pins-pdf";
 // from any host, and the bare domain is the shortest thing to type.
 export function useSlipDetails(sessionName: string): SlipDetails {
   const schoolName = useSchoolStore((s) => s.currentSchool?.name) ?? "Your school";
-  return { schoolName, sessionName, checkUrl: `${env.SCHOOL_DOMAIN}/check-result` };
+  // Kept fresh by useSyncSchoolData (refetched on mount and focus); the slips
+  // simply go without it if it has expired or can't be read.
+  const logoUrl = useSchoolStore((s) => s.currentSchool?.logoUrl) ?? null;
+  return { schoolName, sessionName, checkUrl: `${env.SCHOOL_DOMAIN}/check-result`, logoUrl };
 }

@@ -31,6 +31,23 @@ describe("buildPinsPdf", () => {
     expect((await buildPinsPdf(pins(11), details)).getNumberOfPages()).toBe(2);
   });
 
+  it("embeds the school's logo once, however many slips", async () => {
+    // A 1×1 PNG stands in for a real logo.
+    const logo = {
+      dataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
+      width: 1,
+      height: 1,
+    };
+    const text = (await buildPinsPdf(pins(11), details, logo)).output();
+    expect(text.match(/\/Subtype \/Image/g)).toHaveLength(1);
+    expect(text).toContain("Federal Government College");
+  });
+
+  it("still builds without a logo", async () => {
+    const text = (await buildPinsPdf(pins(1), details, null)).output();
+    expect(text).not.toContain("/Subtype /Image");
+  });
+
   it("prints each serial and PIN, keeping a PIN's leading zeros", async () => {
     const text = (await buildPinsPdf(pins(2), details)).output();
     expect(text).toContain("ABCD-EFGH-00");

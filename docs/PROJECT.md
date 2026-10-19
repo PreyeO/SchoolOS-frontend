@@ -2522,6 +2522,21 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
     PDF. Slip text comes from `useSlipDetails` (school name, session, apex
     `/check-result`). Checked by rendering a 12-card sample in Chrome:
     2 pages, slips inside the margins, leading zeros kept.
+  - **School logo on slips** (no school colours: most slips get printed in
+    black and white, and the PIN has to stay sharp).
+    - PDF: `loadLogo` fetches the presigned logo once per download, redraws it
+      to PNG on a canvas, and jsPDF embeds it once under one alias for every
+      slip (tested: one image object across 11 slips). It sits top-right in a
+      12mm box, proportions kept, with the school name narrowed beside it.
+    - Print view: a plain `<img>`, which needs no CORS, removes itself if
+      broken, and printing waits up to 3s for it to load.
+    - Both are optional: an expired link, a fetch error or a 5s timeout just
+      means no logo.
+    - **Unverified: S3 CORS for GET.** The PDF has to *read* the logo's
+      pixels, so the bucket must allow GET from school origins. Uploads (POST)
+      already work from the browser. No local school had a logo to test with.
+      If the logo shows in "Print slips" but not in the PDF, add GET to the
+      bucket's CORS rule.
   - **`testTimeout` is 15s** (vitest.config): the form tests type whole
     serials and PINs key by key, and one crossed the 5s default under a full
     parallel run with nothing wrong.
