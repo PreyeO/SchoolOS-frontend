@@ -30,7 +30,27 @@ export function PurchasesTable() {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
+      {/* Phones: the six-column table needs ~640px, so a compact list instead. */}
+      <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white sm:hidden">
+        {data.results.map((p) => (
+          <li key={p.id} className="space-y-1 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-ink">
+                {p.quantity} card{p.quantity === 1 ? "" : "s"} · <span className="tabular-nums">{formatNaira(p.amount)}</span>
+              </span>
+              <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS[p.status].className}`}>
+                {STATUS[p.status].label}
+              </span>
+            </div>
+            <p className="text-xs text-n-500 wrap-break-word">
+              {p.academic_session_name} · {formatTimestamp(p.created_at)}
+              {p.initiated_by ? ` · ${p.initiated_by.first_name} ${p.initiated_by.last_name}` : ""}
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-xl border border-n-200 bg-white sm:block">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-n-200 text-xs uppercase tracking-wide text-n-400">

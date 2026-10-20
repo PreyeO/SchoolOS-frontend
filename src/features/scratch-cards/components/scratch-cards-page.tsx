@@ -26,7 +26,7 @@ export function ScratchCardsPage() {
           Cards are bought from SchoolOS
           {unitPrice !== undefined ? ` at ${formatNaira(unitPrice)} each` : ""}, paid through Paystack. Give one to
           each family: the serial and PIN on it let a parent check their child&rsquo;s results at{" "}
-          <span className="font-mono text-ink">{env.SCHOOL_DOMAIN}/check-result</span> with no account. A card
+          <span className="font-mono text-ink">{env.SCHOOL_DOMAIN}/check-result</span>{" "}with no account. A card
           locks to the first student it&rsquo;s used for and works for every term of its session.
         </p>
       </div>

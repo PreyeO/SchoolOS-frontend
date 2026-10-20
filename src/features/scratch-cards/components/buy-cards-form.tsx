@@ -17,7 +17,7 @@ import { buyCardsSchema, type BuyCardsValues } from "../schemas/buy-cards-schema
 // /scratch-cards/payment-complete to see the PINs. The total is quoted from the
 // live price; the server snapshots it when the purchase is created.
 export function BuyCardsForm() {
-  const { data: sessions = [] } = useAcademicSessions();
+  const { data: sessions = [], isPending: sessionsPending, isError: sessionsError } = useAcademicSessions();
   const { data: unitPrice, isPending: pricePending, isError: priceError } = useCardPrice();
   const currentSessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
   const start = useStartCardPurchase();
@@ -33,6 +33,15 @@ export function BuyCardsForm() {
   const quantity = useWatch({ control, name: "quantity" });
   const total = unitPrice !== undefined && Number.isFinite(quantity) && quantity > 0 ? unitPrice * quantity : null;
 
+  // Loading and failure are not "no sessions": saying the school has none
+  // while the list is merely slow, or unreachable, sends the admin off to
+  // create a session that already exists.
+  if (sessionsPending) {
+    return <p className="text-sm text-n-400" role="status">Loading sessions…</p>;
+  }
+  if (sessionsError) {
+    return <p className="text-sm text-clay">Couldn&rsquo;t load this school&rsquo;s sessions. Refresh to try again.</p>;
+  }
   if (sessions.length === 0) {
     return (
       <p className="text-sm text-n-500">

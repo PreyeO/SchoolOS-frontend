@@ -2513,6 +2513,20 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
     scratch once PINs go out by SMS; it was never released, so no old label is
     bridged. Code names (`features/scratch-cards`, `/scratch-cards` routes,
     `manage_scratch_cards`) are unchanged, to match the backend.
+  - **Phone layout (2026-10-20).** At 390px, Card stock's six-column table was
+    ~710px in a 356px box: the student column wrapped a few letters per line,
+    rows were tall and mostly empty, and Regenerate was off-screen. Below `sm`
+    both tabs now render compact lists: `CardsList` in `cards-views.tsx`
+    (serial + status, then student or "Not used yet" and the last use, with
+    Regenerate in view), and Purchases inline. The tables are unchanged from
+    `sm` up. jsdom applies no CSS, so tests see both views and scope to
+    `getByRole("table")` / `getByRole("list")`.
+  - **Buy form loading vs empty:** it used to say "this school has none yet"
+    while sessions were still loading or had failed. Now it shows loading and
+    error states, and "none" only means none.
+  - **Local screenshots must run on port 3002**: the backend's CORS allows
+    only `localhost:3002`. On 3010 every API call fails after its preflight,
+    which is how the loading-vs-empty bug above was found.
   - **The cost is stated before checkout:** the page heading reads "Cards are
     bought from SchoolOS at ₦X each, paid through Paystack", with the price
     from `/card-purchases/price/`. The nav description and the empty Card

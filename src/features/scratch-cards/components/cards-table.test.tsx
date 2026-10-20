@@ -41,14 +41,27 @@ describe("CardsTable regenerate", () => {
   it("keeps the new PIN on screen after the list refreshes and the old card turns Replaced", async () => {
     serve();
     const { user } = renderWithClient(<CardsTable />);
-    const row = (await screen.findByText("OLDS-ERIA-L1")).closest("tr") as HTMLElement;
+    // jsdom applies no CSS, so the phone list and the table both render; act
+    // on the table's row.
+    const table = await screen.findByRole("table");
+    const row = (await within(table).findByText("OLDS-ERIA-L1")).closest("tr") as HTMLElement;
 
     await user.click(within(row).getByRole("button", { name: /Regenerate/ }));
     await user.click(screen.getByRole("button", { name: "Issue new card" }));
 
-    // The list refetch lands: the old card is now Replaced.
-    expect(await screen.findByText("Replaced")).toBeInTheDocument();
+    // The list refetch lands: the old card is now Replaced. (hidden: the open
+    // dialog marks the page behind it aria-hidden.)
+    expect(await within(screen.getByRole("table", { hidden: true })).findByText("Replaced")).toBeInTheDocument();
     // Regression: the dialog lived in the old card's row and vanished with it.
     expect(within(screen.getByRole("dialog")).getByText("5550001111")).toBeInTheDocument();
+  });
+
+  it("gives phones a compact list with the student, or that the card is unused", async () => {
+    serve();
+    renderWithClient(<CardsTable />);
+    const list = await screen.findByRole("list");
+    expect(within(list).getByText("OLDS-ERIA-L1")).toBeInTheDocument();
+    expect(within(list).getByText("Not used yet")).toBeInTheDocument();
+    expect(within(list).getByRole("button", { name: /Regenerate/ })).toBeInTheDocument();
   });
 });
