@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ArmPicker } from "@/components/shared/arm-picker";
@@ -12,6 +12,7 @@ import { buildArmOptions } from "@/lib/school/arm-options";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
 import { useBroadsheet } from "../hooks/use-broadsheet";
+import { downloadBroadsheetCsv } from "../lib/broadsheet-csv";
 import { NoStudentsRow, NoSubjectsRow } from "./broadsheet-empty";
 import { BroadsheetNotices } from "./broadsheet-notices";
 import { BroadsheetTable } from "./broadsheet-table";
@@ -40,6 +41,10 @@ export function BroadsheetPage({
   const term = useTermSelection();
   const { data: classes, isPending: classesLoading, isError, error } = useClasses();
   const [armId, setArmId] = useState<string | null>(initialArmId ?? null);
+  // Schools print the sheet after the first CA to show parents, and grades
+  // computed out of 100 read as F9 across the board at that point — so the
+  // grade is theirs to switch off, on screen, in print and in the export.
+  const [showGrades, setShowGrades] = useState(true);
 
   useEffect(() => {
     if (initialPeriodId) term.setPeriodId(initialPeriodId);
@@ -89,17 +94,45 @@ export function BroadsheetPage({
                 label="Term"
               />
             </div>
-            {sheet.rows.length > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => window.print()}
-                className="h-8 shrink-0 text-xs"
-              >
-                <Printer className="size-3.5 mr-1" />
-                Print
-              </Button>
+            {sheet.rows.length > 0 && sheet.columns.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-n-500">
+                  <input
+                    type="checkbox"
+                    checked={showGrades}
+                    onChange={(e) => setShowGrades(e.target.checked)}
+                    className="size-4 rounded border-n-300 text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+                  />
+                  Show grades
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    downloadBroadsheetCsv({
+                      title: `${selected?.label ?? "Class"} — ${term.label ?? "Term"}`,
+                      columns: sheet.columns,
+                      rows: sheet.rows,
+                      showGrades,
+                    })
+                  }
+                  className="h-8 shrink-0 text-xs"
+                >
+                  <Download className="size-3.5 mr-1" />
+                  Export to Excel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="h-8 shrink-0 text-xs"
+                >
+                  <Printer className="size-3.5 mr-1" />
+                  Print
+                </Button>
+              </div>
             )}
           </div>
 
@@ -111,7 +144,7 @@ export function BroadsheetPage({
             />
           )}
 
-          <div className="rounded-xl border border-n-200 bg-white" data-print-area>
+          <div className="rounded-xl border border-n-200 bg-white" data-print-area data-print-landscape>
             {/* The picker/badge sit outside the print area, so this is the only
                 clue on the printed sheet of which class and term it is. */}
             <p className="hidden print:block print:mb-3 print:text-base print:font-semibold">
@@ -132,7 +165,7 @@ export function BroadsheetPage({
             ) : sheet.columns.length === 0 ? (
               <NoSubjectsRow armLabel={selected?.label ?? "This class"} />
             ) : (
-              <BroadsheetTable columns={sheet.columns} rows={sheet.rows} />
+              <BroadsheetTable columns={sheet.columns} rows={sheet.rows} showGrades={showGrades} />
             )}
           </div>
 

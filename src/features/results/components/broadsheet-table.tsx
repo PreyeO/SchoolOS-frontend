@@ -5,6 +5,9 @@ import type { BroadsheetColumn, BroadsheetGridRow } from "../hooks/use-broadshee
 interface Props {
   columns: BroadsheetColumn[];
   rows: BroadsheetGridRow[];
+  // Off for a mid-term sheet: grades are graded against the full 100, so a
+  // first-CA score out of 20 shows as F9 for every child.
+  showGrades: boolean;
 }
 
 // The grid itself: students down, subjects across, standing on the right.
@@ -12,10 +15,12 @@ interface Props {
 // Always wider than the viewport, so the student column is sticky — a score you
 // can't attribute to a child is useless. print:static undoes that for paper,
 // where there's nothing to scroll and a sticky cell just lands wrong.
-export function BroadsheetTable({ columns, rows }: Props) {
+export function BroadsheetTable({ columns, rows, showGrades }: Props) {
   return (
     <div className="overflow-x-auto print:overflow-visible">
-      <table className="w-full border-collapse text-sm">
+      {/* Smaller type on paper: a class with a dozen subjects ran off the
+          right edge of the page at text-sm. */}
+      <table className="w-full border-collapse text-sm print:text-[10px]">
         <thead>
           <tr className="border-b border-n-200">
             {/* w-36 (min and max too) below sm: the name column is sticky, and left
@@ -85,7 +90,7 @@ export function BroadsheetTable({ columns, rows }: Props) {
                     {result ? (
                       <>
                         {Number(result.total_score)}
-                        {result.grade && (
+                        {showGrades && result.grade && (
                           <span className="ml-1 text-[11px] text-n-400">{result.grade}</span>
                         )}
                       </>
