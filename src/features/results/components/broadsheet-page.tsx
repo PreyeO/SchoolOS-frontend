@@ -43,8 +43,9 @@ export function BroadsheetPage({
   const [armId, setArmId] = useState<string | null>(initialArmId ?? null);
   // Schools print the sheet after the first CA to show parents, and grades
   // computed out of 100 read as F9 across the board at that point — so the
-  // grade is theirs to switch off, on screen, in print and in the export.
-  const [showGrades, setShowGrades] = useState(true);
+  // grade starts off and is theirs to switch on — on screen, in print and in
+  // the export.
+  const [showGrades, setShowGrades] = useState(false);
 
   useEffect(() => {
     if (initialPeriodId) term.setPeriodId(initialPeriodId);
