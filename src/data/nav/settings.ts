@@ -4,7 +4,7 @@ import {
   CalendarRange,
   SlidersHorizontal,
   Coins,
-  Plug,
+  Wallet,
   ShieldCheck,
   FileStack,
   BadgeDollarSign,
@@ -49,12 +49,16 @@ export const settingsGroup: NavGroup = {
       description: "Configure fee items, amounts, and class-based fee plans.",
       permission: "view_fees",
     }, false),
+    // Was a "Payment Integrations" placeholder promising online fee
+    // collection, which has no backend. The route now holds the SMS wallet;
+    // /settings/payments/topup-complete (Paystack's return) resolves here too.
     adminItem({
-      label: "Payment Integrations",
+      label: "SMS Wallet",
       href: "/settings/payments",
-      icon: Plug,
-      description: "Connect payment gateways to accept fees online.",
-    }),
+      icon: Wallet,
+      description: "Buy SMS credits for texting parents, and see what they've been spent on.",
+      permission: "manage_wallet",
+    }, false),
     adminItem({
       label: "Roles & Permissions",
       href: "/settings/roles",

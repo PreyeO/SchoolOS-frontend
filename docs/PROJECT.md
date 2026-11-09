@@ -2612,6 +2612,42 @@ button was calling a dead route. Replaced with `POST scratch-cards/{id}/replace/
   from stock (or flagged).
 - **Pre-existing, unrelated:** `bulk-import-panel.test.tsx` fails 4/4 with the
   scratch-card changes stashed too (MSW handler-lookup assertion).
+- The stock-rotation hazard was raised with the backend developer on 2026-11-09.
+
+### Result Cards phase 2, step 2: SMS Wallet (2026-11-09)
+`/settings/payments` (was the "Payment Integrations" placeholder, which
+promised online fee collection that has no backend) is now **SMS Wallet**,
+gated on `manage_wallet`. Code: `features/wallet/`, endpoints in
+`lib/api/endpoints/wallet.ts`. Owner roles get `manage_wallet` on `migrate`;
+the Roles editor groups it as "SMS wallet".
+- **Balance** card plus **Buy credits** form: credits in, naira quoted from the live
+  `credit_price`; bounds (`min/max_topup_credits`) come from `GET /wallet/`,
+  so the zod schema is built per render. Presets 100/500/1,000/5,000, filtered
+  to the bounds. The body is `{credits, gateway: "paystack"}` only, never an
+  amount. The ₦100 minimum charge is a server constant the API doesn't expose,
+  so its 400 is toasted as written.
+- **Activity** (ledger) filtered on the server by `?type=`, labelled in the
+  school's words by `describeTransaction` (reference prefixes:
+  `debit:issuance:` → "Result card PINs texted"; refund notes' message uuids
+  are hidden; adjustments show the platform admin's reason). **Top-ups** list
+  with status; a pending row gets **"Check with Paystack"**, which calls the
+  same `topups/redirect/?reference=` verify and credits a paid one whose tab was
+  closed before Paystack redirected.
+- **`/settings/payments/topup-complete`** is Paystack's return. **The backend's
+  `FRONTEND_WALLET_REDIRECT_URL` must be exactly this path.** Outcome is the
+  top-up's `status` (successful/failed/pending, with "Check again"), per the
+  handoff. The return route is in `PUBLIC_RULES` (tested: no token is sent). The
+  balance shown afterwards is fetched only once the credit has landed: read
+  alongside the confirm, it showed the pre-credit balance as "now" (tested,
+  and the test was checked by reintroducing the bug).
+- `goToPayment` moved to `src/lib/go-to-payment.ts` (shared by cards and wallet).
+- `refreshWallet` invalidates summary, top-ups and ledger but not the whole
+  `["wallet"]` key, which would re-run the return-page confirm.
+- **Not verified live or in a browser:** the backend wasn't running, and there
+  were no screenshots. Needs a click-through at 390px and 1280px, and a
+  test-mode Paystack top-up with the redirect env var set.
+- **Not built (platform side):** `POST /wallet/adjustments/` (platform admins credit
+  or debit a school's wallet, `adjust_school_wallets`).
 
 ## Next up
 

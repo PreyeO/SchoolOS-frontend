@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
 import { replaceCard, revealCardPins, startCardPurchase } from "../api/scratch-cards-api";
-import { goToPayment } from "../lib/go-to-payment";
+import { goToPayment } from "@/lib/go-to-payment";
 import type { ReplaceCardPayload } from "../types";
 import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
 

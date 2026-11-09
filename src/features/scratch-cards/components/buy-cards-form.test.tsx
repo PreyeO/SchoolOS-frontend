@@ -8,11 +8,12 @@ import { signInAs } from "@/test/fixtures";
 import { apiUrl, server } from "@/test/msw/server";
 import { renderWithClient } from "@/test/render";
 
-import { goToPayment } from "../lib/go-to-payment";
+import { goToPayment } from "@/lib/go-to-payment";
+
 import { BuyCardsForm } from "./buy-cards-form";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock("../lib/go-to-payment", () => ({ goToPayment: vi.fn() }));
+vi.mock("@/lib/go-to-payment", () => ({ goToPayment: vi.fn() }));
 
 const sessions = [
   { id: "s-old", name: "2025/2026", periods: [], created_at: "2025-09-01T00:00:00Z" },

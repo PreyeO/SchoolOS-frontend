@@ -3,7 +3,13 @@ import axios from "axios";
 import { env } from "@/config/env";
 import { useAuthStore } from "@/stores/auth-store";
 
-import { ENDPOINTS, PILOT_ENDPOINTS, RESULT_CHECK_ENDPOINTS, SCRATCH_CARD_ENDPOINTS } from "./endpoints";
+import {
+  ENDPOINTS,
+  PILOT_ENDPOINTS,
+  RESULT_CHECK_ENDPOINTS,
+  SCRATCH_CARD_ENDPOINTS,
+  WALLET_ENDPOINTS,
+} from "./endpoints";
 import { installTokenRefresh } from "./token-refresh";
 
 export const apiClient = axios.create({
@@ -57,6 +63,8 @@ const PUBLIC_RULES: readonly PublicRule[] = [
   // Paystack's return to the school. Public by design; the reveal that follows
   // is a separate, authenticated route.
   { path: SCRATCH_CARD_ENDPOINTS.PAYMENT_RETURN() },
+  // Same for a wallet top-up's return.
+  { path: WALLET_ENDPOINTS.TOPUP_RETURN() },
 ];
 
 export interface PublicRequestShape {

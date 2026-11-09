@@ -12,6 +12,7 @@ const PERMISSION_GROUPS: { label: string; permissions: string[] }[] = [
   { label: "Settings", permissions: ["manage_roles", "manage_school_settings", "view_analytics"] },
   { label: "Academic", permissions: ["manage_academic_structure"] },
   { label: "Result cards", permissions: ["manage_scratch_cards"] },
+  { label: "SMS wallet", permissions: ["manage_wallet"] },
 ];
 
 export function permissionLabel(permission: string): string {
