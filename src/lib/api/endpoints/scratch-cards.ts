@@ -19,9 +19,16 @@ export const SCRATCH_CARD_ENDPOINTS = {
 
   // The stock list. Never includes a PIN.
   CARDS: () => `/api/scratch-cards/`,
-  // No body. { card, pin } — the PIN exists only in this response, and the old
-  // serial is dead for good. A card already bound to a student stays bound.
-  REGENERATE: (id: string) => `/api/scratch-cards/${id}/regenerate/`,
+  // POST { reason, channel, idempotency_key } → { batch, pins, created }.
+  // Reissues the card to the student it was issued to. Only works while the
+  // card has an active assignment; an anonymous card from a purchase reveal
+  // has none and is refused. Print: the new PIN is in `pins`, once. SMS: pins
+  // is null and the text goes out after the response.
+  REPLACE: (id: string) => `/api/scratch-cards/${id}/replace/`,
+
+  // ?card=&intended_student=&academic_session=&channel=. Who each card was
+  // issued to. `superseded_at` null marks the active row. Phone is masked.
+  ASSIGNMENTS: () => `/api/card-assignments/`,
 } as const;
 
 // Public result checker: no auth, 15 requests a minute per IP, and five wrong

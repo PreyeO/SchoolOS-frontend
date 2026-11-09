@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { getCardPrice, getCardPurchases, getScratchCards } from "../api/scratch-cards-api";
+import { getActiveAssignment, getCardPrice, getCardPurchases, getScratchCards } from "../api/scratch-cards-api";
 import type { ScratchCardFilters } from "../types";
 
 // Every key sits under "scratch-cards", which is deliberately NOT in
@@ -25,6 +25,17 @@ export function useCardPurchases(page: number) {
     queryKey: [...SCRATCH_CARDS_KEY, "purchases", page],
     queryFn: () => getCardPurchases(page),
     placeholderData: keepPreviousData,
+  });
+}
+
+// Fetched when the replace dialog opens, and always fresh: whether the card
+// can be replaced at all depends on it.
+export function useActiveAssignment(cardId: string | null) {
+  return useQuery({
+    queryKey: [...SCRATCH_CARDS_KEY, "active-assignment", cardId],
+    queryFn: () => getActiveAssignment(cardId as string),
+    enabled: !!cardId,
+    staleTime: 0,
   });
 }
 

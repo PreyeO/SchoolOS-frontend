@@ -8,14 +8,15 @@ import { Select } from "@/components/ui/select";
 import { useScratchCards } from "../hooks/use-scratch-card-queries";
 import type { ScratchCard, ScratchCardFilters } from "../types";
 import { CardsList, CardsTableView } from "./cards-views";
-import { RegenerateCardDialog } from "./regenerate-card-dialog";
+import { ReplaceCardDialog } from "./replace-card-dialog";
 
-// The two filters the backend has. Replaced cards show under "All" only:
-// there's no server filter for them, and filtering one page client-side would
-// make the page counts lie.
+// Server filters only. Replaced cards show under "All" only: there's no
+// server filter for them, and filtering one page client-side would make the
+// page counts lie. "In stock" is the server's `unused`: cards issuance can
+// still hand out, which excludes cards already issued but not yet used.
 const VIEWS: Record<string, { label: string; filters: ScratchCardFilters }> = {
   all: { label: "All cards", filters: {} },
-  unused: { label: "Unused", filters: { is_bound: false } },
+  stock: { label: "In stock", filters: { unused: true } },
   used: { label: "Used", filters: { is_bound: true } },
   locked: { label: "Locked", filters: { is_locked: true } },
 };
@@ -24,7 +25,7 @@ export function CardsTable() {
   const [view, setView] = useState("all");
   const [page, setPage] = useState(1);
   // A snapshot of the card being replaced, outside the rows: the refetch after
-  // a regenerate turns that row "Replaced", and the dialog must outlive it.
+  // a print replace turns that row "Replaced", and the dialog must outlive it.
   const [replacing, setReplacing] = useState<ScratchCard | null>(null);
   const { data, isPending, isError } = useScratchCards({ ...VIEWS[view].filters, page });
 
@@ -52,20 +53,22 @@ export function CardsTable() {
         <p className="text-sm text-n-400 italic">
           {view === "all"
             ? "You haven't bought any cards yet. Buy cards above; they appear here once the payment goes through."
-            : "No cards match this filter."}
+            : view === "stock"
+              ? "No cards left to issue. Buy more above."
+              : "No cards match this filter."}
         </p>
       ) : (
         <>
           <div className="sm:hidden">
-            <CardsList cards={data.results} onRegenerate={setReplacing} />
+            <CardsList cards={data.results} onReplace={setReplacing} />
           </div>
           <div className="hidden sm:block">
-            <CardsTableView cards={data.results} onRegenerate={setReplacing} />
+            <CardsTableView cards={data.results} onReplace={setReplacing} />
           </div>
           <PaginationControls page={page} pageSize={25} count={data.count} onPageChange={setPage} />
         </>
       )}
-      <RegenerateCardDialog card={replacing} onClose={() => setReplacing(null)} />
+      <ReplaceCardDialog key={replacing?.id ?? "closed"} card={replacing} onClose={() => setReplacing(null)} />
     </div>
   );
 }

@@ -2443,8 +2443,9 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
     `GET /card-purchases/price/`. No price is sent; the server snapshots it.
     Then off to Paystack via `goToPayment` (stubbable; jsdom can't spy on
     `location`).
-  - Card stock: All, Unused, Used or Locked; "Replaced" shows only under All,
-    since there's no server filter. Regenerate shows the new PIN once.
+  - Card stock: All, In stock, Used or Locked; "Replaced" shows only under All,
+    since there's no server filter. (Regenerate was removed by the backend on
+    2026-10-25; see "Replace" below.)
   - Purchases history.
 - **`/scratch-cards/payment-complete`** is Paystack's return. **The backend's
   `FRONTEND_SCRATCH_CARD_REDIRECT_URL` should be exactly this path** (it was
@@ -2573,9 +2574,44 @@ endpoints in `lib/api/endpoints/scratch-cards.ts`.
   unknown serial, unknown reference) passed. **Not verified:** a real Paystack
   checkout. That needs the redirect env var, a test-mode key, and a school
   whose trial hasn't expired (local FGC's has).
-- **Phase 2 (waiting on backend):** SMS delivery, parent contacts without
-  accounts, card assignment history and the mismatch flag. See the "Scratch
-  Cards by SMS" proposal.
+- **Phase 2 shipped on the backend 2026-10-25** (fc06f64, new `payments` and
+  `messaging` apps): wallet + SMS credits, guardian contacts, issuance to named
+  students, the stuck-SMS queue, assignment history. Contract:
+  `docs/wallet-sms-issuance-frontend-handoff.md`. Frontend progress below.
+
+### Result Cards phase 2, step 1: Regenerate → Replace (2026-11-09)
+The backend **deleted** `POST scratch-cards/{id}/regenerate/`, so Card stock's
+button was calling a dead route. Replaced with `POST scratch-cards/{id}/replace/`
+`{reason: lost|never_arrived|resend, channel: print|sms, idempotency_key}` →
+`{batch, pins, created}`.
+- **Replace only works on an issued card** (an active `CardAssignment`). Cards
+  handed out anonymously from a purchase reveal have none, and the server refuses
+  them ("no active issuance"). `ScratchCard` rows don't say which kind a card is,
+  so `ReplaceCardDialog` fetches `GET card-assignments/?card=` on open (only the
+  `superseded_at: null` row counts) and explains instead of offering the form.
+- **Idempotency:** `newIdempotencyKey()` (`lib/api/idempotency-key.ts`), one per
+  dialog opening (the dialog is keyed by card id), reused on every retry (tested
+  by breaking it). It falls back from `crypto.randomUUID` to `getRandomValues`
+  because plain-http `lvh.me` isn't a secure context. Use it for issuance
+  commit and resolve too.
+- **A 409** is a replayed print whose PINs were in a lost response:
+  `isConflictError()` → the dialog says so, with no retry. Other errors toast.
+- Print shows the PIN once (`IssuedPinPanel`, split from the old dialog). SMS
+  says the PIN goes only to the phone. A texted card switched to print warns that
+  the text isn't refunded.
+- "Unused" filter → **"In stock"** = server `?unused=true` (not revoked, locked,
+  bound or on an active assignment). The pill for an unbound card is now
+  **"Not used yet"**, because an issued card that hasn't been checked yet is in that state too.
+- Copy in `PinsSheet` and the payment-return page no longer says "use Regenerate".
+- **Not verified live** (backend wasn't running). Needs the new migrations, and
+  a card issued through issuance before Replace can be clicked through.
+- **Backend hazard to raise:** issuance *rotates* whatever stock card it takes
+  (new serial and PIN, old one revoked), and `_stock` counts an anonymously
+  revealed, not-yet-checked card as stock. So issuing after an anonymous handout
+  can kill slips families already hold. Ask for revealed cards to be excluded
+  from stock (or flagged).
+- **Pre-existing, unrelated:** `bulk-import-panel.test.tsx` fails 4/4 with the
+  scratch-card changes stashed too (MSW handler-lookup assertion).
 
 ## Next up
 

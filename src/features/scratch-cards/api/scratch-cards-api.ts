@@ -3,9 +3,11 @@ import { SCRATCH_CARD_ENDPOINTS } from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 import type {
+  CardAssignment,
   CardPin,
   CardPurchase,
-  RegenerateResponse,
+  IssuanceResult,
+  ReplaceCardPayload,
   ScratchCard,
   ScratchCardFilters,
   StartPurchasePayload,
@@ -49,7 +51,17 @@ export async function getScratchCards(filters: ScratchCardFilters): Promise<Pagi
   return data;
 }
 
-export async function regenerateCard(id: string): Promise<RegenerateResponse> {
-  const { data } = await apiClient.post<RegenerateResponse>(SCRATCH_CARD_ENDPOINTS.REGENERATE(id));
+export async function replaceCard(id: string, payload: ReplaceCardPayload): Promise<IssuanceResult> {
+  const { data } = await apiClient.post<IssuanceResult>(SCRATCH_CARD_ENDPOINTS.REPLACE(id), payload);
   return data;
+}
+
+// The assignment still pointing at this serial, or null when nobody was
+// issued it (e.g. an anonymous card from a purchase reveal). Filtering by card
+// returns only rows on this serial, so this is a short list.
+export async function getActiveAssignment(cardId: string): Promise<CardAssignment | null> {
+  const { data } = await apiClient.get<PaginatedResponse<CardAssignment>>(SCRATCH_CARD_ENDPOINTS.ASSIGNMENTS(), {
+    params: { card: cardId },
+  });
+  return data.results.find((row) => row.superseded_at === null) ?? null;
 }

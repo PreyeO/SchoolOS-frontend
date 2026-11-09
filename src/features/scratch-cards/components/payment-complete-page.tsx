@@ -75,7 +75,8 @@ export function PaymentCompletePage({ params }: { params: Record<string, string>
     body = (
       <p className="text-sm text-ink">
         Payment confirmed, but these PINs have already been shown once, or more than 15 minutes have passed since the
-        cards were created. For any card whose PIN you don&rsquo;t have, use Regenerate in Card stock. {BACK}
+        cards were created. The cards aren&rsquo;t lost: they stay in stock, and each gets a fresh PIN when you
+        issue it to a student. {BACK}
       </p>
     );
   } else {

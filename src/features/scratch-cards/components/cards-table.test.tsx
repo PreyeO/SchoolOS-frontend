@@ -19,25 +19,38 @@ const card = (id: string, serial: string, revoked = false) =>
     failed_attempts: 0, bound_at: null, last_used_at: null, created_at: "2026-10-18T09:00:00Z",
   }) as ScratchCard;
 
-// A stock list that changes after a regenerate, as the real one does: the old
-// card comes back revoked and the new one is added.
+// A stock list that changes after a print replace, as the real one does: the
+// old card comes back revoked and the new one is added.
 function serve() {
-  let regenerated = false;
+  let replaced = false;
+  const cardQueries: URLSearchParams[] = [];
   server.use(
-    http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.CARDS()), () => {
-      const results = regenerated
+    http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.CARDS()), ({ request }) => {
+      cardQueries.push(new URL(request.url).searchParams);
+      const results = replaced
         ? [card("c1", "OLDS-ERIA-L1", true), card("c2", "NEWS-ERIA-L2")]
         : [card("c1", "OLDS-ERIA-L1")];
       return HttpResponse.json({ count: results.length, next: null, previous: null, results });
     }),
-    http.post(apiUrl(SCRATCH_CARD_ENDPOINTS.REGENERATE("c1")), () => {
-      regenerated = true;
-      return HttpResponse.json({ card: card("c2", "NEWS-ERIA-L2"), pin: "5550001111" });
+    http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.ASSIGNMENTS()), () => {
+      const results = replaced
+        ? []
+        : [{ id: "a1", card: "c1", student_name: "Ada Obi", admission_number: "ADM/001", channel: "print",
+            guardian_name: "", phone: "", superseded_at: null, assigned_at: "2026-10-26T09:00:00Z" }];
+      return HttpResponse.json({ count: results.length, next: null, previous: null, results });
+    }),
+    http.post(apiUrl(SCRATCH_CARD_ENDPOINTS.REPLACE("c1")), () => {
+      replaced = true;
+      return HttpResponse.json(
+        { batch: { id: "b1" }, created: true, pins: [{ serial: "NEWS-ERIA-L2", pin: "5550001111" }] },
+        { status: 201 },
+      );
     }),
   );
+  return cardQueries;
 }
 
-describe("CardsTable regenerate", () => {
+describe("CardsTable replace", () => {
   it("keeps the new PIN on screen after the list refreshes and the old card turns Replaced", async () => {
     serve();
     const { user } = renderWithClient(<CardsTable />);
@@ -46,13 +59,14 @@ describe("CardsTable regenerate", () => {
     const table = await screen.findByRole("table");
     const row = (await within(table).findByText("OLDS-ERIA-L1")).closest("tr") as HTMLElement;
 
-    await user.click(within(row).getByRole("button", { name: /Regenerate/ }));
-    await user.click(screen.getByRole("button", { name: "Issue new card" }));
+    await user.click(within(row).getByRole("button", { name: /Replace/ }));
+    await user.click(await screen.findByRole("button", { name: "Replace and show PIN" }));
 
     // The list refetch lands: the old card is now Replaced. (hidden: the open
     // dialog marks the page behind it aria-hidden.)
     expect(await within(screen.getByRole("table", { hidden: true })).findByText("Replaced")).toBeInTheDocument();
     // Regression: the dialog lived in the old card's row and vanished with it.
+    // The assignment refetch (now empty) mustn't swap the PIN for "nothing to replace" either.
     expect(within(screen.getByRole("dialog")).getByText("5550001111")).toBeInTheDocument();
   });
 
@@ -61,7 +75,17 @@ describe("CardsTable regenerate", () => {
     renderWithClient(<CardsTable />);
     const list = await screen.findByRole("list");
     expect(within(list).getByText("OLDS-ERIA-L1")).toBeInTheDocument();
+    expect(within(list).getByText("No student yet")).toBeInTheDocument();
     expect(within(list).getByText("Not used yet")).toBeInTheDocument();
-    expect(within(list).getByRole("button", { name: /Regenerate/ })).toBeInTheDocument();
+    expect(within(list).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
+  });
+
+  it("asks the server for stock with its own unused filter, not is_bound", async () => {
+    const queries = serve();
+    const { user } = renderWithClient(<CardsTable />);
+    await screen.findByRole("table");
+    await user.selectOptions(screen.getByLabelText("Show cards"), "In stock");
+    await vi.waitFor(() => expect(queries.at(-1)?.get("unused")).toBe("true"));
+    expect(queries.at(-1)?.has("is_bound")).toBe(false);
   });
 });

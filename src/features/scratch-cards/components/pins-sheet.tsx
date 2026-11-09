@@ -64,8 +64,8 @@ export function PinsSheet({ pins, sessionName }: Props) {
       <div className="flex items-start gap-2.5 rounded-lg border border-clay/30 bg-clay/10 px-3.5 py-3">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-clay" />
         <p className="text-sm text-ink">
-          <span className="font-medium">Save these now.</span> The PINs won&rsquo;t be shown again. If one is
-          lost later, use Regenerate on that card to issue a new one.
+          <span className="font-medium">Save these now.</span> The PINs won&rsquo;t be shown again. These cards
+          aren&rsquo;t tied to a student, so one that&rsquo;s lost after you hand it out can&rsquo;t be replaced.
         </p>
       </div>
 

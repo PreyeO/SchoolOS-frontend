@@ -5,8 +5,9 @@ import { toast } from "sonner";
 
 import { getErrorMessage } from "@/lib/api/get-error-message";
 
-import { regenerateCard, revealCardPins, startCardPurchase } from "../api/scratch-cards-api";
+import { replaceCard, revealCardPins, startCardPurchase } from "../api/scratch-cards-api";
 import { goToPayment } from "../lib/go-to-payment";
+import type { ReplaceCardPayload } from "../types";
 import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
 
 // All three run with networkMode "always": none of them may wait as a paused
@@ -41,14 +42,17 @@ export function useRevealPins() {
   });
 }
 
-// Issues a new serial and PIN for one card; the old serial stops working.
-export function useRegenerateCard() {
+// Reissues a card to the student it was issued to. Print returns the new PIN
+// once; SMS queues a text. The caller owns the idempotency key and resends
+// the same one on a retry, so a lost response can't issue twice.
+export function useReplaceCard() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: regenerateCard,
+    mutationFn: ({ id, ...payload }: ReplaceCardPayload & { id: string }) => replaceCard(id, payload),
     networkMode: "always",
     gcTime: 0,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: SCRATCH_CARDS_KEY }),
-    onError: (error) => toast.error(getErrorMessage(error)),
+    // Errors are handled by the dialog: a 409 means a print replay whose PINs
+    // are gone, which needs its own explanation rather than a bare toast.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: SCRATCH_CARDS_KEY }),
   });
 }

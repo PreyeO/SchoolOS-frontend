@@ -19,6 +19,13 @@ export function isValidationError(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 400;
 }
 
+// A 409: the server already did this. Card issuance uses it for a replayed
+// print commit or replace, whose PINs were in the first response and can't be
+// sent again, so the caller must explain that rather than offer a retry.
+export function isConflictError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 409;
+}
+
 // The request was aborted by OUR OWN timeout, not refused by the server.
 //
 // Distinct from isNetworkError, which this would otherwise be folded into:

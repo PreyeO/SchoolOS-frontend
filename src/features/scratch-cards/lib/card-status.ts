@@ -13,10 +13,12 @@ export function cardStatus(card: Pick<ScratchCard, "is_revoked" | "is_locked" | 
 }
 
 export const CARD_STATUS_META: Record<CardStatus, { label: string; className: string; hint: string }> = {
+  // Not "Unused": the "In stock" filter means something narrower (not yet
+  // issued either), and an issued card waiting for its first check is here too.
   unused: {
-    label: "Unused",
+    label: "Not used yet",
     className: "border-grass/30 bg-grass/10 text-grass",
-    hint: "Not checked against any student yet.",
+    hint: "Nobody has checked a result with it yet.",
   },
   used: {
     label: "Used",
@@ -26,7 +28,7 @@ export const CARD_STATUS_META: Record<CardStatus, { label: string; className: st
   locked: {
     label: "Locked",
     className: "border-clay/30 bg-clay/10 text-clay",
-    hint: "Five wrong PINs locked it. Regenerate to issue a new card.",
+    hint: "Five wrong PINs locked it. Replace it to give the student a new card.",
   },
   replaced: {
     label: "Replaced",

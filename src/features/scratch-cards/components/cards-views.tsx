@@ -10,7 +10,7 @@ import type { ScratchCard } from "../types";
 
 interface Props {
   cards: ScratchCard[];
-  onRegenerate: (card: ScratchCard) => void;
+  onReplace: (card: ScratchCard) => void;
 }
 
 function StatusPill({ card }: { card: ScratchCard }) {
@@ -22,19 +22,22 @@ function StatusPill({ card }: { card: ScratchCard }) {
   );
 }
 
-function RegenerateButton({ card, onRegenerate }: { card: ScratchCard; onRegenerate: Props["onRegenerate"] }) {
+// Offered on every live card. Whether it can actually be replaced depends on
+// an active assignment, which the card row doesn't carry; the dialog looks it
+// up and explains when there's nothing to replace.
+function ReplaceButton({ card, onReplace }: { card: ScratchCard; onReplace: Props["onReplace"] }) {
   if (cardStatus(card) === "replaced") return null;
   return (
-    <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 text-xs" onClick={() => onRegenerate(card)}>
-      <RefreshCw className="size-3.5" /> Regenerate
+    <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 text-xs" onClick={() => onReplace(card)}>
+      <RefreshCw className="size-3.5" /> Replace
     </Button>
   );
 }
 
 // Phones: one compact block per card. The six-column table needed ~710px and
-// crushed the student column into a few letters a line, with Regenerate
+// crushed the student column into a few letters a line, with the action
 // scrolled off-screen.
-export function CardsList({ cards, onRegenerate }: Props) {
+export function CardsList({ cards, onReplace }: Props) {
   return (
     <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
       {cards.map((card) => (
@@ -47,11 +50,11 @@ export function CardsList({ cards, onRegenerate }: Props) {
             <p className="text-xs text-n-500 wrap-break-word">
               {card.student
                 ? `${card.student.user.first_name} ${card.student.user.last_name} · ${card.student.admission_number}`
-                : "Not used yet"}
+                : "No student yet"}
               {card.last_used_at ? ` · ${formatTimestamp(card.last_used_at)}` : ""}
             </p>
           </div>
-          <RegenerateButton card={card} onRegenerate={onRegenerate} />
+          <ReplaceButton card={card} onReplace={onReplace} />
         </li>
       ))}
     </ul>
@@ -59,7 +62,7 @@ export function CardsList({ cards, onRegenerate }: Props) {
 }
 
 // Wider screens: the full table, with room for every column.
-export function CardsTableView({ cards, onRegenerate }: Props) {
+export function CardsTableView({ cards, onReplace }: Props) {
   return (
     <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
       <table className="w-full text-left">
@@ -92,7 +95,7 @@ export function CardsTableView({ cards, onRegenerate }: Props) {
               <td className="whitespace-nowrap px-3 py-2.5 text-n-500">
                 {card.last_used_at ? formatTimestamp(card.last_used_at) : "—"}
               </td>
-              <td className="px-3 py-2.5 text-right"><RegenerateButton card={card} onRegenerate={onRegenerate} /></td>
+              <td className="px-3 py-2.5 text-right"><ReplaceButton card={card} onReplace={onReplace} /></td>
             </tr>
           ))}
         </tbody>

@@ -32,7 +32,9 @@ export interface StartPurchasePayload {
   gateway: "paystack";
 }
 
-// The plaintext pair, which exists only in a reveal or regenerate response.
+export * from "./types/issuance";
+
+// The plaintext pair, which exists only in a reveal, issue or replace response.
 export interface CardPin {
   serial: string;
   pin: string;
@@ -48,7 +50,7 @@ export interface ScratchCard {
   academic_session_name: string;
   // Five wrong PINs lock a card for good.
   is_locked: boolean;
-  // Replaced by a regenerated card; the serial no longer works.
+  // Replaced by a new card (issue or replace rotates it); the serial no longer works.
   is_revoked: boolean;
   revoked_at: string | null;
   regenerated_from: string | null;
@@ -62,13 +64,11 @@ export interface ScratchCardFilters {
   page?: number;
   is_bound?: boolean;
   is_locked?: boolean;
+  // True: cards issuance can still hand out (not revoked, locked, bound, or
+  // on an active assignment). The server's definition, so list and commit agree.
+  unused?: boolean;
   academic_session_id?: string;
   purchase_id?: string;
-}
-
-export interface RegenerateResponse {
-  card: ScratchCard;
-  pin: string;
 }
 
 // --- Public result checker ---
