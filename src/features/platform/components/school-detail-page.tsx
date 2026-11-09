@@ -11,6 +11,7 @@ import { formatNaira } from "@/lib/text/format-naira";
 import { usePlatformSchool } from "../hooks/use-platform";
 import { AccessBadge } from "./access-badge";
 import { ActivateSubscriptionDialog } from "./activate-subscription-dialog";
+import { AdjustCreditsDialog } from "./adjust-credits-dialog";
 import { ExtendTrialDialog } from "./extend-trial-dialog";
 
 // One school as SchoolOS staff sees it.
@@ -58,6 +59,7 @@ export function PlatformSchoolDetailPage({ schoolId }: { schoolId: string }) {
             schoolId={school.id}
             currentPrice={school.price_per_student}
           />
+          <AdjustCreditsDialog schoolId={school.id} />
         </div>
       </div>
 

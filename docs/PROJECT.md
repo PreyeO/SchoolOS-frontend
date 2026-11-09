@@ -2785,7 +2785,33 @@ stock · Sent · Parent numbers · Purchases**.
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
 
-- **Not built (platform side):** `POST /wallet/adjustments/` (platform admins credit
+### Result Cards phase 2, step 5: card history and platform credit adjustments (2026-11-10)
+- **Student page → "Result card" section** (`StudentResultCardSection`). Shown only
+  with `manage_scratch_cards` via `useHasSchoolPermission`, which is false
+  while `/me` loads and in the teacher view (teachers open this page too).
+  - **Parent numbers:** that student's contacts (`?student=`) with
+    add/edit/make main/remove, reusing `ContactsList` and `ContactFormDialog`.
+    It says where texts go when none is saved (a linked parent account's phone).
+  - **Cards issued:** `StudentCardHistory` (`card-assignments/?intended_student=`,
+    newest first). Each row shows serial, reason (Issued / Replaced: lost /
+    Replaced: never arrived / Sent again), Current or Replaced, delivery pill,
+    texted-to (masked) or printed, and the **mismatch** line (shown, never acted
+    on, per the handoff). Tested.
+  - Live: renders on a real FGC student with no errors. FGC has no cards, so
+    only the empty state was seen.
+- **Platform: `AdjustCreditsDialog`** ("SMS credits" on the platform school
+  detail). Add or remove, credits, required reason, a key per opening reused
+  on retry; `POST /wallet/adjustments/` with signed credits. Staff can't
+  read a school's balance (`GET /wallet/` is school-only), so the result
+  toast shows `balance_after`. Like the other platform dialogs it isn't
+  permission-gated client-side (Super Admin gets `adjust_school_wallets` on
+  migrate; others get the server's 403 as a toast). Tested (signs, trim,
+  same key on retry). **Not verified live:** no platform-admin session was
+  used.
+- With this, **every route from the SMS/wallet/issuance backend is consumed**
+  except the deliberate ones: the single-item detail routes
+  (`wallet/topups/{id}/`, `scratch-cards/{id}/`, `outbound-messages/{id}/`)
+  and the server-to-server webhooks. (platform admins credit
   or debit a school's wallet, `adjust_school_wallets`).
 
 ## Next up
