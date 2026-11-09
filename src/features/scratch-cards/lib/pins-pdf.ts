@@ -44,6 +44,15 @@ function drawSlip(doc: JsPDF, pin: CardPin, x: number, y: number, d: SlipDetails
   doc.text(d.schoolName, left, y + pad + 4, { maxWidth: nameWidth });
   doc.setTextColor(...MUTED).setFont("helvetica", "normal").setFontSize(7.5);
   doc.text(`RESULT CHECK CARD  ·  ${d.sessionName}`, left, y + pad + 9);
+  if (pin.student) {
+    // Whose card it is, in the gap above SERIAL: a named slip handed to the
+    // wrong family is the mismatch the server flags later.
+    doc.setTextColor(...INK).setFont("helvetica", "bold").setFontSize(8.5);
+    doc.text(`For ${pin.student.name}  (${pin.student.admission_number})`, left, y + pad + 13.5, {
+      maxWidth: SLIP_WIDTH - pad * 2,
+    });
+    doc.setTextColor(...MUTED).setFont("helvetica", "normal");
+  }
 
   doc.setFontSize(7).text("SERIAL", left, y + pad + 17);
   doc.setTextColor(...INK).setFont("courier", "bold").setFontSize(13);

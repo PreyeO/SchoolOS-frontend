@@ -10,6 +10,7 @@ import { newIdempotencyKey } from "@/lib/api/idempotency-key";
 
 import { useReplaceCard } from "../hooks/use-scratch-card-mutations";
 import { useActiveAssignment } from "../hooks/use-scratch-card-queries";
+import { toCardPin } from "../lib/issuance-verdict";
 import { whyNotReplaceable } from "../lib/why-not-replaceable";
 import type { CardPin, ScratchCard } from "../types";
 import { IssuedPinPanel } from "./issued-pin-panel";
@@ -77,7 +78,8 @@ export function ReplaceCardDialog({ card, onClose }: Props) {
           replace.mutate(
             { id: card.id, ...choice, idempotency_key: idempotencyKey },
             {
-              onSuccess: ({ pins }) => setOutcome(pins?.[0] ? { kind: "pin", pin: pins[0] } : { kind: "texted" }),
+              onSuccess: ({ pins }) =>
+                setOutcome(pins?.[0] ? { kind: "pin", pin: toCardPin(pins[0]) } : { kind: "texted" }),
               onError: (error) =>
                 isConflictError(error) ? setOutcome({ kind: "already-done" }) : toast.error(getErrorMessage(error)),
             },

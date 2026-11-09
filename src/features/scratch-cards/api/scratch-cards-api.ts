@@ -56,6 +56,15 @@ export async function replaceCard(id: string, payload: ReplaceCardPayload): Prom
   return data;
 }
 
+// A student's reissue chain, newest first: every card they were given,
+// including replaced ones (superseded_at set).
+export async function getStudentCardHistory(studentId: string): Promise<CardAssignment[]> {
+  const { data } = await apiClient.get<PaginatedResponse<CardAssignment>>(SCRATCH_CARD_ENDPOINTS.ASSIGNMENTS(), {
+    params: { intended_student: studentId, page_size: 100 },
+  });
+  return data.results;
+}
+
 // The assignment still pointing at this serial, or null when nobody was
 // issued it (e.g. an anonymous card from a purchase reveal). Filtering by card
 // returns only rows on this serial, so this is a short list.

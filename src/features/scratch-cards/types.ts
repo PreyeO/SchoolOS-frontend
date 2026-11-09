@@ -41,6 +41,9 @@ export * from "./types/issuance";
 export interface CardPin {
   serial: string;
   pin: string;
+  // Set for a card issued to a named student (print issuance or replace), so
+  // the slip says whose it is. Absent on an anonymous purchase reveal.
+  student?: { name: string; admission_number: string };
 }
 
 // GET /api/scratch-cards/. Never carries a PIN.

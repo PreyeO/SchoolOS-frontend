@@ -29,6 +29,7 @@ export function printPinSlips(
   ${logo}
   <div class="school">${escapeHtml(schoolName)}</div>
   <div class="label">Result check card · ${escapeHtml(sessionName)}</div>
+  ${p.student ? `<div class="for">For ${escapeHtml(p.student.name)} (${escapeHtml(p.student.admission_number)})</div>` : ""}
   <div class="row"><span>Serial</span><b>${escapeHtml(p.serial)}</b></div>
   <div class="row"><span>PIN</span><b>${escapeHtml(p.pin)}</b></div>
   <div class="foot">Check results at ${escapeHtml(checkUrl)}. Keep this card for every term of the session.</div>
@@ -44,6 +45,7 @@ export function printPinSlips(
   .logo { position: absolute; top: 10px; right: 12px; max-width: 44px; max-height: 44px; object-fit: contain; }
   .school { font-weight: 700; font-size: 14px; padding-right: 52px; }
   .label { font-size: 11px; color: #636660; margin-bottom: 8px; }
+  .for { font-size: 12px; font-weight: 600; margin: -4px 0 6px; }
   .row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
   .row b { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.05em; }
   .foot { font-size: 10px; color: #636660; margin-top: 8px; }

@@ -22,6 +22,8 @@ interface Props {
 // before leaving until they've been downloaded or printed.
 export function PinsSheet({ pins, sessionName }: Props) {
   const details = useSlipDetails(sessionName);
+  // Issued to named students (print issuance), as opposed to a purchase reveal.
+  const named = pins.some((p) => p.student);
   const [saved, setSaved] = useState(false);
   const [making, setMaking] = useState(false);
 
@@ -64,8 +66,10 @@ export function PinsSheet({ pins, sessionName }: Props) {
       <div className="flex items-start gap-2.5 rounded-lg border border-clay/30 bg-clay/10 px-3.5 py-3">
         <ShieldAlert className="mt-0.5 size-4 shrink-0 text-clay" />
         <p className="text-sm text-ink">
-          <span className="font-medium">Save these now.</span> The PINs won&rsquo;t be shown again. These cards
-          aren&rsquo;t tied to a student, so one that&rsquo;s lost after you hand it out can&rsquo;t be replaced.
+          <span className="font-medium">Save these now.</span> The PINs won&rsquo;t be shown again.{" "}
+          {named
+            ? "If a family loses their slip, use Replace on that card in Card stock to give them a new one."
+            : "These cards aren’t tied to a student, so one that’s lost after you hand it out can’t be replaced."}
         </p>
       </div>
 
@@ -85,6 +89,7 @@ export function PinsSheet({ pins, sessionName }: Props) {
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-n-200 text-xs uppercase tracking-wide text-n-400">
+              {named && <th className="px-3 py-2.5 font-medium">Student</th>}
               <th className="px-3 py-2.5 font-medium">Serial</th>
               <th className="px-3 py-2.5 font-medium">PIN</th>
             </tr>
@@ -92,8 +97,14 @@ export function PinsSheet({ pins, sessionName }: Props) {
           <tbody>
             {pins.map((p) => (
               <tr key={p.serial} className="border-b border-n-100 last:border-0">
-                <td className="px-3 py-2.5 font-mono text-sm text-ink">{p.serial}</td>
-                <td className="px-3 py-2.5 font-mono text-sm tracking-wider text-ink">{p.pin}</td>
+                {named && (
+                  <td className="px-3 py-2.5 text-sm text-ink">
+                    {p.student?.name}{" "}
+                    <span className="whitespace-nowrap font-mono text-xs text-n-400">{p.student?.admission_number}</span>
+                  </td>
+                )}
+                <td className="whitespace-nowrap px-3 py-2.5 font-mono text-sm text-ink">{p.serial}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 font-mono text-sm tracking-wider text-ink">{p.pin}</td>
               </tr>
             ))}
           </tbody>

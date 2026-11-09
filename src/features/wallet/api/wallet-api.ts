@@ -40,6 +40,20 @@ export async function getWalletTransactions(
   return data;
 }
 
+// Platform staff only (adjust_school_wallets). Signed credits: negative
+// removes. A debit the balance can't cover is refused; a reused key too.
+export interface WalletAdjustmentPayload {
+  school_id: string;
+  credits: number;
+  reason: string;
+  idempotency_key: string;
+}
+
+export async function adjustSchoolWallet(payload: WalletAdjustmentPayload): Promise<WalletTransaction> {
+  const { data } = await apiClient.post<WalletTransaction>(WALLET_ENDPOINTS.ADJUSTMENTS(), payload);
+  return data;
+}
+
 // Verifies the charge with Paystack and credits the wallet when it's paid.
 // Accepts reference or trxref; also used to re-check a pending top-up.
 export async function confirmTopUp(reference: string): Promise<WalletTopUp> {

@@ -8,6 +8,8 @@ import { ErrorState } from "@/components/shared/error-state";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { ProfileHeaderCard } from "@/components/shared/profile-header-card";
 
+import { StudentResultCardSection } from "@/features/scratch-cards/components/student-result-card-section";
+
 import { useStudentDetail } from "../hooks/use-student-detail";
 import { useCanAccess } from "@/lib/auth/use-can-access";
 import { useHasSchoolPermission } from "@/lib/auth/use-school-permission";
@@ -41,6 +43,7 @@ export function StudentDetailPage({ id }: { id: string }) {
   // teacher and for an admin whose role lacks the permission.
   const canOpenDirectory = useCanAccess("/students");
   const canManageLinks = useHasSchoolPermission("add_students");
+  const canManageCards = useHasSchoolPermission("manage_scratch_cards");
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading student profile…</p>;
@@ -115,6 +118,14 @@ export function StudentDetailPage({ id }: { id: string }) {
         studentId={student.id}
         currentClassArmId={student.current_class?.class_arm_id ?? null}
       />
+
+      {/* Admins with manage_scratch_cards only: a teacher reaches this page
+          too, and every route behind the section would 403 for them. */}
+      {canManageCards && (
+        <StudentResultCardSection
+          student={{ id: student.id, name: `${user.first_name} ${user.last_name}`, admission_number: student.admission_number }}
+        />
+      )}
 
       <StudentProfileCards student={student} canEdit={canEdit} />
 

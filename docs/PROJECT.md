@@ -2732,6 +2732,59 @@ gate). Code: `features/guardian-contacts/`, endpoints in
   - **Writes not verified live:** Graceland (active) has no students, and FGC
     (has students) can't write.
 
+### Result Cards phase 2, step 4: Issue cards, Sent, and the stuck-SMS queue (2026-11-09)
+Handoff §5–6. Result Cards now has an **"Issue cards"** banner and tabs **Card
+stock · Sent · Parent numbers · Purchases**.
+- **`/scratch-cards/issue`** (`components/issue/`): pick a session, who
+  (class · arm · chosen students · whole school) and how (text or print named
+  slips), then **Check** (preview) → **Issue** (commit).
+  - Preview runs on request only, never on input changes: preview and commit
+    are throttled to 30/minute per school. Editing the form drops a stale preview.
+  - `issuanceVerdict()` (tested) decides the commit button and explains every
+    blocker with numbers: stock and credit shortfalls, nobody eligible, and the
+    **selection rule**. A hand-picked selection with anyone skipped is blocked
+    even when the server says `can_commit`, because the server only refuses
+    that at commit. The batch cap isn't sent, so an otherwise unexplained "no"
+    is reported as the cap. Buy and top-up links are gated by `useCanAccess`
+    (the wallet has its own permission).
+  - Buckets: who gets a card, then each skip reason. "No number" and "Can't be
+    texted" rows have an inline **Add number** (`ContactFormDialog` with the
+    student preset), which re-checks afterwards. Only `phone_masked` is shown,
+    even though preview rows also carry the full `phone`.
+  - **Idempotency (`useIssueFlow`):** one key per issuance fingerprint (session,
+    channel, scope, sorted ids), kept across re-checks and commit retries, and
+    replaced when the request changes (the server rejects a key reused for a
+    different issuance). Both directions are tested, and each test was checked
+    by breaking it. A 409 means the print was already processed and its PINs
+    are gone; the screen sends the admin to Replace. `useCommitIssuance` has
+    `gcTime: 0` and `networkMode: "always"` (it returns PINs).
+  - **Named slips:** `CardPin.student` is optional. PDF and print slips show
+    "For {name} ({adm})", the CSV adds `admission_number,student_name`,
+    `PinsSheet` adds a Student column with Replace-appropriate wording.
+    Replace's reprint uses it too (`toCardPin`).
+- **Sent tab:** `BatchesList` (counts only), plus `/scratch-cards/batches/[id]`
+  (`BatchDetailPage`): every recipient with a delivery pill and the mismatch
+  flag. It **polls the detail every 5s only while any text is pending or
+  sending** (`batchInFlight`, tested).
+- **`AttentionQueue`** (top of Sent, hidden when empty): "Not confirmed"
+  (`unknown`) and failed-and-unrefunded texts, with **Send again** and **Mark
+  failed and refund**. Keys are stable per message and action while the page
+  is open. The message body names the student; it's the only link back to who
+  a text was for (`OutboundMessage` has no student field).
+- **Backend gap (ask):** after a **resend**, the ORIGINAL message stays
+  `unknown`/`failed`, so it never leaves the "needs a decision" filters. A second
+  resend after a page reload (new key) could send and charge again if the first
+  hasn't gone out yet. The frontend hides resent rows for the session, and
+  treats failed-and-refunded as decided (`needsDecision`, tested). Ask: mark
+  the original resolved (or expose `resolved_at`/`superseded`), and add the
+  student to `OutboundMessage`.
+- **Live (2026-11-09):** a whole-school preview against Graceland returned
+  real numbers (0 eligible, 0 stock, 0 credits), with the blocker shown and
+  commit disabled. Screenshots at 390 and 1280px of Result Cards, the issue
+  form and the preview: no overflow or errors. **Not verified live:** a real
+  commit, batch status, the queue. No local school has both active access
+  and students, or any cards.
+
 - **Not built (platform side):** `POST /wallet/adjustments/` (platform admins credit
   or debit a school's wallet, `adjust_school_wallets`).
 

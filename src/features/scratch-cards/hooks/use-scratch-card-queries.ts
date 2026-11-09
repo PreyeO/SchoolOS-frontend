@@ -2,7 +2,13 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { getActiveAssignment, getCardPrice, getCardPurchases, getScratchCards } from "../api/scratch-cards-api";
+import {
+  getActiveAssignment,
+  getCardPrice,
+  getCardPurchases,
+  getScratchCards,
+  getStudentCardHistory,
+} from "../api/scratch-cards-api";
 import type { ScratchCardFilters } from "../types";
 
 // Every key sits under "scratch-cards", which is deliberately NOT in
@@ -36,6 +42,13 @@ export function useActiveAssignment(cardId: string | null) {
     queryFn: () => getActiveAssignment(cardId as string),
     enabled: !!cardId,
     staleTime: 0,
+  });
+}
+
+export function useStudentCardHistory(studentId: string) {
+  return useQuery({
+    queryKey: [...SCRATCH_CARDS_KEY, "student-history", studentId],
+    queryFn: () => getStudentCardHistory(studentId),
   });
 }
 

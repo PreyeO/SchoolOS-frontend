@@ -29,6 +29,25 @@ export const SCRATCH_CARD_ENDPOINTS = {
   // ?card=&intended_student=&academic_session=&channel=. Who each card was
   // issued to. `superseded_at` null marks the active row. Phone is masked.
   ASSIGNMENTS: () => `/api/card-assignments/`,
+
+  // Issuance (handoff §5). Preview and commit share a body:
+  // { academic_session_id, channel, scope, class_id | class_arm_id | student_ids }.
+  // Both are throttled to 30/minute per school, so preview on request only.
+  // Preview writes nothing. Commit also needs idempotency_key: one per preview,
+  // reused on retry. Print returns pins ONCE; a replayed print key is 409.
+  ISSUE_PREVIEW: () => `/api/issuance/preview/`,
+  ISSUE_COMMIT: () => `/api/issuance/commit/`,
+  // POST { message_id, action: mark_failed | resend, idempotency_key }.
+  // Only for an unknown or failed message. mark_failed refunds; resend
+  // spends new credits and keeps the first charge.
+  RESOLVE: () => `/api/issuance/resolve/`,
+  // List: counts only, ?channel=&academic_session=. Detail: every recipient
+  // with message_status; poll the DETAIL, not the list.
+  BATCHES: () => `/api/issuance-batches/`,
+  BATCH: (id: string) => `/api/issuance-batches/${id}/`,
+  // ?status=unknown|failed|pending|sending&purpose=scratch_card_pin. Phone
+  // masked; body has the PIN starred out.
+  MESSAGES: () => `/api/outbound-messages/`,
 } as const;
 
 // Public result checker: no auth, 15 requests a minute per IP, and five wrong
