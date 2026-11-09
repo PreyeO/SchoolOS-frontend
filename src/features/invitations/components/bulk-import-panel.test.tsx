@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STUDENT_ENDPOINTS } from "@/lib/api/endpoints";
 import { apiUrl, server } from "@/test/msw/server";
+import { uploadedFileName } from "@/test/multipart";
 import { renderWithClient } from "@/test/render";
 
 import type { BulkImportResult } from "../types";
@@ -28,7 +29,8 @@ const COMMITTED: BulkImportResult = { ...PREVIEW, applied: [applied("Xk7-pq92")]
 // Records the name of the file each POST carried.
 function serve(commitReply: () => Response = () => HttpResponse.json(COMMITTED)) {
   const posts = { preview: [] as string[], commit: [] as string[] };
-  const fileName = async (request: Request) => ((await request.formData()).get("file") as File).name;
+  // Not request.formData(), which trips an undici assertion under jsdom; see test/multipart.ts.
+  const fileName = async (request: Request) => (await uploadedFileName(request)) ?? "NOT MULTIPART";
   server.use(
     http.post(apiUrl(STUDENT_ENDPOINTS.BULK_IMPORT_PREVIEW()), async ({ request }) => {
       posts.preview.push(await fileName(request));

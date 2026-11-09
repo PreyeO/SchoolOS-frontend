@@ -15,3 +15,4 @@ export * from "./endpoints/pilot";
 export * from "./endpoints/storage";
 export * from "./endpoints/scratch-cards";
 export * from "./endpoints/wallet";
+export * from "./endpoints/messaging";

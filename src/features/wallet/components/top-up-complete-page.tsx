@@ -48,8 +48,9 @@ export function TopUpCompletePage({ params }: { params: Record<string, string> }
   } else if (topup.status === "failed") {
     body = (
       <p className="text-sm text-ink">
-        The payment wasn&rsquo;t completed, so no credits were added. If money left your account, contact SchoolOS
-        support with reference <span className="font-mono break-all">{topup.gateway_reference}</span>. {BACK}
+        Paystack has no completed payment for this, so no credits were added. If money did leave your account, it
+        may still come through; check again from the Top-ups list later, or contact SchoolOS support with reference{" "}
+        <span className="font-mono whitespace-nowrap">{topup.gateway_reference}</span>. {BACK}
       </p>
     );
   } else {

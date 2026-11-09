@@ -12,16 +12,19 @@ import { useTopUps } from "../hooks/use-wallet-queries";
 import { formatCredits } from "../lib/describe-transaction";
 import type { TopUpStatus } from "../types";
 
+// "failed" is not a declined card: Paystack's verify reports an unpaid or
+// abandoned checkout as false, which the server records as failed (checked
+// live 2026-11-09). So it reads "Not paid", and stays re-checkable.
 const STATUS: Record<TopUpStatus, { label: string; className: string }> = {
   successful: { label: "Added", className: "border-grass/30 bg-grass/10 text-grass" },
   pending: { label: "Not confirmed", className: "border-amber/40 bg-amber/10 text-ink" },
-  failed: { label: "Failed", className: "border-clay/30 bg-clay/10 text-clay" },
+  failed: { label: "Not paid", className: "border-n-200 bg-n-50 text-n-600" },
 };
 
-// Every checkout started, newest first. A pending one is either abandoned or
-// paid but never confirmed (the admin closed the tab before Paystack sent them
-// back); "Check with Paystack" runs the same verify the return page does and
-// credits the wallet if it was paid.
+// Every checkout started, newest first. "Check with Paystack" runs the same
+// verify the return page does and credits the wallet if it was paid: for a
+// tab closed before Paystack sent the admin back, or a payment finished after
+// an earlier check (the server re-verifies a failed row; only success is final).
 export function TopUpsList() {
   const [page, setPage] = useState(1);
   const { data, isPending, isError } = useTopUps(page);
@@ -53,10 +56,10 @@ export function TopUpsList() {
                   {formatTimestamp(t.created_at)}
                   {t.initiated_by ? ` · ${t.initiated_by.first_name} ${t.initiated_by.last_name}` : ""}
                   {" · "}
-                  <span className="font-mono break-all">{t.gateway_reference}</span>
+                  <span className="font-mono whitespace-nowrap">{t.gateway_reference}</span>
                 </p>
               </div>
-              {t.status === "pending" && (
+              {t.status !== "successful" && (
                 <Button
                   type="button"
                   variant="outline"

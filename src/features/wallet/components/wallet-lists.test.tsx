@@ -38,7 +38,7 @@ describe("TransactionsList", () => {
 });
 
 describe("TopUpsList", () => {
-  it("re-checks a pending top-up with Paystack by its reference, and only offers it on pending rows", async () => {
+  it("re-checks an uncredited top-up by its reference; never offered once credits were added", async () => {
     const checked: string[] = [];
     server.use(
       http.get(apiUrl(WALLET_ENDPOINTS.TOPUPS()), () =>
@@ -48,6 +48,9 @@ describe("TopUpsList", () => {
               initiated_by: null, created_at: "2026-11-01T09:00:00Z" },
             { id: "t2", status: "successful", credits_purchased: 100, amount: 1000, gateway_reference: "WTP-S",
               initiated_by: null, created_at: "2026-10-01T09:00:00Z" },
+            // Unpaid, as Paystack's verify reports it: re-checkable, labelled "Not paid".
+            { id: "t3", status: "failed", credits_purchased: 20, amount: 200, gateway_reference: "WTP-F",
+              initiated_by: null, created_at: "2026-09-01T09:00:00Z" },
           ]),
         ),
       ),
@@ -59,7 +62,8 @@ describe("TopUpsList", () => {
     const { user } = renderWithClient(<TopUpsList />);
 
     const buttons = await screen.findAllByRole("button", { name: "Check with Paystack" });
-    expect(buttons).toHaveLength(1);
+    expect(buttons).toHaveLength(2);
+    expect(screen.getByText("Not paid")).toBeInTheDocument();
     await user.click(buttons[0]);
     await vi.waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("50 credits added."));
     expect(checked).toEqual(["WTP-P"]);

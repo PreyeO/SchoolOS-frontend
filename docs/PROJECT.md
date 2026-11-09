@@ -2643,9 +2643,83 @@ the Roles editor groups it as "SMS wallet".
 - `goToPayment` moved to `src/lib/go-to-payment.ts` (shared by cards and wallet).
 - `refreshWallet` invalidates summary, top-ups and ledger but not the whole
   `["wallet"]` key, which would re-run the return-page confirm.
-- **Not verified live or in a browser:** the backend wasn't running, and there
-  were no screenshots. Needs a click-through at 390px and 1280px, and a
-  test-mode Paystack top-up with the redirect env var set.
+- **Verified live 2026-11-09** (Graceland's owner, the only local school with
+  active access; owners had `manage_wallet` after migrate):
+  - Every wallet response shape matches `types.ts`, and a bad `?type=` is a 400.
+  - Bounds errors come back as written.
+  - A test-mode top-up (`sk_test`) returned a `payment_link`.
+  - The return route answers without auth and accepts `trxref`.
+  - Screenshots at 390 and 1280px (puppeteer-core plus local Chrome, token
+    injected into `schoolos-auth`) of the wallet, both tabs and the return page:
+    no overflow, no console errors, no failed calls.
+- **Live finding: "failed" means "not paid".** Paystack's verify reports an
+  unpaid or abandoned checkout as `false`, so re-checking one that's still open
+  marks it `failed` at once; the handoff's "pending" barely occurs. It's not
+  final: `_confirm` re-verifies anything not yet successful. So the list says
+  **"Not paid"**, and "Check with Paystack" is offered on every uncredited row.
+  The return page and the toast say "no completed payment" rather than "failed".
+- References use `whitespace-nowrap`: `break-all` split one mid-word, which is
+  easy to misread to support.
+- **Not verified:** a completed Paystack test payment (crediting), and the Replace
+  dialog. No local school has any cards or assignments.
+- **Backend `.env` now needs `FRONTEND_WALLET_REDIRECT_URL`.** It has no default,
+  so `school_os_web` exits on boot without it (hit 2026-11-09). Set it to
+  `/settings/payments/topup-complete`, and set `FRONTEND_SCRATCH_CARD_REDIRECT_URL`
+  to `/scratch-cards/payment-complete` while you're there.
+- **Dev-server gotcha:** after a `npm run build`, the dev server 404'd *every*
+  `/settings/*` route (Next's own fallback, not the app's) until `.next/dev` was
+  deleted and dev restarted. Not a routing bug.
+### Result Cards phase 2, step 3: Parent numbers (2026-11-09)
+A **"Parent numbers"** tab on `/scratch-cards` (same `manage_scratch_cards`
+gate). Code: `features/guardian-contacts/`, endpoints in
+`lib/api/endpoints/messaging.ts`. Contract: handoff §4 and `messaging/services.py`
+`ContactService`.
+- List with server-side `?search=` (admission no., student or parent name,
+  phone). The server orders by main number first, then parent name, with no
+  ordering param, so search is how a student is found. Each row has Make main,
+  Edit and Remove (`ConfirmDeleteDialog`).
+- **The page says the fallback out loud:** a student with no number here is
+  texted at a linked parent account's phone (`ContactService.resolve`). Removing
+  a main number does **not** promote another (the server just deletes it), and
+  the confirm says so.
+- `ContactFormDialog` handles add (pick a student via `PersonSearchSelect`, or
+  `student` pre-set, which issuance's inline "add number" will reuse) and edit
+  (student fixed; the server refuses moves).
+  - Edit PATCHes only changed keys.
+  - The main number's flag is shown as text, not a disabled checkbox:
+    react-hook-form reads a disabled input as `undefined`.
+- **Phones:** `lib/phone.ts`.
+  - `toE164` is what we send (`+234…`), because the serializer's
+    `PhoneNumberField` parses before the service's normaliser.
+  - `looksLikeNigerianMobile` checks shape only (10 national digits starting
+    7/8/9), deliberately looser than the server, so it can never block a valid
+    number.
+  - `formatNigerianPhone` displays `0803 123 4567`.
+- **CSV import** (`ContactsImportDialog`): Check (preview) → Import (the same file
+  again) → done; template download; skipped rows reuse
+  `BulkImportSkippedTable`. It warns that **import adds, never replaces**:
+  importing a file twice gives each student a duplicate number (made main).
+  Worth a backend ask (upsert by student and phone).
+- **Bug caught by its own test:** the import first posted `FormData` without
+  the multipart header. Under the client's JSON default, axios JSON-stringifies
+  FormData, so the File arrives as `{}`. Fixed as `postCsv` with
+  `Content-Type: multipart/form-data`. The test was re-checked by removing the
+  header.
+- **The 4 long-failing `bulk-import-panel` tests are fixed (test-only).** The
+  cause was `request.formData()` in the MSW handler: undici's parser trips an
+  internal assertion on a jsdom-built multipart body, even though the body is
+  correct (probed). New helper `src/test/multipart.ts` `uploadedFileName()`
+  reads the file name from the raw text. Use it, never `formData()`, in MSW
+  upload handlers. Full suite: 217/217.
+- **Live:**
+  - Reads checked on FGC (list, `?student=`).
+  - An expired-trial write returns the "trial period has ended" detail, which
+    the form toasts.
+  - Screenshots at 390 and 1280px of the tab, the add dialog and the import
+    dialog: no overflow, no errors.
+  - **Writes not verified live:** Graceland (active) has no students, and FGC
+    (has students) can't write.
+
 - **Not built (platform side):** `POST /wallet/adjustments/` (platform admins credit
   or debit a school's wallet, `adjust_school_wallets`).
 

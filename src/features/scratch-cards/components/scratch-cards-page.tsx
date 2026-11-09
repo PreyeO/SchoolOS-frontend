@@ -2,6 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/config/env";
+import { ContactsPanel } from "@/features/guardian-contacts/components/contacts-panel";
 import { formatNaira } from "@/lib/text/format-naira";
 
 import { useCardPrice } from "../hooks/use-scratch-card-queries";
@@ -40,12 +41,17 @@ export function ScratchCardsPage() {
         <TabsList>
           <TabsTrigger value="cards">Card stock</TabsTrigger>
           <TabsTrigger value="purchases">Purchases</TabsTrigger>
+          <TabsTrigger value="numbers">Parent numbers</TabsTrigger>
         </TabsList>
         <TabsContent value="cards" className="pt-3">
           <CardsTable />
         </TabsContent>
         <TabsContent value="purchases" className="pt-3">
           <PurchasesTable />
+        </TabsContent>
+        {/* Same permission as the rest of this page (manage_scratch_cards). */}
+        <TabsContent value="numbers" className="pt-3">
+          <ContactsPanel />
         </TabsContent>
       </Tabs>
     </div>
