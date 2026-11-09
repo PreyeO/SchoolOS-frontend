@@ -10,7 +10,7 @@ import { newIdempotencyKey } from "@/lib/api/idempotency-key";
 
 import { useReplaceCard } from "../hooks/use-scratch-card-mutations";
 import { useActiveAssignment } from "../hooks/use-scratch-card-queries";
-import { cardStatus } from "../lib/card-status";
+import { whyNotReplaceable } from "../lib/why-not-replaceable";
 import type { CardPin, ScratchCard } from "../types";
 import { IssuedPinPanel } from "./issued-pin-panel";
 import { ReplaceCardForm } from "./replace-card-form";
@@ -63,10 +63,7 @@ export function ReplaceCardDialog({ card, onClose }: Props) {
     description = getErrorMessage(assignment.error);
     body = closeFooter;
   } else if (!assignment.data) {
-    description =
-      card && cardStatus(card) === "unused"
-        ? "This card hasn't been given to a named student, so there's nothing to replace. It's still in stock, and gets a fresh serial and PIN when you issue it to a student."
-        : "This card was handed out without a named student, so it can't be replaced. Issue the family a new card from stock instead.";
+    description = card ? whyNotReplaceable(card) : "";
     body = closeFooter;
   } else {
     description = "The old serial and PIN stop working and can't be restored. The new card goes to the same student.";

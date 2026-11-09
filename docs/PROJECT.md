@@ -2612,7 +2612,19 @@ button was calling a dead route. Replaced with `POST scratch-cards/{id}/replace/
   from stock (or flagged).
 - **Pre-existing, unrelated:** `bulk-import-panel.test.tsx` fails 4/4 with the
   scratch-card changes stashed too (MSW handler-lookup assertion).
-- The stock-rotation hazard was raised with the backend developer on 2026-11-09.
+- The stock-rotation hazard was raised with the backend developer on 2026-11-09,
+  and **fixed the same day (backend b87df1a)**:
+  - A reveal that returns cards stamps `pins_revealed_at` on the purchase
+    (also on each card in `GET /scratch-cards/`), and those cards leave
+    `unused=true` and issuance stock. They still verify until bound or locked.
+  - An empty reveal doesn't stamp, so cards whose PINs were missed stay stock
+    (the payment-return page's wording is still true).
+  - **Purchases revealed before the field existed stay unstamped**, and
+    issuance can still take them.
+  - Frontend: `whyNotReplaceable()` (tested) gives the replace dialog the right
+    reason. It had been telling a printed slip it was "in stock". Card stock
+    shows a quiet **"Printed slip"** tag. Migration `scratch_cards.0004` was
+    applied locally on 2026-11-09.
 
 ### Result Cards phase 2, step 2: SMS Wallet (2026-11-09)
 `/settings/payments` (was the "Payment Integrations" placeholder, which

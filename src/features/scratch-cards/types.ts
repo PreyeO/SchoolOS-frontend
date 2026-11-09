@@ -22,6 +22,9 @@ export interface CardPurchase {
   initiated_by: UserMinimal | null;
   // Includes replacement cards, so it can be higher than quantity.
   card_count: number;
+  // When the one-time PIN list was handed out. Those cards are printed slips:
+  // they leave issuance stock (still verify until used). Null if never revealed.
+  pins_revealed_at: string | null;
   created_at: string;
 }
 
@@ -57,6 +60,9 @@ export interface ScratchCard {
   failed_attempts: number;
   bound_at: string | null;
   last_used_at: string | null;
+  // The purchase's pins_revealed_at: set means this card went out as an
+  // anonymous printed slip, so it isn't stock and has no student to reissue to.
+  pins_revealed_at: string | null;
   created_at: string;
 }
 

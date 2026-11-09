@@ -13,11 +13,25 @@ interface Props {
   onReplace: (card: ScratchCard) => void;
 }
 
+// Plus a quiet "Printed slip" tag on a live card whose PIN went out on the
+// purchase's printed sheet: it isn't stock and can't be replaced, which is
+// otherwise invisible until someone tries.
 function StatusPill({ card }: { card: ScratchCard }) {
-  const meta = CARD_STATUS_META[cardStatus(card)];
+  const status = cardStatus(card);
+  const meta = CARD_STATUS_META[status];
   return (
-    <span title={meta.hint} className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${meta.className}`}>
-      {meta.label}
+    <span className="inline-flex shrink-0 flex-wrap items-center gap-1">
+      <span title={meta.hint} className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${meta.className}`}>
+        {meta.label}
+      </span>
+      {card.pins_revealed_at && status !== "replaced" && (
+        <span
+          title="Its PIN was on the sheet printed after purchase, so it isn't stock and has no named student."
+          className="whitespace-nowrap rounded-full border border-n-200 px-2 py-0.5 text-[11px] text-n-500"
+        >
+          Printed slip
+        </span>
+      )}
     </span>
   );
 }

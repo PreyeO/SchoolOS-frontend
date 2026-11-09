@@ -45,17 +45,17 @@ function serve(rows: CardAssignment[], ...replies: (() => Response)[]) {
 }
 
 describe("ReplaceCardDialog", () => {
-  it("explains a card nobody was issued is still in stock, and offers no replace", async () => {
+  it("explains a card nobody was issued is in stock, and offers no replace", async () => {
     serve([]);
     renderWithClient(<ReplaceCardDialog card={card} onClose={() => {}} />);
-    expect(await screen.findByText(/still in stock/)).toBeInTheDocument();
+    expect(await screen.findByText(/It's in stock/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Replace and/ })).not.toBeInTheDocument();
   });
 
   it("ignores a superseded assignment: only the active one can be replaced", async () => {
     serve([{ ...assignment("print"), superseded_at: "2026-10-27T09:00:00Z" }]);
     renderWithClient(<ReplaceCardDialog card={card} onClose={() => {}} />);
-    expect(await screen.findByText(/still in stock/)).toBeInTheDocument();
+    expect(await screen.findByText(/It's in stock/)).toBeInTheDocument();
   });
 
   it("prints: sends the choice and shows the new PIN once", async () => {
