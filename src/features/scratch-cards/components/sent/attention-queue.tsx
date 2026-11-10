@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,20 +28,13 @@ export function AttentionQueue() {
     return keys.current.get(k) as string;
   };
 
-  // Resent this visit. The server leaves the ORIGINAL message unknown/failed
-  // after a resend (it records the new text separately), so without this it
-  // would sit here inviting a second, paid resend. Backend gap: see PROJECT.md.
-  const [resent, setResent] = useState<Set<string>>(() => new Set());
-
-  const rows = needsDecision([...(unknown.data?.results ?? []), ...(failed.data?.results ?? [])]).filter(
-    (m) => !resent.has(m.id),
-  );
+  // A resend moves the original to "resolved" on the server (backend 1a0ab0b),
+  // so the refetch after it drops the row by itself, and the server refuses a
+  // second resend with a new key. No local hiding needed.
+  const rows = needsDecision([...(unknown.data?.results ?? []), ...(failed.data?.results ?? [])]);
   if (rows.length === 0) return null;
   const run = (m: OutboundMessage, action: ResolvePayload["action"]) =>
-    resolve.mutate(
-      { message_id: m.id, action, idempotency_key: keyFor(m.id, action) },
-      { onSuccess: () => action === "resend" && setResent((s) => new Set(s).add(m.id)) },
-    );
+    resolve.mutate({ message_id: m.id, action, idempotency_key: keyFor(m.id, action) });
 
   return (
     <section className="space-y-2 rounded-xl border border-clay/30 bg-clay/5 p-4" aria-labelledby="attention-heading">
@@ -62,8 +55,17 @@ export function AttentionQueue() {
               <span className="font-mono text-xs text-n-600">{m.recipient_phone}</span>
               <span className="text-xs text-n-400">{formatTimestamp(m.created_at)}</span>
             </div>
-            {/* The body names the student; it's the only link back to who this was for. */}
-            <p className="text-sm text-ink wrap-break-word">{m.body}</p>
+            {/* Who it was for comes from `student`, never the body: the body is
+                empty until the worker sends, which is exactly when a text gets stuck. */}
+            <p className="text-sm font-medium text-ink wrap-break-word">
+              {m.student ? (
+                <>
+                  {m.student.name} <span className="font-mono text-xs font-normal text-n-400">{m.student.admission_number}</span>
+                </>
+              ) : (
+                "A text not linked to a card"
+              )}
+            </p>
             {m.failure_reason && <p className="text-xs text-clay">{m.failure_reason}</p>}
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" variant="outline" className="h-8 text-xs" disabled={resolve.isPending} onClick={() => run(m, "resend")}>

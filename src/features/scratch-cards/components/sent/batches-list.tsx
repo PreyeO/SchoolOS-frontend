@@ -5,25 +5,57 @@ import Link from "next/link";
 import { ChevronRight, MessageSquare, Printer } from "lucide-react";
 
 import { PaginationControls } from "@/components/shared/pagination-controls";
+import { Select } from "@/components/ui/select";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useIssuanceBatches } from "../../hooks/use-issuance";
 import { batchScopeLabel } from "../../lib/message-status";
+import type { IssuanceChannel } from "../../types";
+import { useSessionFilter } from "../session-filter";
 
 // Every issuance, newest first: counts only. Delivery per recipient lives on
 // the detail page, which is the one that polls.
 export function BatchesList() {
   const [page, setPage] = useState(1);
-  const { data, isPending, isError } = useIssuanceBatches(page);
+  const [channel, setChannel] = useState<IssuanceChannel | "">("");
+  const session = useSessionFilter("batches");
+  const { data, isPending, isError } = useIssuanceBatches({
+    page,
+    ...(channel && { channel }),
+    ...(session.sessionId && { academic_session: session.sessionId }),
+  });
 
-  if (isPending) return <p className="text-sm text-n-400" role="status">Loading sends…</p>;
-  if (isError) return <p className="text-sm text-clay">Couldn&rsquo;t load sends. Refresh to try again.</p>;
-  if (data.results.length === 0) {
-    return <p className="text-sm text-n-400 italic">Nothing issued yet. Cards you text or print for students appear here.</p>;
+  const filters = (
+    <div className="flex flex-col gap-2 sm:flex-row">
+      {session.control(() => setPage(1))}
+      <Select aria-label="Texted or printed" value={channel} onChange={(e) => { setChannel(e.target.value as IssuanceChannel | ""); setPage(1); }} className="h-9 w-full sm:w-44">
+        <option value="">Texted and printed</option>
+        <option value="sms">Texted</option>
+        <option value="print">Printed</option>
+      </Select>
+    </div>
+  );
+
+  if (isPending || isError || data.results.length === 0) {
+    return (
+      <div className="space-y-3">
+        {filters}
+        {isPending ? (
+          <p className="text-sm text-n-400" role="status">Loading sends…</p>
+        ) : isError ? (
+          <p className="text-sm text-clay">Couldn&rsquo;t load sends. Refresh to try again.</p>
+        ) : (
+          <p className="text-sm text-n-400 italic">
+            {channel || !session.isAll ? "No sends match these filters." : "Nothing issued yet. Cards you text or print for students appear here."}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-3">
+      {filters}
       <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
         {data.results.map((b) => {
           const Icon = b.channel === "sms" ? MessageSquare : Printer;

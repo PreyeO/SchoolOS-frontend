@@ -7,6 +7,7 @@ import type {
   CardPin,
   CardPurchase,
   IssuanceResult,
+  PurchaseStatus,
   ReplaceCardPayload,
   ScratchCard,
   ScratchCardFilters,
@@ -18,9 +19,19 @@ export async function getCardPrice(): Promise<number> {
   return data.unit_price;
 }
 
-export async function getCardPurchases(page: number): Promise<PaginatedResponse<CardPurchase>> {
+// status, academic_session_id and created_at_after/_before are server
+// filters. Gateway exists too but is pointless: only Paystack is offered.
+export interface PurchaseFilters {
+  page: number;
+  status?: PurchaseStatus;
+  academic_session_id?: string;
+  created_at_after?: string;
+  created_at_before?: string;
+}
+
+export async function getCardPurchases(filters: PurchaseFilters): Promise<PaginatedResponse<CardPurchase>> {
   const { data } = await apiClient.get<PaginatedResponse<CardPurchase>>(SCRATCH_CARD_ENDPOINTS.PURCHASES(), {
-    params: { page },
+    params: filters,
   });
   return data;
 }

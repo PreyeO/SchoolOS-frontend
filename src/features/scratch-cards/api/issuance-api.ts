@@ -4,6 +4,7 @@ import type { PaginatedResponse } from "@/lib/api/types";
 
 import type {
   IssuanceBatch,
+  IssuanceChannel,
   IssuanceCommitPayload,
   IssuancePreview,
   IssuancePreviewPayload,
@@ -24,9 +25,17 @@ export async function commitIssuance(payload: IssuanceCommitPayload): Promise<Is
   return data;
 }
 
-export async function getIssuanceBatches(page: number): Promise<PaginatedResponse<IssuanceBatch>> {
+// Note the param is `academic_session` here (filterset_fields), not the
+// `academic_session_id` the card and purchase lists take.
+export interface BatchFilters {
+  page: number;
+  channel?: IssuanceChannel;
+  academic_session?: string;
+}
+
+export async function getIssuanceBatches(filters: BatchFilters): Promise<PaginatedResponse<IssuanceBatch>> {
   const { data } = await apiClient.get<PaginatedResponse<IssuanceBatch>>(SCRATCH_CARD_ENDPOINTS.BATCHES(), {
-    params: { page },
+    params: filters,
   });
   return data;
 }

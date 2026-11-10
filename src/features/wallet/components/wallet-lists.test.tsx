@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 
@@ -37,6 +37,26 @@ describe("TransactionsList", () => {
   });
 });
 
+describe("TopUpsList filters", () => {
+  it("sends status and the date range to the server", async () => {
+    const seen: URLSearchParams[] = [];
+    server.use(
+      http.get(apiUrl(WALLET_ENDPOINTS.TOPUPS()), ({ request }) => {
+        seen.push(new URL(request.url).searchParams);
+        return HttpResponse.json(page([]));
+      }),
+    );
+    const { user } = renderWithClient(<TopUpsList />);
+    await user.selectOptions(await screen.findByLabelText("Top-up status"), "Not paid");
+    await user.type(screen.getByLabelText("To"), "2026-11-01");
+    await vi.waitFor(() => {
+      expect(seen.at(-1)?.get("status")).toBe("failed");
+      expect(seen.at(-1)?.get("created_at_before")).toBe("2026-11-01");
+    });
+    expect(screen.getByText("No top-ups match these filters.")).toBeInTheDocument();
+  });
+});
+
 describe("TopUpsList", () => {
   it("re-checks an uncredited top-up by its reference; never offered once credits were added", async () => {
     const checked: string[] = [];
@@ -63,7 +83,8 @@ describe("TopUpsList", () => {
 
     const buttons = await screen.findAllByRole("button", { name: "Check with Paystack" });
     expect(buttons).toHaveLength(2);
-    expect(screen.getByText("Not paid")).toBeInTheDocument();
+    // Scoped to the list: the status filter has a "Not paid" option too.
+    expect(within(screen.getByRole("list")).getByText("Not paid")).toBeInTheDocument();
     await user.click(buttons[0]);
     await vi.waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("50 credits added."));
     expect(checked).toEqual(["WTP-P"]);

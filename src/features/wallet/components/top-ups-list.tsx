@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { DateRangeFields, dateRangeParams } from "@/components/shared/date-range-fields";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { formatNaira } from "@/lib/text/format-naira";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
@@ -27,17 +29,45 @@ const STATUS: Record<TopUpStatus, { label: string; className: string }> = {
 // an earlier check (the server re-verifies a failed row; only success is final).
 export function TopUpsList() {
   const [page, setPage] = useState(1);
-  const { data, isPending, isError } = useTopUps(page);
+  const [status, setStatus] = useState<TopUpStatus | "">("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const { data, isPending, isError } = useTopUps({ page, ...(status && { status }), ...dateRangeParams(from, to) });
   const recheck = useRecheckTopUp();
+  const filtered = !!status || !!from || !!to;
 
-  if (isPending) return <p className="text-sm text-n-400" role="status">Loading top-ups…</p>;
-  if (isError) return <p className="text-sm text-clay">Couldn&rsquo;t load top-ups. Refresh to try again.</p>;
-  if (data.results.length === 0) {
-    return <p className="text-sm text-n-400 italic">No top-ups yet. Credits you buy will be listed here.</p>;
+  const filters = (
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <Select aria-label="Top-up status" value={status} onChange={(e) => { setStatus(e.target.value as TopUpStatus | ""); setPage(1); }} className="h-9 w-full sm:w-44">
+        <option value="">Any status</option>
+        <option value="successful">{STATUS.successful.label}</option>
+        <option value="pending">{STATUS.pending.label}</option>
+        <option value="failed">{STATUS.failed.label}</option>
+      </Select>
+      <DateRangeFields idPrefix="topups" from={from} to={to} onFromChange={(v) => { setFrom(v); setPage(1); }} onToChange={(v) => { setTo(v); setPage(1); }} />
+    </div>
+  );
+
+  if (isPending || isError || data.results.length === 0) {
+    return (
+      <div className="space-y-3">
+        {filters}
+        {isPending ? (
+          <p className="text-sm text-n-400" role="status">Loading top-ups…</p>
+        ) : isError ? (
+          <p className="text-sm text-clay">Couldn&rsquo;t load top-ups. Refresh to try again.</p>
+        ) : (
+          <p className="text-sm text-n-400 italic">
+            {filtered ? "No top-ups match these filters." : "No top-ups yet. Credits you buy will be listed here."}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-3">
+      {filters}
       <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
         {data.results.map((t) => {
           const checking = recheck.isPending && recheck.variables === t.gateway_reference;

@@ -15,17 +15,17 @@ import { PaymentCompletePage } from "./payment-complete-page";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-const purchase = (verified: boolean | null) =>
-  ({ id: "p1", academic_session_name: "2026/2027", verification_api_verified: verified }) as CardPurchase;
+const purchase = (verified: boolean | null, revealedAt: string | null = null) =>
+  ({ id: "p1", academic_session_name: "2026/2027", verification_api_verified: verified, pins_revealed_at: revealedAt }) as CardPurchase;
 
 // Serves the payment check and a reveal that hands the PINs out once, as the
 // server does, then an empty list.
-function serve(verified: boolean | null) {
+function serve(verified: boolean | null, revealedAt: string | null = null) {
   const calls = { confirm: [] as string[], reveal: 0 };
   server.use(
     http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.PAYMENT_RETURN()), ({ request }) => {
       calls.confirm.push(new URL(request.url).search);
-      return HttpResponse.json(purchase(verified));
+      return HttpResponse.json(purchase(verified, revealedAt));
     }),
     http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.REVEAL("p1")), () => {
       calls.reveal += 1;
@@ -78,11 +78,23 @@ describe("PaymentCompletePage", () => {
     expect(calls.reveal).toBe(0);
   });
 
-  it("explains an empty reveal instead of showing nothing", async () => {
-    const calls = serve(true);
+  // Backend b87df1a: an empty reveal means one of two things, and only one of
+  // them leaves the cards in stock.
+  it("on an empty reveal after an earlier one, says the cards are printed slips, not stock", async () => {
+    const calls = serve(true, "2026-11-09T10:00:00Z");
     calls.reveal = 1; // the PINs were already handed out
     open();
-    expect(await screen.findByText(/already been shown once/)).toBeInTheDocument();
+    expect(await screen.findByText(/already shown once/)).toBeInTheDocument();
+    expect(screen.getByText(/no longer in stock/)).toBeInTheDocument();
+    expect(screen.queryByText(/they stay in stock/)).not.toBeInTheDocument();
+  });
+
+  it("on an empty reveal that expired unrevealed, says the cards stay in stock", async () => {
+    const calls = serve(true, null);
+    calls.reveal = 1;
+    open();
+    expect(await screen.findByText(/15 minutes passed/)).toBeInTheDocument();
+    expect(screen.getByText(/they stay in stock/)).toBeInTheDocument();
   });
 
   it("doesn't call the API without a payment reference", () => {

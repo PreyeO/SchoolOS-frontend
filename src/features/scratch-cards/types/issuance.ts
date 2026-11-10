@@ -5,8 +5,10 @@ export type ReplaceReason = "lost" | "never_arrived" | "resend";
 export type AssignmentReason = "issued" | ReplaceReason;
 export type IssuanceScope = "school" | "class" | "arm" | "selection";
 
-// `sending` is the gap between queued and sent. Print rows have no message.
-export type MessageStatus = "pending" | "sending" | "sent" | "delivered" | "failed" | "unknown";
+// `sending` is the gap between queued and sent. `resolved` means a resend
+// closed this text (its charge stands; the new text is a separate message).
+// Print rows have no message.
+export type MessageStatus = "pending" | "sending" | "sent" | "delivered" | "failed" | "unknown" | "resolved";
 
 // One row of GET /api/card-assignments/. A card can have several over its
 // life; the active one has superseded_at null.
@@ -119,8 +121,10 @@ export interface OutboundMessage {
   channel: "sms" | "whatsapp";
   purpose: string;
   recipient_phone: string; // masked
-  // The text as sent, with the PIN starred out. It names the student, which is
-  // the only way to tell who a queued message was for.
+  // Who a card-PIN text was for; null for any other text. Use this, never the
+  // body, which is empty until the worker sends.
+  student: { id: string; name: string; admission_number: string } | null;
+  // The text as sent, with the PIN starred out.
   body: string;
   status: MessageStatus;
   attempts: number;

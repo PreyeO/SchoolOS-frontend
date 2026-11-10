@@ -21,21 +21,32 @@ export async function startTopUp(payload: StartTopUpPayload): Promise<WalletTopU
   return data;
 }
 
-export async function getTopUps(page: number, status?: TopUpStatus): Promise<PaginatedResponse<WalletTopUp>> {
-  const { data } = await apiClient.get<PaginatedResponse<WalletTopUp>>(WALLET_ENDPOINTS.TOPUPS(), {
-    params: { page, status },
-  });
+// Date-only, inclusive; both lists take them.
+interface DateBounds {
+  created_at_after?: string;
+  created_at_before?: string;
+}
+
+export interface TopUpFilters extends DateBounds {
+  page: number;
+  status?: TopUpStatus;
+}
+
+export async function getTopUps(filters: TopUpFilters): Promise<PaginatedResponse<WalletTopUp>> {
+  const { data } = await apiClient.get<PaginatedResponse<WalletTopUp>>(WALLET_ENDPOINTS.TOPUPS(), { params: filters });
   return data;
+}
+
+export interface LedgerFilters extends DateBounds {
+  page: number;
+  type?: WalletTransactionType;
 }
 
 // The server filters by type, so each tab is its own request (the handoff
 // says not to split one ledger page in the client: the page counts would lie).
-export async function getWalletTransactions(
-  page: number,
-  type?: WalletTransactionType,
-): Promise<PaginatedResponse<WalletTransaction>> {
+export async function getWalletTransactions(filters: LedgerFilters): Promise<PaginatedResponse<WalletTransaction>> {
   const { data } = await apiClient.get<PaginatedResponse<WalletTransaction>>(WALLET_ENDPOINTS.TRANSACTIONS(), {
-    params: { page, type },
+    params: filters,
   });
   return data;
 }

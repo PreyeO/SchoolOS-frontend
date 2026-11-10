@@ -2771,19 +2771,52 @@ stock · Sent · Parent numbers · Purchases**.
   failed and refund**. Keys are stable per message and action while the page
   is open. The message body names the student; it's the only link back to who
   a text was for (`OutboundMessage` has no student field).
-- **Backend gap (ask):** after a **resend**, the ORIGINAL message stays
-  `unknown`/`failed`, so it never leaves the "needs a decision" filters. A second
-  resend after a page reload (new key) could send and charge again if the first
-  hasn't gone out yet. The frontend hides resent rows for the session, and
-  treats failed-and-refunded as decided (`needsDecision`, tested). Ask: mark
-  the original resolved (or expose `resolved_at`/`superseded`), and add the
-  student to `OutboundMessage`.
+- **Resend gap, raised and fixed (backend 1a0ab0b, 2026-11-10):**
+  - A resend now moves the original message to the new status **`resolved`**
+    ("Sent again" in `MESSAGE_STATUS_META`), so it leaves the queue on refetch.
+  - The same key replays; a new key is refused ("This message was already
+    resent."). The frontend's session-only hiding was removed.
+  - `OutboundMessage.student` (`{id, name, admission_number}` or null) now
+    names who a text was for. The queue uses it, never the body, which is
+    **empty until the worker sends** (tested with an empty body).
+  - Failed-and-refunded still counts as decided (`needsDecision`).
+  - Migration `messaging.0002` is applied on the next container start.
 - **Live (2026-11-09):** a whole-school preview against Graceland returned
   real numbers (0 eligible, 0 stock, 0 credits), with the blocker shown and
   commit disabled. Screenshots at 390 and 1280px of Result Cards, the issue
   form and the preview: no overflow or errors. **Not verified live:** a real
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
+
+### Result Cards phase 2, review fixes from the backend developer (2026-11-10)
+Six points; all addressed, and each list's params are tested (`list-filters.test.tsx`,
+`wallet-lists.test.tsx`):
+- **Session scoping.** `useSessionFilter` (`scratch-cards/components/session-filter.tsx`)
+  starts on the current session (else the newest) and offers "All sessions".
+  - Card stock sends `academic_session_id` with every view, so **In stock is
+    `unused=true` + session**, the handoff's definition of issuable stock. A
+    note appears if "All sessions" is picked with In stock.
+  - Purchases send `academic_session_id`.
+  - Sent sends **`academic_session`**: that list's `filterset_fields` name, not
+    `_id`.
+- **Purchases:** status (Paid / Not completed / Failed), session, From/To.
+  `gateway` deliberately isn't offered (Paystack only). Rows show
+  `card_count` ("40 cards · 43 incl. replacements") when replacements push it
+  past `quantity`, plus "PINs printed" when `pins_revealed_at` is set. The table
+  became a two-line list at every width.
+- **Top-ups:** status filter + From/To. **Ledger:** From/To on top of the type
+  filter. Both keep the filter bar visible in empty and loading states, with
+  "No … match these filters" wording.
+- **Sent:** channel (texted/printed) + session.
+- **Payment-return empty reveal** now branches on `pins_revealed_at` (tested
+  both ways). Set means shown on an earlier visit: printed slips, no longer
+  stock. Unset means the 15-minute window expired: still stock, fresh PIN on
+  issue. The confirm response is read before this page's reveal, so the field
+  reflects earlier visits only.
+- Shared `components/shared/date-range-fields.tsx` (`DateRangeFields` +
+  `dateRangeParams`), the audit log's From/To layout made reusable. The audit
+  log itself was left as is.
+- Not screenshotted: Docker was stopped at the time.
 
 ### Result Cards phase 2, step 5: card history and platform credit adjustments (2026-11-10)
 - **Student page → "Result card" section** (`StudentResultCardSection`). Shown only

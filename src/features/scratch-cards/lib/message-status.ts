@@ -10,6 +10,8 @@ export const MESSAGE_STATUS_META: Record<MessageStatus, { label: string; classNa
   delivered: { label: "Delivered", className: "border-grass/30 bg-grass/10 text-grass" },
   failed: { label: "Failed", className: "border-clay/30 bg-clay/10 text-clay" },
   unknown: { label: "Not confirmed", className: "border-clay/30 bg-white text-clay" },
+  // Closed by a resend: a newer text replaced it, so nothing to decide here.
+  resolved: { label: "Sent again", className: "border-n-200 bg-white text-n-500" },
 };
 
 // "Class", "3 chosen students"… The list has no names (scope_detail is ids),
@@ -36,7 +38,7 @@ export function needsDecision(messages: OutboundMessage[]): OutboundMessage[] {
 
 // Counts per status for a batch's recipients, in the order they progress.
 export function statusCounts(batch: IssuanceBatch): { status: MessageStatus; count: number }[] {
-  const order: MessageStatus[] = ["pending", "sending", "sent", "delivered", "failed", "unknown"];
+  const order: MessageStatus[] = ["pending", "sending", "sent", "delivered", "failed", "unknown", "resolved"];
   const counts = new Map<MessageStatus, number>();
   for (const a of batch.assignments ?? []) {
     if (a.message_status) counts.set(a.message_status, (counts.get(a.message_status) ?? 0) + 1);

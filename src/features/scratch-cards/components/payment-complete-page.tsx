@@ -72,11 +72,20 @@ export function PaymentCompletePage({ params }: { params: Record<string, string>
   } else if (!pins) {
     body = <p className="text-sm text-n-400" role="status">Payment confirmed. Getting your PINs…</p>;
   } else if (pins.length === 0) {
-    body = (
+    // Two different situations. purchase is the confirm response, read BEFORE
+    // this page's reveal, so pins_revealed_at set here means an earlier visit
+    // already showed them: those cards left stock as printed slips. Unset
+    // means the 15-minute window ran out unrevealed, and the cards are stock.
+    body = purchase?.pins_revealed_at ? (
       <p className="text-sm text-ink">
-        Payment confirmed, but these PINs have already been shown once, or more than 15 minutes have passed since the
-        cards were created. The cards aren&rsquo;t lost: they stay in stock, and each gets a fresh PIN when you
-        issue it to a student. {BACK}
+        Payment confirmed. These PINs were already shown once, so they can&rsquo;t be shown again. Those cards are
+        now printed slips: they still work, but they&rsquo;re no longer in stock for issuing. {BACK}
+      </p>
+    ) : (
+      <p className="text-sm text-ink">
+        Payment confirmed, but more than 15 minutes passed before the PINs were shown, so they can&rsquo;t be shown
+        now. The cards aren&rsquo;t lost: they stay in stock, and each gets a fresh PIN when you issue it to a
+        student. {BACK}
       </p>
     );
   } else {

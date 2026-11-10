@@ -2,8 +2,14 @@
 
 import { keepPreviousData, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
-import { confirmTopUp, getTopUps, getWallet, getWalletTransactions } from "../api/wallet-api";
-import type { TopUpStatus, WalletTransactionType } from "../types";
+import {
+  confirmTopUp,
+  getTopUps,
+  getWallet,
+  getWalletTransactions,
+  type LedgerFilters,
+  type TopUpFilters,
+} from "../api/wallet-api";
 
 // Not in query-persistence's allowlist: a balance read from device storage
 // would be stale exactly when it matters (right after a send or a top-up).
@@ -26,18 +32,18 @@ export function useWallet({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({ queryKey: SUMMARY_KEY, queryFn: getWallet, staleTime: 0, enabled });
 }
 
-export function useTopUps(page: number, status?: TopUpStatus) {
+export function useTopUps(filters: TopUpFilters) {
   return useQuery({
-    queryKey: [...TOPUPS_KEY, page, status ?? "all"],
-    queryFn: () => getTopUps(page, status),
+    queryKey: [...TOPUPS_KEY, filters],
+    queryFn: () => getTopUps(filters),
     placeholderData: keepPreviousData,
   });
 }
 
-export function useWalletTransactions(page: number, type?: WalletTransactionType) {
+export function useWalletTransactions(filters: LedgerFilters) {
   return useQuery({
-    queryKey: [...LEDGER_KEY, page, type ?? "all"],
-    queryFn: () => getWalletTransactions(page, type),
+    queryKey: [...LEDGER_KEY, filters],
+    queryFn: () => getWalletTransactions(filters),
     placeholderData: keepPreviousData,
   });
 }

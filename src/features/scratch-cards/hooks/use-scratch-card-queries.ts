@@ -8,6 +8,7 @@ import {
   getCardPurchases,
   getScratchCards,
   getStudentCardHistory,
+  type PurchaseFilters,
 } from "../api/scratch-cards-api";
 import type { ScratchCardFilters } from "../types";
 
@@ -26,10 +27,10 @@ export function useCardPrice() {
   });
 }
 
-export function useCardPurchases(page: number) {
+export function useCardPurchases(filters: PurchaseFilters) {
   return useQuery({
-    queryKey: [...SCRATCH_CARDS_KEY, "purchases", page],
-    queryFn: () => getCardPurchases(page),
+    queryKey: [...SCRATCH_CARDS_KEY, "purchases", filters],
+    queryFn: () => getCardPurchases(filters),
     placeholderData: keepPreviousData,
   });
 }

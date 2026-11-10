@@ -13,6 +13,7 @@ import {
   getOutboundMessages,
   previewIssuance,
   resolveMessage,
+  type BatchFilters,
 } from "../api/issuance-api";
 import type { IssuanceBatch, MessageStatus } from "../types";
 import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
@@ -43,10 +44,10 @@ export function useCommitIssuance() {
   });
 }
 
-export function useIssuanceBatches(page: number) {
+export function useIssuanceBatches(filters: BatchFilters) {
   return useQuery({
-    queryKey: [...SCRATCH_CARDS_KEY, "batches", page],
-    queryFn: () => getIssuanceBatches(page),
+    queryKey: [...SCRATCH_CARDS_KEY, "batches", filters],
+    queryFn: () => getIssuanceBatches(filters),
     placeholderData: keepPreviousData,
   });
 }
