@@ -2788,6 +2788,28 @@ stock · Sent · Parent numbers · Purchases**.
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
 
+### Audit log caught up with the new backend actions (2026-11-10)
+A diff of `audit/enums.py` against `features/audit-logs/lib/actions/` found
+**17 actions with no catalog entry**: all of scratch_cards, payments and
+messaging, plus October's `attendance.cleared`. They had been rendering
+through the generic fallback ("debited -12 credits (debit:issuance:<uuid>)")
+and were missing from the action filter.
+- New `actions/cards.ts` and `actions/wallet.ts`, `attendance.cleared` in
+  `attendance.ts`. New categories: **Result cards** (Ticket), **SMS wallet**
+  (Wallet), **Parent numbers** (Phone).
+- Sentences were written against each call site's real `target_repr`. Card and
+  purchase model reprs use **" — School"**, not " @ School", so
+  `cleanTargetRepr` doesn't strip them, and the entries do it themselves
+  (`beforeDash`). UUIDs and ledger references are never shown.
+- `scratch_card.bound`, `scratch_card.locked` and some `wallet.refunded` rows
+  have **no actor** (public checker or worker), so they render after "System".
+  The catalog's old "every action has an actor" note no longer holds for these.
+- Tested: `new-actions.test.ts` runs every action's real repr shape through
+  `formatAuditEntry`, and checks the filter groups.
+- **Re-run this diff whenever the backend adds an app.** The audit log has no
+  catalog endpoint (see Real backend gaps), so nothing fails loudly when an
+  action is added.
+
 ### Result Cards phase 2, review fixes from the backend developer (2026-11-10)
 Six points; all addressed, and each list's params are tested (`list-filters.test.tsx`,
 `wallet-lists.test.tsx`):
