@@ -10,6 +10,9 @@ import type { ScratchCard } from "../types";
 
 interface Props {
   cards: ScratchCard[];
+  // Ids with an active assignment (looked up by the table). Replace shows for
+  // these only: no assignment means nobody to reissue the card to.
+  replaceable: Set<string>;
   onReplace: (card: ScratchCard) => void;
 }
 
@@ -36,20 +39,22 @@ function StatusPill({ card }: { card: ScratchCard }) {
   );
 }
 
-// Not on a replaced card, and not on a printed slip (pins_revealed_at set):
-// its PIN went out on the purchase sheet with no student, so it has no
-// assignment and Replace can never work. The "Printed slip" tag says enough;
-// a family who lost one gets a different card through Issue cards.
+// Whether a card is even worth looking up. Replace is valid only with an
+// active assignment, which the row doesn't carry, so the table looks that up
+// for these candidates and shows Replace only when one comes back. Never a
+// candidate: a replaced card, or a printed slip (pins_revealed_at set: its PIN
+// went out on the purchase sheet with no student, so it has no assignment;
+// a family who lost one gets a different card through Issue cards).
 //
-// Still shown on any other live card, including "Not used yet": it may have
-// been issued to a student who hasn't checked a result yet. The card row
-// doesn't say whether it's on an assignment; the dialog looks that up.
+// "Not used yet" alone decides nothing: it covers untouched stock (no
+// assignment, no Replace) AND a card issued to a student who hasn't checked
+// a result yet (assignment, Replace).
 export function canOfferReplace(card: Pick<ScratchCard, "is_revoked" | "is_locked" | "student" | "pins_revealed_at">): boolean {
   return cardStatus(card) !== "replaced" && !card.pins_revealed_at;
 }
 
-function ReplaceButton({ card, onReplace }: { card: ScratchCard; onReplace: Props["onReplace"] }) {
-  if (!canOfferReplace(card)) return null;
+function ReplaceButton({ card, replaceable, onReplace }: { card: ScratchCard } & Pick<Props, "replaceable" | "onReplace">) {
+  if (!replaceable.has(card.id)) return null;
   return (
     <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 text-xs" onClick={() => onReplace(card)}>
       <RefreshCw className="size-3.5" /> Replace
@@ -60,7 +65,7 @@ function ReplaceButton({ card, onReplace }: { card: ScratchCard; onReplace: Prop
 // Phones: one compact block per card. The six-column table needed ~710px and
 // crushed the student column into a few letters a line, with the action
 // scrolled off-screen.
-export function CardsList({ cards, onReplace }: Props) {
+export function CardsList({ cards, replaceable, onReplace }: Props) {
   return (
     <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
       {cards.map((card) => (
@@ -77,7 +82,7 @@ export function CardsList({ cards, onReplace }: Props) {
               {card.last_used_at ? ` · ${formatTimestamp(card.last_used_at)}` : ""}
             </p>
           </div>
-          <ReplaceButton card={card} onReplace={onReplace} />
+          <ReplaceButton card={card} replaceable={replaceable} onReplace={onReplace} />
         </li>
       ))}
     </ul>
@@ -85,7 +90,7 @@ export function CardsList({ cards, onReplace }: Props) {
 }
 
 // Wider screens: the full table, with room for every column.
-export function CardsTableView({ cards, onReplace }: Props) {
+export function CardsTableView({ cards, replaceable, onReplace }: Props) {
   return (
     <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
       <table className="w-full text-left">
@@ -118,7 +123,7 @@ export function CardsTableView({ cards, onReplace }: Props) {
               <td className="whitespace-nowrap px-3 py-2.5 text-n-500">
                 {card.last_used_at ? formatTimestamp(card.last_used_at) : "—"}
               </td>
-              <td className="px-3 py-2.5 text-right"><ReplaceButton card={card} onReplace={onReplace} /></td>
+              <td className="px-3 py-2.5 text-right"><ReplaceButton card={card} replaceable={replaceable} onReplace={onReplace} /></td>
             </tr>
           ))}
         </tbody>

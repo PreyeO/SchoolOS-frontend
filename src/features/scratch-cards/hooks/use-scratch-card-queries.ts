@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 
 import {
   getActiveAssignment,
@@ -43,6 +43,25 @@ export function useActiveAssignment(cardId: string | null) {
     queryFn: () => getActiveAssignment(cardId as string),
     enabled: !!cardId,
     staleTime: 0,
+  });
+}
+
+// Which cards on this page can be replaced: only those with an active
+// assignment, which the card row doesn't carry ("Not used yet" covers both
+// untouched stock and an issued card nobody has checked a result with yet).
+// One lookup per candidate, under the SAME key the replace dialog uses, so
+// opening the dialog afterwards is served from cache. Callers pass only
+// candidates (not replaced, not a printed slip, not the In stock view).
+// Backend ask: an `active_assignment` flag on the card row would make this a
+// single request instead of one per row.
+export function useReplaceableCardIds(cardIds: string[]): Set<string> {
+  return useQueries({
+    queries: cardIds.map((id) => ({
+      queryKey: [...SCRATCH_CARDS_KEY, "active-assignment", id],
+      queryFn: () => getActiveAssignment(id),
+      staleTime: 30_000,
+    })),
+    combine: (results) => new Set(cardIds.filter((_, i) => !!results[i]?.data)),
   });
 }
 

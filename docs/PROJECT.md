@@ -2828,6 +2828,20 @@ single-tab users.
   which follows publishing; buying is occasional. The route stays
   `/scratch-cards`, so Paystack's `/scratch-cards/payment-complete` return still
   resolves to it by prefix. Same `manage_scratch_cards` gate.
+- **Replace only with an active assignment** (follow-up from the backend
+  developer, same day). The printed-slip rule alone still showed Replace on
+  plain stock (e.g. MWW5-4KLM-LD), because "Not used yet" covers both untouched
+  stock and a card issued but not yet checked.
+  - `useReplaceableCardIds` looks up the active assignment for each
+    candidate on the page, using the **same query key** as the replace
+    dialog, so opening the dialog is served from cache.
+  - `canOfferReplace` now only picks candidates (not replaced, not a printed
+    slip). The **In stock** view does no lookups at all, since stock has no
+    assignment by definition.
+  - Tested with the three cases (issued, plain stock, printed slip) and the
+    In stock view; both tests fail with the old rule put back.
+  - **Backend ask:** an `active_assignment` flag (or id) on the card row would
+    replace up to 25 lookups per page with none.
 - **No Replace on a printed slip** (`canOfferReplace` in `cards-views.tsx`, tested).
   A card with `pins_revealed_at` has no assignment, so Replace could only open
   a dialog saying "can't". The "Printed slip" tag stays. "Not used yet" cards
