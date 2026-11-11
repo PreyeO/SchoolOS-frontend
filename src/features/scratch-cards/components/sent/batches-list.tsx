@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useIssuanceBatches } from "../../hooks/use-issuance";
-import { batchScopeLabel } from "../../lib/message-status";
+import { batchScopeName } from "../../lib/assignment-labels";
 import type { IssuanceChannel } from "../../types";
 import { useSessionFilter } from "../session-filter";
 
@@ -66,7 +66,8 @@ export function BatchesList() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-ink">
                     {b.channel === "sms" ? "Texted" : "Printed"} {b.student_count} card{b.student_count === 1 ? "" : "s"}
-                    <span className="font-normal text-n-500"> · {batchScopeLabel(b)}</span>
+                    {/* The list carries no scope_detail, so no class name here; the detail page names it. */}
+                    <span className="font-normal text-n-500"> · {batchScopeName(b, [])}</span>
                   </p>
                   <p className="text-xs text-n-500">{b.session_name} · {formatTimestamp(b.created_at)}</p>
                 </div>

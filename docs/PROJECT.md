@@ -2833,6 +2833,36 @@ agreed first: https://claude.ai/artifact/EgGd3yog8M2KDQEvVXjm5J
   credits). Screenshots at 390 and 1280px: no overflow or errors. On phones,
   pill and action share a line.
 
+### Showing every field that means something (2026-11-11, backend developer's review)
+The send page titled a replacement "Texted 1 card" although the response said
+`"reason": "lost"`. A sweep of all result-card responses for unused,
+meaningful fields:
+- **Send page** (`BatchDetailPage`, `BatchAssignmentRow`):
+  - `batchTitle` says "Texted 1 replacement card" when every assignment's
+    `reason` ≠ issued.
+  - `batchScopeName` names the class or arm from `scope_detail` (the list
+    has none, so it stays generic there).
+  - Each row: student linked to `/students/:intended_student`; serial; texted
+    to whom, or printed; `REASON_LABEL` + `assigned_at`; a superseded row says
+    "Replaced on {superseded_at}. This serial no longer works", with a
+    Replaced pill; delivery pill; mismatch.
+- **Student card history:** the shared `REASON_LABEL`, a "Replaced on…" line,
+  a "View send" link (`issuance_batch`), and a tint instead of `opacity-60`
+  (dimmed small grey text failed contrast).
+- **Card stock** `cardNotes()`: "Given to a student, not used yet"
+  (`active_assignment` and unbound: otherwise indistinguishable from stock);
+  "N wrong PIN tries (locks at 5)" (`failed_attempts`, before the lock);
+  "Replaced {revoked_at}".
+- **Texts needing a decision:** `sent_at` ("Handed to the SMS provider…" or
+  "Never handed…") and `attempts`.
+- **Purchases:** `gateway_reference`, for support.
+- Deliberately still unshown: ids, `gateway_response`, `is_fully_verified`
+  (tracking only, per the handoff), `last_error` (provider internals;
+  `failure_reason` is the readable one), `regenerated_from` (an id, not a
+  serial).
+- Tested: `assignment-labels.test.ts` (titles, scope names, notes); the
+  student-history test checks the new lines.
+
 ### "It logs me out randomly": the multi-tab refresh race (fixed 2026-11-11)
 Reported by the backend developer (who keeps several tabs open), never seen by
 single-tab users.

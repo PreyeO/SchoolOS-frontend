@@ -14,21 +14,6 @@ export const MESSAGE_STATUS_META: Record<MessageStatus, { label: string; classNa
   resolved: { label: "Sent again", className: "border-n-200 bg-white text-n-500" },
 };
 
-// "Class", "3 chosen students"… The list has no names (scope_detail is ids),
-// so this is the honest summary.
-export function batchScopeLabel(batch: Pick<IssuanceBatch, "scope" | "student_count">): string {
-  switch (batch.scope) {
-    case "school":
-      return "Whole school";
-    case "class":
-      return "One class";
-    case "arm":
-      return "One arm";
-    case "selection":
-      return batch.student_count === 1 ? "1 student" : `${batch.student_count} chosen students`;
-  }
-}
-
 // The messages still awaiting a decision. Unknown always is. Failed only until
 // its credits are refunded: a failed-and-refunded text is decided (that's what
 // "Mark failed" produces), and keeping it would list it forever.

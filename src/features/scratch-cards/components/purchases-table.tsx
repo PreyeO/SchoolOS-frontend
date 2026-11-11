@@ -90,6 +90,13 @@ export function PurchasesTable() {
                   {p.academic_session_name} · {formatTimestamp(p.created_at)}
                   {p.initiated_by ? ` · ${p.initiated_by.first_name} ${p.initiated_by.last_name}` : ""}
                   {p.pins_revealed_at ? " · PINs printed" : ""}
+                  {/* What SchoolOS support asks for about a payment. */}
+                  {p.gateway_reference && (
+                    <>
+                      {" · "}
+                      <span className="font-mono whitespace-nowrap">{p.gateway_reference}</span>
+                    </>
+                  )}
                 </p>
               </li>
             ))}

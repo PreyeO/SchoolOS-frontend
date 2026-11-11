@@ -73,10 +73,11 @@ describe("StudentResultCardSection", () => {
     const items = await screen.findAllByRole("listitem");
     const [current, old] = items.filter((li) => /ERIA/.test(li.textContent ?? ""));
     expect(within(current).getByText("Current")).toBeInTheDocument();
-    expect(within(current).getByText("Replaced: lost")).toBeInTheDocument();
+    expect(within(current).getByText("Replacement: card lost")).toBeInTheDocument();
     expect(within(current).getByText(/Printed slip/)).toBeInTheDocument();
     expect(within(current).getByText(/different student/)).toBeInTheDocument();
     expect(within(old).getByText("Replaced")).toBeInTheDocument();
+    expect(within(old).getByText(/Replaced on .*this serial no longer works/)).toBeInTheDocument();
     expect(within(old).getByText("Delivered")).toBeInTheDocument();
   });
 });

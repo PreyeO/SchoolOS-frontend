@@ -66,6 +66,11 @@ export function AttentionQueue() {
                 "A text not linked to a card"
               )}
             </p>
+            {/* What helps decide: did it ever leave, and how hard was it tried. */}
+            <p className="text-xs text-n-600">
+              {m.sent_at ? `Handed to the SMS provider ${formatTimestamp(m.sent_at)}` : "Never handed to the SMS provider"}
+              {m.attempts > 1 ? ` · tried ${m.attempts} times` : ""}
+            </p>
             {m.failure_reason && <p className="text-xs text-clay">{m.failure_reason}</p>}
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" variant="outline" className="h-8 text-xs" disabled={resolve.isPending} onClick={() => run(m, "resend")}>

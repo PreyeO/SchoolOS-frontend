@@ -5,7 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
-import { CARD_STATUS_META, cardStatus } from "../lib/card-status";
+import { CARD_STATUS_META, cardNotes, cardStatus } from "../lib/card-status";
 import type { ScratchCard } from "../types";
 
 interface Props {
@@ -34,6 +34,12 @@ function StatusPill({ card }: { card: ScratchCard }) {
       )}
     </span>
   );
+}
+
+function CardNotes({ card }: { card: ScratchCard }) {
+  const notes = cardNotes(card);
+  if (notes.length === 0) return null;
+  return <p className="mt-1 text-xs text-n-600">{notes.join(" · ")}</p>;
 }
 
 // Replace is valid only with an active assignment, which the row now carries
@@ -75,6 +81,7 @@ export function CardsList({ cards, onReplace }: Props) {
                 : "No student yet"}
               {card.last_used_at ? ` · ${formatTimestamp(card.last_used_at)}` : ""}
             </p>
+            <CardNotes card={card} />
           </div>
           <ReplaceButton card={card} onReplace={onReplace} />
         </li>
@@ -103,7 +110,7 @@ export function CardsTableView({ cards, onReplace }: Props) {
             <tr key={card.id} className="border-b border-n-100 last:border-0 text-sm">
               <td className="whitespace-nowrap px-3 py-2.5 font-mono text-ink">{card.serial}</td>
               <td className="whitespace-nowrap px-3 py-2.5 text-n-500">{card.academic_session_name}</td>
-              <td className="px-3 py-2.5"><StatusPill card={card} /></td>
+              <td className="px-3 py-2.5"><StatusPill card={card} /><CardNotes card={card} /></td>
               <td className="px-3 py-2.5 text-ink">
                 {card.student ? (
                   <>
