@@ -12,15 +12,16 @@ import { CardsTable } from "./cards-table";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-const card = (id: string, serial: string, revoked = false) =>
+const card = (id: string, serial: string, revoked = false, assigned = false) =>
   ({
     id, serial, student: null, purchase: "p1", academic_session_name: "2026/2027",
     is_locked: false, is_revoked: revoked, revoked_at: null, regenerated_from: null,
-    failed_attempts: 0, bound_at: null, last_used_at: null, created_at: "2026-10-18T09:00:00Z",
+    failed_attempts: 0, bound_at: null, last_used_at: null, pins_revealed_at: null,
+    active_assignment: assigned, created_at: "2026-10-18T09:00:00Z",
   }) as ScratchCard;
 
 // A stock list that changes after a print replace, as the real one does: the
-// old card comes back revoked and the new one is added.
+// old card comes back revoked and the new one, now holding the assignment, is added.
 function serve() {
   let replaced = false;
   const cardQueries: URLSearchParams[] = [];
@@ -28,8 +29,8 @@ function serve() {
     http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.CARDS()), ({ request }) => {
       cardQueries.push(new URL(request.url).searchParams);
       const results = replaced
-        ? [card("c1", "OLDS-ERIA-L1", true), card("c2", "NEWS-ERIA-L2")]
-        : [card("c1", "OLDS-ERIA-L1")];
+        ? [card("c1", "OLDS-ERIA-L1", true), card("c2", "NEWS-ERIA-L2", false, true)]
+        : [card("c1", "OLDS-ERIA-L1", false, true)];
       return HttpResponse.json({ count: results.length, next: null, previous: null, results });
     }),
     http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.ASSIGNMENTS()), () => {
@@ -80,54 +81,31 @@ describe("CardsTable replace", () => {
     expect(within(list).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
   });
 
-  // All three read "Not used yet"; only an active assignment makes Replace valid.
-  // (MWW5-4KLM-LD in the report was plain stock and still showed Replace.)
-  function serveThree() {
-    const looked: string[] = [];
+  // All three read "Not used yet"; only `active_assignment` makes Replace
+  // valid. (MWW5-4KLM-LD in the report was plain stock and still showed it.)
+  // No assignments handler on purpose: the list must not look any up (MSW
+  // fails the test on an unhandled request).
+  it("shows Replace only where the row says active_assignment, with no per-row lookups", async () => {
     server.use(
       http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.CARDS()), () =>
         HttpResponse.json({
           count: 3, next: null, previous: null,
           results: [
-            card("c1", "ISSU-EDNO-TY"),
+            card("c1", "ISSU-EDNO-TY", false, true),
             card("c2", "MWW5-4KLM-LD"),
             { ...card("c3", "PRIN-TEDS-LP"), pins_revealed_at: "2026-11-09T10:00:00Z" },
           ],
         }),
       ),
-      http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.ASSIGNMENTS()), ({ request }) => {
-        const id = new URL(request.url).searchParams.get("card") ?? "";
-        looked.push(id);
-        // Only c1 was issued to a student.
-        const results = id === "c1" ? [{ id: "a1", card: "c1", superseded_at: null }] : [];
-        return HttpResponse.json({ count: results.length, next: null, previous: null, results });
-      }),
     );
-    return looked;
-  }
-
-  it("shows Replace only on a card with an active assignment", async () => {
-    const looked = serveThree();
     renderWithClient(<CardsTable />);
     const table = await screen.findByRole("table");
     const row = (serial: string) => within(table).getByText(serial).closest("tr") as HTMLElement;
 
-    expect(await within(row("ISSU-EDNO-TY")).findByRole("button", { name: /Replace/ })).toBeInTheDocument();
+    expect(within(row("ISSU-EDNO-TY")).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
     expect(within(row("MWW5-4KLM-LD")).queryByRole("button", { name: /Replace/ })).not.toBeInTheDocument();
     expect(within(row("PRIN-TEDS-LP")).getByText("Printed slip")).toBeInTheDocument();
     expect(within(row("PRIN-TEDS-LP")).queryByRole("button", { name: /Replace/ })).not.toBeInTheDocument();
-    // A printed slip can never have one, so it isn't even looked up.
-    expect(looked.sort()).toEqual(["c1", "c2"]);
-  });
-
-  it("never offers Replace in the In stock view, and doesn't look anything up there", async () => {
-    const looked = serveThree();
-    const { user } = renderWithClient(<CardsTable />);
-    await screen.findByRole("table");
-    looked.length = 0;
-    await user.selectOptions(screen.getByLabelText("Show cards"), "In stock");
-    await vi.waitFor(() => expect(screen.queryAllByRole("button", { name: /Replace/ })).toHaveLength(0));
-    expect(looked).toEqual([]);
   });
 
   it("asks the server for stock with its own unused filter, not is_bound", async () => {

@@ -49,7 +49,9 @@ describe("ContactsPanel: parent-account numbers", () => {
     const calls = serve();
     const { user } = renderWithClient(<ContactsPanel />);
 
-    const section = await screen.findByRole("region", { name: /Texted at a parent account.s phone \(1\)/ });
+    // Generous waits: this section renders after its own request, which a busy
+    // parallel run can slow past findBy's 1s default (flaked twice under load).
+    const section = await screen.findByRole("region", { name: /Texted at a parent account.s phone \(1\)/ }, { timeout: 5000 });
     expect(within(section).getByText("Kemi Ade")).toBeInTheDocument();
     expect(within(section).getByText("0803 999 8888")).toBeInTheDocument();
     expect(within(section).queryByRole("button", { name: /Edit|Remove|Make main/ })).not.toBeInTheDocument();
@@ -62,7 +64,7 @@ describe("ContactsPanel: parent-account numbers", () => {
   it("'Use a different number' adds a contact for that student, skipping the picker", async () => {
     serve();
     const { user } = renderWithClient(<ContactsPanel />);
-    await user.click(await screen.findByRole("button", { name: "Use a different number" }));
+    await user.click(await screen.findByRole("button", { name: "Use a different number" }, { timeout: 5000 }));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent("For Tobi Ade (ADM/009).");
     expect(within(dialog).getByLabelText("Mobile number")).toBeInTheDocument();

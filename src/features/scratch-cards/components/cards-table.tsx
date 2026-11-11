@@ -5,9 +5,9 @@ import { useState } from "react";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Select } from "@/components/ui/select";
 
-import { useReplaceableCardIds, useScratchCards } from "../hooks/use-scratch-card-queries";
+import { useScratchCards } from "../hooks/use-scratch-card-queries";
 import type { ScratchCard, ScratchCardFilters } from "../types";
-import { CardsList, CardsTableView, canOfferReplace } from "./cards-views";
+import { CardsList, CardsTableView } from "./cards-views";
 import { ReplaceCardDialog } from "./replace-card-dialog";
 import { useSessionFilter } from "./session-filter";
 
@@ -37,10 +37,6 @@ export function CardsTable() {
     ...(session.sessionId && { academic_session_id: session.sessionId }),
     page,
   });
-  // Replace needs an active assignment. In stock means none, by definition,
-  // so that view skips the lookups; elsewhere only plausible cards are asked.
-  const candidates = view === "stock" ? [] : (data?.results ?? []).filter(canOfferReplace).map((c) => c.id);
-  const replaceable = useReplaceableCardIds(candidates);
 
   return (
     <div className="space-y-3">
@@ -82,10 +78,10 @@ export function CardsTable() {
       ) : (
         <>
           <div className="sm:hidden">
-            <CardsList cards={data.results} replaceable={replaceable} onReplace={setReplacing} />
+            <CardsList cards={data.results} onReplace={setReplacing} />
           </div>
           <div className="hidden sm:block">
-            <CardsTableView cards={data.results} replaceable={replaceable} onReplace={setReplacing} />
+            <CardsTableView cards={data.results} onReplace={setReplacing} />
           </div>
           <PaginationControls page={page} pageSize={25} count={data.count} onPageChange={setPage} />
         </>

@@ -10,9 +10,6 @@ import type { ScratchCard } from "../types";
 
 interface Props {
   cards: ScratchCard[];
-  // Ids with an active assignment (looked up by the table). Replace shows for
-  // these only: no assignment means nobody to reissue the card to.
-  replaceable: Set<string>;
   onReplace: (card: ScratchCard) => void;
 }
 
@@ -39,22 +36,19 @@ function StatusPill({ card }: { card: ScratchCard }) {
   );
 }
 
-// Whether a card is even worth looking up. Replace is valid only with an
-// active assignment, which the row doesn't carry, so the table looks that up
-// for these candidates and shows Replace only when one comes back. Never a
-// candidate: a replaced card, or a printed slip (pins_revealed_at set: its PIN
-// went out on the purchase sheet with no student, so it has no assignment;
-// a family who lost one gets a different card through Issue cards).
-//
-// "Not used yet" alone decides nothing: it covers untouched stock (no
-// assignment, no Replace) AND a card issued to a student who hasn't checked
-// a result yet (assignment, Replace).
-export function canOfferReplace(card: Pick<ScratchCard, "is_revoked" | "is_locked" | "student" | "pins_revealed_at">): boolean {
-  return cardStatus(card) !== "replaced" && !card.pins_revealed_at;
+// Replace is valid only with an active assignment, which the row now carries
+// (`active_assignment`, backend 7ebd0d3; always false in stock). "Not used
+// yet" alone decides nothing: it covers untouched stock (no assignment) AND a
+// card issued to a student who hasn't checked a result yet (assignment).
+// A replaced card or a printed slip can never qualify, whatever the flag says.
+export function canOfferReplace(
+  card: Pick<ScratchCard, "is_revoked" | "is_locked" | "student" | "pins_revealed_at" | "active_assignment">,
+): boolean {
+  return card.active_assignment && cardStatus(card) !== "replaced" && !card.pins_revealed_at;
 }
 
-function ReplaceButton({ card, replaceable, onReplace }: { card: ScratchCard } & Pick<Props, "replaceable" | "onReplace">) {
-  if (!replaceable.has(card.id)) return null;
+function ReplaceButton({ card, onReplace }: { card: ScratchCard; onReplace: Props["onReplace"] }) {
+  if (!canOfferReplace(card)) return null;
   return (
     <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 text-xs" onClick={() => onReplace(card)}>
       <RefreshCw className="size-3.5" /> Replace
@@ -65,7 +59,7 @@ function ReplaceButton({ card, replaceable, onReplace }: { card: ScratchCard } &
 // Phones: one compact block per card. The six-column table needed ~710px and
 // crushed the student column into a few letters a line, with the action
 // scrolled off-screen.
-export function CardsList({ cards, replaceable, onReplace }: Props) {
+export function CardsList({ cards, onReplace }: Props) {
   return (
     <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
       {cards.map((card) => (
@@ -82,7 +76,7 @@ export function CardsList({ cards, replaceable, onReplace }: Props) {
               {card.last_used_at ? ` · ${formatTimestamp(card.last_used_at)}` : ""}
             </p>
           </div>
-          <ReplaceButton card={card} replaceable={replaceable} onReplace={onReplace} />
+          <ReplaceButton card={card} onReplace={onReplace} />
         </li>
       ))}
     </ul>
@@ -90,7 +84,7 @@ export function CardsList({ cards, replaceable, onReplace }: Props) {
 }
 
 // Wider screens: the full table, with room for every column.
-export function CardsTableView({ cards, replaceable, onReplace }: Props) {
+export function CardsTableView({ cards, onReplace }: Props) {
   return (
     <div className="overflow-x-auto rounded-xl border border-n-200 bg-white">
       <table className="w-full text-left">
@@ -123,7 +117,7 @@ export function CardsTableView({ cards, replaceable, onReplace }: Props) {
               <td className="whitespace-nowrap px-3 py-2.5 text-n-500">
                 {card.last_used_at ? formatTimestamp(card.last_used_at) : "—"}
               </td>
-              <td className="px-3 py-2.5 text-right"><ReplaceButton card={card} replaceable={replaceable} onReplace={onReplace} /></td>
+              <td className="px-3 py-2.5 text-right"><ReplaceButton card={card} onReplace={onReplace} /></td>
             </tr>
           ))}
         </tbody>

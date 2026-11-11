@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/shared/error-state";
 
 import { usePaymentConfirmation } from "../hooks/use-payment-confirmation";
-import { useRevealPins } from "../hooks/use-scratch-card-mutations";
-import type { CardPin } from "../types";
-import { PinsSheet } from "./pins-sheet";
+import { PaidPurchasePanel } from "./paid-purchase-panel";
 
 const BACK = (
   <Link href="/scratch-cards" className="text-sm text-primary hover:underline">
@@ -18,22 +15,13 @@ const BACK = (
 );
 
 // Where Paystack sends the admin after checkout (FRONTEND_SCRATCH_CARD_
-// REDIRECT_URL on the backend must be this path). Confirms the payment, then
-// fetches the PINs exactly once: the server hands them out a single time, so a
-// second call would return [] and blank a sheet nobody had saved yet. The ref
-// guard holds through React's dev double-run of effects.
+// REDIRECT_URL on the backend must be this path). Confirms the payment. It no
+// longer reveals the PINs on arrival (backend 7ebd0d3): paid cards go into
+// stock by default, and showing them as anonymous slips is a separate,
+// confirmed choice in PaidPurchasePanel.
 export function PaymentCompletePage({ params }: { params: Record<string, string> }) {
   const { data: purchase, outcome, reference, isPending, isError, error, refetch, isFetching } =
     usePaymentConfirmation(params);
-  const reveal = useRevealPins();
-  const requested = useRef(false);
-  const [pins, setPins] = useState<CardPin[] | null>(null);
-
-  useEffect(() => {
-    if (outcome !== "paid" || !purchase || requested.current) return;
-    requested.current = true;
-    reveal.mutate(purchase.id, { onSuccess: setPins });
-  }, [outcome, purchase, reveal]);
 
   let body: React.ReactNode;
   if (!reference) {
@@ -45,7 +33,7 @@ export function PaymentCompletePage({ params }: { params: Record<string, string>
   } else if (outcome === "pending") {
     body = (
       <div className="space-y-3">
-        <p className="text-sm text-ink">Paystack hasn&rsquo;t confirmed this payment yet. No PINs are shown until it does.</p>
+        <p className="text-sm text-ink">Paystack hasn&rsquo;t confirmed this payment yet. The cards are created once it does.</p>
         <Button type="button" variant="outline" onClick={() => refetch()} disabled={isFetching}>
           {isFetching ? "Checking…" : "Check again"}
         </Button>
@@ -58,46 +46,8 @@ export function PaymentCompletePage({ params }: { params: Record<string, string>
         support with reference <span className="font-mono">{reference}</span>. {BACK}
       </p>
     );
-  } else if (!pins && reveal.isError) {
-    // Retrying is safe: if the first call did reach the server, this one
-    // returns [] and the empty-list message below explains what to do.
-    body = (
-      <div className="space-y-3">
-        <p className="text-sm text-ink">Payment confirmed, but the PINs couldn&rsquo;t be loaded.</p>
-        <Button type="button" onClick={() => purchase && reveal.mutate(purchase.id, { onSuccess: setPins })}>
-          Try again
-        </Button>
-      </div>
-    );
-  } else if (!pins) {
-    body = <p className="text-sm text-n-400" role="status">Payment confirmed. Getting your PINs…</p>;
-  } else if (pins.length === 0) {
-    // Two different situations. purchase is the confirm response, read BEFORE
-    // this page's reveal, so pins_revealed_at set here means an earlier visit
-    // already showed them: those cards left stock as printed slips. Unset
-    // means the 15-minute window ran out unrevealed, and the cards are stock.
-    body = purchase?.pins_revealed_at ? (
-      <p className="text-sm text-ink">
-        Payment confirmed. These PINs were already shown once, so they can&rsquo;t be shown again. Those cards are
-        now printed slips: they still work, but they&rsquo;re no longer in stock for issuing. {BACK}
-      </p>
-    ) : (
-      <p className="text-sm text-ink">
-        Payment confirmed, but more than 15 minutes passed before the PINs were shown, so they can&rsquo;t be shown
-        now. The cards aren&rsquo;t lost: they stay in stock, and each gets a fresh PIN when you issue it to a
-        student. {BACK}
-      </p>
-    );
-  } else {
-    body = (
-      <div className="space-y-4">
-        <p className="text-sm text-ink">
-          Payment confirmed: {pins.length} card{pins.length === 1 ? "" : "s"} for {purchase?.academic_session_name}.
-        </p>
-        <PinsSheet pins={pins} sessionName={purchase?.academic_session_name ?? ""} />
-        {BACK}
-      </div>
-    );
+  } else if (purchase) {
+    body = <PaidPurchasePanel purchase={purchase} onRevealedEmpty={() => refetch()} isRefreshing={isFetching} />;
   }
 
   return (

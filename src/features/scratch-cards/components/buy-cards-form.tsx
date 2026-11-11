@@ -92,7 +92,7 @@ export function BuyCardsForm() {
           {start.isPending ? "Opening Paystack…" : "Continue to payment"}
         </Button>
         <p className="text-xs text-n-400">
-          You&rsquo;ll pay on Paystack, then come back here to see and save the PINs.
+          You&rsquo;ll pay on Paystack, then come back here. The cards go into stock, ready to issue to students.
         </p>
       </div>
     </form>

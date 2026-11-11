@@ -66,6 +66,10 @@ export interface ScratchCard {
   // The purchase's pins_revealed_at: set means this card went out as an
   // anonymous printed slip, so it isn't stock and has no student to reissue to.
   pins_revealed_at: string | null;
+  // True when this serial has an assignment not yet replaced: the one thing
+  // that makes Replace valid. Always false in stock (unused=true). Annotated
+  // server-side (backend 7ebd0d3), so no per-row lookup is needed.
+  active_assignment: boolean;
   created_at: string;
 }
 

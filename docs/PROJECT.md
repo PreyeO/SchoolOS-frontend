@@ -2832,16 +2832,31 @@ single-tab users.
   developer, same day). The printed-slip rule alone still showed Replace on
   plain stock (e.g. MWW5-4KLM-LD), because "Not used yet" covers both untouched
   stock and a card issued but not yet checked.
-  - `useReplaceableCardIds` looks up the active assignment for each
-    candidate on the page, using the **same query key** as the replace
-    dialog, so opening the dialog is served from cache.
-  - `canOfferReplace` now only picks candidates (not replaced, not a printed
-    slip). The **In stock** view does no lookups at all, since stock has no
-    assignment by definition.
-  - Tested with the three cases (issued, plain stock, printed slip) and the
-    In stock view; both tests fail with the old rule put back.
-  - **Backend ask:** an `active_assignment` flag (or id) on the card row would
-    replace up to 25 lookups per page with none.
+  - First fixed with per-row lookups, then replaced the same day by the
+    backend's **`active_assignment`** flag on every card row (7ebd0d3, an
+    `Exists` annotation; always false in stock). `canOfferReplace` =
+    `active_assignment && not replaced && not a printed slip`. **No per-row
+    requests**: the test serves no assignments handler, so any lookup fails it.
+    The dialog still loads that one assignment when opened.
+  - Tested with the three cases: issued (Replace), plain stock MWW5-4KLM-LD
+    (none), printed slip (none).
+- **Payment return no longer reveals the PINs automatically** (backend handoff
+  change, 7ebd0d3).
+  - Paid cards go **into stock by default**, a path that must never call
+    reveal. `PaidPurchasePanel` leads with "Issue cards".
+  - "Show the PINs now" is a second, explicit choice. Its confirm spells out the
+    trade-off: no student recorded, out of stock (never issuable or
+    replaceable), shown once, only within 15 minutes of payment. "Keep them in
+    stock" backs out.
+  - **Empty reveal:** the panel re-reads the purchase (`onRevealedEmpty` →
+    confirm refetch, "Checking…" meanwhile) before choosing between "15
+    minutes passed, still in stock" and "already shown as slips". A reveal
+    whose response was lost leaves a stale copy saying unrevealed, and
+    claiming "still in stock" then would be false. Tested, and the test was
+    checked by removing the re-read.
+  - The buy form's "come back here to see and save the PINs" now says the cards
+    go into stock.
+  - **Not seen live:** needs a real paid purchase (Paystack test checkout).
 - **No Replace on a printed slip** (`canOfferReplace` in `cards-views.tsx`, tested).
   A card with `pins_revealed_at` has no assignment, so Replace could only open
   a dialog saying "can't". The "Printed slip" tag stays. "Not used yet" cards
