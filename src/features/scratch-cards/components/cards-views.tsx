@@ -5,7 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
-import { CARD_STATUS_META, cardNotes, cardStatus } from "../lib/card-status";
+import { CARD_STATUS_META, cardNotes, cardStatus, cardWhereLine } from "../lib/card-status";
 import type { ScratchCard } from "../types";
 
 interface Props {
@@ -75,11 +75,9 @@ export function CardsList({ cards, onReplace }: Props) {
               <span className="font-mono text-sm text-ink">{card.serial}</span>
               <StatusPill card={card} />
             </div>
-            <p className="text-xs text-n-500 wrap-break-word">
-              {card.student
-                ? `${card.student.user.first_name} ${card.student.user.last_name} · ${card.student.admission_number}`
-                : "No student yet"}
-              {card.last_used_at ? ` · ${formatTimestamp(card.last_used_at)}` : ""}
+            <p className="text-xs text-n-600 wrap-break-word">
+              {cardWhereLine(card)}
+              {card.student && card.last_used_at ? ` · last checked ${formatTimestamp(card.last_used_at)}` : ""}
             </p>
             <CardNotes card={card} />
           </div>
@@ -100,8 +98,8 @@ export function CardsTableView({ cards, onReplace }: Props) {
             <th className="px-3 py-2.5 font-medium">Serial</th>
             <th className="px-3 py-2.5 font-medium">Session</th>
             <th className="px-3 py-2.5 font-medium">Status</th>
-            <th className="px-3 py-2.5 font-medium">Student</th>
-            <th className="px-3 py-2.5 font-medium">Last used</th>
+            <th className="px-3 py-2.5 font-medium">Where it is</th>
+            <th className="px-3 py-2.5 font-medium">Last checked</th>
             <th className="px-3 py-2.5"><span className="sr-only">Actions</span></th>
           </tr>
         </thead>
@@ -111,16 +109,7 @@ export function CardsTableView({ cards, onReplace }: Props) {
               <td className="whitespace-nowrap px-3 py-2.5 font-mono text-ink">{card.serial}</td>
               <td className="whitespace-nowrap px-3 py-2.5 text-n-500">{card.academic_session_name}</td>
               <td className="px-3 py-2.5"><StatusPill card={card} /><CardNotes card={card} /></td>
-              <td className="px-3 py-2.5 text-ink">
-                {card.student ? (
-                  <>
-                    {card.student.user.first_name} {card.student.user.last_name}{" "}
-                    <span className="whitespace-nowrap font-mono text-xs text-n-400">{card.student.admission_number}</span>
-                  </>
-                ) : (
-                  <span className="text-n-400">—</span>
-                )}
-              </td>
+              <td className="px-3 py-2.5 text-ink">{cardWhereLine(card)}</td>
               <td className="whitespace-nowrap px-3 py-2.5 text-n-500">
                 {card.last_used_at ? formatTimestamp(card.last_used_at) : "—"}
               </td>

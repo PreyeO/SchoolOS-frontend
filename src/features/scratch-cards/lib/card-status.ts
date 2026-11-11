@@ -2,19 +2,29 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import type { ScratchCard } from "../types";
 
-// The card's facts that a status word can't carry, as short notes:
-// - given to a student but not used yet (active_assignment, nobody bound):
-//   otherwise it reads exactly like stock, the confusion behind MWW5-4KLM-LD;
-// - wrong PIN tries so far, before the 5-strike lock (an early warning);
-// - when a replaced card was replaced.
+// One line saying where a card is. `student` on a card is the student it got
+// LOCKED to at its first result check, not who it was given to, so "No
+// student yet" read as a contradiction next to "Given to a student"
+// (reported 2026-11-11). The row doesn't carry who an issued card was given
+// to; the student's page and the send page do.
+export function cardWhereLine(
+  card: Pick<ScratchCard, "is_revoked" | "revoked_at" | "student" | "active_assignment" | "pins_revealed_at">,
+): string {
+  if (card.is_revoked) return card.revoked_at ? `Replaced ${formatTimestamp(card.revoked_at)}` : "Replaced";
+  if (card.student) {
+    return `Used by ${card.student.user.first_name} ${card.student.user.last_name} · ${card.student.admission_number}`;
+  }
+  if (card.active_assignment) return "Given to a student · no results checked yet";
+  if (card.pins_revealed_at) return "Anonymous printed slip · no results checked yet";
+  return "In stock · not given out yet";
+}
+
+// What the status and the line above can't carry: wrong PIN tries so far,
+// before the 5-strike lock (an early warning).
 export const LOCK_AFTER = 5;
 
-export function cardNotes(
-  card: Pick<ScratchCard, "is_revoked" | "is_locked" | "student" | "active_assignment" | "failed_attempts" | "revoked_at">,
-): string[] {
+export function cardNotes(card: Pick<ScratchCard, "is_revoked" | "is_locked" | "failed_attempts">): string[] {
   const notes: string[] = [];
-  if (card.is_revoked && card.revoked_at) notes.push(`Replaced ${formatTimestamp(card.revoked_at)}`);
-  if (!card.is_revoked && card.active_assignment && !card.student) notes.push("Given to a student, not used yet");
   if (!card.is_revoked && !card.is_locked && card.failed_attempts > 0) {
     const n = card.failed_attempts;
     notes.push(`${n} wrong PIN ${n === 1 ? "try" : "tries"} (locks at ${LOCK_AFTER})`);

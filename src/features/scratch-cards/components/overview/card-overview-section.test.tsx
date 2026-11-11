@@ -44,7 +44,7 @@ describe("CardOverviewSection", () => {
 
     expect(await screen.findByRole("heading", { name: /2 of 4 students/ })).toBeInTheDocument();
     expect(previews).toEqual([{ scope: "school", academic_session_id: "sess", channel: "sms" }]);
-    expect(screen.getByRole("link", { name: "Send cards to the 2 waiting" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Send cards" })).toHaveAttribute(
       "href",
       "/scratch-cards/issue?scope=school&session=sess&check=1",
     );

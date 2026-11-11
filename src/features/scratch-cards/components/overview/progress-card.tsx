@@ -56,7 +56,8 @@ export function ProgressCard({ overview: o, checked, sessionId }: Props) {
       {o.waiting > 0 ? (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Button asChild size="lg">
-            <Link href={sendHref}>Send cards to the {n(o.waiting)} waiting</Link>
+            {/* No count in the label: "Still waiting" just above already says it. */}
+            <Link href={sendHref}>Send cards</Link>
           </Button>
           <p className="text-sm text-n-500">You&rsquo;ll see who gets one and what it costs before anything is sent.</p>
         </div>

@@ -65,7 +65,8 @@ describe("CardsTable replace", () => {
 
     // The list refetch lands: the old card is now Replaced. (hidden: the open
     // dialog marks the page behind it aria-hidden.)
-    expect(await within(screen.getByRole("table", { hidden: true })).findByText("Replaced")).toBeInTheDocument();
+    // (Twice in the row: the pill, and the where-it-is line.)
+    expect(await within(screen.getByRole("table", { hidden: true })).findAllByText("Replaced")).not.toHaveLength(0);
     // Regression: the dialog lived in the old card's row and vanished with it.
     // The assignment refetch (now empty) mustn't swap the PIN for "nothing to replace" either.
     expect(within(screen.getByRole("dialog")).getByText("5550001111")).toBeInTheDocument();
@@ -76,7 +77,8 @@ describe("CardsTable replace", () => {
     renderWithClient(<CardsTable />);
     const list = await screen.findByRole("list");
     expect(within(list).getByText("OLDS-ERIA-L1")).toBeInTheDocument();
-    expect(within(list).getByText("No student yet")).toBeInTheDocument();
+    // c1 is issued (active_assignment) and unused: said plainly, not "No student yet".
+    expect(within(list).getByText("Given to a student · no results checked yet")).toBeInTheDocument();
     expect(within(list).getByText("Not used yet")).toBeInTheDocument();
     expect(within(list).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
   });

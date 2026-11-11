@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CardAssignment, IssuanceBatch, ScratchCard } from "../types";
 import { batchScopeName, batchTitle, REASON_LABEL } from "./assignment-labels";
-import { cardNotes } from "./card-status";
+import { cardNotes, cardWhereLine } from "./card-status";
 
 const assignment = (reason: CardAssignment["reason"]) => ({ reason }) as CardAssignment;
 const classes = [
@@ -36,11 +36,26 @@ describe("batchScopeName", () => {
   });
 });
 
+// "No student yet" sat above "Given to a student" and read as a contradiction:
+// a card's `student` is who it got locked to at the first check, not who
+// it was given to.
+describe("cardWhereLine", () => {
+  const card = { is_revoked: false, revoked_at: null, student: null, active_assignment: false, pins_revealed_at: null } as unknown as ScratchCard;
+  const used = { user: { first_name: "Ada", last_name: "Obi" }, admission_number: "ADM/001" } as ScratchCard["student"];
+
+  it("says where each kind of card is, never 'No student yet'", () => {
+    expect(cardWhereLine({ ...card, student: used, active_assignment: true })).toBe("Used by Ada Obi · ADM/001");
+    expect(cardWhereLine({ ...card, active_assignment: true })).toBe("Given to a student · no results checked yet");
+    expect(cardWhereLine({ ...card, pins_revealed_at: "2026-11-09T10:00:00Z" })).toBe("Anonymous printed slip · no results checked yet");
+    expect(cardWhereLine(card)).toBe("In stock · not given out yet");
+    expect(cardWhereLine({ ...card, is_revoked: true, revoked_at: "2026-11-11T16:54:00Z" })).toMatch(/^Replaced /);
+  });
+});
+
 describe("cardNotes", () => {
   const base = { is_revoked: false, is_locked: false, student: null, active_assignment: false, failed_attempts: 0, revoked_at: null } as unknown as ScratchCard;
 
-  it("tells an issued-but-unused card apart from stock", () => {
-    expect(cardNotes({ ...base, active_assignment: true })).toEqual(["Given to a student, not used yet"]);
+  it("has no notes for a card with nothing to warn about", () => {
     expect(cardNotes(base)).toEqual([]);
   });
 

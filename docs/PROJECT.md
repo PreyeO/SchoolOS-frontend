@@ -2846,6 +2846,17 @@ agreed first: https://claude.ai/artifact/EgGd3yog8M2KDQEvVXjm5J
   The overview's "Card details" leads there, so that's where owners look for a
   lost card. Copy that said "Replace in Card stock" now points to the
   student's page. Tested.
+- **Wording (from the hosted app):**
+  - The overview button is just **"Send cards"**; "Still waiting" above it
+    gives the count.
+  - Card rows no longer say "No student yet". A card's `student` is who it
+    got locked to at the first result check, so that sat above "Given to a
+    student" as a contradiction. `cardWhereLine()` (tested) gives one line
+    instead: "Used by {name} · {adm}" / "Given to a student · no results
+    checked yet" / "Anonymous printed slip · no results checked yet" / "In
+    stock · not given out yet" / "Replaced {date}".
+  - The desktop column is "Where it is", plus "Last checked". `cardNotes` now
+    only warns about wrong PIN tries.
 - **Gotcha, hit live:** a server route (`page.tsx`) must never import a
   non-component value (an array, a const) from a `"use client"` file. It gets
   a client-reference stub instead (`.find is not a function`), and the page
