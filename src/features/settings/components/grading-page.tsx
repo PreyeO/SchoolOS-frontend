@@ -8,7 +8,8 @@ import { DEFAULT_GRADE_COMPONENTS, getDefaultGradeRanges } from "@/data/grading-
 import { useSchoolLevels } from "@/lib/school/use-school-levels";
 
 import { useGradingSystems } from "../hooks/use-grading-systems";
-import { useCreateGradingSystem } from "../hooks/use-grading-mutations";
+import { useApplyGradingToLevels, useCreateGradingSystem } from "../hooks/use-grading-mutations";
+import { ALL_LEVELS, toContent } from "../lib/grading-copy";
 import { GradingFormDialog } from "./grading/grading-form-dialog";
 import { GradingSystemCard } from "./grading/grading-system-card";
 
@@ -16,6 +17,7 @@ export function GradingPage() {
   const { data: systems, isPending, isError, error } = useGradingSystems();
   const { levels: schoolLevels } = useSchoolLevels();
   const createSystem = useCreateGradingSystem();
+  const applyToLevels = useApplyGradingToLevels();
 
   if (isPending) {
     return <p className="text-sm text-n-400" role="status">Loading your grading systems…</p>;
@@ -35,7 +37,8 @@ export function GradingPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-ink">Grading</h1>
           <p className="mt-1 text-sm text-n-500">
-            Set up how scores are calculated and mapped to grades, one system per school level.
+            Set up how scores are calculated and mapped to grades, one system per school level. Set one level up, then
+            copy it to the others, or add the same setup to every level at once.
           </p>
         </div>
         {availableLevels.length > 0 && (
@@ -47,13 +50,12 @@ export function GradingPage() {
               ranges: firstAvailable ? getDefaultGradeRanges(firstAvailable) : [],
             }}
             availableLevels={availableLevels}
-            isPending={createSystem.isPending}
+            isPending={createSystem.isPending || applyToLevels.isPending}
             onSave={(values) =>
-              createSystem.mutateAsync({
-                level: values.level as (typeof availableLevels)[number],
-                components: values.components.map((c, i) => ({ ...c, order: i + 1 })),
-                ranges: values.ranges,
-              })
+              values.level === ALL_LEVELS
+                ? // Every remaining level gets the same setup, one create each.
+                  applyToLevels.mutateAsync({ targets: availableLevels.map((level) => ({ level })), content: toContent(values) })
+                : createSystem.mutateAsync({ level: values.level as (typeof availableLevels)[number], ...toContent(values) })
             }
             trigger={
               <Button type="button">
@@ -69,7 +71,7 @@ export function GradingPage() {
       ) : (
         <div className="space-y-4">
           {systems.map((system) => (
-            <GradingSystemCard key={system.id} system={system} />
+            <GradingSystemCard key={system.id} system={system} systems={systems} schoolLevels={schoolLevels} />
           ))}
         </div>
       )}

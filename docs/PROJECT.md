@@ -2213,6 +2213,18 @@ summed to more than the dialog, which also scrolled it sideways.
 - **Still not done:** `needs-attention-list` and the platform screens use the
   same truncated-row pattern but weren't in the screenshots.
 
+**Grading: one setup, many levels (2026-11-11, branch `grading`).** Admins had
+to type the same components and grade scale once per level. The backend has no
+bulk route (one `GradingSystem` per level), so `useApplyGradingToLevels` sends
+one request per level, in turn, never stops on a refusal, and toasts each failed
+level by name. Two entry points: the add form's level picker gains **"All N
+levels without grading"** (`ALL_LEVELS` in `lib/grading-copy.ts`), and each card
+has **Copy to other levels**, which creates on empty levels and PATCHes ones that
+already have grading. Those start unticked, with a warning, so nothing is
+overwritten by default. A PATCH is safe after scores exist: the backend's
+`update_grading_system` matches components by name and updates them in place;
+only ranges are fully replaced.
+
 **Student lifecycle, offboarding, open passwords (2026-10-10).** Built against
 backend `development` (`31108f6`, `6f91d3d`, both 2026-10-09; not on backend
 `main` at the time). Handoff: `SchoolOS-backend/docs/student-lifecycle-frontend-handoff.md`,
