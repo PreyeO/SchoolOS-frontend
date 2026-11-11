@@ -2857,6 +2857,11 @@ agreed first: https://claude.ai/artifact/EgGd3yog8M2KDQEvVXjm5J
     stock · not given out yet" / "Replaced {date}".
   - The desktop column is "Where it is", plus "Last checked". `cardNotes` now
     only warns about wrong PIN tries.
+- **Send page "back" goes where you came from** (`lib/batch-back-link.ts`,
+  tested). Links into `/scratch-cards/batches/[id]` carry `?from=records` (→
+  "← Records", Past sends tab) or `?from=student&student=…` (→ "← Back to
+  the student"); anything else → "← Result cards". Build them with
+  `batchHref()`. Checked live for both origins.
 - **Gotcha, hit live:** a server route (`page.tsx`) must never import a
   non-component value (an array, a const) from a `"use client"` file. It gets
   a client-reference stub instead (`.find is not a function`), and the page

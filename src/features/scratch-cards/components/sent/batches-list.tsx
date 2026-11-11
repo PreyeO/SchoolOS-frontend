@@ -10,6 +10,7 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { useIssuanceBatches } from "../../hooks/use-issuance";
 import { batchScopeName } from "../../lib/assignment-labels";
+import { batchHref } from "../../lib/batch-back-link";
 import type { IssuanceChannel } from "../../types";
 import { useSessionFilter } from "../session-filter";
 
@@ -61,7 +62,7 @@ export function BatchesList() {
           const Icon = b.channel === "sms" ? MessageSquare : Printer;
           return (
             <li key={b.id}>
-              <Link href={`/scratch-cards/batches/${b.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-n-50">
+              <Link href={batchHref(b.id, { from: "records" })} className="flex items-center gap-3 px-4 py-3 hover:bg-n-50">
                 <Icon className="size-4 shrink-0 text-n-400" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-ink">

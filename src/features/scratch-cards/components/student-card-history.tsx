@@ -8,6 +8,7 @@ import Link from "next/link";
 
 import { useStudentCardHistory } from "../hooks/use-scratch-card-queries";
 import { REASON_LABEL } from "../lib/assignment-labels";
+import { batchHref } from "../lib/batch-back-link";
 import { MESSAGE_STATUS_META } from "../lib/message-status";
 import { ReplaceFromHistory } from "./replace-from-history";
 
@@ -54,7 +55,12 @@ export function StudentCardHistory({ studentId }: { studentId: string }) {
             {a.issuance_batch && (
               <>
                 {" · "}
-                <Link href={`/scratch-cards/batches/${a.issuance_batch}`} className="text-primary hover:underline">View send</Link>
+                <Link
+                  href={batchHref(a.issuance_batch, { from: "student", studentId })}
+                  className="text-primary hover:underline"
+                >
+                  View send
+                </Link>
               </>
             )}
           </p>

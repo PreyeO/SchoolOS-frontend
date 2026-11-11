@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
+import { batchHref } from "../../lib/batch-back-link";
 import type { CardPin, IssuanceBatch } from "../../types";
 import { PinsSheet } from "../pins-sheet";
 
@@ -43,7 +44,7 @@ export function IssueResult({ outcome, onAnother }: { outcome: IssueOutcome; onA
           page.
         </p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link href={`/scratch-cards/batches/${outcome.batch.id}`} className="text-sm text-primary hover:underline">
+          <Link href={batchHref(outcome.batch.id)} className="text-sm text-primary hover:underline">
             Watch delivery
           </Link>
           {again}

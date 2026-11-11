@@ -8,16 +8,19 @@ import { formatTimestamp } from "@/lib/text/format-timestamp";
 
 import { batchInFlight, useIssuanceBatch } from "../../hooks/use-issuance";
 import { batchScopeName, batchTitle } from "../../lib/assignment-labels";
+import { backLink, type BatchOrigin } from "../../lib/batch-back-link";
 import { MESSAGE_STATUS_META, statusCounts } from "../../lib/message-status";
 import { BatchAssignmentRow } from "./batch-assignment-row";
 
 // /scratch-cards/batches/[id]: what a send was (first cards or replacements,
 // for which class or arm), who it went to, and how each text is doing.
 // Refreshes itself every few seconds while any text is queued or sending.
-export function BatchDetailPage({ id }: { id: string }) {
+export function BatchDetailPage({ id, origin = { from: "home" } }: { id: string; origin?: BatchOrigin }) {
   const { data: batch, isPending, isError, error } = useIssuanceBatch(id);
   const { data: classes = [] } = useClasses();
-  const back = <Link href="/scratch-cards" className="text-sm text-primary hover:underline">← Result cards</Link>;
+  // Back to wherever the send was opened from (Records, a student, or home).
+  const target = backLink(origin);
+  const back = <Link href={target.href} className="text-sm text-primary hover:underline">← {target.label}</Link>;
 
   if (isPending) return <div className="space-y-4">{back}<p className="text-sm text-n-400" role="status">Loading…</p></div>;
   if (isError) return <div className="space-y-4">{back}<ErrorState error={error} resourceLabel="this send" /></div>;
