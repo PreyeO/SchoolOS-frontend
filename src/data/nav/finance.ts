@@ -1,4 +1,4 @@
-import { CircleDollarSign, Receipt, CreditCard, Ticket, Wallet, Banknote, PieChart } from "lucide-react";
+import { CircleDollarSign, Receipt, CreditCard, Wallet, Banknote, PieChart } from "lucide-react";
 
 import { adminItem, type NavGroup } from "./types";
 
@@ -22,15 +22,7 @@ export const financeGroup: NavGroup = {
       // fee items, so PaymentsPage already refuses without view_fees.
       permission: "view_fees",
     }, false),
-    // Bought from SchoolOS, not a school fee. /scratch-cards/payment-complete
-    // (Paystack's return) resolves to this item too, so it's gated the same.
-    adminItem({
-      label: "Result Cards",
-      href: "/scratch-cards",
-      icon: Ticket,
-      description: "Buy result-check cards from SchoolOS for parents, and manage their PINs.",
-      permission: "manage_scratch_cards",
-    }, false),
+    // Result Cards moved to the Results group (2026-11-11): see results-group.ts.
     adminItem({
       label: "Expenses",
       href: "/expenses",

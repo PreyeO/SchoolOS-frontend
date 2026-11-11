@@ -2788,6 +2788,34 @@ stock · Sent · Parent numbers · Purchases**.
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
 
+### Three fixes (2026-11-11)
+- **Result Cards moved from Finance to Results**, right after Publish Results
+  (`data/nav/results-group.ts`). Its daily job is getting results to parents,
+  which follows publishing; buying is occasional. The route stays
+  `/scratch-cards`, so Paystack's `/scratch-cards/payment-complete` return still
+  resolves to it by prefix. Same `manage_scratch_cards` gate.
+- **No Replace on a printed slip** (`canOfferReplace` in `cards-views.tsx`, tested).
+  A card with `pins_revealed_at` has no assignment, so Replace could only open
+  a dialog saying "can't". The "Printed slip" tag stays. "Not used yet" cards
+  that aren't printed slips keep Replace, because they may be issued but
+  unchecked.
+- **PDF slips lost the school logo while Print kept it.** The cause, diagnosed:
+  - `SchoolLogo` (sidebar and topbar) renders the same presigned URL as a plain
+    `<img>`. S3 answers that with no `Access-Control-Allow-Origin` and no
+    `Vary: Origin`, and Chrome caches it. `loadLogo`'s later CORS `fetch` reused
+    the cached copy, failed CORS, and quietly fell back to no logo.
+  - The bucket itself **does** allow GET from school origins: checked live with
+    a preflight from `https://greenfield.myschoolos.io` and `localhost:3002`.
+    This resolves the old "Unverified: S3 CORS for GET" note.
+  - Fix: `fetch(..., { cache: "no-store" })`. A cache-busting query param
+    would break the presigned signature.
+  - Also: decoding now goes through an `<img>` instead of `createImageBitmap`,
+    which can't decode SVG in Chrome, and the 5s limit now covers the decode
+    too. Tested (`load-logo.test.ts`).
+  - **Not reproduced end to end here:** no local school has a logo, and
+    Greenfield Demo Academy is on another environment. Retest a PDF download
+    there.
+
 ### Parent numbers: no duplicates, and parent-account phones shown (2026-11-11, backend 1cd3adf)
 - **Duplicates fixed server-side:** a number is unique per student (migration
   `messaging.0003`, applied locally; it deleted existing duplicates, keeping

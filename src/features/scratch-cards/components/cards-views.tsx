@@ -36,11 +36,20 @@ function StatusPill({ card }: { card: ScratchCard }) {
   );
 }
 
-// Offered on every live card. Whether it can actually be replaced depends on
-// an active assignment, which the card row doesn't carry; the dialog looks it
-// up and explains when there's nothing to replace.
+// Not on a replaced card, and not on a printed slip (pins_revealed_at set):
+// its PIN went out on the purchase sheet with no student, so it has no
+// assignment and Replace can never work. The "Printed slip" tag says enough;
+// a family who lost one gets a different card through Issue cards.
+//
+// Still shown on any other live card, including "Not used yet": it may have
+// been issued to a student who hasn't checked a result yet. The card row
+// doesn't say whether it's on an assignment; the dialog looks that up.
+export function canOfferReplace(card: Pick<ScratchCard, "is_revoked" | "is_locked" | "student" | "pins_revealed_at">): boolean {
+  return cardStatus(card) !== "replaced" && !card.pins_revealed_at;
+}
+
 function ReplaceButton({ card, onReplace }: { card: ScratchCard; onReplace: Props["onReplace"] }) {
-  if (cardStatus(card) === "replaced") return null;
+  if (!canOfferReplace(card)) return null;
   return (
     <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 text-xs" onClick={() => onReplace(card)}>
       <RefreshCw className="size-3.5" /> Replace

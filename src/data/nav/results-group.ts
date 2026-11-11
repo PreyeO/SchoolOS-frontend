@@ -1,4 +1,4 @@
-import { ClipboardList, FileText, GraduationCap, NotebookPen, Table, Trophy } from "lucide-react";
+import { ClipboardList, FileText, GraduationCap, NotebookPen, Table, Ticket, Trophy } from "lucide-react";
 
 import { adminItem, groupedItem, staffItem, teacherItem, type NavItem } from "./types";
 
@@ -58,6 +58,18 @@ export const resultsNavItem: NavItem = groupedItem({
       href: "/results/publish",
       icon: FileText,
       description: "Lock a class's results to compute positions and release report cards.",
+    }, false),
+    // Moved from Finance (2026-11-11). Buying cards is occasional; the screen's
+    // daily job is getting results to parents (issue, text or print PINs,
+    // delivery, parent numbers), which follows straight on from publishing.
+    // The route stays /scratch-cards, so Paystack's return path
+    // (/scratch-cards/payment-complete) still resolves here by prefix.
+    adminItem({
+      label: "Result Cards",
+      href: "/scratch-cards",
+      icon: Ticket,
+      description: "Give parents result-check cards by text or printed slip, and buy more from SchoolOS.",
+      permission: "manage_scratch_cards",
     }, false),
     adminItem({
       label: "Principal's Remarks",

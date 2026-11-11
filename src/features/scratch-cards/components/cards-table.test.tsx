@@ -80,6 +80,26 @@ describe("CardsTable replace", () => {
     expect(within(list).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
   });
 
+  // A printed slip has no assignment, so Replace could only ever say "can't".
+  it("offers Replace on a 'Not used yet' card, but never on a printed slip", async () => {
+    server.use(
+      http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.CARDS()), () =>
+        HttpResponse.json({
+          count: 2, next: null, previous: null,
+          results: [card("c1", "ISSU-EDNO-TY"), { ...card("c2", "PRIN-TEDS-LP"), pins_revealed_at: "2026-11-09T10:00:00Z" }],
+        }),
+      ),
+    );
+    renderWithClient(<CardsTable />);
+    const table = await screen.findByRole("table");
+    const issued = (await within(table).findByText("ISSU-EDNO-TY")).closest("tr") as HTMLElement;
+    const printed = within(table).getByText("PRIN-TEDS-LP").closest("tr") as HTMLElement;
+
+    expect(within(issued).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
+    expect(within(printed).getByText("Printed slip")).toBeInTheDocument();
+    expect(within(printed).queryByRole("button", { name: /Replace/ })).not.toBeInTheDocument();
+  });
+
   it("asks the server for stock with its own unused filter, not is_bound", async () => {
     const queries = serve();
     const { user } = renderWithClient(<CardsTable />);
