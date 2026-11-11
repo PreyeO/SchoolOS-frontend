@@ -47,9 +47,11 @@ export interface CreateGradingSystemPayload {
   ranges: GradeRangeInput[];
 }
 
-// Confirmed against academic/serializers.py GradingSystemUpdateSerializer —
-// components/ranges, if provided, WHOLLY replace the existing set (deleted and
-// recreated, not merged); level is not editable post-creation at all.
+// Confirmed against academic/services.py update_grading_system: ranges, if
+// provided, wholly replace the existing set. Components are diffed by name:
+// kept names are updated in place, missing ones removed (deactivated if they
+// have scores), new ones created, so entered scores survive. level is not
+// editable post-creation at all.
 export interface UpdateGradingSystemPayload {
   name?: string;
   components?: GradeComponentInput[];

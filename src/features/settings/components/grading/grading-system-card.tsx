@@ -4,15 +4,23 @@ import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
-import { SCHOOL_LEVELS } from "@/data/school-levels";
+import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 
 import type { GradingSystem } from "../../api/grading-api";
 import { useDeleteGradingSystem, useUpdateGradingSystem } from "../../hooks/use-grading-mutations";
 import { GradeComponentsBar } from "./grade-components-bar";
 import { GradeScaleStrip } from "./grade-scale-strip";
+import { CopyToLevelsDialog } from "./copy-to-levels-dialog";
 import { GradingFormDialog } from "./grading-form-dialog";
 
-export function GradingSystemCard({ system }: { system: GradingSystem }) {
+interface Props {
+  system: GradingSystem;
+  // For "Copy to other levels": which levels exist and which already have grading.
+  systems: GradingSystem[];
+  schoolLevels: SchoolLevelValue[];
+}
+
+export function GradingSystemCard({ system, systems, schoolLevels }: Props) {
   const updateSystem = useUpdateGradingSystem();
   const deleteSystem = useDeleteGradingSystem();
   const levelLabel = SCHOOL_LEVELS.find((l) => l.value === system.level)?.label ?? system.level;
@@ -27,7 +35,8 @@ export function GradingSystemCard({ system }: { system: GradingSystem }) {
           <p className="font-semibold text-ink">{system.name ?? `${levelLabel} Grading`}</p>
           <p className="text-xs text-n-400">{levelLabel}</p>
         </div>
-        <span className="flex shrink-0 items-center gap-1">
+        <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+          <CopyToLevelsDialog source={system} systems={systems} schoolLevels={schoolLevels} />
           <GradingFormDialog
             title="Edit grading system"
             initialValues={{
