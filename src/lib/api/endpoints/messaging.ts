@@ -8,13 +8,22 @@ export const GUARDIAN_CONTACT_ENDPOINTS = {
   // guardian name, phone). Ordered primary first, then guardian name.
   // POST { student_id, name, phone, is_primary? }. A student's first contact is
   // forced primary; setting primary clears the previous one.
+  // With ?student=, the paginated body ALSO carries `account_phone` (next to
+  // results): the linked parent account's number issuance will text, or null
+  // when the student has a contact.
   LIST: () => `/api/guardian-contacts/`,
+  // GET ?search=&student=&page=. Students with NO contact whose text goes to a
+  // linked parent account's phone. Read-only rows, paginated. Render apart
+  // from the contacts; refetch both after any contact create/delete.
+  ACCOUNT_PHONES: () => `/api/guardian-contacts/account-phones/`,
   // PATCH { name?, phone?, is_primary? } (can't move to another student;
   // can't un-primary the only primary). DELETE → 204.
   DETAIL: (id: string) => `/api/guardian-contacts/${id}/`,
   // Multipart `file`. Fixed header: admission_number, guardian_name,
   // guardian_phone. Both → { applied: [...], skipped: [{ row, reason }] }.
-  // Preview writes nothing; commit makes every applied row the primary.
+  // Preview writes nothing; commit makes every applied row the primary. A
+  // number the student already has is skipped (unique per student since
+  // backend 1cd3adf), so re-importing a file adds nothing.
   IMPORT_PREVIEW: () => `/api/guardian-contacts/import/preview/`,
   IMPORT: () => `/api/guardian-contacts/import/`,
 } as const;

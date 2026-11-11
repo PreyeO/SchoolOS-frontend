@@ -9,6 +9,7 @@ import {
   commitContactImport,
   createGuardianContact,
   deleteGuardianContact,
+  getAccountPhones,
   getGuardianContacts,
   previewContactImport,
   updateGuardianContact,
@@ -24,6 +25,17 @@ export function useGuardianContacts(filters: ContactFilters) {
   return useQuery({
     queryKey: [...GUARDIAN_CONTACTS_KEY, filters],
     queryFn: () => getGuardianContacts(filters),
+    placeholderData: keepPreviousData,
+  });
+}
+
+// Under the same key prefix as the contacts on purpose: every contact write
+// invalidates GUARDIAN_CONTACTS_KEY, which refetches this too, and a student
+// who just got a contact leaves this list (as the handoff asks).
+export function useAccountPhones(filters: ContactFilters) {
+  return useQuery({
+    queryKey: [...GUARDIAN_CONTACTS_KEY, "account-phones", filters],
+    queryFn: () => getAccountPhones(filters),
     placeholderData: keepPreviousData,
   });
 }

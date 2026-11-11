@@ -10,11 +10,16 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 import { useGuardianContacts } from "../hooks/use-guardian-contacts";
 import type { GuardianContact } from "../types";
-import { ContactFormDialog } from "./contact-form-dialog";
+import { AccountPhonesList } from "./account-phones-list";
+import { ContactFormDialog, type ContactStudent } from "./contact-form-dialog";
 import { ContactsImportDialog } from "./contacts-import-dialog";
 import { ContactsList } from "./contacts-list";
 
-type Open = { kind: "add" } | { kind: "edit"; contact: GuardianContact } | { kind: "import" } | null;
+type Open =
+  | { kind: "add"; student?: ContactStudent }
+  | { kind: "edit"; contact: GuardianContact }
+  | { kind: "import" }
+  | null;
 
 // The "Parent numbers" tab on Result Cards: who each student's card PIN is
 // texted to. Search is server-side (admission no., names, phone): the list
@@ -36,8 +41,8 @@ export function ContactsPanel() {
   return (
     <div className="space-y-3">
       <p className="max-w-2xl text-sm text-n-500">
-        Card PINs are texted to each student&rsquo;s main number here. A student with none here is texted at the phone
-        on a linked parent account, if there is one.
+        Card PINs are texted to each student&rsquo;s main saved number. A student with none saved is texted at their
+        linked parent account&rsquo;s phone, listed separately below.
       </p>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -58,25 +63,39 @@ export function ContactsPanel() {
         </div>
       </div>
 
-      {isPending ? (
-        <p className="text-sm text-n-400" role="status">Loading numbers…</p>
-      ) : isError ? (
-        <p className="text-sm text-clay">Couldn&rsquo;t load parents&rsquo; numbers. Refresh to try again.</p>
-      ) : data.results.length === 0 ? (
-        <p className="text-sm text-n-400 italic">
-          {query ? "No numbers match this search." : "No numbers yet. Add them one by one, or import a CSV."}
-        </p>
-      ) : (
-        <>
-          <ContactsList contacts={data.results} onEdit={(contact) => show({ kind: "edit", contact })} />
-          <PaginationControls page={page} pageSize={25} count={data.count} onPageChange={setPage} />
-        </>
-      )}
+      <section className="space-y-2" aria-labelledby="saved-numbers-heading">
+        <h3 id="saved-numbers-heading" className="text-sm font-semibold text-ink">Saved numbers</h3>
+        {isPending ? (
+          <p className="text-sm text-n-400" role="status">Loading numbers…</p>
+        ) : isError ? (
+          <p className="text-sm text-clay">Couldn&rsquo;t load parents&rsquo; numbers. Refresh to try again.</p>
+        ) : data.results.length === 0 ? (
+          <p className="text-sm text-n-400 italic">
+            {query ? "No saved numbers match this search." : "No numbers saved yet. Add them one by one, or import a CSV."}
+          </p>
+        ) : (
+          <>
+            <ContactsList contacts={data.results} onEdit={(contact) => show({ kind: "edit", contact })} />
+            <PaginationControls page={page} pageSize={25} count={data.count} onPageChange={setPage} />
+          </>
+        )}
+      </section>
+
+      {/* A second, read-only list: a student without a saved number never
+          appears above, so their parent-account number can only come from
+          its own endpoint (one call, never ?student= per student). */}
+      <AccountPhonesList
+        search={query}
+        onUseDifferent={(row) =>
+          show({ kind: "add", student: { id: row.student_id, name: row.student_name, admission_number: row.admission_number } })
+        }
+      />
 
       <ContactFormDialog
         key={`form-${opening}`}
         open={open?.kind === "add" || open?.kind === "edit"}
         contact={open?.kind === "edit" ? open.contact : undefined}
+        student={open?.kind === "add" ? open.student : undefined}
         onClose={() => setOpen(null)}
       />
       <ContactsImportDialog key={`import-${opening}`} open={open?.kind === "import"} onClose={() => setOpen(null)} />

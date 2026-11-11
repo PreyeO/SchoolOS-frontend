@@ -2788,6 +2788,31 @@ stock · Sent · Parent numbers · Purchases**.
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
 
+### Parent numbers: no duplicates, and parent-account phones shown (2026-11-11, backend 1cd3adf)
+- **Duplicates fixed server-side:** a number is unique per student (migration
+  `messaging.0003`, applied locally; it deleted existing duplicates, keeping
+  the main number or else the oldest). Create/edit refuse with "This student
+  already has this number." (toasted), and the CSV skips such rows on preview
+  and commit. The import dialog's old "importing twice duplicates" warning now
+  says the opposite.
+- **Parent-account phones:** a student with no saved number is texted at a
+  linked parent account's phone. Those numbers are now visible:
+  - **Parent numbers tab:** a second, read-only section, `AccountPhonesList`,
+    from `GET guardian-contacts/account-phones/` (one call, never `?student=`
+    per student). It uses the same search (it matches student and parent name
+    and admission no., **not phone**) and is hidden when empty. "Use a
+    different number" opens `ContactFormDialog` with the student preset; once
+    saved, the student leaves this list on refetch. Its query sits under
+    `GUARDIAN_CONTACTS_KEY`, so every contact write refetches both lists.
+  - **Student page:** `?student=` now returns `account_phone` next to
+    `results` (`ContactsPage` type). With no saved number, the section names the
+    parent and number the card will be texted to, or says plainly there's no
+    number anywhere.
+- Tested (panel, import, student section). **Live:** account-phones returned
+  2 real FGC students; `?student=` returned `account_phone: null` where
+  expected. Screenshots at 390 and 1280px; on phones the "Use a different
+  number" button moved below the text, which it was squeezing.
+
 ### Audit log caught up with the new backend actions (2026-11-10)
 A diff of `audit/enums.py` against `features/audit-logs/lib/actions/` found
 **17 actions with no catalog entry**: all of scratch_cards, payments and

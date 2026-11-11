@@ -15,11 +15,18 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const row = (id: string, name: string, primary: boolean) =>
   ({ id, student: "s1", student_name: "Ada Obi", admission_number: "ADM/001", name, phone: "+2348031234567", is_primary: primary }) as GuardianContact;
 
-function serve() {
+const accountPhone = { student_id: "s9", admission_number: "ADM/009", student_name: "Tobi Ade", name: "Kemi Ade", phone: "+2348039998888" };
+
+function serve(accountPhones = [accountPhone]) {
   const searches: (string | null)[] = [];
+  const accountSearches: (string | null)[] = [];
   const patches: unknown[] = [];
   const deletes: string[] = [];
   server.use(
+    http.get(apiUrl(GUARDIAN_CONTACT_ENDPOINTS.ACCOUNT_PHONES()), ({ request }) => {
+      accountSearches.push(new URL(request.url).searchParams.get("search"));
+      return HttpResponse.json({ count: accountPhones.length, next: null, previous: null, results: accountPhones });
+    }),
     http.get(apiUrl(GUARDIAN_CONTACT_ENDPOINTS.LIST()), ({ request }) => {
       searches.push(new URL(request.url).searchParams.get("search"));
       const results = [row("g1", "Ngozi Obi", true), row("g2", "Emeka Obi", false)];
@@ -34,8 +41,39 @@ function serve() {
       return new HttpResponse(null, { status: 204 });
     }),
   );
-  return { searches, patches, deletes };
+  return { searches, accountSearches, patches, deletes };
 }
+
+describe("ContactsPanel: parent-account numbers", () => {
+  it("lists them read-only, apart from the saved numbers, with the same search", async () => {
+    const calls = serve();
+    const { user } = renderWithClient(<ContactsPanel />);
+
+    const section = await screen.findByRole("region", { name: /Texted at a parent account.s phone \(1\)/ });
+    expect(within(section).getByText("Kemi Ade")).toBeInTheDocument();
+    expect(within(section).getByText("0803 999 8888")).toBeInTheDocument();
+    expect(within(section).queryByRole("button", { name: /Edit|Remove|Make main/ })).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Search parent numbers"), "Tobi");
+    await vi.waitFor(() => expect(calls.accountSearches.at(-1)).toBe("Tobi"));
+  });
+
+  it("'Use a different number' adds a contact for that student, skipping the picker", async () => {
+    serve();
+    const { user } = renderWithClient(<ContactsPanel />);
+    await user.click(await screen.findByRole("button", { name: "Use a different number" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("For Tobi Ade (ADM/009).");
+    expect(within(dialog).getByLabelText("Mobile number")).toBeInTheDocument();
+  });
+
+  it("shows no section at all when every student has a saved number", async () => {
+    serve([]);
+    renderWithClient(<ContactsPanel />);
+    await screen.findByText("Ngozi Obi");
+    expect(screen.queryByText(/Texted at a parent account/)).not.toBeInTheDocument();
+  });
+});
 
 describe("ContactsPanel", () => {
   it("searches on the server, without sending an empty search", async () => {

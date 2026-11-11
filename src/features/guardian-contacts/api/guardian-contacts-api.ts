@@ -3,6 +3,7 @@ import { GUARDIAN_CONTACT_ENDPOINTS } from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 import type {
+  AccountPhone,
   ContactImportResult,
   CreateContactPayload,
   GuardianContact,
@@ -15,8 +16,19 @@ export interface ContactFilters {
   student?: string;
 }
 
-export async function getGuardianContacts(filters: ContactFilters): Promise<PaginatedResponse<GuardianContact>> {
-  const { data } = await apiClient.get<PaginatedResponse<GuardianContact>>(GUARDIAN_CONTACT_ENDPOINTS.LIST(), {
+// account_phone is present only when filtered by `student` (null if that
+// student has a contact).
+export type ContactsPage = PaginatedResponse<GuardianContact> & { account_phone?: AccountPhone | null };
+
+export async function getGuardianContacts(filters: ContactFilters): Promise<ContactsPage> {
+  const { data } = await apiClient.get<ContactsPage>(GUARDIAN_CONTACT_ENDPOINTS.LIST(), {
+    params: { ...filters, search: filters.search || undefined },
+  });
+  return data;
+}
+
+export async function getAccountPhones(filters: ContactFilters): Promise<PaginatedResponse<AccountPhone>> {
+  const { data } = await apiClient.get<PaginatedResponse<AccountPhone>>(GUARDIAN_CONTACT_ENDPOINTS.ACCOUNT_PHONES(), {
     params: { ...filters, search: filters.search || undefined },
   });
   return data;

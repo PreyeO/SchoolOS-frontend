@@ -19,7 +19,11 @@ const row = (over: Partial<CardAssignment>) =>
     superseded_at: null, message_status: "delivered", mismatch: false, assigned_at: "2026-11-01T09:00:00Z", ...over,
   }) as CardAssignment;
 
-function serve(history: CardAssignment[]) {
+const parentAccount = { student_id: "s1", admission_number: "ADM/001", student_name: "Ada Obi", name: "Ngozi Obi", phone: "+2348031112222" };
+
+// account_phone sits next to results (not in a row), as the backend sends it
+// with ?student=.
+function serve(history: CardAssignment[], accountPhone: typeof parentAccount | null = null) {
   const queries: Record<string, string | null> = {};
   server.use(
     http.get(apiUrl(SCRATCH_CARD_ENDPOINTS.ASSIGNMENTS()), ({ request }) => {
@@ -28,7 +32,7 @@ function serve(history: CardAssignment[]) {
     }),
     http.get(apiUrl(GUARDIAN_CONTACT_ENDPOINTS.LIST()), ({ request }) => {
       queries.student = new URL(request.url).searchParams.get("student");
-      return HttpResponse.json(page([]));
+      return HttpResponse.json({ ...page([]), account_phone: accountPhone });
     }),
   );
   return queries;
@@ -44,10 +48,19 @@ describe("StudentResultCardSection", () => {
     expect(queries).toEqual({ intended_student: "s1", student: "s1" });
   });
 
-  it("says where texts go when no number is saved", async () => {
-    serve([]);
+  it("with no saved number, shows the parent-account number the text will go to, read-only", async () => {
+    serve([], parentAccount);
     renderWithClient(<StudentResultCardSection student={student} />);
-    expect(await screen.findByText(/texted to a linked parent account/)).toBeInTheDocument();
+    expect(await screen.findByText(/texted to their parent.s account phone/)).toBeInTheDocument();
+    expect(screen.getByText("Ngozi Obi")).toBeInTheDocument();
+    expect(screen.getByText("0803 111 2222")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Edit|Remove/ })).not.toBeInTheDocument();
+  });
+
+  it("says plainly when there's no number anywhere", async () => {
+    serve([], null);
+    renderWithClient(<StudentResultCardSection student={student} />);
+    expect(await screen.findByText(/no linked parent account has a phone/)).toBeInTheDocument();
   });
 
   it("shows the reissue chain: current card on top, the replaced one marked, and a mismatch", async () => {

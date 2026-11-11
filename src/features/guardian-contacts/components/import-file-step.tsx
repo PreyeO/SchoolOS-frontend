@@ -56,10 +56,7 @@ export function ImportFileStep({ onPreview, isPending }: Props) {
       <ul className="list-disc space-y-1 pl-5 text-xs text-n-500">
         <li>Phone numbers can be 0803…, +234…, or 803… if Excel dropped the zero. Landlines are refused.</li>
         <li>Each imported number becomes that student&rsquo;s main number.</li>
-        <li>
-          Importing adds numbers; it never replaces them. Importing the same file twice gives each student a second,
-          identical number.
-        </li>
+        <li>A number a student already has is skipped, so importing the same file twice adds nothing.</li>
       </ul>
 
       <Button type="button" className="w-full" disabled={!file || isPending} onClick={() => file && onPreview(file)}>

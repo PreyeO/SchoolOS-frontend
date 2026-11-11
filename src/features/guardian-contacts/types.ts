@@ -17,6 +17,18 @@ export interface GuardianContact {
   updated_at: string;
 }
 
+// A linked parent ACCOUNT's phone that issuance texts when the student has no
+// guardian contact (backend 1cd3adf). Read-only: not a contact, so nothing to
+// edit or delete here. name and phone are the parent's. Full phone, like the
+// contacts list; never show it on issuance or message screens.
+export interface AccountPhone {
+  student_id: string;
+  admission_number: string;
+  student_name: string;
+  name: string;
+  phone: string;
+}
+
 export interface CreateContactPayload {
   student_id: string;
   name: string;

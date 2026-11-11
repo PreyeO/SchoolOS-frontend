@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ContactFormDialog, type ContactStudent } from "@/features/guardian-contacts/components/contact-form-dialog";
 import { ContactsList } from "@/features/guardian-contacts/components/contacts-list";
 import { useGuardianContacts } from "@/features/guardian-contacts/hooks/use-guardian-contacts";
+import { formatNigerianPhone } from "@/features/guardian-contacts/lib/phone";
 import type { GuardianContact } from "@/features/guardian-contacts/types";
 
 import { StudentCardHistory } from "./student-card-history";
@@ -36,9 +37,20 @@ export function StudentResultCardSection({ student }: { student: ContactStudent 
         ) : contacts.isError ? (
           <p className="text-sm text-clay">Couldn&rsquo;t load this student&rsquo;s numbers.</p>
         ) : contacts.data.results.length === 0 ? (
-          <p className="text-sm text-n-500">
-            None saved. A card PIN for this student is texted to a linked parent account&rsquo;s phone, if there is one.
-          </p>
+          // account_phone: the number issuance will actually text instead
+          // (null when there's none). Read-only, it's the parent's account.
+          contacts.data.account_phone ? (
+            <p className="text-sm text-ink">
+              None saved, so this student&rsquo;s card is texted to their parent&rsquo;s account phone:{" "}
+              <span className="font-medium">{contacts.data.account_phone.name}</span>,{" "}
+              <span className="whitespace-nowrap font-mono">{formatNigerianPhone(contacts.data.account_phone.phone)}</span>.
+              <span className="block text-xs text-n-500">Add a number above to text someone else instead.</span>
+            </p>
+          ) : (
+            <p className="text-sm text-n-500">
+              None saved, and no linked parent account has a phone. Add a number to text this student&rsquo;s card.
+            </p>
+          )
         ) : (
           <ContactsList contacts={contacts.data.results} onEdit={(contact) => show({ contact })} />
         )}

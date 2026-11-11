@@ -69,10 +69,11 @@ describe("ContactsImportDialog", () => {
     expect(CONTACTS_TEMPLATE_CSV.split("\r\n")[0]).toBe("admission_number,guardian_name,guardian_phone");
   });
 
-  // The server always adds rows, so a second run of one file duplicates them.
-  it("says up front that importing adds rather than replaces", () => {
+  // Since backend 1cd3adf a number is unique per student, and re-imports skip.
+  it("says a number a student already has is skipped, not duplicated", () => {
     serve();
     renderWithClient(<ContactsImportDialog open onClose={() => {}} />);
-    expect(screen.getByText(/never replaces them/)).toBeInTheDocument();
+    expect(screen.getByText(/importing the same file twice adds nothing/)).toBeInTheDocument();
+    expect(screen.queryByText(/second, identical number/)).not.toBeInTheDocument();
   });
 });
