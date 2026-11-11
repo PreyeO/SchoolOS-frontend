@@ -78,6 +78,9 @@ describe("StudentResultCardSection", () => {
     expect(within(current).getByText(/different student/)).toBeInTheDocument();
     expect(within(old).getByText("Replaced")).toBeInTheDocument();
     expect(within(old).getByText(/Replaced on .*this serial no longer works/)).toBeInTheDocument();
+    // Replace is offered on the current card only.
+    expect(within(current).getByRole("button", { name: /Replace/ })).toBeInTheDocument();
+    expect(within(old).queryByRole("button", { name: /Replace/ })).not.toBeInTheDocument();
     expect(within(old).getByText("Delivered")).toBeInTheDocument();
   });
 });

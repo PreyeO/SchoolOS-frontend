@@ -19,6 +19,8 @@ export const SCRATCH_CARD_ENDPOINTS = {
 
   // The stock list. Never includes a PIN.
   CARDS: () => `/api/scratch-cards/`,
+  // One card (same row shape, active_assignment included).
+  CARD: (id: string) => `/api/scratch-cards/${id}/`,
   // POST { reason, channel, idempotency_key } → { batch, pins, created }.
   // Reissues the card to the student it was issued to. Only works while the
   // card has an active assignment; an anonymous card from a purchase reveal

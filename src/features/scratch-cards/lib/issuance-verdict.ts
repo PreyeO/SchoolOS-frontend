@@ -3,7 +3,7 @@ import type { CardPin, IssuancePreview, IssuedPin, IssuanceChannel, IssuanceTarg
 export const SKIP_BUCKETS: { key: SkipBucket; label: string; hint: string }[] = [
   { key: "no_number", label: "No phone number", hint: "Add a parent's number, then check again." },
   { key: "invalid_number", label: "Number can't be texted", hint: "The saved number isn't a valid Nigerian mobile. Add a correct one." },
-  { key: "already_has_card", label: "Already has a card", hint: "Issued or used this session. Use Replace in Card stock if theirs was lost." },
+  { key: "already_has_card", label: "Already has a card", hint: "Issued or used this session. If theirs was lost, use Replace on the student's page." },
   { key: "not_enrolled", label: "Not enrolled this session", hint: "No class for this session, so no card is issued." },
   { key: "not_found", label: "Not found", hint: "No longer a student at this school." },
 ];

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useStudentCardHistory } from "../hooks/use-scratch-card-queries";
 import { REASON_LABEL } from "../lib/assignment-labels";
 import { MESSAGE_STATUS_META } from "../lib/message-status";
+import { ReplaceFromHistory } from "./replace-from-history";
 
 // Every card this student was given, newest first. The top live row is the
 // card they hold now; a row with superseded_at was replaced by the one above.
@@ -37,6 +38,12 @@ export function StudentCardHistory({ studentId }: { studentId: string }) {
             {a.message_status && (
               <span className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${MESSAGE_STATUS_META[a.message_status].className}`}>
                 {MESSAGE_STATUS_META[a.message_status].label}
+              </span>
+            )}
+            {/* Only the current card: a superseded one already has its replacement. */}
+            {!a.superseded_at && (
+              <span className="ml-auto">
+                <ReplaceFromHistory cardId={a.card} />
               </span>
             )}
           </div>

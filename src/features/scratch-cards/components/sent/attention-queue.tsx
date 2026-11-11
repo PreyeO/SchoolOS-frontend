@@ -14,7 +14,7 @@ import type { OutboundMessage, ResolvePayload } from "../../types";
 // Texts that need a decision: "Not confirmed" (the provider never said either
 // way) and "Failed". Mark failed refunds the credits and sends nothing; Send
 // again spends new credits on a fresh text and PIN. Renders nothing when the
-// queue is empty, so the Sent tab stays quiet on a good day.
+// queue is empty, so the top of Result cards stays quiet on a good day.
 export function AttentionQueue() {
   const unknown = useOutboundMessages("unknown");
   const failed = useOutboundMessages("failed");

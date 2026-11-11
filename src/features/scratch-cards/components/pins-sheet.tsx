@@ -68,7 +68,7 @@ export function PinsSheet({ pins, sessionName }: Props) {
         <p className="text-sm text-ink">
           <span className="font-medium">Save these now.</span> The PINs won&rsquo;t be shown again.{" "}
           {named
-            ? "If a family loses their slip, use Replace on that card in Card stock to give them a new one."
+            ? "If a family loses their slip, use Replace on the student's page to give them a new one."
             : "These cards aren’t tied to a student, so one that’s lost after you hand it out can’t be replaced."}
         </p>
       </div>

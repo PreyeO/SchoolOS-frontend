@@ -1,33 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { History, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/config/env";
-import { ContactsPanel } from "@/features/guardian-contacts/components/contacts-panel";
 
-import { CardsTable } from "./cards-table";
+import { useCardOverview } from "../hooks/use-card-overview";
 import { BuyCardsDialog } from "./overview/buy-cards-dialog";
 import { CardOverviewSection } from "./overview/card-overview-section";
-import { PurchasesTable } from "./purchases-table";
 import { useSessionFilter } from "./session-filter";
 import { AttentionQueue } from "./sent/attention-queue";
-import { BatchesList } from "./sent/batches-list";
 
 // Result Cards, organised around one job: get every student's card to their
-// parent this session (redesign agreed 2026-11-11; the clickable mockup is
-// linked in PROJECT.md). Top to bottom: texts needing a decision, progress
-// with one "send to the waiting" button, what a send depends on, students
-// (not cards), then the records. Buying is a dialog: it's occasional.
+// parent this session (redesign agreed 2026-11-11; mockup linked in
+// PROJECT.md). Texts needing a decision, progress with one "send to the
+// waiting" button, what a send depends on, then students. Records (sends,
+// numbers, every card, purchases) live on their own page; buying is a dialog.
 // Gated on manage_scratch_cards by the nav registry (RouteAccessGuard).
 export function ScratchCardsPage() {
   const session = useSessionFilter("overview", { allowAll: false });
   const [buying, setBuying] = useState(false);
+  // Same query (and cache entry) as the overview below: no extra request.
+  const stock = useCardOverview(session.sessionId).data?.stockLeft;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="space-y-4">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold text-ink">Result cards</h1>
           <p className="mt-1 max-w-2xl text-sm text-n-500">
@@ -36,11 +36,23 @@ export function ScratchCardsPage() {
             and who&rsquo;s still waiting.
           </p>
         </div>
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2">
           {session.hasSessions && session.control()}
-          <Button type="button" variant="outline" className="h-9" onClick={() => setBuying(true)}>
-            Buy more cards
+          <Button asChild variant="outline" className="h-9">
+            <Link href="/scratch-cards/records"><History className="size-4" aria-hidden /> Records</Link>
           </Button>
+          {/* Filled, with the stock beside it: it's how a school sees it's running low. */}
+          <div className="flex items-center gap-2 sm:ml-auto">
+            {stock !== undefined && (
+              <span className="whitespace-nowrap text-sm text-n-600">
+                <span className="font-semibold tabular-nums text-ink">{stock.toLocaleString("en-NG")}</span> card
+                {stock === 1 ? "" : "s"} left
+              </span>
+            )}
+            <Button type="button" className="h-9" onClick={() => setBuying(true)}>
+              <Plus className="size-4" aria-hidden /> Buy cards
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -55,22 +67,6 @@ export function ScratchCardsPage() {
       ) : (
         <CardOverviewSection sessionId={session.sessionId} onBuy={() => setBuying(true)} />
       )}
-
-      <section aria-labelledby="records-heading" className="space-y-3">
-        <h2 id="records-heading" className="text-sm font-semibold text-ink">Records</h2>
-        <Tabs defaultValue="sent">
-          <TabsList>
-            <TabsTrigger value="sent">Past sends</TabsTrigger>
-            <TabsTrigger value="numbers">Parent numbers</TabsTrigger>
-            <TabsTrigger value="cards">Every card</TabsTrigger>
-            <TabsTrigger value="purchases">Purchases</TabsTrigger>
-          </TabsList>
-          <TabsContent value="sent" className="pt-3"><BatchesList /></TabsContent>
-          <TabsContent value="numbers" className="pt-3"><ContactsPanel /></TabsContent>
-          <TabsContent value="cards" className="pt-3"><CardsTable /></TabsContent>
-          <TabsContent value="purchases" className="pt-3"><PurchasesTable /></TabsContent>
-        </Tabs>
-      </section>
 
       <BuyCardsDialog open={buying} onClose={() => setBuying(false)} />
     </div>

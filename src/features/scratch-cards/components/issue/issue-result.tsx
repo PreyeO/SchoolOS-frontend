@@ -56,7 +56,8 @@ export function IssueResult({ outcome, onAnother }: { outcome: IssueOutcome; onA
     <div className="space-y-3">
       <p className="text-sm text-ink">
         These cards were already issued, but the PINs were in a response that never reached this screen, and
-        SchoolOS can&rsquo;t show them again. Find the students in Card stock and use Replace to print new slips.
+        SchoolOS can&rsquo;t show them again. Open each student&rsquo;s page (Card details on Result cards) and use
+        Replace to print a new slip.
       </p>
       {again}
     </div>

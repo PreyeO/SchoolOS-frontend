@@ -2833,6 +2833,25 @@ agreed first: https://claude.ai/artifact/EgGd3yog8M2KDQEvVXjm5J
   credits). Screenshots at 390 and 1280px: no overflow or errors. On phones,
   pill and action share a line.
 
+### Result Cards follow-ups: Records page, Buy button, Replace from the student (2026-11-11)
+- **Records moved to its own page,** `/scratch-cards/records` (`RecordsPage`;
+  `?tab=sends|numbers|cards|purchases`), opened from a **Records** button in the
+  header. Under the student list, filtering ("Need a number") pulled it up
+  so it read as part of the list.
+- **"Buy cards" is a filled button** at the header's right, with "N cards left"
+  beside it. The stock comes from the overview's cached query, so no extra request.
+- **Replace on a student's page:** the current card in `StudentCardHistory` has
+  `ReplaceFromHistory`, which loads the card (`GET scratch-cards/{id}/`,
+  new `CARD` endpoint) on the first click, then opens `ReplaceCardDialog`.
+  The overview's "Card details" leads there, so that's where owners look for a
+  lost card. Copy that said "Replace in Card stock" now points to the
+  student's page. Tested.
+- **Gotcha, hit live:** a server route (`page.tsx`) must never import a
+  non-component value (an array, a const) from a `"use client"` file. It gets
+  a client-reference stub instead (`.find is not a function`), and the page
+  throws. Unit tests render the component directly and can't catch it. Fix:
+  keep such values in plain modules (`lib/record-tabs.ts`).
+
 ### Showing every field that means something (2026-11-11, backend developer's review)
 The send page titled a replacement "Texted 1 card" although the response said
 `"reason": "lost"`. A sweep of all result-card responses for unused,

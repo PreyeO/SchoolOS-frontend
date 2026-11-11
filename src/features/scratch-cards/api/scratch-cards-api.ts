@@ -62,6 +62,11 @@ export async function getScratchCards(filters: ScratchCardFilters): Promise<Pagi
   return data;
 }
 
+export async function getScratchCard(id: string): Promise<ScratchCard> {
+  const { data } = await apiClient.get<ScratchCard>(SCRATCH_CARD_ENDPOINTS.CARD(id));
+  return data;
+}
+
 export async function replaceCard(id: string, payload: ReplaceCardPayload): Promise<IssuanceResult> {
   const { data } = await apiClient.post<IssuanceResult>(SCRATCH_CARD_ENDPOINTS.REPLACE(id), payload);
   return data;
