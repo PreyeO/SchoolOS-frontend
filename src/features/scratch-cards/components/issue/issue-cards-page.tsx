@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -14,25 +14,52 @@ import { toPreviewPayload } from "../../lib/issuance-target";
 import { issuanceVerdict } from "../../lib/issuance-verdict";
 import type { PreviewRow } from "../../types";
 import { IssueForm, type IssueFormState } from "./issue-form";
+import type { PickedStudent } from "./student-multi-pick";
 import { IssueResult } from "./issue-result";
 import { PreviewBuckets } from "./preview-buckets";
 import { PreviewSummary } from "./preview-summary";
 
+export interface IssuePrefill {
+  sessionId?: string;
+  scope?: "school" | "selection";
+  student?: PickedStudent;
+  // Run the check straight away (the overview's "Send cards" links).
+  check?: boolean;
+}
+
 // /scratch-cards/issue: give purchased cards to named students, by text or as
 // printed slips. Check (preview, writes nothing) → Issue (commit) → result.
-export function IssueCardsPage() {
+// Opened pre-filled from the overview, it checks once by itself; nothing is
+// ever sent without pressing the final button.
+export function IssueCardsPage({ prefill = {} }: { prefill?: IssuePrefill }) {
   const { data: sessions = [], isPending: sessionsPending } = useAcademicSessions();
   const { data: classes = [] } = useClasses();
   const currentSessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
   const flow = useIssueFlow();
   const [form, setForm] = useState<IssueFormState | null>(null);
   const [adding, setAdding] = useState<PreviewRow | null>(null);
+  const autoChecked = useRef(false);
 
   const defaultSession = sessions.find((s) => s.name === currentSessionName) ?? sessions[0];
+  const prefillSession = sessions.some((s) => s.id === prefill.sessionId) ? prefill.sessionId : undefined;
   const state: IssueFormState = form ?? {
-    sessionId: defaultSession?.id ?? "", channel: "sms", scope: "class", classId: "", armId: "", students: [],
+    sessionId: prefillSession ?? defaultSession?.id ?? "",
+    channel: "sms",
+    scope: prefill.scope ?? "class",
+    classId: "",
+    armId: "",
+    students: prefill.student ? [prefill.student] : [],
   };
   const payload = toPreviewPayload({ ...state, studentIds: state.students.map((s) => s.id) });
+
+  // One automatic check for a pre-filled link, once sessions have loaded.
+  // The ref holds through StrictMode's double effect, and the preview is
+  // throttled, so it must never repeat by itself.
+  useEffect(() => {
+    if (!prefill.check || autoChecked.current || !payload || sessionsPending) return;
+    autoChecked.current = true;
+    flow.check(payload);
+  }, [prefill.check, payload, sessionsPending, flow]);
   const sessionName = sessions.find((s) => s.id === state.sessionId)?.name ?? "";
   const checked = flow.checked;
   const verdict = checked ? issuanceVerdict(checked.preview, checked.payload, checked.payload.channel) : null;

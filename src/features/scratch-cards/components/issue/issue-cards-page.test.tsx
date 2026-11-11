@@ -101,6 +101,26 @@ describe("IssueCardsPage", () => {
     expect(await screen.findByText(/were already issued, but the PINs were in a response/)).toBeInTheDocument();
   });
 
+  // The overview's links: pre-filled, checked once automatically, never sent.
+  it("pre-filled for the whole school, checks once by itself and sends nothing", async () => {
+    const calls = serve([texted]);
+    renderWithClient(<IssueCardsPage prefill={{ scope: "school", sessionId: "sess", check: true }} />);
+
+    expect(await screen.findByText("1 will get a card")).toBeInTheDocument();
+    expect(calls.preview).toEqual([{ scope: "school", academic_session_id: "sess", channel: "sms" }]);
+    expect(calls.commit).toEqual([]);
+  });
+
+  it("pre-filled for one student, checks just that student", async () => {
+    const calls = serve([texted]);
+    renderWithClient(
+      <IssueCardsPage prefill={{ scope: "selection", sessionId: "sess", student: { id: "s1", name: "Ada Obi", admission_number: "ADM/001" }, check: true }} />,
+    );
+    await screen.findByText("1 will get a card");
+    expect(calls.preview).toEqual([{ scope: "selection", student_ids: ["s1"], academic_session_id: "sess", channel: "sms" }]);
+    expect(screen.getByRole("list", { name: "Chosen students" })).toHaveTextContent("Ada Obi");
+  });
+
   it("drops a stale preview when the form changes", async () => {
     serve([texted]);
     const { user } = renderWithClient(<IssueCardsPage />);

@@ -2788,6 +2788,51 @@ stock · Sent · Parent numbers · Purchases**.
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
 
+### Result Cards redesigned around one job (2026-11-11)
+The old page was organised around how the system works (buy form on top,
+tabs for card stock, sends, numbers, purchases), and both the user and the
+backend developer found it confusing. Rebuilt around what an owner asks:
+*have my parents got their cards, and who's still waiting?* Clickable mockup
+agreed first: https://claude.ai/artifact/EgGd3yog8M2KDQEvVXjm5J
+- **Data: two requests, no per-student lookups.**
+  - `useCardOverview(session)` runs ONE whole-school SMS issuance preview
+    (writes nothing), and `buildCardOverview` (tested) turns its buckets
+    into counts plus a per-student list: `already_has_card` → has a card,
+    `eligible` → waiting and textable, `no_number`/`invalid_number` → needs a
+    number. `not_enrolled`/`not_found` are left out.
+  - It's a POST counting against the issuance throttle, so no
+    refetch-on-focus. It refreshes on mount, after a send, and after a number
+    is added.
+  - `useCheckedCount` = bound cards this session ("parents who checked
+    results").
+  - Anonymous printed slips aren't tied to students, so those families
+    still count as waiting; that's what the server knows.
+- **Page, top to bottom:**
+  - `AttentionQueue`;
+  - `ProgressCard` ("N of M students have their card", bar, 4 stats, **Send
+    cards to the N waiting**);
+  - `ReadinessList` (cards vs needed, missing numbers, credits vs needed,
+    each with its fix; hidden when nobody is waiting);
+  - `StudentCardList` (one row per student; chips Waiting / Need a number /
+    Have a card / All; client-side search over the one snapshot; 50 at a
+    time with "Show more"). Row actions: **Send card** (one student),
+    **Add number** (`ContactFormDialog`, then the overview refreshes),
+    **Card details** (→ `/students/:id`, which has the history and Replace);
+  - **Records** tabs: Past sends, Parent numbers, Every card, Purchases.
+  - Buying moved into `BuyCardsDialog`. The session picker has no "All
+    sessions" (`useSessionFilter(…, { allowAll: false })`).
+- **The issue page takes a pre-fill** (`IssuePrefill`, read from
+  `?scope=school|student=…&session=…&check=1` by the route) and checks once by
+  itself (a ref guard survives StrictMode). It never sends without the final
+  button. Tested both ways.
+- An overview that can't load (e.g. an expired trial: the preview is a POST)
+  shows the server's own sentence.
+- **Live (FGC, active):** 0 of 4 with a card, 4 waiting, 2 need a number; the
+  waiting rows show "Will be texted to Gesi Suku" (the parent-account
+  fallback); all three readiness checks amber (0 cards, 2 numbers, 0
+  credits). Screenshots at 390 and 1280px: no overflow or errors. On phones,
+  pill and action share a line.
+
 ### "It logs me out randomly": the multi-tab refresh race (fixed 2026-11-11)
 Reported by the backend developer (who keeps several tabs open), never seen by
 single-tab users.
