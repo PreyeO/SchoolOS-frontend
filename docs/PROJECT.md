@@ -2788,6 +2788,40 @@ stock · Sent · Parent numbers · Purchases**.
   commit, batch status, the queue. No local school has both active access
   and students, or any cards.
 
+### "It logs me out randomly": the multi-tab refresh race (fixed 2026-11-11)
+Reported by the backend developer (who keeps several tabs open), never seen by
+single-tab users.
+- **Cause:** refresh tokens are single-use (`ROTATE_REFRESH_TOKENS` +
+  `BLACKLIST_AFTER_ROTATION`; access 60 min, refresh 7 days).
+  1. Tab A refreshes and saves the new pair to localStorage.
+  2. Tab B, idle, still holds the spent pair **in memory**: zustand's persist
+     never re-reads storage when another tab writes.
+  3. On its next request tab B refreshes with a blacklisted token. Its old
+     "did someone else win?" check read its own in-memory store, so it
+     logged out, and `clearAuth()` wiped the shared storage too.
+- **Fix** (`lib/api/token-refresh.ts`, `lib/auth/persisted-tokens.ts`):
+  - `syncAuthAcrossTabs()` rehydrates the store on the `storage` event, so a
+    sign-out in one tab signs the others out too.
+  - Before refreshing, adopt a newer pair from storage.
+  - Refreshes are serialised across tabs with a Web Lock (secure contexts
+    only; plain-http `lvh.me` goes without).
+  - After a refusal, **re-check storage, not memory**, before logging out.
+  - A 401 on a request sent with an access token this tab has since replaced
+    is just retried with the current one.
+- **Tests** (`token-refresh.test.ts`, 6): lost race adopts the winner, a
+  pre-refreshed pair needs no server call, a really-dead session still logs
+  out, single-tab refresh, unreachable server keeps the session, storage-event
+  sync. With the old memory check put back, the two race tests fail.
+- **Live, two real Chrome tabs against the real backend** (puppeteer, an
+  access token minted to expire in 20s):
+  - *Before (fix stashed):* tab A refresh 200, tab B refresh **401**, tab B
+    sent to `/login`. Reproduced the report.
+  - *After:* one refresh (tab A, 200); tab B navigated normally, already holding
+    A's tokens via the storage sync.
+  - Truly simultaneous refreshes with the same token both got 200 on the old
+    code (the backend's check-then-blacklist isn't atomic), so the failure
+    needs a **staggered** second refresh: the idle-tab case.
+
 ### Three fixes (2026-11-11)
 - **Result Cards moved from Finance to Results**, right after Publish Results
   (`data/nav/results-group.ts`). Its daily job is getting results to parents,

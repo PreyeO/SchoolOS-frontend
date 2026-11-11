@@ -55,7 +55,8 @@ describe("ContactsPanel: parent-account numbers", () => {
     expect(within(section).queryByRole("button", { name: /Edit|Remove|Make main/ })).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Search parent numbers"), "Tobi");
-    await vi.waitFor(() => expect(calls.accountSearches.at(-1)).toBe("Tobi"));
+    // A 300ms debounce, then a refetch: allow for a busy parallel run.
+    await vi.waitFor(() => expect(calls.accountSearches.at(-1)).toBe("Tobi"), { timeout: 4000 });
   });
 
   it("'Use a different number' adds a contact for that student, skipping the picker", async () => {

@@ -1,11 +1,14 @@
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 
+import { readPersistedTokens } from "@/lib/auth/persisted-tokens";
+import { AUTH_STORAGE_KEY } from "@/lib/storage/ssr-safe-local-storage";
 import { useAuthStore } from "@/stores/auth-store";
 
 import { ENDPOINTS } from "./endpoints";
 import { isNetworkError } from "./get-error-message";
 
 const SESSION_EXPIRED_FLAG = "schoolos-session-expired";
+const REFRESH_LOCK = "schoolos-token-refresh";
 
 interface RetriableConfig extends AxiosRequestConfig {
   _retried?: boolean;
@@ -20,16 +23,50 @@ export function consumeSessionExpiredFlag(): boolean {
   return expired;
 }
 
-// On any 401, try a silent refresh once and retry the original request. If the
-// refresh itself fails (refresh token also expired/invalid), fall back to a
-// clean logout rather than leaving the user on a raw backend error.
+// THE MULTI-TAB RACE (the "it logs me out randomly" report, 2026-11-11).
+// Refresh tokens are single-use: the backend rotates them and blacklists the
+// old one (ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION). With two tabs
+// open when the 60-minute access token expires, tab A refreshes and saves the
+// new pair to localStorage, but tab B's in-memory store still holds the old
+// refresh token, so its own refresh is refused. The old recovery check
+// compared against tab B's in-memory store (which never saw A's write), so
+// it logged out, and clearAuth() then wiped the shared storage for A too.
 //
-// Takes the client as an argument rather than importing it, which keeps this a
-// leaf module — client.ts imports here, not the other way round. The
-// single-flight state lives inside this closure for the same reason it was
-// module-scoped before: one refresh must serve every request that 401s in the
-// same window, or a burst of parallel calls each fires its own and they race to
-// write the store.
+// Fixed in layers, each enough on its own for the common case:
+// 1. syncAuthAcrossTabs: every tab re-reads the store when another one writes it.
+// 2. Before refreshing, adopt a newer pair another tab already saved.
+// 3. Refreshes are serialised across tabs with a Web Lock where available
+//    (secure contexts only; plain-http lvh.me dev hosts go without).
+// 4. After a refused refresh, check STORAGE (not memory) for a winner first.
+
+// The newer pair another tab saved, adopted into this tab's store (claims too,
+// via rehydrate). Null when storage holds nothing newer than `sentRefresh`.
+async function adoptNewerFromStorage(sentRefresh: string | undefined): Promise<string | null> {
+  const stored = readPersistedTokens();
+  if (!stored || stored.refresh === sentRefresh) return null;
+  await useAuthStore.persist.rehydrate();
+  return useAuthStore.getState().tokens?.access ?? stored.access;
+}
+
+function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  return locks?.request ? (locks.request(REFRESH_LOCK, fn) as Promise<T>) : fn();
+}
+
+// Keeps every tab's in-memory session in step with localStorage. Another tab
+// refreshing hands this one the new pair; another tab signing out signs this
+// one out too, rather than leaving it on a session that no longer exists.
+export function syncAuthAcrossTabs() {
+  if (typeof window === "undefined") return;
+  window.addEventListener("storage", (event) => {
+    if (event.key === AUTH_STORAGE_KEY) void useAuthStore.persist.rehydrate();
+  });
+}
+
+// On any 401, try a silent refresh once and retry the original request; if it's
+// refused and no tab holds a newer pair, log out cleanly. Takes the client as
+// an argument so this stays a leaf module. The single-flight state in this
+// closure makes one refresh serve every request that 401s together in this tab.
 export function installTokenRefresh(
   client: AxiosInstance,
   isPublicRequest: (config: { url?: string; method?: string }) => boolean,
@@ -43,35 +80,33 @@ export function installTokenRefresh(
   }
 
   async function refreshAccessToken(): Promise<{ token: string | null; unreachable: boolean }> {
-    const refresh = useAuthStore.getState().tokens?.refresh;
-    if (!refresh) return { token: null, unreachable: false };
+    const sent = useAuthStore.getState().tokens?.refresh;
+    if (!sent && !readPersistedTokens()) return { token: null, unreachable: false };
 
-    try {
-      const { data } = await client.post<{ access: string; refresh?: string }>(ENDPOINTS.REFRESH, {
-        refresh,
-      });
-      useAuthStore.getState().setTokens({ access: data.access, refresh: data.refresh ?? refresh });
-      return { token: data.access, unreachable: false };
-    } catch (error) {
-      // A rejected refresh isn't always a dead session — it's also what a
-      // one-time refresh token looks like the moment AFTER something else
-      // (auth-handoff's own rotate() call, or this same interceptor running in
-      // another tab against the same localStorage-persisted store) has already
-      // rotated it out from under us. If the store's refresh token has since
-      // changed from the one we just sent, someone else won that race and the
-      // session is fine — recover with whatever access token they landed
-      // instead of forcing a logout on a token we already know is stale.
-      const current = useAuthStore.getState().tokens;
-      if (current && current.refresh !== refresh && current.access) {
-        return { token: current.access, unreachable: false };
+    const adopted = await adoptNewerFromStorage(sent);
+    if (adopted) return { token: adopted, unreachable: false };
+
+    return withRefreshLock(async () => {
+      // Another tab may have refreshed while this one waited for the lock.
+      const won = await adoptNewerFromStorage(sent);
+      if (won) return { token: won, unreachable: false };
+
+      const refresh = useAuthStore.getState().tokens?.refresh;
+      if (!refresh) return { token: null, unreachable: false };
+      try {
+        const { data } = await client.post<{ access: string; refresh?: string }>(ENDPOINTS.REFRESH, { refresh });
+        useAuthStore.getState().setTokens({ access: data.access, refresh: data.refresh ?? refresh });
+        return { token: data.access, unreachable: false };
+      } catch (error) {
+        // Refused: but if another tab (or auth-handoff's rotate) saved a newer
+        // pair meanwhile, the session is fine and that pair is the one to use.
+        const late = await adoptNewerFromStorage(refresh);
+        if (late) return { token: late, unreachable: false };
+        // Never reached the server: the session may be valid, we just couldn't
+        // ask. Not a logout, which would strand an offline register's marks.
+        return { token: null, unreachable: isNetworkError(error) };
       }
-
-      // True when the refresh never reached the server. The session may be
-      // perfectly valid — we simply couldn't ask. Distinguished from a rejected
-      // refresh token so a working user isn't logged out over a dropped
-      // connection, which for an offline register means discarding unsynced marks.
-      return { token: null, unreachable: isNetworkError(error) };
-    }
+    });
   }
 
   function forceLogout() {
@@ -90,6 +125,16 @@ export function installTokenRefresh(
 
       if (status !== 401 || !original || original._retried || isPublicRequest(original)) {
         return Promise.reject(error);
+      }
+
+      // Sent with an access token this tab has since replaced (another tab's
+      // refresh arrived via syncAuthAcrossTabs): just retry with the current one.
+      const current = useAuthStore.getState().tokens?.access;
+      const sentWith = String(original.headers?.Authorization ?? "");
+      if (current && sentWith && sentWith !== `Bearer ${current}`) {
+        original._retried = true;
+        original.headers = { ...original.headers, Authorization: `Bearer ${current}` };
+        return client(original);
       }
 
       if (isRefreshing) {
@@ -113,7 +158,7 @@ export function installTokenRefresh(
 
       if (!newToken) {
         // Only a refusal ends the session. If the server was unreachable we keep
-        // the user signed in and let the request fail — they may be mid-lesson
+        // the user signed in and let the request fail: they may be mid-lesson
         // with queued attendance, and clearAuth() would strand it.
         if (!unreachable) forceLogout();
         return Promise.reject(error);

@@ -10,7 +10,7 @@ import {
   SCRATCH_CARD_ENDPOINTS,
   WALLET_ENDPOINTS,
 } from "./endpoints";
-import { installTokenRefresh } from "./token-refresh";
+import { installTokenRefresh, syncAuthAcrossTabs } from "./token-refresh";
 
 export const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
@@ -100,5 +100,8 @@ apiClient.interceptors.request.use((config) => {
 // token-refresh.ts. Installed here so this file stays the client definition and
 // its request interceptor.
 installTokenRefresh(apiClient, isPublicRequest);
+// Every tab re-reads the shared session when another tab writes it, so one
+// tab's refresh doesn't leave the others holding a spent, single-use token.
+syncAuthAcrossTabs();
 
 export { consumeSessionExpiredFlag } from "./token-refresh";
