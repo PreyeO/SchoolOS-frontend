@@ -62,7 +62,7 @@ export const resultsNavItem: NavItem = groupedItem({
     // Moved from Finance (2026-11-11). Buying cards is occasional; the screen's
     // daily job is getting results to parents (issue, text or print PINs,
     // delivery, parent numbers), which follows straight on from publishing.
-    // The route stays /scratch-cards, so Paystack's return path
+    // The route stays /scratch-cards, so the gateway's return path
     // (/scratch-cards/payment-complete) still resolves here by prefix.
     adminItem({
       label: "Result Cards",

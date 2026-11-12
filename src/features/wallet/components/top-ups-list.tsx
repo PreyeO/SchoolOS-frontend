@@ -6,6 +6,7 @@ import { DateRangeFields, dateRangeParams } from "@/components/shared/date-range
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { gatewayLabel } from "@/lib/payments/gateways";
 import { formatNaira } from "@/lib/text/format-naira";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
@@ -14,18 +15,18 @@ import { useTopUps } from "../hooks/use-wallet-queries";
 import { formatCredits } from "../lib/describe-transaction";
 import type { TopUpStatus } from "../types";
 
-// "failed" is not a declined card: Paystack's verify reports an unpaid or
+// "failed" is not a declined card: the gateway's verify reports an unpaid or
 // abandoned checkout as false, which the server records as failed (checked
-// live 2026-11-09). So it reads "Not paid", and stays re-checkable.
+// live with Paystack 2026-11-09). So it reads "Not paid", and stays re-checkable.
 const STATUS: Record<TopUpStatus, { label: string; className: string }> = {
   successful: { label: "Added", className: "border-grass/30 bg-grass/10 text-grass" },
   pending: { label: "Not confirmed", className: "border-amber/40 bg-amber/10 text-ink" },
   failed: { label: "Not paid", className: "border-n-200 bg-n-50 text-n-600" },
 };
 
-// Every checkout started, newest first. "Check with Paystack" runs the same
-// verify the return page does and credits the wallet if it was paid: for a
-// tab closed before Paystack sent the admin back, or a payment finished after
+// Every checkout started, newest first. "Check with <its gateway>" runs the
+// same verify the return page does and credits the wallet if it was paid: for
+// a tab closed before the gateway sent the admin back, or a payment finished after
 // an earlier check (the server re-verifies a failed row; only success is final).
 export function TopUpsList() {
   const [page, setPage] = useState(1);
@@ -85,7 +86,7 @@ export function TopUpsList() {
                 <p className="text-xs text-n-500 wrap-break-word">
                   {formatTimestamp(t.created_at)}
                   {t.initiated_by ? ` · ${t.initiated_by.first_name} ${t.initiated_by.last_name}` : ""}
-                  {" · "}
+                  {` · ${gatewayLabel(t.gateway)} `}
                   <span className="font-mono whitespace-nowrap">{t.gateway_reference}</span>
                 </p>
               </div>
@@ -98,7 +99,7 @@ export function TopUpsList() {
                   disabled={recheck.isPending}
                   onClick={() => recheck.mutate(t.gateway_reference)}
                 >
-                  {checking ? "Checking…" : "Check with Paystack"}
+                  {checking ? "Checking…" : `Check with ${gatewayLabel(t.gateway)}`}
                 </Button>
               )}
             </li>

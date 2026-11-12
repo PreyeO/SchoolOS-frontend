@@ -65,12 +65,12 @@ describe("TopUpsList", () => {
         HttpResponse.json(
           page([
             { id: "t1", status: "pending", credits_purchased: 50, amount: 500, gateway_reference: "WTP-P",
-              initiated_by: null, created_at: "2026-11-01T09:00:00Z" },
+              gateway: "flutterwave", initiated_by: null, created_at: "2026-11-01T09:00:00Z" },
             { id: "t2", status: "successful", credits_purchased: 100, amount: 1000, gateway_reference: "WTP-S",
-              initiated_by: null, created_at: "2026-10-01T09:00:00Z" },
+              gateway: "paystack", initiated_by: null, created_at: "2026-10-01T09:00:00Z" },
             // Unpaid, as Paystack's verify reports it: re-checkable, labelled "Not paid".
             { id: "t3", status: "failed", credits_purchased: 20, amount: 200, gateway_reference: "WTP-F",
-              initiated_by: null, created_at: "2026-09-01T09:00:00Z" },
+              gateway: "paystack", initiated_by: null, created_at: "2026-09-01T09:00:00Z" },
           ]),
         ),
       ),
@@ -81,11 +81,13 @@ describe("TopUpsList", () => {
     );
     const { user } = renderWithClient(<TopUpsList />);
 
-    const buttons = await screen.findAllByRole("button", { name: "Check with Paystack" });
-    expect(buttons).toHaveLength(2);
+    // Each row's button names the gateway that row was paid through.
+    const flutterwave = await screen.findByRole("button", { name: "Check with Flutterwave" });
+    expect(screen.getAllByRole("button", { name: /^Check with/ })).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Check with Paystack" })).toBeInTheDocument();
     // Scoped to the list: the status filter has a "Not paid" option too.
     expect(within(screen.getByRole("list")).getByText("Not paid")).toBeInTheDocument();
-    await user.click(buttons[0]);
+    await user.click(flutterwave);
     await vi.waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("50 credits added."));
     expect(checked).toEqual(["WTP-P"]);
   });

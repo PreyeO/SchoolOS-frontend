@@ -1,4 +1,5 @@
 import type { UserMinimal } from "@/lib/api/profile-summary";
+import type { PaymentGateway } from "@/lib/payments/gateways";
 
 // GET /api/wallet/. Credits are whole numbers; prices are integer naira.
 export interface WalletSummary {
@@ -17,7 +18,7 @@ export interface WalletTopUp {
   amount: number;
   credits_purchased: number;
   credit_price: number;
-  gateway: "paystack" | "flutterwave";
+  gateway: PaymentGateway;
   gateway_reference: string;
   // The handoff's signal for the return page: successful = credited.
   status: TopUpStatus;
@@ -30,8 +31,7 @@ export interface WalletTopUp {
 
 export interface StartTopUpPayload {
   credits: number;
-  // Only Paystack works; flutterwave is accepted by the API but rejected.
-  gateway: "paystack";
+  gateway: PaymentGateway;
 }
 
 export type WalletTransactionType = "topup" | "debit" | "refund" | "adjustment";

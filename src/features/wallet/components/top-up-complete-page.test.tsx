@@ -19,7 +19,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 // moves once it has run: a summary read before that would be the old 20.
 // Verifying with Paystack takes a moment, so the confirm is delayed: a summary
 // fetched alongside it lands first and reads the pre-credit balance.
-function serve(status: TopUpStatus) {
+function serve(status: TopUpStatus, gateway = "paystack") {
   const calls = { confirm: [] as { search: string; auth: string | null }[], balancesRead: [] as number[] };
   let balance = 20;
   server.use(
@@ -27,7 +27,7 @@ function serve(status: TopUpStatus) {
       calls.confirm.push({ search: new URL(request.url).search, auth: request.headers.get("authorization") });
       await delay(50);
       if (status === "successful") balance = 70;
-      return HttpResponse.json({ id: "t1", status, credits_purchased: 50, gateway_reference: "WTP-ABC" });
+      return HttpResponse.json({ id: "t1", status, credits_purchased: 50, gateway_reference: "WTP-ABC", gateway });
     }),
     http.get(apiUrl(WALLET_ENDPOINTS.SUMMARY()), () => {
       calls.balancesRead.push(balance);
@@ -80,6 +80,24 @@ describe("TopUpCompletePage", () => {
     open();
     await userEvent.click(await screen.findByRole("button", { name: "Check again" }));
     expect(calls.confirm.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // Flutterwave returns tx_ref (no `reference`) plus its own status.
+  it("confirms a Flutterwave return by tx_ref with its status, and names Flutterwave", async () => {
+    const calls = serve("failed", "flutterwave");
+    open({ gateway: "flutterwave", status: "cancelled", tx_ref: "WTP-ABC", transaction_id: "9001" });
+
+    expect(await screen.findByText(/Flutterwave has no completed payment for this/)).toBeInTheDocument();
+    const query = new URLSearchParams(calls.confirm[0].search);
+    expect(query.get("reference")).toBe("WTP-ABC");
+    expect(query.get("status")).toBe("cancelled");
+  });
+
+  it("names Flutterwave while confirming, from the return URL, before the API answers", async () => {
+    serve("successful", "flutterwave");
+    open({ gateway: "flutterwave", status: "successful", tx_ref: "WTP-ABC" });
+    expect(screen.getByText("Confirming your payment with Flutterwave…")).toBeInTheDocument();
+    await screen.findByText(/50 credits added/);
   });
 
   it("doesn't call the API without a payment reference", () => {

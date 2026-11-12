@@ -48,15 +48,15 @@ export function useWalletTransactions(filters: LedgerFilters) {
   });
 }
 
-// Paystack's return. A query keyed by the reference, so StrictMode's double
+// The gateway's return. A query keyed by the reference, so StrictMode's double
 // mount can't send it twice. Not retried: "pending" is a real answer to show
 // with a "Check again" button, not a failure to hammer.
-export function useTopUpConfirmation(reference: string | null) {
+export function useTopUpConfirmation(reference: string | null, redirectStatus?: string) {
   const queryClient = useQueryClient();
   return useQuery({
     queryKey: [...WALLET_KEY, "return", reference],
     queryFn: async () => {
-      const topup = await confirmTopUp(reference as string);
+      const topup = await confirmTopUp(reference as string, redirectStatus);
       if (topup.status === "successful") refreshWallet(queryClient);
       return topup;
     },

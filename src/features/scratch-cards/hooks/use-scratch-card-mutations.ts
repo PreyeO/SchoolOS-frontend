@@ -7,6 +7,7 @@ import { getErrorMessage } from "@/lib/api/get-error-message";
 
 import { replaceCard, revealCardPins, startCardPurchase } from "../api/scratch-cards-api";
 import { goToPayment } from "@/lib/go-to-payment";
+import { gatewayLabel } from "@/lib/payments/gateways";
 import type { ReplaceCardPayload } from "../types";
 import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
 
@@ -14,17 +15,17 @@ import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
 // mutation. A paused mutation is persisted to device storage along with its
 // result once it resumes, and two of these return plaintext PINs.
 
-// Starts checkout. On success the browser leaves for Paystack; nothing else
-// needs refreshing because no cards exist until the payment is verified.
+// Starts checkout. On success the browser leaves for the chosen gateway;
+// nothing else needs refreshing because no cards exist until it's verified.
 export function useStartCardPurchase() {
   return useMutation({
     mutationFn: startCardPurchase,
     networkMode: "always",
-    onSuccess: (purchase) => {
+    onSuccess: (purchase, payload) => {
       if (purchase.payment_link) {
         goToPayment(purchase.payment_link);
       } else {
-        toast.error("Paystack didn't return a payment page. Please try again.");
+        toast.error(`${gatewayLabel(payload.gateway)} didn't return a payment page. Please try again.`);
       }
     },
     onError: (error) => toast.error(getErrorMessage(error)),

@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { GatewayPicker } from "@/components/shared/gateway-picker";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_GATEWAY, gatewayLabel, type PaymentGateway } from "@/lib/payments/gateways";
 import { TextField } from "@/features/students/components/student-field";
 import { formatNaira } from "@/lib/text/format-naira";
 
@@ -18,6 +21,8 @@ const PRESETS = [100, 500, 1000, 5000];
 // snapshots both, so the request never carries an amount.
 export function TopUpForm({ wallet }: { wallet: WalletSummary }) {
   const start = useStartTopUp();
+  const [gateway, setGateway] = useState<PaymentGateway>(DEFAULT_GATEWAY);
+  const label = gatewayLabel(gateway);
   const presets = PRESETS.filter((n) => n >= wallet.min_topup_credits && n <= wallet.max_topup_credits);
 
   const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<TopUpValues>({
@@ -31,7 +36,7 @@ export function TopUpForm({ wallet }: { wallet: WalletSummary }) {
     <form
       noValidate
       className="space-y-4"
-      onSubmit={handleSubmit((values) => start.mutate({ credits: values.credits, gateway: "paystack" }))}
+      onSubmit={handleSubmit((values) => start.mutate({ credits: values.credits, gateway }))}
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
@@ -68,12 +73,14 @@ export function TopUpForm({ wallet }: { wallet: WalletSummary }) {
         </p>
       </div>
 
+      <GatewayPicker value={gateway} onChange={setGateway} disabled={start.isPending} />
+
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={start.isPending || total === null}>
-          {start.isPending ? "Opening Paystack…" : "Continue to payment"}
+          {start.isPending ? `Opening ${label}…` : "Continue to payment"}
         </Button>
         <p className="text-xs text-n-400">
-          You&rsquo;ll pay on Paystack, then come back here. Credits are added once Paystack confirms the payment.
+          You&rsquo;ll pay on {label}, then come back here. Credits are added once {label} confirms the payment.
         </p>
       </div>
     </form>

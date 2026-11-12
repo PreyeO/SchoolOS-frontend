@@ -66,6 +66,19 @@ describe("BuyCardsForm", () => {
     expect(goToPayment).toHaveBeenCalledWith("https://checkout.paystack.com/abc");
   });
 
+  it("buys through Flutterwave when it's picked", async () => {
+    const posts = serve();
+    const { user } = renderWithClient(<BuyCardsForm />);
+    await screen.findByText("₦1,000 per card");
+
+    await user.click(screen.getByRole("radio", { name: "Flutterwave" }));
+    expect(screen.getByText(/You.ll pay on Flutterwave/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue to payment" }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]).toMatchObject({ quantity: 1, gateway: "flutterwave" });
+  });
+
   it("refuses more than 1,000 cards before reaching the server", async () => {
     const posts = serve();
     const { user } = renderWithClient(<BuyCardsForm />);

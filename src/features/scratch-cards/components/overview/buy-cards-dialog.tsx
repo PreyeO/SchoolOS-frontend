@@ -17,7 +17,7 @@ export function BuyCardsDialog({ open, onClose }: { open: boolean; onClose: () =
           <DialogTitle>Buy result cards</DialogTitle>
           <DialogDescription>
             Bought from SchoolOS{unitPrice !== undefined ? ` at ${formatNaira(unitPrice)} each` : ""}, paid through
-            Paystack. One card covers every term of its session.
+            Paystack or Flutterwave. One card covers every term of its session.
           </DialogDescription>
         </DialogHeader>
         {open && <BuyCardsForm />}

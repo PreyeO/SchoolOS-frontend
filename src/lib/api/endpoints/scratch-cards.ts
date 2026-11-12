@@ -1,17 +1,19 @@
 // --- Scratch cards (backend docs/scratch-cards-frontend-handoff.md) ---
 //
 // Platform revenue, not school fees: a school buys result-check cards from
-// SchoolOS through Paystack. Every admin route needs manage_scratch_cards.
+// SchoolOS through Paystack or Flutterwave. Every admin route needs
+// manage_scratch_cards.
 
 export const SCRATCH_CARD_ENDPOINTS = {
-  // POST { academic_session_id, quantity, gateway: "paystack" } → the purchase
+  // POST { academic_session_id, quantity, gateway: "paystack" | "flutterwave" } → the purchase
   // with payment_link. No cards exist until the payment is verified.
   PURCHASES: () => `/api/card-purchases/`,
   PURCHASE: (id: string) => `/api/card-purchases/${id}/`,
   // { unit_price } in naira, for the total shown before checkout.
   PRICE: () => `/api/card-purchases/price/`,
-  // Public. The payment-return page passes Paystack's ?gateway=&reference=
-  // through; this verifies the charge and creates the cards.
+  // Public. The payment-return page passes the gateway's query through whole
+  // (?gateway= plus reference/trxref, or tx_ref/status/transaction_id); this
+  // verifies the charge and creates the cards.
   PAYMENT_RETURN: () => `/api/card-purchases/redirect/`,
   // { cards: [{ serial, pin }] } ONCE, then an empty list. The plaintext also
   // expires 15 minutes after the cards are generated.

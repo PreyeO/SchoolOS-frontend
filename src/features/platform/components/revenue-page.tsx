@@ -13,7 +13,7 @@ import { ScratchCardRevenue } from "./scratch-card-revenue";
 //
 // "Projected" is doing real work in that word: subscriptions don't go through
 // a payment gateway, so none of the subscription figures has been invoiced or
-// collected. Scratch cards do (Paystack), which is why their real money sits
+// collected. Scratch cards do (Paystack or Flutterwave), which is why their real money sits
 // in a separate section rather than being added to the projection. For an unsubscribed school the
 // price is a default standing in for one they haven't agreed to — which is why
 // price_is_locked is surfaced per row rather than hidden. Without it the total

@@ -12,14 +12,15 @@ export const TRANSACTION_TABS: { value: WalletTransactionType | "all"; label: st
 
 // One line of human text for a ledger row. `reference` is machine-shaped
 // (see types.ts), so it's read for its prefix, never shown raw except for a
-// top-up's gateway reference, which is what support would ask for.
+// top-up's gateway reference, which is what support would ask for. The row
+// doesn't say which gateway, so the label is the neutral "Payment ref".
 export function describeTransaction(tx: Pick<WalletTransaction, "type" | "reference" | "note">): {
   label: string;
   detail: string | null;
 } {
   switch (tx.type) {
     case "topup":
-      return { label: "Top-up", detail: `Paystack ref ${tx.reference}` };
+      return { label: "Top-up", detail: `Payment ref ${tx.reference}` };
     case "debit":
       return {
         label: tx.reference.startsWith("debit:issuance:") ? "Result card PINs texted" : "Texts sent",

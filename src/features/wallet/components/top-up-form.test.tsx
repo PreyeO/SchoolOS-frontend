@@ -52,6 +52,28 @@ describe("TopUpForm", () => {
     expect(goToPayment).toHaveBeenCalledWith("https://checkout.paystack.com/x");
   });
 
+  it("pays through Flutterwave when it's picked, and says so before leaving", async () => {
+    const posts = serve(() => HttpResponse.json({ id: "t1", payment_link: "https://checkout.flutterwave.com/v3/hosted/pay/x" }, { status: 201 }));
+    const { user } = renderWithClient(<TopUpForm wallet={wallet} />);
+    expect(screen.getByRole("radio", { name: "Paystack" })).toBeChecked();
+
+    await user.click(screen.getByRole("radio", { name: "Flutterwave" }));
+    expect(screen.getByText(/You.ll pay on Flutterwave/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue to payment" }));
+
+    await waitFor(() => expect(posts).toEqual([{ credits: 500, gateway: "flutterwave" }]));
+    expect(goToPayment).toHaveBeenCalledWith("https://checkout.flutterwave.com/v3/hosted/pay/x");
+  });
+
+  it("names the chosen gateway if it returns no payment page", async () => {
+    serve(() => HttpResponse.json({ id: "t1", payment_link: null }, { status: 201 }));
+    const { user } = renderWithClient(<TopUpForm wallet={wallet} />);
+    await user.click(screen.getByRole("radio", { name: "Flutterwave" }));
+    await user.click(screen.getByRole("button", { name: "Continue to payment" }));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Flutterwave didn't return a payment page. Please try again."));
+    expect(goToPayment).not.toHaveBeenCalled();
+  });
+
   it("holds the server's bounds before sending anything", async () => {
     const posts = serve();
     const { user } = renderWithClient(<TopUpForm wallet={{ ...wallet, max_topup_credits: 500 }} />);

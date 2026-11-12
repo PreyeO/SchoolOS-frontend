@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { describeTransaction, formatCredits, formatSignedCredits } from "./describe-transaction";
 
 describe("describeTransaction", () => {
-  it("names a top-up with its Paystack reference, which support would ask for", () => {
+  // The ledger row doesn't say which gateway took the money, so no name is guessed.
+  it("names a top-up with its payment reference, which support would ask for", () => {
     expect(describeTransaction({ type: "topup", reference: "WTP-ABC123", note: "" })).toEqual({
       label: "Top-up",
-      detail: "Paystack ref WTP-ABC123",
+      detail: "Payment ref WTP-ABC123",
     });
   });
 

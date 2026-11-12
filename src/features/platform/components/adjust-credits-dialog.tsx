@@ -15,7 +15,7 @@ import { adjustSchoolWallet } from "@/features/wallet/api/wallet-api";
 
 type Direction = "add" | "remove";
 const DIRECTIONS: { value: Direction; label: string; hint: string }[] = [
-  { value: "add", label: "Add credits", hint: "e.g. goodwill, or a payment received outside Paystack." },
+  { value: "add", label: "Add credits", hint: "e.g. goodwill, or a payment received outside SchoolOS checkout." },
   { value: "remove", label: "Remove credits", hint: "e.g. correcting a mistake. Refused if the balance can't cover it." },
 ];
 

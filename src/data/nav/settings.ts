@@ -51,7 +51,7 @@ export const settingsGroup: NavGroup = {
     }, false),
     // Was a "Payment Integrations" placeholder promising online fee
     // collection, which has no backend. The route now holds the SMS wallet;
-    // /settings/payments/topup-complete (Paystack's return) resolves here too.
+    // /settings/payments/topup-complete (the gateway's return) resolves here too.
     adminItem({
       label: "SMS Wallet",
       href: "/settings/payments",

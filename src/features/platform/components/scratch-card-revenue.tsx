@@ -5,7 +5,7 @@ import { formatNaira } from "@/lib/text/format-naira";
 import type { SchoolFinancialRow } from "../types";
 
 // Scratch-card money, kept visibly apart from the subscription projection:
-// this is collected through Paystack, that is an estimate. Only schools that
+// this is collected through Paystack or Flutterwave, that is an estimate. Only schools that
 // have bought cards are listed, most revenue first.
 export function ScratchCardRevenue({ rows, total }: { rows: SchoolFinancialRow[]; total: number }) {
   const buyers = rows
@@ -17,7 +17,7 @@ export function ScratchCardRevenue({ rows, total }: { rows: SchoolFinancialRow[]
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-ink">Result cards</h2>
-          <p className="text-xs text-n-500">Collected through Paystack. Unlike the projection above, this is real money.</p>
+          <p className="text-xs text-n-500">Collected through Paystack and Flutterwave. Unlike the projection above, this is real money.</p>
         </div>
         <p className="font-display text-xl font-bold tabular-nums text-ink">{formatNaira(total)}</p>
       </div>

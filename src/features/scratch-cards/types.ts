@@ -1,4 +1,5 @@
 import type { UserMinimal } from "@/lib/api/profile-summary";
+import type { PaymentGateway } from "@/lib/payments/gateways";
 import type { StudentListItem } from "@/features/students/types";
 
 export type PurchaseStatus = "pending" | "successful" | "failed";
@@ -11,7 +12,7 @@ export interface CardPurchase {
   quantity: number;
   unit_price: number;
   amount: number;
-  gateway: "paystack" | "flutterwave";
+  gateway: PaymentGateway;
   gateway_reference: string | null;
   status: PurchaseStatus;
   payment_link: string | null;
@@ -31,8 +32,7 @@ export interface CardPurchase {
 export interface StartPurchasePayload {
   academic_session_id: string;
   quantity: number;
-  // Only Paystack works; flutterwave is accepted by the API but fails checkout.
-  gateway: "paystack";
+  gateway: PaymentGateway;
 }
 
 export * from "./types/issuance";

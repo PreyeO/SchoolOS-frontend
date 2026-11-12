@@ -2681,6 +2681,32 @@ the Roles editor groups it as "SMS wallet".
 - **Dev-server gotcha:** after a `npm run build`, the dev server 404'd *every*
   `/settings/*` route (Next's own fallback, not the app's) until `.next/dev` was
   deleted and dev restarted. Not a routing bug.
+
+### Flutterwave alongside Paystack (2026-11-12)
+Backend 73524ab registered `FlutterwaveGateway`, so both checkouts (result
+cards, SMS top-ups) now take `gateway: "paystack" | "flutterwave"`. **This
+supersedes the "Paystack only" notes above.**
+- **One source of truth:** `lib/payments/gateways.ts` holds the type, labels,
+  `gatewayLabel()` and `returnReference()`; `components/shared/gateway-picker.tsx`
+  is the "Pay with" radio pair on both forms (default Paystack).
+- **Returns differ by gateway.** The backend's callback URL already carries
+  `?gateway=…`. Paystack appends `reference` + `trxref`; Flutterwave appends
+  `tx_ref`, `status` (`successful`/`cancelled`/`failed`) and `transaction_id`.
+  Both verify routes read `reference` or `tx_ref`, plus `status`. The wallet
+  return used to send `reference` only; it now forwards `status` too. A
+  Flutterwave `status=successful` is **not** proof: only the verify response
+  decides, same as before.
+- **Copy names the gateway actually used:** the row's `gateway` once loaded,
+  else the URL's `?gateway=`, else "the payment provider". The wallet ledger
+  row has no gateway field, so a top-up there reads "Payment ref …".
+- Purchases and top-ups rows show their gateway before the reference;
+  "Check with Paystack" became "Check with <that row's gateway>".
+- **Verified:** the running backend has `FLUTTERWAVE_SECRET_KEY`,
+  `FLUTTERWAVE_SIGNATURE` and base URL set, and the factory resolves it.
+  **Not verified:** a real Flutterwave checkout end to end, and its webhook,
+  which posts to `/api/webhooks/flutterwave/` (payments/urls.py) and must be set in the
+  Flutterwave dashboard with the same secret hash.
+
 ### Result Cards phase 2, step 3: Parent numbers (2026-11-09)
 A **"Parent numbers"** tab on `/scratch-cards` (same `manage_scratch_cards`
 gate). Code: `features/guardian-contacts/`, endpoints in

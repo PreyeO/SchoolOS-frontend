@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { GatewayPicker } from "@/components/shared/gateway-picker";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_GATEWAY, gatewayLabel, type PaymentGateway } from "@/lib/payments/gateways";
 import { SelectField, TextField } from "@/features/students/components/student-field";
 import { useAcademicSessions } from "@/features/settings/hooks/use-academic-sessions";
 import { formatNaira } from "@/lib/text/format-naira";
@@ -13,7 +16,7 @@ import { useStartCardPurchase } from "../hooks/use-scratch-card-mutations";
 import { useCardPrice } from "../hooks/use-scratch-card-queries";
 import { buyCardsSchema, type BuyCardsValues } from "../schemas/buy-cards-schema";
 
-// Buying hands the admin to Paystack, and they come back to
+// Buying hands the admin to the chosen gateway, and they come back to
 // /scratch-cards/payment-complete to see the PINs. The total is quoted from the
 // live price; the server snapshots it when the purchase is created.
 export function BuyCardsForm() {
@@ -21,6 +24,8 @@ export function BuyCardsForm() {
   const { data: unitPrice, isPending: pricePending, isError: priceError } = useCardPrice();
   const currentSessionName = useSchoolStore((s) => s.currentSchool?.sessionName);
   const start = useStartCardPurchase();
+  const [gateway, setGateway] = useState<PaymentGateway>(DEFAULT_GATEWAY);
+  const label = gatewayLabel(gateway);
 
   // The current session first, since that's what nearly every purchase is for.
   const defaultSession = sessions.find((s) => s.name === currentSessionName) ?? sessions[0];
@@ -54,7 +59,7 @@ export function BuyCardsForm() {
     <form
       noValidate
       className="space-y-4"
-      onSubmit={handleSubmit((values) => start.mutate({ ...values, gateway: "paystack" }))}
+      onSubmit={handleSubmit((values) => start.mutate({ ...values, gateway }))}
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SelectField
@@ -87,12 +92,14 @@ export function BuyCardsForm() {
         </p>
       </div>
 
+      <GatewayPicker value={gateway} onChange={setGateway} disabled={start.isPending} />
+
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={start.isPending || total === null}>
-          {start.isPending ? "Opening Paystack…" : "Continue to payment"}
+          {start.isPending ? `Opening ${label}…` : "Continue to payment"}
         </Button>
         <p className="text-xs text-n-400">
-          You&rsquo;ll pay on Paystack, then come back here. The cards go into stock, ready to issue to students.
+          You&rsquo;ll pay on {label}, then come back here. The cards go into stock, ready to issue to students.
         </p>
       </div>
     </form>

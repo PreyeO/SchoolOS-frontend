@@ -65,9 +65,13 @@ export async function adjustSchoolWallet(payload: WalletAdjustmentPayload): Prom
   return data;
 }
 
-// Verifies the charge with Paystack and credits the wallet when it's paid.
-// Accepts reference or trxref; also used to re-check a pending top-up.
-export async function confirmTopUp(reference: string): Promise<WalletTopUp> {
-  const { data } = await apiClient.get<WalletTopUp>(WALLET_ENDPOINTS.TOPUP_RETURN(), { params: { reference } });
+// Verifies the charge with the top-up's own gateway and credits the wallet
+// when it's paid; also used to re-check a pending top-up. `status` is what
+// Flutterwave put on the return URL (Paystack sends none). The backend keeps
+// it for tracking only: the verify API alone decides whether credits land.
+export async function confirmTopUp(reference: string, status?: string): Promise<WalletTopUp> {
+  const { data } = await apiClient.get<WalletTopUp>(WALLET_ENDPOINTS.TOPUP_RETURN(), {
+    params: { reference, ...(status ? { status } : {}) },
+  });
   return data;
 }

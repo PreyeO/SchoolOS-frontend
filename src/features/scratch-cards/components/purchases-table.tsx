@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DateRangeFields, dateRangeParams } from "@/components/shared/date-range-fields";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { Select } from "@/components/ui/select";
+import { gatewayLabel } from "@/lib/payments/gateways";
 import { formatNaira } from "@/lib/text/format-naira";
 import { formatTimestamp } from "@/lib/text/format-timestamp";
 
@@ -35,8 +36,8 @@ function CardsBought({ p }: { p: CardPurchase }) {
 }
 
 // Every checkout this school has started, newest first, filtered on the
-// server. "Not completed" covers an abandoned checkout and one Paystack hasn't
-// confirmed; no cards exist for either.
+// server. "Not completed" covers an abandoned checkout and one the gateway
+// hasn't confirmed; no cards exist for either.
 export function PurchasesTable() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<PurchaseStatus | "">("");
@@ -90,10 +91,11 @@ export function PurchasesTable() {
                   {p.academic_session_name} · {formatTimestamp(p.created_at)}
                   {p.initiated_by ? ` · ${p.initiated_by.first_name} ${p.initiated_by.last_name}` : ""}
                   {p.pins_revealed_at ? " · PINs printed" : ""}
-                  {/* What SchoolOS support asks for about a payment. */}
+                  {/* What SchoolOS support asks for about a payment: where it went, and its reference. */}
+                  {` · ${gatewayLabel(p.gateway)}`}
                   {p.gateway_reference && (
                     <>
-                      {" · "}
+                      {" "}
                       <span className="font-mono whitespace-nowrap">{p.gateway_reference}</span>
                     </>
                   )}

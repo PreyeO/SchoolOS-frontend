@@ -20,7 +20,8 @@ export async function getCardPrice(): Promise<number> {
 }
 
 // status, academic_session_id and created_at_after/_before are server
-// filters. Gateway exists too but is pointless: only Paystack is offered.
+// filters. A gateway filter exists too, unused: nobody has asked to split the
+// list by provider, and each row already names its own.
 export interface PurchaseFilters {
   page: number;
   status?: PurchaseStatus;
@@ -41,8 +42,9 @@ export async function startCardPurchase(payload: StartPurchasePayload): Promise<
   return data;
 }
 
-// Paystack's query string, passed through as-is: it sends `reference` (and
-// `trxref`); the API also accepts `tx_ref`. Verifies the charge and, when paid,
+// The gateway's query string, passed through as-is: Paystack sends `reference`
+// (and `trxref`), Flutterwave `tx_ref` and `status`; the API reads either.
+// Verifies the charge with the purchase's own gateway and, when paid,
 // creates the cards — so it must run before the page decides what to show.
 export async function confirmCardPayment(params: Record<string, string>): Promise<CardPurchase> {
   const { data } = await apiClient.get<CardPurchase>(SCRATCH_CARD_ENDPOINTS.PAYMENT_RETURN(), { params });

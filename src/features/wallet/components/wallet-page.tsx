@@ -11,7 +11,7 @@ import { TopUpsList } from "./top-ups-list";
 import { TransactionsList } from "./transactions-list";
 
 // /settings/payments. The school's SMS credit balance: bought here through
-// Paystack, spent when SchoolOS texts on the school's behalf (today, result
+// Paystack or Flutterwave, spent when SchoolOS texts on the school's behalf (today, result
 // card PINs). Gated on manage_wallet by the nav registry.
 export function WalletPage() {
   const { data: wallet, isPending, isError, error } = useWallet();

@@ -4,10 +4,11 @@ import { PaymentCompletePage } from "@/features/scratch-cards/components/payment
 
 export const metadata: Metadata = { title: "Result Card Payment" };
 
-// Paystack's return URL. The backend builds it from
-// FRONTEND_SCRATCH_CARD_REDIRECT_URL, which must be "/scratch-cards/payment-complete".
-// Paystack appends ?gateway=paystack&reference=…&trxref=…; read server-side
-// and passed through whole, same as the attendance and fees routes.
+// The gateway's return URL. The backend builds it from
+// FRONTEND_SCRATCH_CARD_REDIRECT_URL, which must be "/scratch-cards/payment-complete",
+// plus ?gateway=paystack|flutterwave. Paystack then appends reference & trxref,
+// Flutterwave tx_ref, status & transaction_id; read server-side and passed
+// through whole, same as the attendance and fees routes.
 export default async function Page({
   searchParams,
 }: {

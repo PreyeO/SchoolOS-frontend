@@ -60,7 +60,7 @@ const PUBLIC_RULES: readonly PublicRule[] = [
   // needs no login at all. VERIFY also matches verify/pdf/ (substring match).
   { path: RESULT_CHECK_ENDPOINTS.PERIODS() },
   { path: RESULT_CHECK_ENDPOINTS.VERIFY() },
-  // Paystack's return to the school. Public by design; the reveal that follows
+  // The payment gateway's return to the school. Public by design; the reveal that follows
   // is a separate, authenticated route.
   { path: SCRATCH_CARD_ENDPOINTS.PAYMENT_RETURN() },
   // Same for a wallet top-up's return.

@@ -2,19 +2,21 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { returnReference } from "@/lib/payments/gateways";
+
 import { confirmCardPayment } from "../api/scratch-cards-api";
 import { SCRATCH_CARDS_KEY } from "./use-scratch-card-queries";
 
 export type PaymentOutcome = "paid" | "failed" | "pending";
 
-// Paystack's return: verifies the charge (and creates the cards when paid).
+// The gateway's return: verifies the charge (and creates the cards when paid).
 //
 // A query rather than an effect-fired call, keyed by the reference, so React's
 // dev double-mount and a re-render can't send it twice. Not retried: a
 // "pending" answer is a real state to show, with a "Check again" button
 // (refetch), not a failure to hammer.
 export function usePaymentConfirmation(params: Record<string, string>) {
-  const reference = params.reference ?? params.tx_ref ?? params.trxref ?? null;
+  const reference = returnReference(params);
 
   const query = useQuery({
     queryKey: [...SCRATCH_CARDS_KEY, "payment-return", reference],

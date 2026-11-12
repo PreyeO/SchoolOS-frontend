@@ -127,7 +127,19 @@ describe("PaymentCompletePage", () => {
   it("doesn't call the API without a payment reference", () => {
     const calls = serve(true);
     open({});
-    expect(screen.getByText(/opens after paying for cards on Paystack/)).toBeInTheDocument();
+    expect(screen.getByText(/opens after paying for cards online/)).toBeInTheDocument();
     expect(calls.confirm).toEqual([]);
+  });
+
+  // Flutterwave's return carries tx_ref and its own status, no `reference`.
+  it("confirms a Flutterwave return by tx_ref, passing its status through, and names Flutterwave", async () => {
+    const calls = serve(null);
+    open({ gateway: "flutterwave", status: "successful", tx_ref: "SCC-FLW1", transaction_id: "9001" });
+    // The redirect's "successful" is not proof: a pending verify still says so.
+    expect(await screen.findByText(/Flutterwave hasn.t confirmed this payment yet/)).toBeInTheDocument();
+    const query = new URLSearchParams(calls.confirm[0]);
+    expect(query.get("tx_ref")).toBe("SCC-FLW1");
+    expect(query.get("status")).toBe("successful");
+    expect(calls.reveal).toBe(0);
   });
 });

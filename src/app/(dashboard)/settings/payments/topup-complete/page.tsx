@@ -4,10 +4,11 @@ import { TopUpCompletePage } from "@/features/wallet/components/top-up-complete-
 
 export const metadata: Metadata = { title: "SMS Credit Payment" };
 
-// Paystack's return URL for a wallet top-up. The backend builds it from
-// FRONTEND_WALLET_REDIRECT_URL, which must be "/settings/payments/topup-complete".
-// Paystack appends ?gateway=paystack&reference=…&trxref=…; read server-side and
-// passed through, same as the result-card return.
+// The gateway's return URL for a wallet top-up. The backend builds it from
+// FRONTEND_WALLET_REDIRECT_URL, which must be "/settings/payments/topup-complete",
+// plus ?gateway=paystack|flutterwave. Paystack then appends reference & trxref,
+// Flutterwave tx_ref, status & transaction_id; read server-side and passed
+// through, same as the result-card return.
 export default async function Page({
   searchParams,
 }: {
