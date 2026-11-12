@@ -45,8 +45,10 @@ describe("GradingPage add form", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Primary already has grading, so it's left alone.
-    await waitFor(() => expect(levels).toEqual(["nursery", "junior_secondary"]));
+    await waitFor(() => expect(levels).toEqual(["nursery", "junior_secondary"]), { timeout: 10_000 });
     expect(toast.success).toHaveBeenCalledWith("Grading saved for 2 levels.");
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  });
+    // A whole grading form is a lot of DOM; under the full parallel suite it
+    // outran the 5s default while passing alone in ~2s.
+  }, 20_000);
 });
