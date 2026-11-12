@@ -13,6 +13,7 @@ import { buildClassOptions } from "@/lib/school/class-options";
 
 import { useCreateFeeItem } from "../hooks/use-fee-item-mutations";
 import { useFeeItems } from "../hooks/use-fee-items";
+import { CopyFeesDialog } from "./copy-fees-dialog";
 import { FeeItemDialog } from "./fee-item-dialog";
 import { FeeItemsBlockers } from "./fee-items-blockers";
 import { FeeItemsContextBar } from "./fee-items-context-bar";
@@ -42,9 +43,8 @@ export function FeeItemsPage() {
   const classGroups = useMemo(() => buildClassOptions(classes ?? []), [classes]);
   const classOptions = useMemo(() => classGroups.flatMap((g) => g.options), [classGroups]);
 
-  // Both default rather than being forced: the current term is where a bursar
-  // usually starts, but setting next term's fees before it opens is the other
-  // half of this screen's job, so neither picker locks.
+  // Both default rather than lock: setting next term's fees before it opens is
+  // half of this screen's job.
   const selectedClass = classId ?? classOptions[0]?.classId ?? null;
 
   const items = useFeeItems(selectedClass, term.periodId);
@@ -60,11 +60,8 @@ export function FeeItemsPage() {
   const termName = term.label ?? "";
   const context = className && termName ? `${className} · ${termName}` : "";
 
-  // Offline with nothing cached. `isPaused && !data` rather than
-  // `isPending && isPaused` — a *disabled* query is also pending, with
-  // fetchStatus "idle", so the conjunction silently never fires. Fee queries are
-  // never persisted (see PERSISTED_KEYS), so offline always lands here rather
-  // than on a spinner that can't resolve.
+  // Offline with nothing cached: `isPaused && !data`, since a *disabled* query
+  // is also pending. Fee queries are never persisted (see PERSISTED_KEYS).
   if ((classesPaused && !classes) || (term.isPaused && !term.hasTerms)) {
     return <OfflineNotice resourceLabel="Your fee structure" />;
   }
@@ -88,6 +85,15 @@ export function FeeItemsPage() {
           </p>
         </div>
         {ready && canEdit && (
+          <span className="flex flex-wrap gap-2">
+          <CopyFeesDialog
+            lines={(items.data ?? []).filter((i) => i.is_active).map((i) => ({ name: i.name, amount: i.amount }))}
+            sourceClassId={selectedClass as string}
+            sourceLabel={className}
+            termLabel={termName}
+            periodId={term.periodId as string}
+            classGroups={classGroups}
+          />
           <FeeItemDialog
             trigger={
               <Button type="button" size="sm">
@@ -106,6 +112,7 @@ export function FeeItemsPage() {
               })
             }
           />
+          </span>
         )}
       </div>
 

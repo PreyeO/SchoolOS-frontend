@@ -2225,6 +2225,28 @@ overwritten by default. A PATCH is safe after scores exist: the backend's
 `update_grading_system` matches components by name and updates them in place;
 only ranges are fully replaced.
 
+**Fees: copy to other classes (2026-11-12, branch `grading`).** Fee Structure
+gains **Copy to other classes**: the class in view's active fees for the
+selected term go onto the ticked classes, same term. The source's own level
+starts ticked (JSS 1 → JSS 2, JSS 3), and each level has a Select all. No bulk
+route, so `useCopyFeeItems` reads each target fresh, then creates one fee at a
+time. It **only adds**: the backend refuses a second active fee of the same
+name (case-insensitive) on a class and term, so a name the class already has
+is skipped and its amount kept (`planClassCopy`). Copying to a *different term*
+isn't built.
+
+**Platform: School activity (2026-11-12, branch `grading`, `/platform/activity`).**
+Shows which schools are using SchoolOS, quietest first, banded Active (≤7 days) /
+Slowing (≤30) / Gone quiet / No activity. There's no "last active" field, so
+it's one `GET /api/audit-logs/?school_id=…&page_size=10` per school (a
+platform-only filter), and the newest entry whose actor is **not** a platform
+admin counts. Staff actions (extend trial, wallet adjustments) are logged
+against the school and would otherwise make a dormant school look alive;
+verified live, where one school's newest entry was exactly that. Limits: reads
+aren't audited, so a school that only views looks quiet; the school list is
+`getPlatformSchools` (capped at 100), so N schools means N requests. A backend
+`last_activity_at` on the school list would replace all of it with one call.
+
 **Student lifecycle, offboarding, open passwords (2026-10-10).** Built against
 backend `development` (`31108f6`, `6f91d3d`, both 2026-10-09; not on backend
 `main` at the time). Handoff: `SchoolOS-backend/docs/student-lifecycle-frontend-handoff.md`,

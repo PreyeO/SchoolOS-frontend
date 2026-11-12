@@ -1,4 +1,5 @@
 import {
+  Activity,
   Building2,
   Inbox,
   LayoutDashboard,
@@ -63,6 +64,7 @@ export const PLATFORM_NAV_GROUPS: NavGroup[] = [
     label: "Activity",
     icon: ScrollText,
     items: [
+      item("School activity", "/platform/activity", Activity, "Which schools are using SchoolOS, and which have gone quiet."),
       item("Audit log", "/platform/audit", ScrollText, "Every recorded change, across every school."),
     ],
   },
