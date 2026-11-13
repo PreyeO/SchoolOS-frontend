@@ -31,6 +31,10 @@ export function LeaderboardPage() {
   const [armId, setArmId] = useState<string | null>(null);
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [acrossClass, setAcrossClass] = useState(false);
+  // Same reason as the broadsheet: early in term (only the first CA in), a
+  // grade computed out of 100 reads F9 for everyone and alarms teachers. Off
+  // by default; switching it on is the user's call.
+  const [showGrades, setShowGrades] = useState(false);
 
   const groups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const allOptions = useMemo(() => groups.flatMap((g) => g.options), [groups]);
@@ -103,6 +107,18 @@ export function LeaderboardPage() {
             onPeriodChange={term.setPeriodId}
           />
 
+          {board.rows.some((r) => r.grade) && (
+            <label className="flex w-fit items-center gap-2 text-sm text-n-500">
+              <input
+                type="checkbox"
+                checked={showGrades}
+                onChange={(e) => setShowGrades(e.target.checked)}
+                className="size-4 rounded border-n-300 text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+              Show grades
+            </label>
+          )}
+
           <div className="rounded-xl border border-n-200 bg-white">
             {board.isPending ? (
               <p className="p-5 text-sm text-n-400" role="status">Loading…</p>
@@ -117,6 +133,7 @@ export function LeaderboardPage() {
                 rows={board.rows}
                 unit={mode === "overall" ? "%" : ""}
                 showArm={mode === "subject" && subject.acrossClass}
+                showGrades={showGrades}
               />
             )}
           </div>

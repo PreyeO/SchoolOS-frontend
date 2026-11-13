@@ -7,6 +7,8 @@ interface Props {
   // "%" for an overall average, "" for a raw subject total.
   unit: string;
   showArm: boolean;
+  // Off unless the user ticks it; see LeaderboardPage for why.
+  showGrades: boolean;
 }
 
 // Ranked list rather than a table: one line per student, read top-down.
@@ -14,7 +16,7 @@ interface Props {
 // The top three get a filled primary badge and everything else a plain one —
 // deliberately not gold/silver/bronze, which would be the only place in the app
 // introducing colours outside the school's own palette.
-export function LeaderboardTable({ rows, unit, showArm }: Props) {
+export function LeaderboardTable({ rows, unit, showArm, showGrades }: Props) {
   return (
     <ul className="divide-y divide-n-100">
       {rows.map((row) => (
@@ -40,7 +42,7 @@ export function LeaderboardTable({ rows, unit, showArm }: Props) {
               {showArm && row.armLabel && <span className="ml-1.5">· {row.armLabel}</span>}
             </span>
           </span>
-          {row.grade && (
+          {showGrades && row.grade && (
             <span className="shrink-0 rounded-full border border-n-200 px-2 py-0.5 text-[11px] text-n-600">
               {row.grade}
             </span>
