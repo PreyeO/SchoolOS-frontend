@@ -8,6 +8,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { InstallPromptCapture } from "@/features/pwa-install/components/install-prompt-capture";
 
 // One description for the search snippet, Open Graph and Twitter so the three
 // never drift apart. Kept under ~160 characters: WhatsApp and LinkedIn cut
@@ -86,6 +87,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <Toaster />
+            <InstallPromptCapture />
           </QueryProvider>
         </ThemeProvider>
       </body>

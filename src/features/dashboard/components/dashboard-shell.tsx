@@ -6,6 +6,8 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { RouteAccessGuard } from "@/components/auth/route-access-guard";
 import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
 import { PortalContainerProvider } from "@/components/ui/portal-container";
+import { InstallBanner } from "@/features/pwa-install/components/install-banner";
+import { InstallGuideDialog } from "@/features/pwa-install/components/install-guide-dialog";
 import { pickReadableForeground } from "@/lib/contrast";
 import { useSchoolStore } from "@/stores/school-store";
 import { AppSidebar } from "./app-sidebar";
@@ -61,11 +63,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   that isn't theirs still needs the sidebar to get somewhere
                   that is. */}
               <div className="mx-auto max-w-6xl">
+                <InstallBanner />
                 <RouteAccessGuard>{children}</RouteAccessGuard>
               </div>
             </main>
           </div>
           {tabs.length > 0 && <MobileTabBar tabs={tabs} onOpenMore={() => setMenuOpen(true)} />}
+          <InstallGuideDialog />
         </div>
       </PortalContainerProvider>
     </AuthGuard>

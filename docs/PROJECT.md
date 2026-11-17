@@ -3204,6 +3204,52 @@ the three schools' crests, unboxed, split by hairlines, greyscale until hover.
   school id, so a missing one fails the type-check.
 - Checked by screenshot at 1440px and 500px (headless Chrome won't go narrower).
 
+### Install prompt for the PWA (2026-11-17, development)
+Teachers couldn't install the app without being walked through it.
+`features/pwa-install/`. No backend change; the manifest and worker already
+met installability.
+- **Pieces:** `install-environment.ts` (pure: UA + flags → platform, in-app
+  browser, iOS browser, standalone; `resolveInstallMethod` picks one of
+  installed / prompt / ios-safari / ios-other / in-app / android-manual /
+  desktop-manual). `install-prompt-store.ts` captures `beforeinstallprompt`
+  (preventDefault, stashed, single-use) and `appinstalled`.
+  `InstallBanner` sits at the top of every dashboard page on phones/tablets.
+  `InstallGuideDialog` (mounted once in the shell; a zustand flag opens it)
+  shows the steps. `InstallMenuItem` adds "Install app" to the account menu
+  on every device until installed.
+- **The listener attaches at module load, from the root layout**
+  (`InstallPromptCapture`), not in an effect: Chrome fires the event once per
+  page load, often before AuthGuard renders the dashboard, and a missed one is
+  gone until reload. Side effect: Chrome's own install infobar is suppressed
+  on the apex too, which is wanted, since an apex install has no school in it.
+  **Each school installs from its own subdomain.**
+- **iOS has no install prompt at all** (every iOS browser is WebKit). Safari
+  gets Share → Add to Home Screen; Chrome/Edge on iOS the same route (iOS
+  16.4+), with a "use Safari on older iPhones" note.
+- **The main reason installs failed: WhatsApp's built-in browser.** Built-in
+  browsers (WhatsApp, Facebook, Instagram, TikTok, Snapchat, Android WebView)
+  can't install anything, so they get "Open this page in Chrome/Safari" plus
+  the school's `/login` link to copy. Android WhatsApp opens Chrome Custom
+  Tabs, whose UA is plain Chrome, so it falls to `android-manual`, whose note
+  says to choose Open in Chrome first.
+- **"Installed" is remembered** in `schoolos-pwa-installed` (set on
+  `appinstalled` or an accepted prompt), because Chrome stops firing the prompt
+  once installed and the tab would otherwise fall back to manual steps.
+  Dismissing the banner hides it for 14 days
+  (`schoolos-install-banner-dismissed-at`); the menu item stays.
+- **Copy uses ’ and “ ”, not `&apos;`/`&quot;`.** With an entity in the text
+  right after a `<Key>`, the space before it was missing from the rendered DOM
+  ("Sharebutton"); confirmed by reading the live DOM, fixed by the literal
+  characters. Grepped: no other component had the pattern.
+- **Verified:** 23 tests (real UA strings per case, the store, banner flows),
+  each behaviour broken once to confirm a test fails. Puppeteer screenshots at
+  360px with a fake teacher token (backend was down; the shell needs only
+  claims) for Android, iPhone Safari, WhatsApp on iPhone and Android, and the
+  account menu. Headless Chrome fired a **real** `beforeinstallprompt`, and the
+  banner switched to "Install". The guide opened from the menu, closed, and the
+  page stayed clickable twice running.
+  **Not verified:** a real install on a physical Android phone or iPhone.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
