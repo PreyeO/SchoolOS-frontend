@@ -23,6 +23,28 @@ export const HERO = {
   ctaSecondary: { label: "Book a demo", href: "/book-demo" },
 } as const;
 
+// Schools already running on SchoolOS, shown directly under the hero.
+//
+// Hand-maintained, not live: the only source for these figures is the
+// platform-admin overview, which a public page can't call, and no public
+// stats endpoint exists. Taken from that overview on 2026-11-17 (3 schools,
+// 980 students, 36 teachers + 9 school admins). Update both lists together
+// when a school joins or leaves. Keep the figures at or below the real count,
+// never rounded up, and only list a school that has agreed to be named.
+export const SCHOOLS_USING_US = {
+  label: "Already running on SchoolOS",
+  stats: [
+    { value: "3", label: "schools" },
+    { value: "980+", label: "students" },
+    { value: "45", label: "teachers and school admins" },
+  ],
+  schools: [
+    { id: "st-peters-ikwuano", name: "St. Peter's Nur. Pri. Sec. School, Ikwuano" },
+    { id: "let-it-shine", name: "Let It Shine Secondary School" },
+    { id: "kids-paradise", name: "Kids Paradise Montessori School" },
+  ],
+} as const;
+
 export const PAIN_RELIEF = {
   eyebrow: "// 01 · THE PROBLEM",
   pain: "Compiling one term's results shouldn't take three weeks and a pile of spreadsheets.",
