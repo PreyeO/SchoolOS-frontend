@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { InstallMenuItem } from "@/features/pwa-install/components/install-menu-item";
 import { PERSONA_LABELS, type SwitchablePersona } from "@/lib/auth/active-persona";
 import {
   useActivePersona,
@@ -87,6 +88,7 @@ export function UserMenu() {
         </DropdownMenuItem>
         {/* No Settings entry: the sidebar's Settings group is the way there,
             and this pointed only at School Profile regardless. */}
+        <InstallMenuItem />
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={handleLogout}>
           <LogOut /> Log out
