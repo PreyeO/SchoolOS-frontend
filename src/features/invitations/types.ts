@@ -69,7 +69,8 @@ export interface InviteParentPayload {
 export interface AddStudentPayload {
   first_name: string;
   last_name: string;
-  admission_number: string;
+  // No admission_number — the backend allocates it (per-school counter) and
+  // returns it on StudentCreatedResponse.
   password: string;
   gender: Gender;
   date_of_birth?: string;
@@ -89,7 +90,8 @@ export interface StudentCreatedResponse {
   admission_number: string;
   gender: Gender;
   date_of_birth: string | null;
-  // Both null when admission_number/email resolved to an EXISTING user
+  // Allocated by the backend; this response is where the admin first sees it.
+  // Both password fields are null when the email resolved to an EXISTING user
   // (accounts/services.py's _get_or_create_invitee found rather than created
   // one) — their existing password is kept as-is, so there's nothing new to
   // show, and password_note explains why.

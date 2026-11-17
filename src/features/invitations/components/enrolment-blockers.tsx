@@ -11,7 +11,7 @@ interface Props {
 //
 // Shown up front rather than on submit: both are fixed on another screen by
 // someone who may not be the person filling this form in, and discovering that
-// after typing a name, admission number and password is a wasted trip. The
+// after typing a name and password is a wasted trip. The
 // submit button is disabled on the same conditions.
 export function EnrolmentBlockers({ hasArms, sessionName }: Props) {
   return (

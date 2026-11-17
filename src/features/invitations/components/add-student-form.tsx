@@ -39,7 +39,6 @@ export function AddStudentForm() {
     defaultValues: {
       first_name: "",
       last_name: "",
-      admission_number: "",
       password: "",
       gender: "male",
       date_of_birth: "",

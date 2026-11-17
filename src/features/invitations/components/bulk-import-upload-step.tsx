@@ -61,10 +61,12 @@ export function BulkImportUploadStep({ onFileSelected, isPending }: Props) {
       </button>
 
       <p className="text-xs text-n-400">
-        Columns, in order: first_name, last_name, admission_number, gender
-        (male/female/other), date_of_birth, class_name, arm_name, email. Only
-        date_of_birth, arm_name and email may be left blank — arm_name only
-        resolves on its own when the class has exactly one arm.
+        Columns, in order: first_name, last_name, gender (male/female/other),
+        date_of_birth, class_name, arm_name, email. Only date_of_birth, arm_name
+        and email may be left blank — arm_name only resolves on its own when the
+        class has exactly one arm. Don&apos;t add an admission number column:
+        numbers are assigned automatically, and a file with extra columns is
+        rejected.
       </p>
 
       <Button
@@ -77,7 +79,7 @@ export function BulkImportUploadStep({ onFileSelected, isPending }: Props) {
       </Button>
 
       {/* Preview writes nothing, but it still parses and validates every row
-          against the school's classes and existing admission numbers, so a
+          against the school's classes and existing students, so a
           large file is not instant either. Said once here rather than left as
           a button that looks stuck. */}
       {isPending && (

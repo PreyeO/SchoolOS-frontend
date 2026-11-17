@@ -34,7 +34,16 @@ export function BulkImportPreviewStep({ result, isPending, onConfirm, onCancel }
         )}
       </div>
 
-      {applied.length > 0 && <BulkImportAppliedTable rows={applied} stage="preview" />}
+      {applied.length > 0 && (
+        <>
+          <BulkImportAppliedTable rows={applied} stage="preview" />
+          <p className="text-xs text-n-500">
+            Admission numbers are assigned when you import. The ones shown are
+            what we expect them to be, and can shift if another student is added
+            first. The final numbers appear on the next screen.
+          </p>
+        </>
+      )}
       {skipped.length > 0 && <BulkImportSkippedTable rows={skipped} />}
 
       {applied.length === 0 ? (

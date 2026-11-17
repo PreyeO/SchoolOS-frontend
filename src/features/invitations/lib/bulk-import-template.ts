@@ -1,7 +1,8 @@
-const HEADER = [
+// No admission_number column: the backend allocates admission numbers itself
+// and rejects any file that still carries the column.
+export const BULK_IMPORT_HEADER = [
   "first_name",
   "last_name",
-  "admission_number",
   "gender",
   "date_of_birth",
   "class_name",
@@ -14,10 +15,10 @@ const HEADER = [
 // a help paragraph. Matches accounts/services.py's BULK_STUDENT_IMPORT_COLUMNS
 // exactly — the backend rejects the whole file if the header doesn't match
 // this set exactly, so this template is the contract, not a suggestion.
-const EXAMPLE_ROW = ["Jane", "Doe", "STU-2026-001", "female", "2015-03-12", "JSS1", "A", ""];
+const EXAMPLE_ROW = ["Jane", "Doe", "female", "2015-03-12", "JSS1", "A", ""];
 
 export function downloadBulkImportTemplate() {
-  const csv = [HEADER, EXAMPLE_ROW].map((row) => row.join(",")).join("\r\n");
+  const csv = [BULK_IMPORT_HEADER, EXAMPLE_ROW].map((row) => row.join(",")).join("\r\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 

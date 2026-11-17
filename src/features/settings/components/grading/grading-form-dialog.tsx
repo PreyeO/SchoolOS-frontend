@@ -20,6 +20,7 @@ import { FieldWrapper } from "@/features/auth/components/field-wrapper";
 import { focusFirstError } from "@/features/onboarding/lib/first-error-field-id";
 import { SCHOOL_LEVELS, type SchoolLevelValue } from "@/data/school-levels";
 
+import { ALL_LEVELS } from "../../lib/grading-copy";
 import { resolveGradingFormError } from "../../lib/grading-form-error";
 import { gradingSystemSchema, type GradingSystemFormValues } from "../../schemas/grading-schema";
 import { GradeComponentsField } from "./grade-components-field";
@@ -80,6 +81,11 @@ export function GradingFormDialog({ trigger, title, initialValues, availableLeve
                 className="flex rounded-md px-3"
                 {...register("level")}>
                 <option value="">Choose a level…</option>
+                {/* One setup for every level still without one, instead of
+                    typing the same components and grades level by level. */}
+                {availableLevels.length > 1 && (
+                  <option value={ALL_LEVELS}>All {availableLevels.length} levels without grading</option>
+                )}
                 {availableLevels.map((value) => (
                   <option key={value} value={value}>
                     {SCHOOL_LEVELS.find((l) => l.value === value)?.label ?? value}

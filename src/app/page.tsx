@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/landing/sections/Hero";
+import { SchoolsUsingUs } from "@/components/landing/sections/SchoolsUsingUs";
 import { PainRelief } from "@/components/landing/sections/PainRelief";
 import { Capabilities } from "@/components/landing/sections/Capabilities";
 import { BuiltForNigeria } from "@/components/landing/sections/BuiltForNigeria";
@@ -23,6 +24,7 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <SchoolsUsingUs />
         <PainRelief />
         <Capabilities />
         <BuiltForNigeria />

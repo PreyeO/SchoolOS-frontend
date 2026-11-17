@@ -361,6 +361,17 @@
     margin: 14mm;
   }
 
+  /* A broadsheet is a dozen-plus subject columns wide; on a portrait page it
+     ran off the right edge. A named page turns just that print sideways. */
+  @page landscape {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  [data-print-landscape] {
+    page: landscape;
+  }
+
   /* Hide every element that is neither the print area, nor inside it, nor an
      ancestor of it — :has() keeps the ancestor chain alive so the print area
      isn't taken down with its parents.

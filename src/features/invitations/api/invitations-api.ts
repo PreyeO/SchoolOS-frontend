@@ -74,7 +74,6 @@ export async function addStudent(values: AddStudentFormValues): Promise<StudentC
   const payload: AddStudentPayload = {
     first_name: values.first_name,
     last_name: values.last_name,
-    admission_number: values.admission_number,
     password: values.password,
     gender: values.gender,
     class_arm_id: values.class_arm_id,

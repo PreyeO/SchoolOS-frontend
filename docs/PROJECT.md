@@ -2213,6 +2213,40 @@ summed to more than the dialog, which also scrolled it sideways.
 - **Still not done:** `needs-attention-list` and the platform screens use the
   same truncated-row pattern but weren't in the screenshots.
 
+**Grading: one setup, many levels (2026-11-11, branch `grading`).** Admins had
+to type the same components and grade scale once per level. The backend has no
+bulk route (one `GradingSystem` per level), so `useApplyGradingToLevels` sends
+one request per level, in turn, never stops on a refusal, and toasts each failed
+level by name. Two entry points: the add form's level picker gains **"All N
+levels without grading"** (`ALL_LEVELS` in `lib/grading-copy.ts`), and each card
+has **Copy to other levels**, which creates on empty levels and PATCHes ones that
+already have grading. Those start unticked, with a warning, so nothing is
+overwritten by default. A PATCH is safe after scores exist: the backend's
+`update_grading_system` matches components by name and updates them in place;
+only ranges are fully replaced.
+
+**Fees: copy to other classes (2026-11-12, branch `grading`).** Fee Structure
+gains **Copy to other classes**: the class in view's active fees for the
+selected term go onto the ticked classes, same term. The source's own level
+starts ticked (JSS 1 → JSS 2, JSS 3), and each level has a Select all. No bulk
+route, so `useCopyFeeItems` reads each target fresh, then creates one fee at a
+time. It **only adds**: the backend refuses a second active fee of the same
+name (case-insensitive) on a class and term, so a name the class already has
+is skipped and its amount kept (`planClassCopy`). Copying to a *different term*
+isn't built.
+
+**Platform: School activity (2026-11-12, branch `grading`, `/platform/activity`).**
+Shows which schools are using SchoolOS, quietest first, banded Active (≤7 days) /
+Slowing (≤30) / Gone quiet / No activity. There's no "last active" field, so
+it's one `GET /api/audit-logs/?school_id=…&page_size=10` per school (a
+platform-only filter), and the newest entry whose actor is **not** a platform
+admin counts. Staff actions (extend trial, wallet adjustments) are logged
+against the school and would otherwise make a dormant school look alive;
+verified live, where one school's newest entry was exactly that. Limits: reads
+aren't audited, so a school that only views looks quiet; the school list is
+`getPlatformSchools` (capped at 100), so N schools means N requests. A backend
+`last_activity_at` on the school list would replace all of it with one call.
+
 **Student lifecycle, offboarding, open passwords (2026-10-10).** Built against
 backend `development` (`31108f6`, `6f91d3d`, both 2026-10-09; not on backend
 `main` at the time). Handoff: `SchoolOS-backend/docs/student-lifecycle-frontend-handoff.md`,
@@ -3120,6 +3154,55 @@ Six points; all addressed, and each list's params are tested (`list-filters.test
   (`wallet/topups/{id}/`, `scratch-cards/{id}/`, `outbound-messages/{id}/`)
   and the server-to-server webhooks. (platform admins credit
   or debit a school's wallet, `adjust_school_wallets`).
+
+### Auto-generated admission numbers (2026-11-17, backend 95699ce)
+Branch `feat/auto-admission-number`, kept off `development` until that is merged
+to main.
+- **Backend:** admission numbers are allocated from a per-school
+  `AdmissionNumberCounter` as `{slug[:5].upper()}-{n:06d}` (e.g. `FGC-000005`),
+  never reset. `POST` add-student no longer takes `admission_number` (sending it
+  is silently ignored). The bulk-import header must be **exactly**
+  `first_name, last_name, gender, date_of_birth, class_name, arm_name, email`;
+  the old template with `admission_number` is rejected as a whole file. Preview
+  returns *provisional* numbers (counter not advanced); commit allocates the real
+  ones. Migration `accounts.0012` **renumbered every existing student**, oldest
+  first, and rewrote synthetic emails to match.
+- **Frontend:**
+  - Add-student form: the admission-number field is gone (schema, payload, type).
+    A line says it's assigned automatically; `StudentCredentialsResult` already
+    shows the returned number, so that's where the admin first sees it.
+  - Bulk import: `BULK_IMPORT_HEADER` (exported from `bulk-import-template.ts`)
+    drops the column; `bulk-import-template.test.ts` pins it to the backend set.
+    Upload instructions updated. The preview table labels the column
+    "Admission no. (expected)", greys the values, and says numbers can shift if
+    another student is added before import.
+- **Verified live** (preview only, no writes, FGC): the old header is rejected
+  with "CSV columns must be exactly…"; the new one previews with `FGC-000005`.
+  Not clicked through in the browser.
+- **Open questions for the backend / the school:** the renumbering changes every
+  student's sign-in identifier, invalidates admission numbers on printed slips,
+  sent SMS and downloaded CSVs, and breaks re-importing an old parent-numbers
+  CSV keyed on the old numbers. Schools can no longer keep their own numbering.
+
+### Landing: schools using SchoolOS (2026-11-17)
+Same branch. `SchoolsUsingUs` sits directly under the hero: a two-tone display
+sentence ("**980+ students** and **45 staff** are already on SchoolOS.") beside
+the three schools' crests, unboxed, split by hairlines, greyscale until hover.
+- **First version was rejected as ugly** (stat tiles, white boxed logos, a big
+  "3"). Kept from that: never headline the school count, it reads as small;
+  the crests say it. Never box a logo; cut it to transparent instead.
+- **The figures are hand-maintained** in `SCHOOLS_USING_US` (`data/landing.ts`),
+  copied from the platform-admin overview on 2026-11-17. There's no public stats
+  endpoint, and the landing page can't call the platform one. Update the numbers
+  and the school list together; never round up. Going live would need a
+  backend `GET` that's public and returns only totals.
+- Parents are deliberately not counted: the overview doesn't report them.
+- Logos are static imports from `components/landing/assets/schools/`: transparent
+  PNGs cut with sharp from the white originals (near-white keyed to alpha with a
+  soft 225-248 ramp, trimmed, capped at 400px). `mix-blend-multiply` was tried
+  first and left faint lighter rectangles behind the crests. A logo is keyed by
+  school id, so a missing one fails the type-check.
+- Checked by screenshot at 1440px and 500px (headless Chrome won't go narrower).
 
 ## Next up
 
