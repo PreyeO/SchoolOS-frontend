@@ -18,7 +18,8 @@ interface Props {
 // two server-side blockers live and needs the class list.
 //
 // Email is optional because the backend mints a synthetic internal address
-// (student.{admission}.{school}@internal.myschoolos.io) when it's blank — most
+// (student.{admission}.{school}@internal.myschoolos.io, using the admission
+// number it allocates) when it's blank — most
 // primary pupils have no email of their own, and demanding one would push
 // admins into inventing them.
 export function StudentIdentityFields({ register, errors }: Props) {
@@ -43,21 +44,12 @@ export function StudentIdentityFields({ register, errors }: Props) {
         </FieldWrapper>
       </div>
 
-      <FieldWrapper
-        id="student-admission"
-        label="Admission number"
-        error={errors.admission_number?.message}
-        // Re-admission is a new profile (the old one stays as history), so a
-        // returning student needs a number the old profile doesn't hold.
-        hint="Re-admitting someone who left? Give them a new admission number."
-        required
-      >
-        <Input
-          id="student-admission"
-          placeholder="e.g. MOUAU/EEE/16/93164"
-          {...register("admission_number")}
-        />
-      </FieldWrapper>
+      {/* No admission number field: the backend allocates the next one for the
+          school and the success screen shows it. A re-admitted student gets a
+          fresh number automatically. */}
+      <p className="text-xs text-n-500">
+        An admission number is assigned automatically when you create the student.
+      </p>
 
       <FieldWrapper id="student-password" label="Password" error={errors.password?.message} required>
         <PasswordInput

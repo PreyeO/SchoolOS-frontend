@@ -22,6 +22,7 @@ export const financeGroup: NavGroup = {
       // fee items, so PaymentsPage already refuses without view_fees.
       permission: "view_fees",
     }, false),
+    // Result Cards moved to the Results group (2026-11-11): see results-group.ts.
     adminItem({
       label: "Expenses",
       href: "/expenses",

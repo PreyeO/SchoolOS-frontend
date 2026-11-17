@@ -1,0 +1,99 @@
+import type { UserMinimal } from "@/lib/api/profile-summary";
+import type { PaymentGateway } from "@/lib/payments/gateways";
+import type { StudentListItem } from "@/features/students/types";
+
+export type PurchaseStatus = "pending" | "successful" | "failed";
+
+// One row of GET /api/card-purchases/. Amounts are integer naira.
+export interface CardPurchase {
+  id: string;
+  academic_session: string;
+  academic_session_name: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  gateway: PaymentGateway;
+  gateway_reference: string | null;
+  status: PurchaseStatus;
+  payment_link: string | null;
+  // The only signal that decides what the payment-return page shows:
+  // true = paid, false = not confirmed, null = still unresolved. The other
+  // *_verified flags are tracking only (see the handoff).
+  verification_api_verified: boolean | null;
+  initiated_by: UserMinimal | null;
+  // Includes replacement cards, so it can be higher than quantity.
+  card_count: number;
+  // When the one-time PIN list was handed out. Those cards are printed slips:
+  // they leave issuance stock (still verify until used). Null if never revealed.
+  pins_revealed_at: string | null;
+  created_at: string;
+}
+
+export interface StartPurchasePayload {
+  academic_session_id: string;
+  quantity: number;
+  gateway: PaymentGateway;
+}
+
+export * from "./types/issuance";
+
+// The plaintext pair, which exists only in a reveal, issue or replace response.
+export interface CardPin {
+  serial: string;
+  pin: string;
+  // Set for a card issued to a named student (print issuance or replace), so
+  // the slip says whose it is. Absent on an anonymous purchase reveal.
+  student?: { name: string; admission_number: string };
+}
+
+// GET /api/scratch-cards/. Never carries a PIN.
+export interface ScratchCard {
+  id: string;
+  serial: string;
+  // Null until the first successful result check binds it, then permanent.
+  student: StudentListItem | null;
+  purchase: string;
+  academic_session_name: string;
+  // Five wrong PINs lock a card for good.
+  is_locked: boolean;
+  // Replaced by a new card (issue or replace rotates it); the serial no longer works.
+  is_revoked: boolean;
+  revoked_at: string | null;
+  regenerated_from: string | null;
+  failed_attempts: number;
+  bound_at: string | null;
+  last_used_at: string | null;
+  // The purchase's pins_revealed_at: set means this card went out as an
+  // anonymous printed slip, so it isn't stock and has no student to reissue to.
+  pins_revealed_at: string | null;
+  // True when this serial has an assignment not yet replaced: the one thing
+  // that makes Replace valid. Always false in stock (unused=true). Annotated
+  // server-side (backend 7ebd0d3), so no per-row lookup is needed.
+  active_assignment: boolean;
+  created_at: string;
+}
+
+export interface ScratchCardFilters {
+  page?: number;
+  is_bound?: boolean;
+  is_locked?: boolean;
+  // True: cards issuance can still hand out (not revoked, locked, bound, or
+  // on an active assignment). The server's definition, so list and commit agree.
+  unused?: boolean;
+  academic_session_id?: string;
+  purchase_id?: string;
+}
+
+// --- Public result checker ---
+
+export interface CheckPeriods {
+  session_name: string;
+  periods: { id: string; name: string; order: number }[];
+}
+
+export interface CheckResultPayload {
+  serial: string;
+  pin: string;
+  admission_number: string;
+  academic_period_id: string;
+}

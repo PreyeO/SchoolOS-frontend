@@ -14,6 +14,10 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // 15s, not the 5s default: form tests type whole serials and PINs a key
+    // at a time with user-event, and under a full parallel run on a laptop one
+    // crossed 5s and failed with nothing actually wrong.
+    testTimeout: 15_000,
     // A fake origin: any request without an MSW handler fails loudly instead
     // of reaching a real backend.
     env: { NEXT_PUBLIC_API_BASE_URL: "http://api.test" },

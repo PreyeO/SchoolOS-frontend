@@ -11,15 +11,18 @@ import {
   Link2,
   Mail,
   Megaphone,
+  Phone,
   Receipt,
   ShieldCheck,
   SlidersHorizontal,
   SquarePen,
   Star,
+  Ticket,
   UserCheck,
   UserCog,
   UserMinus,
   UserRoundPlus,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,7 +47,10 @@ export type AuditCategoryKey =
   | "payments"
   | "announcements"
   | "offboarding"
-  | "staff";
+  | "staff"
+  | "cards"
+  | "wallet"
+  | "contacts";
 
 // Purely presentational: gives each entry in the timeline an icon and a
 // hover label so the log can be scanned by kind of change. Filtering is done
@@ -83,6 +89,10 @@ export const AUDIT_CATEGORIES: AuditCategory[] = [
   { key: "offboarding", label: "Offboarding", icon: UserMinus },
   // Edits to a teacher's own record (name, phone, photo, staff fields).
   { key: "staff", label: "Teacher records", icon: IdCard },
+  // Buying, issuing, replacing and checking result cards, and resolving texts.
+  { key: "cards", label: "Result cards", icon: Ticket },
+  { key: "wallet", label: "SMS wallet", icon: Wallet },
+  { key: "contacts", label: "Parent numbers", icon: Phone },
 ];
 
 export function categoryByKey(key: AuditCategoryKey | undefined): AuditCategory | undefined {

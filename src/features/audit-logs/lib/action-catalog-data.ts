@@ -36,6 +36,8 @@ import { ANNOUNCEMENTS_ACTIONS } from "./actions/announcements";
 import { ATTENDANCE_ACTIONS } from "./actions/attendance";
 import { FEES_ACTIONS } from "./actions/fees";
 import { RESULTS_ACTIONS } from "./actions/results";
+import { CARD_ACTIONS } from "./actions/cards";
+import { WALLET_ACTIONS } from "./actions/wallet";
 
 export const ACTION_CATALOG: Record<string, ActionMeta> = {
   ...ACCOUNTS_ACTIONS,
@@ -44,4 +46,8 @@ export const ACTION_CATALOG: Record<string, ActionMeta> = {
   ...RESULTS_ACTIONS,
   ...FEES_ACTIONS,
   ...ANNOUNCEMENTS_ACTIONS,
+  // Re-checked 2026-11-10 against audit/enums.py: these 17 (scratch_cards/,
+  // payments/, messaging/, attendance.cleared) had been missing.
+  ...CARD_ACTIONS,
+  ...WALLET_ACTIONS,
 };

@@ -38,6 +38,9 @@ function row(opts: {
     price_per_student: 0,
     price_is_locked: false,
     estimated_termly_revenue: 0,
+    scratch_card_revenue: 0,
+    scratch_cards_sold: 0,
+    scratch_cards_activated: 0,
   };
 }
 

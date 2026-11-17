@@ -2466,6 +2466,724 @@ on mid-size laptops.
   spilling out of a bordered card, and page-level horizontal scroll. Content
   inside scroll containers (wide tables) is skipped on purpose.
 
+### Scratch cards, phase 1 (2026-10-18, backend e666bd4…67c6595)
+A school buys result-check cards from SchoolOS through Paystack and gives one
+to each family. Parents check results without an account. This is platform
+revenue, not a school fee. Contract: backend
+`docs/scratch-cards-frontend-handoff.md`. Code: `features/scratch-cards/`,
+endpoints in `lib/api/endpoints/scratch-cards.ts`.
+- **`/scratch-cards`** (Finance nav, `manage_scratch_cards`):
+  - buy form: session plus quantity, with the total quoted live from
+    `GET /card-purchases/price/`. No price is sent; the server snapshots it.
+    Then off to Paystack via `goToPayment` (stubbable; jsdom can't spy on
+    `location`).
+  - Card stock: All, In stock, Used or Locked; "Replaced" shows only under All,
+    since there's no server filter. (Regenerate was removed by the backend on
+    2026-10-25; see "Replace" below.)
+  - Purchases history.
+- **`/scratch-cards/payment-complete`** is Paystack's return. **The backend's
+  `FRONTEND_SCRATCH_CARD_REDIRECT_URL` should be exactly this path** (it was
+  empty in the local `.env`). The hosted dev backend had it set to
+  `/settings/scratch-cards/redirect`, which 404'd a real payment on
+  2026-10-18. That path is now an alias
+  (`app/(dashboard)/settings/scratch-cards/redirect`) that server-redirects
+  here with Paystack's query intact, so either value works. Inside the
+  streaming dashboard layout, Next sends that redirect as a 200 carrying a
+  `NEXT_REDIRECT` instruction rather than a 307; checked on a production build. It passes Paystack's query through to
+  `/card-purchases/redirect/`; only `verification_api_verified` decides the
+  outcome (paid, failed or pending, with "Check again"). It then reveals the
+  PINs **once**: a ref guard survives StrictMode's double effect, which matters
+  because a second reveal returns `[]` and would blank an unsaved sheet. An
+  empty reveal explains itself and points at Regenerate. In local DEBUG the
+  backend skips this page and lands on the API's JSON instead.
+- **PIN handling:**
+  - PINs live in component state only.
+  - Reveal and regenerate are mutations with `networkMode: "always"` and
+    `gcTime: 0`. They never pause, and only paused mutations are persisted.
+  - No `scratch-cards` key is in the query-persistence allowlist.
+  - `PinsSheet` warns on leaving until the PINs are downloaded (CSV through the
+    shared `lib/text/csv-cell.ts` formula escaping) or printed. Printing opens
+    its own window of cut-out slips; a blocked popup falls back to a toast
+    pointing at the CSV.
+- **`/check-result`** (marketing group, public, works on any host):
+  - serial first, then `GET /scratch-cards-check/periods/?serial=` for that
+    card's terms; then term, admission number and PIN, POSTed to `verify/`
+    (the PIN is never in a URL).
+  - The result renders through the shared `ReportCardBody`, with a PDF
+    download.
+  - Errors show inline, and nothing retries, because every wrong attempt
+    counts toward the five-strike lock.
+  - The check endpoints and the payment return are on client.ts's
+    `PUBLIC_RULES`, so a stale stored token can't 401 them (tested).
+- **Rework (2026-10-19), after the user found both screens wanting:**
+  - **Regenerate bug.** The dialog lived inside the card's table row. The
+    refetch after a regenerate turned that row "Replaced", which renders no
+    dialog, so the new PIN vanished the instant it arrived.
+    `RegenerateCardDialog` is now controlled by `CardsTable` (the
+    `replacing` state), outside the rows. Regression test:
+    `cards-table.test.tsx`, which failed before the fix. The issued PIN is
+    shown large, with Copy and Download, and the dialog says it is the only
+    time it's shown.
+  - **`/check-result` redesigned.**
+    - Layout: two columns on desktop (heading and help on the left, form on
+      the right). On a phone, the form comes straight after the heading.
+    - A card picture shows where the serial and PIN are, plus three short
+      facts and a step indicator.
+    - The serial auto-formats to `XXXX-XXXX-XX` (`formatSerialInput`; the
+      backend generates 10 of A–Z0–9). The PIN accepts 10 digits only and has
+      a show/hide toggle.
+    - Terms are radio buttons. An incomplete serial is caught before any
+      lookup.
+    - The result shows the school's own branded report card (POST
+      `verify/preview/` into a `sandbox=""` iframe through
+      `fitReportCardPreview`), falling back to `ReportCardBody` if that
+      fails. "Another term" reuses the card details.
+    - Screenshotted at 390 and 1280px with mocked API responses: no
+      horizontal overflow.
+  - **Named "Result Cards" in the UI** (nav, page titles, Roles group,
+    platform revenue, PDF and print titles). Briefly "Result PINs", which
+    clashed with the page's own unit: every card *has* a PIN, so "PIN" can't
+    also be the thing bought. A card = one serial + one PIN, printed or texted,
+    like a recharge card. "Scratch card" was dropped because there's nothing to
+    scratch once PINs go out by SMS; it was never released, so no old label is
+    bridged. Code names (`features/scratch-cards`, `/scratch-cards` routes,
+    `manage_scratch_cards`) are unchanged, to match the backend.
+  - **Phone layout (2026-10-20).** At 390px, Card stock's six-column table was
+    ~710px in a 356px box: the student column wrapped a few letters per line,
+    rows were tall and mostly empty, and Regenerate was off-screen. Below `sm`
+    both tabs now render compact lists: `CardsList` in `cards-views.tsx`
+    (serial + status, then student or "Not used yet" and the last use, with
+    Regenerate in view), and Purchases inline. The tables are unchanged from
+    `sm` up. jsdom applies no CSS, so tests see both views and scope to
+    `getByRole("table")` / `getByRole("list")`.
+  - **Buy form loading vs empty:** it used to say "this school has none yet"
+    while sessions were still loading or had failed. Now it shows loading and
+    error states, and "none" only means none.
+  - **Local screenshots must run on port 3002**: the backend's CORS allows
+    only `localhost:3002`. On 3010 every API call fails after its preflight,
+    which is how the loading-vs-empty bug above was found.
+  - **The cost is stated before checkout:** the page heading reads "Cards are
+    bought from SchoolOS at ₦X each, paid through Paystack", with the price
+    from `/card-purchases/price/`. The nav description and the empty Card
+    stock state say the same.
+  - **PDF slips are the main download.** The backend only returns
+    serial/PIN JSON, so every format is built here. `buildPinsPdf`
+    (`lib/pins-pdf.ts`, jsPDF 4.2.1, **lazy-imported** so it isn't in any page
+    bundle) draws ten cut-out slips per A4 page (`lib/slip-layout.ts`, a pure
+    and tested layout), using only the built-in fonts so nothing is fetched.
+    Buttons: **Download PDF** (primary), Print slips, then CSV as a small
+    secondary option. Regenerate's "Download slip" makes the same one-slip
+    PDF. Slip text comes from `useSlipDetails` (school name, session, apex
+    `/check-result`). Checked by rendering a 12-card sample in Chrome:
+    2 pages, slips inside the margins, leading zeros kept.
+  - **School logo on slips** (no school colours: most slips get printed in
+    black and white, and the PIN has to stay sharp).
+    - PDF: `loadLogo` fetches the presigned logo once per download, redraws it
+      to PNG on a canvas, and jsPDF embeds it once under one alias for every
+      slip (tested: one image object across 11 slips). It sits top-right in a
+      12mm box, proportions kept, with the school name narrowed beside it.
+    - Print view: a plain `<img>`, which needs no CORS, removes itself if
+      broken, and printing waits up to 3s for it to load.
+    - Both are optional: an expired link, a fetch error or a 5s timeout just
+      means no logo.
+    - **Unverified: S3 CORS for GET.** The PDF has to *read* the logo's
+      pixels, so the bucket must allow GET from school origins. Uploads (POST)
+      already work from the browser. No local school had a logo to test with.
+      If the logo shows in "Print slips" but not in the PDF, add GET to the
+      bucket's CORS rule.
+  - **`testTimeout` is 15s** (vitest.config): the form tests type whole
+    serials and PINs key by key, and one crossed the 5s default under a full
+    parallel run with nothing wrong.
+  - **`renderWithClient` now uses RTL's `wrapper`,** so `rerender()` keeps the
+    QueryClient (it used to drop it).
+- **Platform:** the financials types gained `scratch_card_revenue`, `_sold` and
+  `_activated`, plus `scratch_card_revenue_total`. The Revenue page has a
+  separate "Scratch cards" section, labelled collected (unlike the
+  projection), and the overview shows the collected total beside it.
+- **Roles:** `manage_scratch_cards` is grouped as "Scratch cards" in the
+  permission checklist. Owner roles get it automatically on `migrate`
+  (backend signal).
+- **Verified:** 18 tests, with the reveal-once guard and the public-token rule
+  checked by breaking them. A live read-only contract check (price, lists,
+  unknown serial, unknown reference) passed. **Not verified:** a real Paystack
+  checkout. That needs the redirect env var, a test-mode key, and a school
+  whose trial hasn't expired (local FGC's has).
+- **Phase 2 shipped on the backend 2026-10-25** (fc06f64, new `payments` and
+  `messaging` apps): wallet + SMS credits, guardian contacts, issuance to named
+  students, the stuck-SMS queue, assignment history. Contract:
+  `docs/wallet-sms-issuance-frontend-handoff.md`. Frontend progress below.
+
+### Result Cards phase 2, step 1: Regenerate → Replace (2026-11-09)
+The backend **deleted** `POST scratch-cards/{id}/regenerate/`, so Card stock's
+button was calling a dead route. Replaced with `POST scratch-cards/{id}/replace/`
+`{reason: lost|never_arrived|resend, channel: print|sms, idempotency_key}` →
+`{batch, pins, created}`.
+- **Replace only works on an issued card** (an active `CardAssignment`). Cards
+  handed out anonymously from a purchase reveal have none, and the server refuses
+  them ("no active issuance"). `ScratchCard` rows don't say which kind a card is,
+  so `ReplaceCardDialog` fetches `GET card-assignments/?card=` on open (only the
+  `superseded_at: null` row counts) and explains instead of offering the form.
+- **Idempotency:** `newIdempotencyKey()` (`lib/api/idempotency-key.ts`), one per
+  dialog opening (the dialog is keyed by card id), reused on every retry (tested
+  by breaking it). It falls back from `crypto.randomUUID` to `getRandomValues`
+  because plain-http `lvh.me` isn't a secure context. Use it for issuance
+  commit and resolve too.
+- **A 409** is a replayed print whose PINs were in a lost response:
+  `isConflictError()` → the dialog says so, with no retry. Other errors toast.
+- Print shows the PIN once (`IssuedPinPanel`, split from the old dialog). SMS
+  says the PIN goes only to the phone. A texted card switched to print warns that
+  the text isn't refunded.
+- "Unused" filter → **"In stock"** = server `?unused=true` (not revoked, locked,
+  bound or on an active assignment). The pill for an unbound card is now
+  **"Not used yet"**, because an issued card that hasn't been checked yet is in that state too.
+- Copy in `PinsSheet` and the payment-return page no longer says "use Regenerate".
+- **Not verified live** (backend wasn't running). Needs the new migrations, and
+  a card issued through issuance before Replace can be clicked through.
+- **Backend hazard to raise:** issuance *rotates* whatever stock card it takes
+  (new serial and PIN, old one revoked), and `_stock` counts an anonymously
+  revealed, not-yet-checked card as stock. So issuing after an anonymous handout
+  can kill slips families already hold. Ask for revealed cards to be excluded
+  from stock (or flagged).
+- **Pre-existing, unrelated:** `bulk-import-panel.test.tsx` fails 4/4 with the
+  scratch-card changes stashed too (MSW handler-lookup assertion).
+- The stock-rotation hazard was raised with the backend developer on 2026-11-09,
+  and **fixed the same day (backend b87df1a)**:
+  - A reveal that returns cards stamps `pins_revealed_at` on the purchase
+    (also on each card in `GET /scratch-cards/`), and those cards leave
+    `unused=true` and issuance stock. They still verify until bound or locked.
+  - An empty reveal doesn't stamp, so cards whose PINs were missed stay stock
+    (the payment-return page's wording is still true).
+  - **Purchases revealed before the field existed stay unstamped**, and
+    issuance can still take them.
+  - Frontend: `whyNotReplaceable()` (tested) gives the replace dialog the right
+    reason. It had been telling a printed slip it was "in stock". Card stock
+    shows a quiet **"Printed slip"** tag. Migration `scratch_cards.0004` was
+    applied locally on 2026-11-09.
+
+### Result Cards phase 2, step 2: SMS Wallet (2026-11-09)
+`/settings/payments` (was the "Payment Integrations" placeholder, which
+promised online fee collection that has no backend) is now **SMS Wallet**,
+gated on `manage_wallet`. Code: `features/wallet/`, endpoints in
+`lib/api/endpoints/wallet.ts`. Owner roles get `manage_wallet` on `migrate`;
+the Roles editor groups it as "SMS wallet".
+- **Balance** card plus **Buy credits** form: credits in, naira quoted from the live
+  `credit_price`; bounds (`min/max_topup_credits`) come from `GET /wallet/`,
+  so the zod schema is built per render. Presets 100/500/1,000/5,000, filtered
+  to the bounds. The body is `{credits, gateway: "paystack"}` only, never an
+  amount. The ₦100 minimum charge is a server constant the API doesn't expose,
+  so its 400 is toasted as written.
+- **Activity** (ledger) filtered on the server by `?type=`, labelled in the
+  school's words by `describeTransaction` (reference prefixes:
+  `debit:issuance:` → "Result card PINs texted"; refund notes' message uuids
+  are hidden; adjustments show the platform admin's reason). **Top-ups** list
+  with status; a pending row gets **"Check with Paystack"**, which calls the
+  same `topups/redirect/?reference=` verify and credits a paid one whose tab was
+  closed before Paystack redirected.
+- **`/settings/payments/topup-complete`** is Paystack's return. **The backend's
+  `FRONTEND_WALLET_REDIRECT_URL` must be exactly this path.** Outcome is the
+  top-up's `status` (successful/failed/pending, with "Check again"), per the
+  handoff. The return route is in `PUBLIC_RULES` (tested: no token is sent). The
+  balance shown afterwards is fetched only once the credit has landed: read
+  alongside the confirm, it showed the pre-credit balance as "now" (tested,
+  and the test was checked by reintroducing the bug).
+- `goToPayment` moved to `src/lib/go-to-payment.ts` (shared by cards and wallet).
+- `refreshWallet` invalidates summary, top-ups and ledger but not the whole
+  `["wallet"]` key, which would re-run the return-page confirm.
+- **Verified live 2026-11-09** (Graceland's owner, the only local school with
+  active access; owners had `manage_wallet` after migrate):
+  - Every wallet response shape matches `types.ts`, and a bad `?type=` is a 400.
+  - Bounds errors come back as written.
+  - A test-mode top-up (`sk_test`) returned a `payment_link`.
+  - The return route answers without auth and accepts `trxref`.
+  - Screenshots at 390 and 1280px (puppeteer-core plus local Chrome, token
+    injected into `schoolos-auth`) of the wallet, both tabs and the return page:
+    no overflow, no console errors, no failed calls.
+- **Live finding: "failed" means "not paid".** Paystack's verify reports an
+  unpaid or abandoned checkout as `false`, so re-checking one that's still open
+  marks it `failed` at once; the handoff's "pending" barely occurs. It's not
+  final: `_confirm` re-verifies anything not yet successful. So the list says
+  **"Not paid"**, and "Check with Paystack" is offered on every uncredited row.
+  The return page and the toast say "no completed payment" rather than "failed".
+- References use `whitespace-nowrap`: `break-all` split one mid-word, which is
+  easy to misread to support.
+- **Not verified:** a completed Paystack test payment (crediting), and the Replace
+  dialog. No local school has any cards or assignments.
+- **Backend `.env` now needs `FRONTEND_WALLET_REDIRECT_URL`.** It has no default,
+  so `school_os_web` exits on boot without it (hit 2026-11-09). Set it to
+  `/settings/payments/topup-complete`, and set `FRONTEND_SCRATCH_CARD_REDIRECT_URL`
+  to `/scratch-cards/payment-complete` while you're there.
+- **Dev-server gotcha:** after a `npm run build`, the dev server 404'd *every*
+  `/settings/*` route (Next's own fallback, not the app's) until `.next/dev` was
+  deleted and dev restarted. Not a routing bug.
+
+### Flutterwave alongside Paystack (2026-11-12)
+Backend 73524ab registered `FlutterwaveGateway`, so both checkouts (result
+cards, SMS top-ups) now take `gateway: "paystack" | "flutterwave"`. **This
+supersedes the "Paystack only" notes above.**
+- **One source of truth:** `lib/payments/gateways.ts` holds the type, labels,
+  `gatewayLabel()` and `returnReference()`; `components/shared/gateway-picker.tsx`
+  is the "Pay with" radio pair on both forms (default Paystack).
+- **Returns differ by gateway.** The backend's callback URL already carries
+  `?gateway=…`. Paystack appends `reference` + `trxref`; Flutterwave appends
+  `tx_ref`, `status` (`successful`/`cancelled`/`failed`) and `transaction_id`.
+  Both verify routes read `reference` or `tx_ref`, plus `status`. The wallet
+  return used to send `reference` only; it now forwards `status` too. A
+  Flutterwave `status=successful` is **not** proof: only the verify response
+  decides, same as before.
+- **Copy names the gateway actually used:** the row's `gateway` once loaded,
+  else the URL's `?gateway=`, else "the payment provider". The wallet ledger
+  row has no gateway field, so a top-up there reads "Payment ref …".
+- Purchases and top-ups rows show their gateway before the reference;
+  "Check with Paystack" became "Check with <that row's gateway>".
+- **Verified:** the running backend has `FLUTTERWAVE_SECRET_KEY`,
+  `FLUTTERWAVE_SIGNATURE` and base URL set, and the factory resolves it.
+  **Not verified:** a real Flutterwave checkout end to end, and its webhook,
+  which posts to `/api/webhooks/flutterwave/` (payments/urls.py) and must be set in the
+  Flutterwave dashboard with the same secret hash.
+
+### Result Cards phase 2, step 3: Parent numbers (2026-11-09)
+A **"Parent numbers"** tab on `/scratch-cards` (same `manage_scratch_cards`
+gate). Code: `features/guardian-contacts/`, endpoints in
+`lib/api/endpoints/messaging.ts`. Contract: handoff §4 and `messaging/services.py`
+`ContactService`.
+- List with server-side `?search=` (admission no., student or parent name,
+  phone). The server orders by main number first, then parent name, with no
+  ordering param, so search is how a student is found. Each row has Make main,
+  Edit and Remove (`ConfirmDeleteDialog`).
+- **The page says the fallback out loud:** a student with no number here is
+  texted at a linked parent account's phone (`ContactService.resolve`). Removing
+  a main number does **not** promote another (the server just deletes it), and
+  the confirm says so.
+- `ContactFormDialog` handles add (pick a student via `PersonSearchSelect`, or
+  `student` pre-set, which issuance's inline "add number" will reuse) and edit
+  (student fixed; the server refuses moves).
+  - Edit PATCHes only changed keys.
+  - The main number's flag is shown as text, not a disabled checkbox:
+    react-hook-form reads a disabled input as `undefined`.
+- **Phones:** `lib/phone.ts`.
+  - `toE164` is what we send (`+234…`), because the serializer's
+    `PhoneNumberField` parses before the service's normaliser.
+  - `looksLikeNigerianMobile` checks shape only (10 national digits starting
+    7/8/9), deliberately looser than the server, so it can never block a valid
+    number.
+  - `formatNigerianPhone` displays `0803 123 4567`.
+- **CSV import** (`ContactsImportDialog`): Check (preview) → Import (the same file
+  again) → done; template download; skipped rows reuse
+  `BulkImportSkippedTable`. It warns that **import adds, never replaces**:
+  importing a file twice gives each student a duplicate number (made main).
+  Worth a backend ask (upsert by student and phone).
+- **Bug caught by its own test:** the import first posted `FormData` without
+  the multipart header. Under the client's JSON default, axios JSON-stringifies
+  FormData, so the File arrives as `{}`. Fixed as `postCsv` with
+  `Content-Type: multipart/form-data`. The test was re-checked by removing the
+  header.
+- **The 4 long-failing `bulk-import-panel` tests are fixed (test-only).** The
+  cause was `request.formData()` in the MSW handler: undici's parser trips an
+  internal assertion on a jsdom-built multipart body, even though the body is
+  correct (probed). New helper `src/test/multipart.ts` `uploadedFileName()`
+  reads the file name from the raw text. Use it, never `formData()`, in MSW
+  upload handlers. Full suite: 217/217.
+- **Live:**
+  - Reads checked on FGC (list, `?student=`).
+  - An expired-trial write returns the "trial period has ended" detail, which
+    the form toasts.
+  - Screenshots at 390 and 1280px of the tab, the add dialog and the import
+    dialog: no overflow, no errors.
+  - **Writes not verified live:** Graceland (active) has no students, and FGC
+    (has students) can't write.
+
+### Result Cards phase 2, step 4: Issue cards, Sent, and the stuck-SMS queue (2026-11-09)
+Handoff §5–6. Result Cards now has an **"Issue cards"** banner and tabs **Card
+stock · Sent · Parent numbers · Purchases**.
+- **`/scratch-cards/issue`** (`components/issue/`): pick a session, who
+  (class · arm · chosen students · whole school) and how (text or print named
+  slips), then **Check** (preview) → **Issue** (commit).
+  - Preview runs on request only, never on input changes: preview and commit
+    are throttled to 30/minute per school. Editing the form drops a stale preview.
+  - `issuanceVerdict()` (tested) decides the commit button and explains every
+    blocker with numbers: stock and credit shortfalls, nobody eligible, and the
+    **selection rule**. A hand-picked selection with anyone skipped is blocked
+    even when the server says `can_commit`, because the server only refuses
+    that at commit. The batch cap isn't sent, so an otherwise unexplained "no"
+    is reported as the cap. Buy and top-up links are gated by `useCanAccess`
+    (the wallet has its own permission).
+  - Buckets: who gets a card, then each skip reason. "No number" and "Can't be
+    texted" rows have an inline **Add number** (`ContactFormDialog` with the
+    student preset), which re-checks afterwards. Only `phone_masked` is shown,
+    even though preview rows also carry the full `phone`.
+  - **Idempotency (`useIssueFlow`):** one key per issuance fingerprint (session,
+    channel, scope, sorted ids), kept across re-checks and commit retries, and
+    replaced when the request changes (the server rejects a key reused for a
+    different issuance). Both directions are tested, and each test was checked
+    by breaking it. A 409 means the print was already processed and its PINs
+    are gone; the screen sends the admin to Replace. `useCommitIssuance` has
+    `gcTime: 0` and `networkMode: "always"` (it returns PINs).
+  - **Named slips:** `CardPin.student` is optional. PDF and print slips show
+    "For {name} ({adm})", the CSV adds `admission_number,student_name`,
+    `PinsSheet` adds a Student column with Replace-appropriate wording.
+    Replace's reprint uses it too (`toCardPin`).
+- **Sent tab:** `BatchesList` (counts only), plus `/scratch-cards/batches/[id]`
+  (`BatchDetailPage`): every recipient with a delivery pill and the mismatch
+  flag. It **polls the detail every 5s only while any text is pending or
+  sending** (`batchInFlight`, tested).
+- **`AttentionQueue`** (top of Sent, hidden when empty): "Not confirmed"
+  (`unknown`) and failed-and-unrefunded texts, with **Send again** and **Mark
+  failed and refund**. Keys are stable per message and action while the page
+  is open. The message body names the student; it's the only link back to who
+  a text was for (`OutboundMessage` has no student field).
+- **Resend gap, raised and fixed (backend 1a0ab0b, 2026-11-10):**
+  - A resend now moves the original message to the new status **`resolved`**
+    ("Sent again" in `MESSAGE_STATUS_META`), so it leaves the queue on refetch.
+  - The same key replays; a new key is refused ("This message was already
+    resent."). The frontend's session-only hiding was removed.
+  - `OutboundMessage.student` (`{id, name, admission_number}` or null) now
+    names who a text was for. The queue uses it, never the body, which is
+    **empty until the worker sends** (tested with an empty body).
+  - Failed-and-refunded still counts as decided (`needsDecision`).
+  - Migration `messaging.0002` is applied on the next container start.
+- **Live (2026-11-09):** a whole-school preview against Graceland returned
+  real numbers (0 eligible, 0 stock, 0 credits), with the blocker shown and
+  commit disabled. Screenshots at 390 and 1280px of Result Cards, the issue
+  form and the preview: no overflow or errors. **Not verified live:** a real
+  commit, batch status, the queue. No local school has both active access
+  and students, or any cards.
+
+### Result Cards redesigned around one job (2026-11-11)
+The old page was organised around how the system works (buy form on top,
+tabs for card stock, sends, numbers, purchases), and both the user and the
+backend developer found it confusing. Rebuilt around what an owner asks:
+*have my parents got their cards, and who's still waiting?* Clickable mockup
+agreed first: https://claude.ai/artifact/EgGd3yog8M2KDQEvVXjm5J
+- **Data: two requests, no per-student lookups.**
+  - `useCardOverview(session)` runs ONE whole-school SMS issuance preview
+    (writes nothing), and `buildCardOverview` (tested) turns its buckets
+    into counts plus a per-student list: `already_has_card` → has a card,
+    `eligible` → waiting and textable, `no_number`/`invalid_number` → needs a
+    number. `not_enrolled`/`not_found` are left out.
+  - It's a POST counting against the issuance throttle, so no
+    refetch-on-focus. It refreshes on mount, after a send, and after a number
+    is added.
+  - `useCheckedCount` = bound cards this session ("parents who checked
+    results").
+  - Anonymous printed slips aren't tied to students, so those families
+    still count as waiting; that's what the server knows.
+- **Page, top to bottom:**
+  - `AttentionQueue`;
+  - `ProgressCard` ("N of M students have their card", bar, 4 stats, **Send
+    cards to the N waiting**);
+  - `ReadinessList` (cards vs needed, missing numbers, credits vs needed,
+    each with its fix; hidden when nobody is waiting);
+  - `StudentCardList` (one row per student; chips Waiting / Need a number /
+    Have a card / All; client-side search over the one snapshot; 50 at a
+    time with "Show more"). Row actions: **Send card** (one student),
+    **Add number** (`ContactFormDialog`, then the overview refreshes),
+    **Card details** (→ `/students/:id`, which has the history and Replace);
+  - **Records** tabs: Past sends, Parent numbers, Every card, Purchases.
+  - Buying moved into `BuyCardsDialog`. The session picker has no "All
+    sessions" (`useSessionFilter(…, { allowAll: false })`).
+- **The issue page takes a pre-fill** (`IssuePrefill`, read from
+  `?scope=school|student=…&session=…&check=1` by the route) and checks once by
+  itself (a ref guard survives StrictMode). It never sends without the final
+  button. Tested both ways.
+- An overview that can't load (e.g. an expired trial: the preview is a POST)
+  shows the server's own sentence.
+- **Live (FGC, active):** 0 of 4 with a card, 4 waiting, 2 need a number; the
+  waiting rows show "Will be texted to Gesi Suku" (the parent-account
+  fallback); all three readiness checks amber (0 cards, 2 numbers, 0
+  credits). Screenshots at 390 and 1280px: no overflow or errors. On phones,
+  pill and action share a line.
+
+### Result Cards follow-ups: Records page, Buy button, Replace from the student (2026-11-11)
+- **Records moved to its own page,** `/scratch-cards/records` (`RecordsPage`;
+  `?tab=sends|numbers|cards|purchases`), opened from a **Records** button in the
+  header. Under the student list, filtering ("Need a number") pulled it up
+  so it read as part of the list.
+- **"Buy cards" is a filled button** at the header's right, with "N cards left"
+  beside it. The stock comes from the overview's cached query, so no extra request.
+- **Replace on a student's page:** the current card in `StudentCardHistory` has
+  `ReplaceFromHistory`, which loads the card (`GET scratch-cards/{id}/`,
+  new `CARD` endpoint) on the first click, then opens `ReplaceCardDialog`.
+  The overview's "Card details" leads there, so that's where owners look for a
+  lost card. Copy that said "Replace in Card stock" now points to the
+  student's page. Tested.
+- **Wording (from the hosted app):**
+  - The overview button is just **"Send cards"**; "Still waiting" above it
+    gives the count.
+  - Card rows no longer say "No student yet". A card's `student` is who it
+    got locked to at the first result check, so that sat above "Given to a
+    student" as a contradiction. `cardWhereLine()` (tested) gives one line
+    instead: "Used by {name} · {adm}" / "Given to a student · no results
+    checked yet" / "Anonymous printed slip · no results checked yet" / "In
+    stock · not given out yet" / "Replaced {date}".
+  - The desktop column is "Where it is", plus "Last checked". `cardNotes` now
+    only warns about wrong PIN tries.
+- **Send page "back" goes where you came from** (`lib/batch-back-link.ts`,
+  tested). Links into `/scratch-cards/batches/[id]` carry `?from=records` (→
+  "← Records", Past sends tab) or `?from=student&student=…` (→ "← Back to
+  the student"); anything else → "← Result cards". Build them with
+  `batchHref()`. Checked live for both origins.
+- **Gotcha, hit live:** a server route (`page.tsx`) must never import a
+  non-component value (an array, a const) from a `"use client"` file. It gets
+  a client-reference stub instead (`.find is not a function`), and the page
+  throws. Unit tests render the component directly and can't catch it. Fix:
+  keep such values in plain modules (`lib/record-tabs.ts`).
+
+### Showing every field that means something (2026-11-11, backend developer's review)
+The send page titled a replacement "Texted 1 card" although the response said
+`"reason": "lost"`. A sweep of all result-card responses for unused,
+meaningful fields:
+- **Send page** (`BatchDetailPage`, `BatchAssignmentRow`):
+  - `batchTitle` says "Texted 1 replacement card" when every assignment's
+    `reason` ≠ issued.
+  - `batchScopeName` names the class or arm from `scope_detail` (the list
+    has none, so it stays generic there).
+  - Each row: student linked to `/students/:intended_student`; serial; texted
+    to whom, or printed; `REASON_LABEL` + `assigned_at`; a superseded row says
+    "Replaced on {superseded_at}. This serial no longer works", with a
+    Replaced pill; delivery pill; mismatch.
+- **Student card history:** the shared `REASON_LABEL`, a "Replaced on…" line,
+  a "View send" link (`issuance_batch`), and a tint instead of `opacity-60`
+  (dimmed small grey text failed contrast).
+- **Card stock** `cardNotes()`: "Given to a student, not used yet"
+  (`active_assignment` and unbound: otherwise indistinguishable from stock);
+  "N wrong PIN tries (locks at 5)" (`failed_attempts`, before the lock);
+  "Replaced {revoked_at}".
+- **Texts needing a decision:** `sent_at` ("Handed to the SMS provider…" or
+  "Never handed…") and `attempts`.
+- **Purchases:** `gateway_reference`, for support.
+- Deliberately still unshown: ids, `gateway_response`, `is_fully_verified`
+  (tracking only, per the handoff), `last_error` (provider internals;
+  `failure_reason` is the readable one), `regenerated_from` (an id, not a
+  serial).
+- Tested: `assignment-labels.test.ts` (titles, scope names, notes); the
+  student-history test checks the new lines.
+
+### "It logs me out randomly": the multi-tab refresh race (fixed 2026-11-11)
+Reported by the backend developer (who keeps several tabs open), never seen by
+single-tab users.
+- **Cause:** refresh tokens are single-use (`ROTATE_REFRESH_TOKENS` +
+  `BLACKLIST_AFTER_ROTATION`; access 60 min, refresh 7 days).
+  1. Tab A refreshes and saves the new pair to localStorage.
+  2. Tab B, idle, still holds the spent pair **in memory**: zustand's persist
+     never re-reads storage when another tab writes.
+  3. On its next request tab B refreshes with a blacklisted token. Its old
+     "did someone else win?" check read its own in-memory store, so it
+     logged out, and `clearAuth()` wiped the shared storage too.
+- **Fix** (`lib/api/token-refresh.ts`, `lib/auth/persisted-tokens.ts`):
+  - `syncAuthAcrossTabs()` rehydrates the store on the `storage` event, so a
+    sign-out in one tab signs the others out too.
+  - Before refreshing, adopt a newer pair from storage.
+  - Refreshes are serialised across tabs with a Web Lock (secure contexts
+    only; plain-http `lvh.me` goes without).
+  - After a refusal, **re-check storage, not memory**, before logging out.
+  - A 401 on a request sent with an access token this tab has since replaced
+    is just retried with the current one.
+- **Tests** (`token-refresh.test.ts`, 6): lost race adopts the winner, a
+  pre-refreshed pair needs no server call, a really-dead session still logs
+  out, single-tab refresh, unreachable server keeps the session, storage-event
+  sync. With the old memory check put back, the two race tests fail.
+- **Live, two real Chrome tabs against the real backend** (puppeteer, an
+  access token minted to expire in 20s):
+  - *Before (fix stashed):* tab A refresh 200, tab B refresh **401**, tab B
+    sent to `/login`. Reproduced the report.
+  - *After:* one refresh (tab A, 200); tab B navigated normally, already holding
+    A's tokens via the storage sync.
+  - Truly simultaneous refreshes with the same token both got 200 on the old
+    code (the backend's check-then-blacklist isn't atomic), so the failure
+    needs a **staggered** second refresh: the idle-tab case.
+
+### Three fixes (2026-11-11)
+- **Result Cards moved from Finance to Results**, right after Publish Results
+  (`data/nav/results-group.ts`). Its daily job is getting results to parents,
+  which follows publishing; buying is occasional. The route stays
+  `/scratch-cards`, so Paystack's `/scratch-cards/payment-complete` return still
+  resolves to it by prefix. Same `manage_scratch_cards` gate.
+- **Replace only with an active assignment** (follow-up from the backend
+  developer, same day). The printed-slip rule alone still showed Replace on
+  plain stock (e.g. MWW5-4KLM-LD), because "Not used yet" covers both untouched
+  stock and a card issued but not yet checked.
+  - First fixed with per-row lookups, then replaced the same day by the
+    backend's **`active_assignment`** flag on every card row (7ebd0d3, an
+    `Exists` annotation; always false in stock). `canOfferReplace` =
+    `active_assignment && not replaced && not a printed slip`. **No per-row
+    requests**: the test serves no assignments handler, so any lookup fails it.
+    The dialog still loads that one assignment when opened.
+  - Tested with the three cases: issued (Replace), plain stock MWW5-4KLM-LD
+    (none), printed slip (none).
+- **Payment return no longer reveals the PINs automatically** (backend handoff
+  change, 7ebd0d3).
+  - Paid cards go **into stock by default**, a path that must never call
+    reveal. `PaidPurchasePanel` leads with "Issue cards".
+  - "Show the PINs now" is a second, explicit choice. Its confirm spells out the
+    trade-off: no student recorded, out of stock (never issuable or
+    replaceable), shown once, only within 15 minutes of payment. "Keep them in
+    stock" backs out.
+  - **Empty reveal:** the panel re-reads the purchase (`onRevealedEmpty` →
+    confirm refetch, "Checking…" meanwhile) before choosing between "15
+    minutes passed, still in stock" and "already shown as slips". A reveal
+    whose response was lost leaves a stale copy saying unrevealed, and
+    claiming "still in stock" then would be false. Tested, and the test was
+    checked by removing the re-read.
+  - The buy form's "come back here to see and save the PINs" now says the cards
+    go into stock.
+  - **Not seen live:** needs a real paid purchase (Paystack test checkout).
+- **No Replace on a printed slip** (`canOfferReplace` in `cards-views.tsx`, tested).
+  A card with `pins_revealed_at` has no assignment, so Replace could only open
+  a dialog saying "can't". The "Printed slip" tag stays. "Not used yet" cards
+  that aren't printed slips keep Replace, because they may be issued but
+  unchecked.
+- **PDF slips lost the school logo while Print kept it.** The cause, diagnosed:
+  - `SchoolLogo` (sidebar and topbar) renders the same presigned URL as a plain
+    `<img>`. S3 answers that with no `Access-Control-Allow-Origin` and no
+    `Vary: Origin`, and Chrome caches it. `loadLogo`'s later CORS `fetch` reused
+    the cached copy, failed CORS, and quietly fell back to no logo.
+  - The bucket itself **does** allow GET from school origins: checked live with
+    a preflight from `https://greenfield.myschoolos.io` and `localhost:3002`.
+    This resolves the old "Unverified: S3 CORS for GET" note.
+  - Fix: `fetch(..., { cache: "no-store" })`. A cache-busting query param
+    would break the presigned signature.
+  - Also: decoding now goes through an `<img>` instead of `createImageBitmap`,
+    which can't decode SVG in Chrome, and the 5s limit now covers the decode
+    too. Tested (`load-logo.test.ts`).
+  - **Not reproduced end to end here:** no local school has a logo, and
+    Greenfield Demo Academy is on another environment. Retest a PDF download
+    there.
+
+### Parent numbers: no duplicates, and parent-account phones shown (2026-11-11, backend 1cd3adf)
+- **Duplicates fixed server-side:** a number is unique per student (migration
+  `messaging.0003`, applied locally; it deleted existing duplicates, keeping
+  the main number or else the oldest). Create/edit refuse with "This student
+  already has this number." (toasted), and the CSV skips such rows on preview
+  and commit. The import dialog's old "importing twice duplicates" warning now
+  says the opposite.
+- **Parent-account phones:** a student with no saved number is texted at a
+  linked parent account's phone. Those numbers are now visible:
+  - **Parent numbers tab:** a second, read-only section, `AccountPhonesList`,
+    from `GET guardian-contacts/account-phones/` (one call, never `?student=`
+    per student). It uses the same search (it matches student and parent name
+    and admission no., **not phone**) and is hidden when empty. "Use a
+    different number" opens `ContactFormDialog` with the student preset; once
+    saved, the student leaves this list on refetch. Its query sits under
+    `GUARDIAN_CONTACTS_KEY`, so every contact write refetches both lists.
+  - **Student page:** `?student=` now returns `account_phone` next to
+    `results` (`ContactsPage` type). With no saved number, the section names the
+    parent and number the card will be texted to, or says plainly there's no
+    number anywhere.
+- Tested (panel, import, student section). **Live:** account-phones returned
+  2 real FGC students; `?student=` returned `account_phone: null` where
+  expected. Screenshots at 390 and 1280px; on phones the "Use a different
+  number" button moved below the text, which it was squeezing.
+
+### Audit log caught up with the new backend actions (2026-11-10)
+A diff of `audit/enums.py` against `features/audit-logs/lib/actions/` found
+**17 actions with no catalog entry**: all of scratch_cards, payments and
+messaging, plus October's `attendance.cleared`. They had been rendering
+through the generic fallback ("debited -12 credits (debit:issuance:<uuid>)")
+and were missing from the action filter.
+- New `actions/cards.ts` and `actions/wallet.ts`, `attendance.cleared` in
+  `attendance.ts`. New categories: **Result cards** (Ticket), **SMS wallet**
+  (Wallet), **Parent numbers** (Phone).
+- Sentences were written against each call site's real `target_repr`. Card and
+  purchase model reprs use **" — School"**, not " @ School", so
+  `cleanTargetRepr` doesn't strip them, and the entries do it themselves
+  (`beforeDash`). UUIDs and ledger references are never shown.
+- `scratch_card.bound`, `scratch_card.locked` and some `wallet.refunded` rows
+  have **no actor** (public checker or worker), so they render after "System".
+  The catalog's old "every action has an actor" note no longer holds for these.
+- Tested: `new-actions.test.ts` runs every action's real repr shape through
+  `formatAuditEntry`, and checks the filter groups.
+- **Re-run this diff whenever the backend adds an app.** The audit log has no
+  catalog endpoint (see Real backend gaps), so nothing fails loudly when an
+  action is added.
+
+### Result Cards phase 2, review fixes from the backend developer (2026-11-10)
+Six points; all addressed, and each list's params are tested (`list-filters.test.tsx`,
+`wallet-lists.test.tsx`):
+- **Session scoping.** `useSessionFilter` (`scratch-cards/components/session-filter.tsx`)
+  starts on the current session (else the newest) and offers "All sessions".
+  - Card stock sends `academic_session_id` with every view, so **In stock is
+    `unused=true` + session**, the handoff's definition of issuable stock. A
+    note appears if "All sessions" is picked with In stock.
+  - Purchases send `academic_session_id`.
+  - Sent sends **`academic_session`**: that list's `filterset_fields` name, not
+    `_id`.
+- **Purchases:** status (Paid / Not completed / Failed), session, From/To.
+  `gateway` deliberately isn't offered (Paystack only). Rows show
+  `card_count` ("40 cards · 43 incl. replacements") when replacements push it
+  past `quantity`, plus "PINs printed" when `pins_revealed_at` is set. The table
+  became a two-line list at every width.
+- **Top-ups:** status filter + From/To. **Ledger:** From/To on top of the type
+  filter. Both keep the filter bar visible in empty and loading states, with
+  "No … match these filters" wording.
+- **Sent:** channel (texted/printed) + session.
+- **Payment-return empty reveal** now branches on `pins_revealed_at` (tested
+  both ways). Set means shown on an earlier visit: printed slips, no longer
+  stock. Unset means the 15-minute window expired: still stock, fresh PIN on
+  issue. The confirm response is read before this page's reveal, so the field
+  reflects earlier visits only.
+- Shared `components/shared/date-range-fields.tsx` (`DateRangeFields` +
+  `dateRangeParams`), the audit log's From/To layout made reusable. The audit
+  log itself was left as is.
+- Not screenshotted: Docker was stopped at the time.
+
+### Result Cards phase 2, step 5: card history and platform credit adjustments (2026-11-10)
+- **Student page → "Result card" section** (`StudentResultCardSection`). Shown only
+  with `manage_scratch_cards` via `useHasSchoolPermission`, which is false
+  while `/me` loads and in the teacher view (teachers open this page too).
+  - **Parent numbers:** that student's contacts (`?student=`) with
+    add/edit/make main/remove, reusing `ContactsList` and `ContactFormDialog`.
+    It says where texts go when none is saved (a linked parent account's phone).
+  - **Cards issued:** `StudentCardHistory` (`card-assignments/?intended_student=`,
+    newest first). Each row shows serial, reason (Issued / Replaced: lost /
+    Replaced: never arrived / Sent again), Current or Replaced, delivery pill,
+    texted-to (masked) or printed, and the **mismatch** line (shown, never acted
+    on, per the handoff). Tested.
+  - Live: renders on a real FGC student with no errors. FGC has no cards, so
+    only the empty state was seen.
+- **Platform: `AdjustCreditsDialog`** ("SMS credits" on the platform school
+  detail). Add or remove, credits, required reason, a key per opening reused
+  on retry; `POST /wallet/adjustments/` with signed credits. Staff can't
+  read a school's balance (`GET /wallet/` is school-only), so the result
+  toast shows `balance_after`. Like the other platform dialogs it isn't
+  permission-gated client-side (Super Admin gets `adjust_school_wallets` on
+  migrate; others get the server's 403 as a toast). Tested (signs, trim,
+  same key on retry). **Not verified live:** no platform-admin session was
+  used.
+- With this, **every route from the SMS/wallet/issuance backend is consumed**
+  except the deliberate ones: the single-item detail routes
+  (`wallet/topups/{id}/`, `scratch-cards/{id}/`, `outbound-messages/{id}/`)
+  and the server-to-server webhooks. (platform admins credit
+  or debit a school's wallet, `adjust_school_wallets`).
+
+### Auto-generated admission numbers (2026-11-17, backend 95699ce)
+Branch `feat/auto-admission-number`, kept off `development` until that is merged
+to main.
+- **Backend:** admission numbers are allocated from a per-school
+  `AdmissionNumberCounter` as `{slug[:5].upper()}-{n:06d}` (e.g. `FGC-000005`),
+  never reset. `POST` add-student no longer takes `admission_number` (sending it
+  is silently ignored). The bulk-import header must be **exactly**
+  `first_name, last_name, gender, date_of_birth, class_name, arm_name, email`;
+  the old template with `admission_number` is rejected as a whole file. Preview
+  returns *provisional* numbers (counter not advanced); commit allocates the real
+  ones. Migration `accounts.0012` **renumbered every existing student**, oldest
+  first, and rewrote synthetic emails to match.
+- **Frontend:**
+  - Add-student form: the admission-number field is gone (schema, payload, type).
+    A line says it's assigned automatically; `StudentCredentialsResult` already
+    shows the returned number, so that's where the admin first sees it.
+  - Bulk import: `BULK_IMPORT_HEADER` (exported from `bulk-import-template.ts`)
+    drops the column; `bulk-import-template.test.ts` pins it to the backend set.
+    Upload instructions updated. The preview table labels the column
+    "Admission no. (expected)", greys the values, and says numbers can shift if
+    another student is added before import.
+- **Verified live** (preview only, no writes, FGC): the old header is rejected
+  with "CSV columns must be exactly…"; the new one previews with `FGC-000005`.
+  Not clicked through in the browser.
+- **Open questions for the backend / the school:** the renumbering changes every
+  student's sign-in identifier, invalidates admission numbers on printed slips,
+  sent SMS and downloaded CSVs, and breaks re-importing an old parent-numbers
+  CSV keyed on the old numbers. Schools can no longer keep their own numbering.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

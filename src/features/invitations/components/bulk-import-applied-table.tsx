@@ -23,7 +23,12 @@ export function BulkImportAppliedTable({ rows, stage }: Props) {
           <tr className="border-b border-n-200 text-xs uppercase tracking-wide text-n-400">
             <th className="px-3 py-2 font-medium">Row</th>
             <th className="px-3 py-2 font-medium">Student</th>
-            <th className="px-3 py-2 font-medium">Admission no.</th>
+            {/* Preview numbers are provisional: the backend reports the next
+                free numbers without reserving them, so a student added
+                elsewhere before commit shifts them. Committed ones are final. */}
+            <th className="px-3 py-2 font-medium">
+              {stage === "preview" ? "Admission no. (expected)" : "Admission no."}
+            </th>
             <th className="px-3 py-2 font-medium">Class</th>
             <th className="px-3 py-2 font-medium">Email</th>
             <th className="px-3 py-2 font-medium">Password</th>
@@ -55,7 +60,9 @@ function AppliedRow({ row, stage }: { row: BulkImportAppliedRow; stage: Props["s
       <td className="px-3 py-2 font-medium text-ink">
         {row.first_name} {row.last_name}
       </td>
-      <td className="px-3 py-2">{row.admission_number}</td>
+      <td className={stage === "preview" ? "px-3 py-2 text-n-500" : "px-3 py-2"}>
+        {row.admission_number}
+      </td>
       <td className="px-3 py-2">
         {row.class_name}
         {row.arm_name ? ` ${row.arm_name}` : ""}
