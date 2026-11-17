@@ -31,17 +31,27 @@ export const HERO = {
 // 980 students, 36 teachers + 9 school admins). Update both lists together
 // when a school joins or leaves. Keep the figures at or below the real count,
 // never rounded up, and only list a school that has agreed to be named.
+//
+// The school count is deliberately not a headline figure: a large "3" reads
+// as small, and the crests already say it. "45 staff" is 36 teachers + 9
+// school admins.
 export const SCHOOLS_USING_US = {
-  label: "Already running on SchoolOS",
-  stats: [
-    { value: "3", label: "schools" },
-    { value: "980+", label: "students" },
-    { value: "45", label: "teachers and school admins" },
+  label: "Trusted by schools across Nigeria",
+  // Rendered as one sentence; `strong` parts are set in ink, the rest muted.
+  headline: [
+    { text: "980+ students", strong: true },
+    { text: " and " },
+    { text: "45 staff", strong: true },
+    { text: " are already on SchoolOS." },
   ],
   schools: [
-    { id: "st-peters-ikwuano", name: "St. Peter's Nur. Pri. Sec. School, Ikwuano" },
-    { id: "let-it-shine", name: "Let It Shine Secondary School" },
-    { id: "kids-paradise", name: "Kids Paradise Montessori School" },
+    {
+      id: "st-peters-ikwuano",
+      name: "St. Peter's Nur. Pri. Sec. School, Ikwuano",
+      shortName: "St. Peter's, Ikwuano",
+    },
+    { id: "let-it-shine", name: "Let It Shine Secondary School", shortName: "Let It Shine" },
+    { id: "kids-paradise", name: "Kids Paradise Montessori School", shortName: "Kids Paradise" },
   ],
 } as const;
 

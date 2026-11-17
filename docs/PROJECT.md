@@ -3185,18 +3185,23 @@ to main.
   CSV keyed on the old numbers. Schools can no longer keep their own numbering.
 
 ### Landing: schools using SchoolOS (2026-11-17)
-Same branch. `SchoolsUsingUs` sits directly under the hero: "Already running on
-SchoolOS", three headcounts (3 schools · 980+ students · 45 teachers and school
-admins) and the three schools' crests on white tiles.
+Same branch. `SchoolsUsingUs` sits directly under the hero: a two-tone display
+sentence ("**980+ students** and **45 staff** are already on SchoolOS.") beside
+the three schools' crests, unboxed, split by hairlines, greyscale until hover.
+- **First version was rejected as ugly** (stat tiles, white boxed logos, a big
+  "3"). Kept from that: never headline the school count, it reads as small;
+  the crests say it. Never box a logo; cut it to transparent instead.
 - **The figures are hand-maintained** in `SCHOOLS_USING_US` (`data/landing.ts`),
   copied from the platform-admin overview on 2026-11-17. There's no public stats
   endpoint, and the landing page can't call the platform one. Update the numbers
   and the school list together; never round up. Going live would need a
   backend `GET` that's public and returns only totals.
 - Parents are deliberately not counted: the overview doesn't report them.
-- Logos are static imports from `components/landing/assets/schools/`, trimmed of
-  their white margins and capped at 400px with sharp (St Peter's was 1.3 MB). A
-  logo is keyed by school id, so a missing one fails the type-check.
+- Logos are static imports from `components/landing/assets/schools/`: transparent
+  PNGs cut with sharp from the white originals (near-white keyed to alpha with a
+  soft 225-248 ramp, trimmed, capped at 400px). `mix-blend-multiply` was tried
+  first and left faint lighter rectangles behind the crests. A logo is keyed by
+  school id, so a missing one fails the type-check.
 - Checked by screenshot at 1440px and 500px (headless Chrome won't go narrower).
 
 ## Next up
