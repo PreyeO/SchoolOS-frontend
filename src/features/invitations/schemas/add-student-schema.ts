@@ -7,7 +7,8 @@ import { nameField } from "./shared";
 export const addStudentSchema = z.object({
   first_name: nameField,
   last_name: nameField,
-  admission_number: z.string().min(1, "Required"),
+  // No admission_number: the backend allocates it from a per-school counter
+  // (e.g. GRN-000001) and returns it in the response.
   password: passwordField,
   gender: z.enum(["male", "female"]),
   date_of_birth: z

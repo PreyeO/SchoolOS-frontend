@@ -3121,6 +3121,35 @@ Six points; all addressed, and each list's params are tested (`list-filters.test
   and the server-to-server webhooks. (platform admins credit
   or debit a school's wallet, `adjust_school_wallets`).
 
+### Auto-generated admission numbers (2026-11-17, backend 95699ce)
+Branch `feat/auto-admission-number`, kept off `development` until that is merged
+to main.
+- **Backend:** admission numbers are allocated from a per-school
+  `AdmissionNumberCounter` as `{slug[:5].upper()}-{n:06d}` (e.g. `FGC-000005`),
+  never reset. `POST` add-student no longer takes `admission_number` (sending it
+  is silently ignored). The bulk-import header must be **exactly**
+  `first_name, last_name, gender, date_of_birth, class_name, arm_name, email`;
+  the old template with `admission_number` is rejected as a whole file. Preview
+  returns *provisional* numbers (counter not advanced); commit allocates the real
+  ones. Migration `accounts.0012` **renumbered every existing student**, oldest
+  first, and rewrote synthetic emails to match.
+- **Frontend:**
+  - Add-student form: the admission-number field is gone (schema, payload, type).
+    A line says it's assigned automatically; `StudentCredentialsResult` already
+    shows the returned number, so that's where the admin first sees it.
+  - Bulk import: `BULK_IMPORT_HEADER` (exported from `bulk-import-template.ts`)
+    drops the column; `bulk-import-template.test.ts` pins it to the backend set.
+    Upload instructions updated. The preview table labels the column
+    "Admission no. (expected)", greys the values, and says numbers can shift if
+    another student is added before import.
+- **Verified live** (preview only, no writes, FGC): the old header is rejected
+  with "CSV columns must be exactly…"; the new one previews with `FGC-000005`.
+  Not clicked through in the browser.
+- **Open questions for the backend / the school:** the renumbering changes every
+  student's sign-in identifier, invalidates admission numbers on printed slips,
+  sent SMS and downloaded CSVs, and breaks re-importing an old parent-numbers
+  CSV keyed on the old numbers. Schools can no longer keep their own numbering.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

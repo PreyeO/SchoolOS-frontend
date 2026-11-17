@@ -16,13 +16,13 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const applied = (password: string | null) => ({
-  row: 2, first_name: "Ada", last_name: "Obi", admission_number: "ADM/001", gender: "female",
+  row: 2, first_name: "Ada", last_name: "Obi", admission_number: "GRN-000001", gender: "female",
   date_of_birth: null, email: "ada@school.ng", class_name: "JSS1", arm_name: "A", class_arm_id: "arm-1",
   password, password_note: null,
 });
 const PREVIEW: BulkImportResult = {
   applied: [applied(null)],
-  skipped: [{ row: 3, reason: "Admission number ADM/002 already exists." }],
+  skipped: [{ row: 3, reason: "Class 'JSS9' not found" }],
 } as BulkImportResult;
 const COMMITTED: BulkImportResult = { ...PREVIEW, applied: [applied("Xk7-pq92")] } as BulkImportResult;
 
@@ -61,7 +61,10 @@ describe("BulkImportPanel", () => {
     await chooseAndPreview();
     expect(posts).toEqual({ preview: ["jss1.csv"], commit: [] });
     expect(screen.getByText("1 skipped")).toBeInTheDocument();
-    expect(screen.getByText(/ADM\/002 already exists/)).toBeInTheDocument();
+    expect(screen.getByText(/JSS9' not found/)).toBeInTheDocument();
+    // Preview numbers are provisional (backend doesn't reserve them).
+    expect(screen.getByText("Admission no. (expected)")).toBeInTheDocument();
+    expect(screen.getByText("GRN-000001")).toBeInTheDocument();
   });
 
   it("commits by re-sending the same file, then shows the new passwords once", async () => {
@@ -71,6 +74,7 @@ describe("BulkImportPanel", () => {
 
     expect(await screen.findByText("1 student created")).toBeInTheDocument();
     expect(posts.commit).toEqual(["jss1.csv"]);
+    expect(screen.getByText("Admission no.")).toBeInTheDocument();
     expect(screen.getByText(/won.t be shown again/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download credentials/ })).toBeInTheDocument();
     expect(toast.success).toHaveBeenCalledWith("1 student imported");
