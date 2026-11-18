@@ -31,7 +31,7 @@ export interface EnvironmentInput {
   // navigator.maxTouchPoints: iPadOS 13+ reports a desktop Mac UA, and this is
   // the only reliable way to tell an iPad from a Mac.
   maxTouchPoints: number;
-  // matchMedia("(display-mode: standalone|fullscreen|minimal-ui)").
+  // isAppDisplayMode(): display-mode standalone or minimal-ui.
   displayModeStandalone: boolean;
   // iOS Safari's non-standard navigator.standalone, true in a home-screen app.
   navigatorStandalone: boolean;
@@ -85,10 +85,22 @@ export function readInstallEnvironment(): InstallEnvironment {
   return detectInstallEnvironment({
     userAgent: navigator.userAgent,
     maxTouchPoints: navigator.maxTouchPoints ?? 0,
-    displayModeStandalone:
-      media("(display-mode: standalone)") || media("(display-mode: fullscreen)") || media("(display-mode: minimal-ui)"),
+    displayModeStandalone: isAppDisplayMode(media),
     navigatorStandalone: (navigator as Navigator & { standalone?: boolean }).standalone === true,
   });
+}
+
+// Whether the page is running in the installed app's window.
+//
+// standalone is what our manifest asks for; minimal-ui is what a browser that
+// can't do standalone falls back to. NOT fullscreen: Chrome reports
+// display-mode: fullscreen for an ordinary tab whenever the browser is
+// full-screen (F11, or the green button on a Mac). Checking it hid "Install
+// app" from a co-founder's Chrome on desktop, in a fresh incognito window,
+// while Safari showed it. Verified in Chrome: a plain tab goes from browser to
+// fullscreen on requestFullscreen().
+export function isAppDisplayMode(matches: (query: string) => boolean): boolean {
+  return matches("(display-mode: standalone)") || matches("(display-mode: minimal-ui)");
 }
 
 // What the UI should offer.
