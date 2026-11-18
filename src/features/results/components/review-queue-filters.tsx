@@ -7,8 +7,14 @@ import type { ArmOptionGroup } from "@/lib/school/arm-options";
 import type { PeriodOptionGroup } from "@/lib/school/period-options";
 
 import type { ReviewQueueSubjectOption } from "../hooks/use-review-queue-subjects";
+import { STATUS_FILTERS } from "../lib/review-queue-filter";
+import type { SubmissionStatus } from "../types";
 
 interface Props {
+  // "" means every status (server-paged). A status reads the whole term and
+  // filters it here, since the backend can't filter by status.
+  status: SubmissionStatus | "";
+  onStatusChange: (status: SubmissionStatus | "") => void;
   termGroups: PeriodOptionGroup[];
   periodId: string | null;
   onPeriodChange: (id: string) => void;
@@ -23,10 +29,14 @@ interface Props {
   subjectsPending: boolean;
 }
 
-// Term, class and subject — all three are SERVER filters now
-// (2026-09-05): each keys the submissions request directly, so narrowing here
-// never hides a row that just didn't happen to load on the current page.
+// Term, class and subject are SERVER filters (2026-09-05): each keys the
+// submissions request directly, so narrowing never hides a row that just
+// didn't happen to load on the current page. Status is the exception: with one
+// picked, the page loads the whole term and filters all four here (see
+// pageByStatus), which is what keeps every match together.
 export function ReviewQueueFilters({
+  status,
+  onStatusChange,
   termGroups,
   periodId,
   onPeriodChange,
@@ -41,6 +51,23 @@ export function ReviewQueueFilters({
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-xl border border-n-200 bg-white p-4">
       <TermPicker groups={termGroups} value={periodId} onChange={onPeriodChange} label="Term" />
+
+      <label className="flex items-center gap-2 text-sm">
+        <span className="text-n-500">Status</span>
+        <Select
+          value={status}
+          onChange={(e) => onStatusChange(e.target.value as SubmissionStatus | "")}
+          aria-label="Filter by status"
+          className="min-w-44"
+        >
+          <option value="">All statuses</option>
+          {STATUS_FILTERS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </Select>
+      </label>
 
       <ArmPicker
         groups={armGroups}

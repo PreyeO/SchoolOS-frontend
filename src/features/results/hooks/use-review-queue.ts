@@ -93,15 +93,18 @@ export async function getReviewQueuePage(
   return data;
 }
 
+// `enabled` false while the review page is filtered by status: that view reads
+// the whole term from useReviewQueue instead (see pageByStatus).
 export function useReviewQueuePage(
   academicPeriodId: string | null | undefined,
   page: number,
   filters: ReviewQueuePageFilters,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: [...REVIEW_QUEUE_QUERY_KEY, "page", academicPeriodId, page, filters],
     queryFn: () => getReviewQueuePage(academicPeriodId as string, page, filters),
-    enabled: !!academicPeriodId,
+    enabled: enabled && !!academicPeriodId,
     // Keeps the current page's rows on screen while the next page loads,
     // instead of collapsing the whole list to a spinner on every click.
     placeholderData: (previous) => previous,

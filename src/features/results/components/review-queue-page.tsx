@@ -8,7 +8,7 @@ import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
-import { REVIEW_QUEUE_PAGE_SIZE, useReviewQueuePage } from "../hooks/use-review-queue";
+import { REVIEW_QUEUE_PAGE_SIZE, useReviewQueue, useReviewQueuePage } from "../hooks/use-review-queue";
 import { useReviewQueueSubjects } from "../hooks/use-review-queue-subjects";
 import { useReviewQueueView } from "../hooks/use-review-queue-view";
 import {
@@ -16,7 +16,8 @@ import {
   useRejectResult,
   useUnlockResult,
 } from "../hooks/use-submission-actions";
-import type { ResultSubmission } from "../types";
+import { pageByStatus, STATUS_FILTERS } from "../lib/review-queue-filter";
+import type { ResultSubmission, SubmissionStatus } from "../types";
 import { NoTermsNotice } from "./no-terms-notice";
 import { type ReviewAction, ReviewActionDialogs } from "./review-action-dialogs";
 import { ReviewQueueEmpty } from "./review-queue-empty";
@@ -25,19 +26,31 @@ import { ReviewQueueList } from "./review-queue-list";
 import { SubmissionScoresDialog } from "./submission-scores-dialog";
 import { TermBadge } from "./term-badge";
 
-export function ReviewQueuePage() {
+interface Props {
+  // From ?status=, set by the dashboard's "Results this term" rows.
+  initialStatus?: SubmissionStatus | "";
+}
+
+export function ReviewQueuePage({ initialStatus = "" }: Props) {
   // Term, class and subject all key the request now — see use-review-queue.ts.
   const term = useTermSelection();
   const { data: classes } = useClasses();
+  const [status, setStatus] = useState<SubmissionStatus | "">(initialStatus);
   const [armId, setArmId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [page, setPage] = useState(1);
-  const {
-    data: queuePage,
-    isPending,
-    isError,
-    error,
-  } = useReviewQueuePage(term.periodId, page, { classArmId: armId || undefined, subjectId: subjectId || undefined });
+  const byStatus = status !== "";
+  const filters = { classArmId: armId || undefined, subjectId: subjectId || undefined };
+
+  // Two sources, one live at a time. "All statuses" pages the server, 25 at a
+  // time. A status reads the whole term (the dashboard already loaded it, so
+  // arriving from there is instant) and pages it here: the server can't filter
+  // by status, and its newest-first pages scattered "4 awaiting" across pages
+  // 1, 2 and 3.
+  const serverPage = useReviewQueuePage(term.periodId, page, filters, !byStatus);
+  const wholeTerm = useReviewQueue(byStatus ? term.periodId : null);
+  const { isPending, isError, error } = byStatus ? wholeTerm : serverPage;
+
   const approve = useApproveResult();
   const reject = useRejectResult();
   const unlock = useUnlockResult();
@@ -46,8 +59,31 @@ export function ReviewQueuePage() {
 
   const armGroups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const { subjects, isPending: subjectsPending } = useReviewQueueSubjects(armId);
-  const { submissions, awaiting } = useReviewQueueView({ submissions: queuePage?.results });
-  const filtered = !!armId || !!subjectId;
+  const serverView = useReviewQueueView({ submissions: serverPage.data?.results });
+  // Not memoised: one term's submissions is at most a few hundred rows.
+  const statusView = byStatus
+    ? pageByStatus(wholeTerm.data ?? [], { status, ...filters }, page, REVIEW_QUEUE_PAGE_SIZE)
+    : null;
+
+  const submissions = statusView ? statusView.rows : serverView.submissions;
+  const count = statusView ? statusView.count : (serverPage.data?.count ?? 0);
+  const currentPage = statusView ? statusView.page : page;
+  const filtered = byStatus || !!armId || !!subjectId;
+
+  const statusSummary = STATUS_FILTERS.find((f) => f.value === status)?.summary;
+  const summary = statusView ? (
+    <>
+      <span className="font-medium text-ink">{count}</span> {statusSummary}
+      {armId || subjectId ? " for these filters" : " this term"}
+    </>
+  ) : serverView.awaiting === 0 ? (
+    "Nothing on this page is waiting on you."
+  ) : (
+    <>
+      <span className="font-medium text-ink">{serverView.awaiting}</span> awaiting your review on this
+      page
+    </>
+  );
 
   function resetPage() {
     setPage(1);
@@ -82,6 +118,8 @@ export function ReviewQueuePage() {
       ) : (
         <>
           <ReviewQueueFilters
+            status={status}
+            onStatusChange={(next) => { setStatus(next); resetPage(); }}
             termGroups={term.groups}
             periodId={term.periodId}
             onPeriodChange={(id) => { term.setPeriodId(id); resetPage(); }}
@@ -103,7 +141,7 @@ export function ReviewQueuePage() {
             <>
               <ReviewQueueList
                 submissions={submissions}
-                awaiting={awaiting}
+                summary={summary}
                 isApproving={approve.isPending}
                 onView={setViewing}
                 onApprove={(s) => approve.mutate({ id: s.id })}
@@ -111,9 +149,9 @@ export function ReviewQueuePage() {
                 onUnlock={(s) => setAction({ kind: "unlock", submission: s })}
               />
               <PaginationControls
-                page={page}
+                page={currentPage}
                 pageSize={REVIEW_QUEUE_PAGE_SIZE}
-                count={queuePage?.count ?? 0}
+                count={count}
                 onPageChange={setPage}
               />
             </>
