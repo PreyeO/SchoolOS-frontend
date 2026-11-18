@@ -26,6 +26,13 @@ export function isConflictError(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 409;
 }
 
+// A 404. DRF's paginator also answers an out-of-range ?page= this way
+// ("Invalid page."), which is how a server-paged list learns its current page
+// no longer exists after the last row on it moved away.
+export function isNotFoundError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 404;
+}
+
 // The request was aborted by OUR OWN timeout, not refused by the server.
 //
 // Distinct from isNetworkError, which this would otherwise be folded into:

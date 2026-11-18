@@ -3,8 +3,27 @@
 import { useMemo } from "react";
 
 import { useClassArmResults } from "./use-report-card";
-import { useReviewQueue } from "./use-review-queue";
+import { useReviewQueue, useSubmissionStatusCounts } from "./use-review-queue";
 import { useScoreSheets } from "./use-score-sheets";
+
+// The admin home's version: the same figures, from four count-only requests
+// instead of every submission in the term. The teacher home keeps
+// useResultsProgress below, because it filters the rows down to the teacher's
+// own subjects and so needs them.
+export function useAdminResultsProgress() {
+  const { currentTerm } = useScoreSheets();
+  const { data: batches, isPending: batchesLoading } = useClassArmResults(currentTerm?.id);
+  const { data: counts, isPending: countsLoading } = useSubmissionStatusCounts(currentTerm?.id);
+
+  return {
+    currentTerm,
+    isPending: !!currentTerm && (batchesLoading || countsLoading),
+    published: (batches ?? []).filter((b) => b.is_locked).length,
+    awaitingReview: counts?.submitted ?? 0,
+    sentBack: counts?.rejected ?? 0,
+    notSubmitted: counts?.draft ?? 0,
+  };
+}
 
 // Where the term's results have got to, for the two home screens.
 //

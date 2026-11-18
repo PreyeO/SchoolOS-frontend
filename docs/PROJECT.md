@@ -3191,11 +3191,19 @@ the three schools' crests, unboxed, split by hairlines, greyscale until hover.
 - **First version was rejected as ugly** (stat tiles, white boxed logos, a big
   "3"). Kept from that: never headline the school count, it reads as small;
   the crests say it. Never box a logo; cut it to transparent instead.
-- **The figures are hand-maintained** in `SCHOOLS_USING_US` (`data/landing.ts`),
-  copied from the platform-admin overview on 2026-11-17. There's no public stats
-  endpoint, and the landing page can't call the platform one. Update the numbers
-  and the school list together; never round up. Going live would need a
-  backend `GET` that's public and returns only totals.
+- **The headcounts are live since 2026-11-18** (backend cb9e018, public
+  `GET /api/schools/stats/`). `lib/landing/public-stats.ts` fetches it
+  server-side, `next: { revalidate: 3600 }` (the backend caches its totals an
+  hour too) with a 5s timeout, so `/` stays static at **1h revalidate**
+  (confirmed in `next build`). Students ≥100 are floored to the ten below with
+  "+" (983 → "980+"); staff = teachers + school_admins, exact under 100. A
+  failed fetch or zero students falls back to `fallbackTotals` (the 2026-11-17
+  figures). Verified rendered: backend down → "980+ students and 45 staff";
+  against a stand-in returning 1,234 / 41+9 → "1,230+ students and 50 staff".
+- **The crests are still hand-picked**, deliberately. The endpoint's `schools`
+  is every School row, consented or not (test and trial schools included), and
+  its logos are presigned for an hour, which a cached page outlives. Add a
+  school to `SCHOOLS_USING_US.schools` only once it has agreed.
 - Parents are deliberately not counted: the overview doesn't report them.
 - Logos are static imports from `components/landing/assets/schools/`: transparent
   PNGs cut with sharp from the white originals (near-white keyed to alpha with a
@@ -3317,9 +3325,24 @@ fetches every page); the review list pages the server 25 at a time, ordered
 - Tests: `review-queue-filter.test.ts`, and `review-queue-page.test.tsx` against
   a fake endpoint that pages like the real one (60 rows, awaiting at 0/30/50/55).
   Forcing server paging back, the two status tests fail.
-- **Would let this go server-side:** `status` in `filterset_fields` (and
-  ideally an ordering param) on `ClassArmSubjectResultSubmissionViewSet`. Then
-  the status view could request one filtered page instead of the whole term.
+- **Superseded the same day by server-side filtering** (backend cb9e018 added
+  `status` to `filterset_fields` and `ordering` over status/created_at/
+  submitted_at):
+  - The review page is server-paged again in every view and sends `status`
+    when picked. It always sends `ordering=-status,-created_at`: the status
+    strings sort descending as submitted, rejected, draft, approved, which is
+    the queue's priority order, so awaiting work leads **across the term**
+    even with "All statuses". A test pins that the strings still sort that way.
+  - The line above the list uses whole-term counts: "4 awaiting your review
+    this term, listed first", or "on this page" only when class/subject narrow it.
+  - `getSubmissionStatusCounts` makes four `page_size=1` requests and reads
+    `count`. The **admin home card** now uses those (`useAdminResultsProgress`)
+    instead of downloading the whole term. The teacher home card and Publish
+    Results still use `useReviewQueue`, because they need the rows.
+  - An out-of-range page (DRF 404 "Invalid page.", e.g. after approving the
+    last row on page 2) steps back one (`isNotFoundError`). Tested, and the
+    test fails without it.
+  - `pageByStatus` is removed.
 
 ### Remarks no longer need behaviour traits (2026-11-18, development)
 **Bug:** on `/results/behaviour`, a category with no traits replaced the whole

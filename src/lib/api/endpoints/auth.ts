@@ -43,6 +43,11 @@ export const ENDPOINTS = {
 // on a DefaultRouter, trailing_slash=True by default) — every action here,
 // including onboarding/advance and onboarding/review, carries a trailing slash.
 export const SCHOOL_ENDPOINTS = {
+  // Public (AllowAny), backend cb9e018: { totals: { schools, students,
+  // teachers, school_admins }, schools: [{ id, name, city, state, logo }] }.
+  // Totals cached an hour server-side. `schools` is EVERY school row, with
+  // hour-long presigned logo URLs; the landing page uses the totals only.
+  PUBLIC_STATS: () => `/api/schools/stats/`,
   // GET (school detail, includes levels) and PATCH (branding update) both hit
   // this same resource. Do NOT use the school-list endpoint for levels — its
   // summary omits them and only has school_type.
