@@ -3297,6 +3297,30 @@ The backend's approve doesn't check completeness.
   Action or Cancel**; use the primitive, or pass classes to the wrapper. No
   other component did (the many `DialogClose asChild` add no classes).
 
+### Result Review: status filter, so the dashboard's counts land together (2026-11-18, development)
+**Reported:** clicking "4 awaiting your review" on the admin home opened
+`/results/review` with those 4 scattered across the server's pages (1 on page
+1, 1 on page 2, 2 on page 3). The card counts the whole term (`useReviewQueue`
+fetches every page); the review list pages the server 25 at a time, ordered
+`-created_at`, with no status filter or ordering param (the gap noted under
+"Real backend gaps").
+- **Status filter** on the review page: All statuses / Awaiting review / Sent
+  back / Not submitted / Approved. With a status picked, the page reads the
+  **whole term** from `useReviewQueue` (same query key as the dashboard, so it's
+  cached when arriving from there) and `pageByStatus` filters by status, class
+  and subject, sorts, and pages 25 here. "All statuses" is unchanged server
+  paging, and its line still says "on this page".
+- The dashboard rows link to `?status=submitted|rejected|draft`, read
+  server-side in the route (`parseStatusFilter`, no Suspense), like broadsheet.
+- With a status, the line reads "4 awaiting your review this term", a real
+  whole-term figure. The page clamps when approving shrinks the list under it.
+- Tests: `review-queue-filter.test.ts`, and `review-queue-page.test.tsx` against
+  a fake endpoint that pages like the real one (60 rows, awaiting at 0/30/50/55).
+  Forcing server paging back, the two status tests fail.
+- **Would let this go server-side:** `status` in `filterset_fields` (and
+  ideally an ordering param) on `ClassArmSubjectResultSubmissionViewSet`. Then
+  the status view could request one filtered page instead of the whole term.
+
 ### Remarks no longer need behaviour traits (2026-11-18, development)
 **Bug:** on `/results/behaviour`, a category with no traits replaced the whole
 student list with "No affective traits are set up", and the **class teacher's

@@ -1,16 +1,18 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { ReviewQueueRow } from "./review-queue-row";
 import type { ResultSubmission } from "../types";
 
 interface Props {
-  // This page's rows, sorted — see useReviewQueueView.
+  // This page's rows, sorted.
   submissions: ResultSubmission[];
-  // Counted over this page only, not the whole term (2026-09-05 — see
-  // use-review-queue.ts for why paging server-side gave up the whole-term
-  // figure), hence "on this page" in the label below rather than an
-  // unqualified total.
-  awaiting: number;
+  // The line above the list. Worded by the page, because what it can claim
+  // depends on the view: "N awaiting your review on this page" when paging the
+  // server (it can't see the rest of the term), "N awaiting your review this
+  // term" when filtered by status (it reads the whole term).
+  summary: ReactNode;
   isApproving: boolean;
   onView: (s: ResultSubmission) => void;
   onApprove: (s: ResultSubmission) => void;
@@ -20,7 +22,7 @@ interface Props {
 
 export function ReviewQueueList({
   submissions,
-  awaiting,
+  summary,
   isApproving,
   onView,
   onApprove,
@@ -29,16 +31,7 @@ export function ReviewQueueList({
 }: Props) {
   return (
     <>
-      <p className="text-sm text-n-500">
-        {awaiting === 0 ? (
-          "Nothing on this page is waiting on you."
-        ) : (
-          <>
-            <span className="font-medium text-ink">{awaiting}</span> awaiting your review on this
-            page
-          </>
-        )}
-      </p>
+      <p className="text-sm text-n-500">{summary}</p>
 
       <ul className="divide-y divide-n-100 rounded-xl border border-n-200 bg-white">
         {submissions.map((s) => (

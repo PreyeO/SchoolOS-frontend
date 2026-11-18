@@ -27,25 +27,28 @@ export function ResultsProgressCard() {
 
   if (!currentTerm) return null;
 
+  // Each row opens the review queue filtered to that status, so "4 awaiting"
+  // lands on those 4 together instead of wherever they fall in the
+  // server's newest-first pages.
   const stats = [
     {
       label: "Awaiting your review",
       value: awaitingReview,
-      href: "/results/review",
+      href: "/results/review?status=submitted",
       icon: Clock,
       urgent: awaitingReview > 0,
     },
     {
       label: "Sent back, not resubmitted",
       value: sentBack,
-      href: "/results/review",
+      href: "/results/review?status=rejected",
       icon: Undo2,
       urgent: false,
     },
     {
       label: "Not submitted yet",
       value: notSubmitted,
-      href: "/results/review",
+      href: "/results/review?status=draft",
       icon: Clock,
       urgent: false,
     },
