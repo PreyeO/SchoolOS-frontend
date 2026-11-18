@@ -23,7 +23,8 @@ import {
   useTraitRatings,
   useTraits,
 } from "../hooks/use-traits";
-import { TRAIT_CATEGORIES, type StudentResultRemark, type TraitCategory } from "../types";
+import { resolveTraitView } from "../lib/trait-view";
+import type { StudentResultRemark, TraitCategory } from "../types";
 import { BehaviourStudentBlock } from "./behaviour-student-block";
 
 const CATEGORY_LABEL: Record<TraitCategory, string> = {
@@ -115,13 +116,15 @@ export function BehaviourPage() {
     [schoolClasses, arm],
   );
 
-  const visibleTraits = useMemo(
-    () =>
-      (traits ?? [])
-        .filter((t) => t.is_active && t.category === category && (!level || t.level === level))
-        .sort((a, b) => a.order - b.order),
-    [traits, category, level],
-  );
+  // Traits are optional: with none set up, the page is still where the class
+  // teacher's remark is written (nowhere else can), so it shows the students
+  // and their remark boxes with no rating scales rather than an empty state.
+  const view = useMemo(() => resolveTraitView(traits, level, category), [traits, level, category]);
+  const visibleTraits = view.traits;
+  const hasTraits = view.categories.length > 0;
+  // Only once traits have loaded, so the heading doesn't flash "Remarks"
+  // before settling on "Behaviour & Remarks".
+  const remarksOnly = !!traits && !hasTraits;
 
   // Saved ratings by "studentId|traitId".
   const saved = useMemo(() => {
@@ -214,10 +217,13 @@ export function BehaviourPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">Behaviour &amp; Remarks</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">
+            {remarksOnly ? "Remarks" : "Behaviour & Remarks"}
+          </h1>
           <p className="mt-1 text-sm text-n-500">
-            Your part of each student&rsquo;s report card: rate them 1–5 on the traits your
-            school reports on, and write their remark. Both print as their own sections.
+            {remarksOnly
+              ? "Your part of each student’s report card: write their remark, with their results in view."
+              : "Your part of each student’s report card: rate them 1–5 on the traits your school reports on, and write their remark. Both print as their own sections."}
           </p>
         </div>
         {currentTerm && <TermBadge label={currentTerm.label} />}
@@ -260,25 +266,50 @@ export function BehaviourPage() {
               </Select>
             </label>
 
-            <span className="flex gap-1.5">
-              {TRAIT_CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(c)}
-                  aria-pressed={category === c}
-                  className={cn(
-                    "cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors",
-                    category === c
-                      ? "border-primary bg-primary/10 font-medium text-primary"
-                      : "border-n-200 text-n-500 hover:border-n-300",
-                  )}
-                >
-                  {CATEGORY_LABEL[c]}
-                </button>
-              ))}
-            </span>
+            {/* Only categories that have traits, and only when there's a choice:
+                a toggle whose other half is always empty is a dead end. With
+                one category its name is still shown, so a teacher knows which
+                section of the report card the scales feed. */}
+            {view.categories.length > 1 ? (
+              <span className="flex gap-1.5">
+                {view.categories.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategory(c)}
+                    aria-pressed={view.category === c}
+                    className={cn(
+                      "cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors",
+                      view.category === c
+                        ? "border-primary bg-primary/10 font-medium text-primary"
+                        : "border-n-200 text-n-500 hover:border-n-300",
+                    )}
+                  >
+                    {CATEGORY_LABEL[c]}
+                  </button>
+                ))}
+              </span>
+            ) : view.category ? (
+              <span className="text-sm text-n-500">{CATEGORY_LABEL[view.category]} traits</span>
+            ) : null}
           </div>
+
+          {remarksOnly && (
+            <p className="rounded-lg border border-n-200 bg-n-50 px-3.5 py-2.5 text-sm text-n-600">
+              Your school doesn&rsquo;t rate behaviour, so there&rsquo;s only the remark to write.{" "}
+              {isAdmin ? (
+                <>
+                  To add affective or psychomotor ratings, set up traits in{" "}
+                  <Link href="/settings/behaviour-traits" className="text-primary hover:underline">
+                    Behaviour Traits
+                  </Link>
+                  .
+                </>
+              ) : (
+                "If it should, an administrator can add the traits in Settings."
+              )}
+            </p>
+          )}
 
           <div className="rounded-xl border border-n-200 bg-white">
             {unavailableOffline ? (
@@ -287,17 +318,6 @@ export function BehaviourPage() {
               </div>
             ) : traitsLoading || rosterLoading || ratingsLoading ? (
               <p className="p-5 text-sm text-n-400" role="status">Loading…</p>
-            ) : visibleTraits.length === 0 ? (
-              <div className="p-5">
-                <p className="text-sm font-medium text-ink">
-                  No {CATEGORY_LABEL[category].toLowerCase()} traits are set up
-                </p>
-                <p className="mt-1 text-sm text-n-500">
-                  {isAdmin
-                    ? "Add them in Settings so teachers can rate against them."
-                    : "Ask an administrator to add the traits your school reports on."}
-                </p>
-              </div>
             ) : !students || students.length === 0 ? (
               <p className="p-5 text-sm text-n-400 italic">
                 No students are enrolled in {arm?.label} for this term.
@@ -329,20 +349,24 @@ export function BehaviourPage() {
                   ))}
                 </ul>
 
-                <div className="flex flex-wrap items-center justify-end gap-3 border-t border-n-100 px-5 py-3">
-                  <span className="mr-auto text-xs text-n-400">
-                    {changed.length > 0
-                      ? `${changed.length} unsaved rating${changed.length === 1 ? "" : "s"}.`
-                      : "No unsaved changes."}
-                  </span>
-                  <Button
-                    type="button"
-                    onClick={submit}
-                    disabled={changed.length === 0 || isSubmitting}
-                  >
-                    {isSubmitting ? "Saving…" : "Save ratings"}
-                  </Button>
-                </div>
+                {/* Ratings only. Each remark saves from its own field, so with
+                    no traits there's nothing for this bar to do. */}
+                {hasTraits && (
+                  <div className="flex flex-wrap items-center justify-end gap-3 border-t border-n-100 px-5 py-3">
+                    <span className="mr-auto text-xs text-n-400">
+                      {changed.length > 0
+                        ? `${changed.length} unsaved rating${changed.length === 1 ? "" : "s"}.`
+                        : "No unsaved changes."}
+                    </span>
+                    <Button
+                      type="button"
+                      onClick={submit}
+                      disabled={changed.length === 0 || isSubmitting}
+                    >
+                      {isSubmitting ? "Saving…" : "Save ratings"}
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </div>

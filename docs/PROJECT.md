@@ -3274,6 +3274,27 @@ The backend's approve doesn't check completeness.
 - **Possible follow-up:** the same gap list on the admin's Result Review before
   Approve.
 
+### Remarks no longer need behaviour traits (2026-11-18, development)
+**Bug:** on `/results/behaviour`, a category with no traits replaced the whole
+student list with "No affective traits are set up", and the **class teacher's
+remark box went with it**. That screen is the only place the remark is written,
+so a school that doesn't rate behaviour couldn't fill that report-card section
+at all. A school rating one category lost the remark boxes on the other tab.
+- `resolveTraitView` (pure) returns the categories that have traits for this
+  class's level, the one to show (the teacher's pick if it has traits, else the
+  first that does), and its traits.
+- The student list always renders: name, result line, remark. Scales appear
+  only when there are traits. The toggle shows only when **both** categories
+  have traits; with one, a "Psychomotor traits" label. With none, the heading
+  becomes "Remarks", a note says the school doesn't rate behaviour (admins get
+  a link to Behaviour Traits), and the Save ratings bar is hidden.
+- The remark stays on this screen, not moved: it comments on results and
+  conduct together, and the block already shows the result line above it.
+- Tests: `trait-view.test.ts`, `behaviour-student-block.test.tsx`, and
+  `behaviour-page.test.tsx` (hooks stubbed). Run against the old page, the
+  no-traits and one-category cases fail. **Not seen in a browser:** the local
+  backend was down.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend

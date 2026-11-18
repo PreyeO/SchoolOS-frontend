@@ -53,24 +53,28 @@ export function BehaviourStudentBlock({
         <StudentResultContext row={resultRow} columns={resultColumns} />
       </div>
 
-      <ul className="mt-3 space-y-2 border-t border-n-100 pt-3">
-        {traits.map((trait) => {
-          const key = `${student.id}|${trait.id}`;
-          return (
-            <li
-              key={trait.id}
-              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5"
-            >
-              <span className="min-w-0 flex-1 truncate text-sm text-n-600">{trait.name}</span>
-              <RatingScale
-                label={`${trait.name} for ${student.user.first_name}`}
-                value={draft[key]}
-                onChange={(rating) => onRate(key, rating)}
-              />
-            </li>
-          );
-        })}
-      </ul>
+      {/* Empty when the school rates no behaviour: the block is then the
+          student, their result and the remark, which is still a complete job. */}
+      {traits.length > 0 && (
+        <ul className="mt-3 space-y-2 border-t border-n-100 pt-3">
+          {traits.map((trait) => {
+            const key = `${student.id}|${trait.id}`;
+            return (
+              <li
+                key={trait.id}
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5"
+              >
+                <span className="min-w-0 flex-1 truncate text-sm text-n-600">{trait.name}</span>
+                <RatingScale
+                  label={`${trait.name} for ${student.user.first_name}`}
+                  value={draft[key]}
+                  onChange={(rating) => onRate(key, rating)}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {/* A full rule rather than the hairline used between results and ratings.
           The remark is not a footnote to the trait scales above it — it's a
