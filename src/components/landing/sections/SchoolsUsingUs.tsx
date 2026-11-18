@@ -3,6 +3,7 @@ import Image, { type StaticImageData } from "next/image";
 import { Container } from "@/components/layout/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { SCHOOLS_USING_US } from "@/data/landing";
+import { buildHeadline, getPublicTotals } from "@/lib/landing/public-stats";
 
 import kidsParadise from "../assets/schools/kids-paradise.png";
 import letItShine from "../assets/schools/let-it-shine.png";
@@ -23,7 +24,14 @@ const LOGOS: Record<(typeof SCHOOLS_USING_US.schools)[number]["id"], StaticImage
 // with a soft edge, then trimmed), so no rectangle shows on any background.
 // Re-cut a new logo the same way rather than boxing it. Greyscale gives three unrelated crests one tone that
 // doesn't fight the brand greens and amber; each takes its colour on hover.
-export function SchoolsUsingUs() {
+//
+// The headcounts are fetched on the server (revalidated hourly) from the
+// public stats endpoint. A failed fetch, or a database reporting no students,
+// falls back to the last known figures rather than printing "0 students".
+export async function SchoolsUsingUs() {
+  const live = await getPublicTotals();
+  const headline = buildHeadline(live && live.students > 0 ? live : SCHOOLS_USING_US.fallbackTotals);
+
   return (
     <section
       aria-label="Schools using SchoolOS"
@@ -34,13 +42,13 @@ export function SchoolsUsingUs() {
           <div className="max-w-xl">
             <SectionLabel className="mb-4 text-brand opacity-100">{SCHOOLS_USING_US.label}</SectionLabel>
             <p className="font-display text-3xl md:text-4xl font-semibold leading-[1.15] tracking-tight text-n-400">
-              {SCHOOLS_USING_US.headline.map((part) =>
-                "strong" in part ? (
-                  <span key={part.text} className="text-ink">
+              {headline.map((part, i) =>
+                part.strong ? (
+                  <span key={i} className="text-ink">
                     {part.text}
                   </span>
                 ) : (
-                  part.text
+                  <span key={i}>{part.text}</span>
                 ),
               )}
             </p>

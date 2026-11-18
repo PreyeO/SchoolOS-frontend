@@ -4,11 +4,16 @@ import { useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/shared/error-state";
 import { PaginationControls } from "@/components/shared/pagination-controls";
+import { isNotFoundError } from "@/lib/api/get-error-message";
 import { useClasses } from "@/features/settings/hooks/use-classes";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { useTermSelection } from "@/lib/school/use-term-selection";
 
-import { REVIEW_QUEUE_PAGE_SIZE, useReviewQueue, useReviewQueuePage } from "../hooks/use-review-queue";
+import {
+  REVIEW_QUEUE_PAGE_SIZE,
+  useReviewQueuePage,
+  useSubmissionStatusCounts,
+} from "../hooks/use-review-queue";
 import { useReviewQueueSubjects } from "../hooks/use-review-queue-subjects";
 import { useReviewQueueView } from "../hooks/use-review-queue-view";
 import {
@@ -16,7 +21,7 @@ import {
   useRejectResult,
   useUnlockResult,
 } from "../hooks/use-submission-actions";
-import { pageByStatus, STATUS_FILTERS } from "../lib/review-queue-filter";
+import { STATUS_FILTERS } from "../lib/review-queue-filter";
 import type { ResultSubmission, SubmissionStatus } from "../types";
 import { NoTermsNotice } from "./no-terms-notice";
 import { type ReviewAction, ReviewActionDialogs } from "./review-action-dialogs";
@@ -39,17 +44,25 @@ export function ReviewQueuePage({ initialStatus = "" }: Props) {
   const [armId, setArmId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [page, setPage] = useState(1);
-  const byStatus = status !== "";
-  const filters = { classArmId: armId || undefined, subjectId: subjectId || undefined };
+  const narrowed = !!armId || !!subjectId;
 
-  // Two sources, one live at a time. "All statuses" pages the server, 25 at a
-  // time. A status reads the whole term (the dashboard already loaded it, so
-  // arriving from there is instant) and pages it here: the server can't filter
-  // by status, and its newest-first pages scattered "4 awaiting" across pages
-  // 1, 2 and 3.
-  const serverPage = useReviewQueuePage(term.periodId, page, filters, !byStatus);
-  const wholeTerm = useReviewQueue(byStatus ? term.periodId : null);
-  const { isPending, isError, error } = byStatus ? wholeTerm : serverPage;
+  // Every filter is server-side now (backend cb9e018 added status and
+  // ordering), and the request orders awaiting work first across the term.
+  // So "4 awaiting" from the dashboard is these 4 on page 1, not 1 on page 1,
+  // 1 on page 2 and 2 on page 3 as it was.
+  const {
+    data: queuePage,
+    isPending,
+    isError,
+    error,
+  } = useReviewQueuePage(term.periodId, page, {
+    classArmId: armId || undefined,
+    subjectId: subjectId || undefined,
+    status: status || undefined,
+  });
+  // Whole-term figures for the line above the list. Already cached when
+  // arriving from the dashboard, which reads the same counts.
+  const { data: counts } = useSubmissionStatusCounts(term.periodId);
 
   const approve = useApproveResult();
   const reject = useRejectResult();
@@ -59,29 +72,38 @@ export function ReviewQueuePage({ initialStatus = "" }: Props) {
 
   const armGroups = useMemo(() => buildArmOptions(classes ?? []), [classes]);
   const { subjects, isPending: subjectsPending } = useReviewQueueSubjects(armId);
-  const serverView = useReviewQueueView({ submissions: serverPage.data?.results });
-  // Not memoised: one term's submissions is at most a few hundred rows.
-  const statusView = byStatus
-    ? pageByStatus(wholeTerm.data ?? [], { status, ...filters }, page, REVIEW_QUEUE_PAGE_SIZE)
-    : null;
+  const { submissions, awaiting } = useReviewQueueView({ submissions: queuePage?.results });
+  const count = queuePage?.count ?? 0;
+  const filtered = !!status || narrowed;
 
-  const submissions = statusView ? statusView.rows : serverView.submissions;
-  const count = statusView ? statusView.count : (serverPage.data?.count ?? 0);
-  const currentPage = statusView ? statusView.page : page;
-  const filtered = byStatus || !!armId || !!subjectId;
+  // Approving the last row on page 2 leaves no page 2, and the server answers
+  // it with "Invalid page" (404). Step back rather than show an error with work
+  // still to do. Adjusted during render, the React-recommended way to derive
+  // state from a changed input.
+  if (isError && page > 1 && isNotFoundError(error)) setPage(page - 1);
 
   const statusSummary = STATUS_FILTERS.find((f) => f.value === status)?.summary;
-  const summary = statusView ? (
+  const summary = status ? (
+    // The response's count is this status across the whole term (and any
+    // class/subject filter), so this can say "this term" honestly.
     <>
       <span className="font-medium text-ink">{count}</span> {statusSummary}
-      {armId || subjectId ? " for these filters" : " this term"}
+      {narrowed ? " for these filters" : " this term"}
     </>
-  ) : serverView.awaiting === 0 ? (
+  ) : !narrowed && counts ? (
+    counts.submitted === 0 ? (
+      "Nothing this term is waiting on you."
+    ) : (
+      <>
+        <span className="font-medium text-ink">{counts.submitted}</span> awaiting your review this term,
+        listed first
+      </>
+    )
+  ) : awaiting === 0 ? (
     "Nothing on this page is waiting on you."
   ) : (
     <>
-      <span className="font-medium text-ink">{serverView.awaiting}</span> awaiting your review on this
-      page
+      <span className="font-medium text-ink">{awaiting}</span> awaiting your review on this page
     </>
   );
 
@@ -149,7 +171,7 @@ export function ReviewQueuePage({ initialStatus = "" }: Props) {
                 onUnlock={(s) => setAction({ kind: "unlock", submission: s })}
               />
               <PaginationControls
-                page={currentPage}
+                page={page}
                 pageSize={REVIEW_QUEUE_PAGE_SIZE}
                 count={count}
                 onPageChange={setPage}

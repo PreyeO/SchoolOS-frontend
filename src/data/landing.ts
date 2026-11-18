@@ -25,25 +25,18 @@ export const HERO = {
 
 // Schools already running on SchoolOS, shown directly under the hero.
 //
-// Hand-maintained, not live: the only source for these figures is the
-// platform-admin overview, which a public page can't call, and no public
-// stats endpoint exists. Taken from that overview on 2026-11-17 (3 schools,
-// 980 students, 36 teachers + 9 school admins). Update both lists together
-// when a school joins or leaves. Keep the figures at or below the real count,
-// never rounded up, and only list a school that has agreed to be named.
+// The headcounts come live from the public stats endpoint; fallbackTotals
+// below is only used if it can't be reached. The SCHOOLS list (and their
+// crests) stays hand-picked: only list a school that has agreed to be named.
 //
 // The school count is deliberately not a headline figure: a large "3" reads
-// as small, and the crests already say it. "45 staff" is 36 teachers + 9
-// school admins.
+// as small, and the crests already say it.
 export const SCHOOLS_USING_US = {
   label: "Trusted by schools across Nigeria",
-  // Rendered as one sentence; `strong` parts are set in ink, the rest muted.
-  headline: [
-    { text: "980+ students", strong: true },
-    { text: " and " },
-    { text: "45 staff", strong: true },
-    { text: " are already on SchoolOS." },
-  ],
+  // The headcounts are live now (lib/landing/public-stats.ts, from the public
+  // stats endpoint). These are only the fallback, for when that can't be
+  // reached: the last figures from the platform overview (2026-11-17).
+  fallbackTotals: { students: 980, teachers: 36, school_admins: 9 },
   schools: [
     {
       id: "st-peters-ikwuano",

@@ -6,7 +6,7 @@ import { apiClient } from "@/lib/api/client";
 import { RESULT_SUBMISSION_ENDPOINTS } from "@/lib/api/endpoints";
 import type { PaginatedResponse } from "@/lib/api/types";
 
-import type { ResultSubmission } from "../types";
+import type { ResultSubmission, SubmissionStatus } from "../types";
 
 export const REVIEW_QUEUE_QUERY_KEY = ["results", "review-queue"];
 export const REVIEW_QUEUE_PAGE_SIZE = 25;
@@ -52,27 +52,26 @@ export function useReviewQueue(academicPeriodId: string | null | undefined) {
 export interface ReviewQueuePageFilters {
   classArmId?: string;
   subjectId?: string;
+  // Server-side since backend cb9e018 added `status` to filterset_fields.
+  status?: SubmissionStatus;
 }
 
-// One page of this term's submissions, filtered server-side by class/subject
-// (ClassArmSubjectResultSubmissionViewSet.filterset_fields covers both) — what
-// the review queue's own browsing table uses (2026-09-05, at the user's
-// explicit request: fetching the whole term up front, as getReviewQueue above
-// still does for the summary screens, made the browsing table wait on however
-// many pages the term happened to have before the first row could render).
+// The queue's priority order, done by the server across the whole term.
+// Statuses are lowercase strings, and descending alphabetical (submitted,
+// rejected, draft, approved) is exactly "what needs the admin first", the
+// same order sortSubmissions applies within a page. created_at breaks ties so
+// paging is stable.
+const PRIORITY_ORDERING = "-status,-created_at";
+
+// One page of this term's submissions, filtered and ordered server-side — what
+// the review queue's browsing table uses. Paged on the server (2026-09-05)
+// because fetching the whole term made the table wait for every page first.
 //
-// What paging server-side gives up, and why: the queue's own priority sort —
-// submitted-and-awaiting first, everything else after — used to sort the
-// COMPLETE term, so nothing needing review could be buried behind an earlier
-// page's worth of already-approved rows. Sorting only within whichever page
-// is loaded (still done — see useReviewQueueView) can't reproduce that once
-// paged server-side, because the backend orders submissions by `-created_at`
-// (ClassArmSubjectResultSubmission.Meta.ordering) with no ordering param
-// exposed to ask for anything else. The "N awaiting your review" figure has
-// the same problem for the same reason, compounded by `status` not even being
-// in filterset_fields — there's no way to ask the backend for just a count of
-// submitted-status rows either. Both are now page-scoped. See docs/asks/ for
-// the backend ask that would let either come back.
+// Paging used to cost the queue its whole-term priority sort and an honest
+// "N awaiting" figure: the backend had no status filter and no ordering param,
+// so awaiting rows scattered across pages. Backend cb9e018 added both, so
+// `ordering` puts awaiting work first across the term, and `status` returns
+// one status's rows (and a whole-term count) directly.
 export async function getReviewQueuePage(
   academicPeriodId: string,
   page: number,
@@ -85,26 +84,54 @@ export async function getReviewQueuePage(
         academic_period: academicPeriodId,
         page,
         page_size: REVIEW_QUEUE_PAGE_SIZE,
+        ordering: PRIORITY_ORDERING,
         ...(filters.classArmId ? { class_arm: filters.classArmId } : {}),
         ...(filters.subjectId ? { subject: filters.subjectId } : {}),
+        ...(filters.status ? { status: filters.status } : {}),
       },
     },
   );
   return data;
 }
 
-// `enabled` false while the review page is filtered by status: that view reads
-// the whole term from useReviewQueue instead (see pageByStatus).
+// How many of this term's submissions are in each status, as four requests
+// of page_size=1 reading only `count`. For the admin home, which shows these
+// numbers and nothing else, instead of downloading every submission
+// (useReviewQueue) to count them in the browser.
+export type SubmissionStatusCounts = Record<SubmissionStatus, number>;
+
+export async function getSubmissionStatusCounts(academicPeriodId: string): Promise<SubmissionStatusCounts> {
+  const statuses: SubmissionStatus[] = ["submitted", "rejected", "draft", "approved"];
+  const counts = await Promise.all(
+    statuses.map(async (status) => {
+      const { data } = await apiClient.get<PaginatedResponse<ResultSubmission>>(RESULT_SUBMISSION_ENDPOINTS.LIST(), {
+        params: { academic_period: academicPeriodId, status, page_size: 1 },
+      });
+      return [status, data.count] as const;
+    }),
+  );
+  return Object.fromEntries(counts) as SubmissionStatusCounts;
+}
+
+export function useSubmissionStatusCounts(academicPeriodId: string | null | undefined) {
+  return useQuery({
+    // Under REVIEW_QUEUE_QUERY_KEY, so approve/reject/unlock (which invalidate
+    // ["results"]) refresh these too.
+    queryKey: [...REVIEW_QUEUE_QUERY_KEY, "counts", academicPeriodId],
+    queryFn: () => getSubmissionStatusCounts(academicPeriodId as string),
+    enabled: !!academicPeriodId,
+  });
+}
+
 export function useReviewQueuePage(
   academicPeriodId: string | null | undefined,
   page: number,
   filters: ReviewQueuePageFilters,
-  enabled = true,
 ) {
   return useQuery({
     queryKey: [...REVIEW_QUEUE_QUERY_KEY, "page", academicPeriodId, page, filters],
     queryFn: () => getReviewQueuePage(academicPeriodId as string, page, filters),
-    enabled: enabled && !!academicPeriodId,
+    enabled: !!academicPeriodId,
     // Keeps the current page's rows on screen while the next page loads,
     // instead of collapsing the whole list to a spinner on every click.
     placeholderData: (previous) => previous,

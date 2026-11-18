@@ -11,8 +11,7 @@ import { STATUS_FILTERS } from "../lib/review-queue-filter";
 import type { SubmissionStatus } from "../types";
 
 interface Props {
-  // "" means every status (server-paged). A status reads the whole term and
-  // filters it here, since the backend can't filter by status.
+  // "" means every status, ordered awaiting-first by the server.
   status: SubmissionStatus | "";
   onStatusChange: (status: SubmissionStatus | "") => void;
   termGroups: PeriodOptionGroup[];
@@ -29,11 +28,9 @@ interface Props {
   subjectsPending: boolean;
 }
 
-// Term, class and subject are SERVER filters (2026-09-05): each keys the
-// submissions request directly, so narrowing never hides a row that just
-// didn't happen to load on the current page. Status is the exception: with one
-// picked, the page loads the whole term and filters all four here (see
-// pageByStatus), which is what keeps every match together.
+// All four are SERVER filters: each keys the submissions request directly, so
+// narrowing never hides a row that just didn't happen to load on the current
+// page. Status joined them with backend cb9e018.
 export function ReviewQueueFilters({
   status,
   onStatusChange,

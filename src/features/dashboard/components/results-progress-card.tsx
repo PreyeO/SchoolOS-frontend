@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Clock, Undo2 } from "lucide-react";
 
 import { useClasses } from "@/features/settings/hooks/use-classes";
-import { useResultsProgress } from "@/features/results/hooks/use-results-progress";
+import { useAdminResultsProgress } from "@/features/results/hooks/use-results-progress";
 import { buildArmOptions } from "@/lib/school/arm-options";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 // figure here answers that with a link to the screen that fixes it.
 export function ResultsProgressCard() {
   const { currentTerm, isPending, published, awaitingReview, sentBack, notSubmitted } =
-    useResultsProgress();
+    useAdminResultsProgress();
   const { data: classes } = useClasses();
 
   // The real denominator. Arms with no broadsheet row yet don't appear in the
@@ -28,8 +28,7 @@ export function ResultsProgressCard() {
   if (!currentTerm) return null;
 
   // Each row opens the review queue filtered to that status, so "4 awaiting"
-  // lands on those 4 together instead of wherever they fall in the
-  // server's newest-first pages.
+  // lands on exactly those 4.
   const stats = [
     {
       label: "Awaiting your review",
