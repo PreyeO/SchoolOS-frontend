@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { detectInstallEnvironment, resolveInstallMethod, type EnvironmentInput } from "./install-environment";
+import {
+  detectInstallEnvironment,
+  isAppDisplayMode,
+  resolveInstallMethod,
+  type EnvironmentInput,
+} from "./install-environment";
 
 // Real user-agent strings, one per case that changes what we tell a teacher.
 const UA = {
@@ -68,6 +73,23 @@ describe("detectInstallEnvironment", () => {
     expect(env(UA.androidChrome, { displayModeStandalone: true }).standalone).toBe(true);
     expect(env(UA.iphoneSafari, { navigatorStandalone: true }).standalone).toBe(true);
     expect(env(UA.iphoneSafari).standalone).toBe(false);
+  });
+});
+
+describe("isAppDisplayMode", () => {
+  const only = (mode: string) => (q: string) => q === `(display-mode: ${mode})`;
+
+  it("counts the installed app's window", () => {
+    expect(isAppDisplayMode(only("standalone"))).toBe(true);
+    expect(isAppDisplayMode(only("minimal-ui"))).toBe(true);
+  });
+
+  // Regression: Chrome reports fullscreen for an ordinary tab once the browser
+  // goes full-screen, which hid "Install app" on a desktop that had never
+  // installed it.
+  it("does not mistake a full-screen browser tab for the app", () => {
+    expect(isAppDisplayMode(only("fullscreen"))).toBe(false);
+    expect(isAppDisplayMode(only("browser"))).toBe(false);
   });
 });
 

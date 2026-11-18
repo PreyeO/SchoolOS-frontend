@@ -3249,6 +3249,21 @@ met installability.
   banner switched to "Install". The guide opened from the menu, closed, and the
   page stayed clickable twice running.
   **Not verified:** a real install on a physical Android phone or iPhone.
+- **Fixed 2026-11-18: "Install app" missing in desktop Chrome**, even in a
+  fresh incognito window, while Safari showed it. The "running as the app"
+  check included `display-mode: fullscreen`, and Chrome reports that for an
+  **ordinary tab** whenever the browser is full-screen (F11, the Mac green
+  button); verified in Chrome, where a plain tab goes from `browser` to
+  `fullscreen` on `requestFullscreen()`. Now `isAppDisplayMode` checks only
+  `standalone` and `minimal-ui`; our manifest never asks for fullscreen.
+  Regression-tested. Also by design: the platform admin panel's menu has no
+  Install item (each school installs from its own subdomain).
+- **Known gaps, not built:** an install made before this feature shipped, or
+  after clearing site data, isn't remembered, so the menu item shows again.
+  Uninstalling leaves the flag set, so the item stays hidden; fixable by
+  clearing the flag whenever `beforeinstallprompt` fires. Android Chrome could
+  detect an existing install via `getInstalledRelatedApps`; needs a manifest
+  `related_applications` entry and a real-device check per subdomain.
 
 ### Warn before submitting a part-filled subject (2026-11-18, development)
 Asked: "if a teacher submits after CA 1 and the admin approves, does CA 2 need
