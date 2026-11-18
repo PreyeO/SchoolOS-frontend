@@ -434,6 +434,9 @@ export function ScoreEntryPage() {
           status={status}
           savedCount={savedAcrossSheet}
           unsavedCount={changed.length}
+          components={components}
+          enteredByComponent={enteredByComponent}
+          studentCount={students.length}
         />
       )}
     </div>

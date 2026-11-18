@@ -3250,6 +3250,30 @@ met installability.
   page stayed clickable twice running.
   **Not verified:** a real install on a physical Android phone or iPhone.
 
+### Warn before submitting a part-filled subject (2026-11-18, development)
+Asked: "if a teacher submits after CA 1 and the admin approves, does CA 2 need
+approving again?" Worse: **approval locks the whole subject for the term**
+(one submission per arm × subject × period; `bulk_enter_scores` refuses every
+write once APPROVED). CA 2 can't be entered at all until an admin with
+`unlock_results` unlocks it (back to SUBMITTED, not DRAFT), then approves again.
+The backend's approve doesn't check completeness.
+- `SubmitResultBar` now opens a confirm **only when an assessment has
+  students without a saved score** (`findIncompleteComponents`, counts from
+  the saved grid, clamped to roster size). It lists each gap ("CA 2: 12 of 35
+  entered", "Exam: Not started"), says approval locks the term, and focuses
+  **Keep entering scores**; **Submit anyway** still works. A complete sheet
+  submits with no dialog, which keeps the earlier "no confirm on a reversible
+  action" reasoning where it still holds.
+- Bar copy: "Submit when every assessment is in … Save keeps your work as you
+  go."
+- Gaps are computed inside the bar, not in `ScoreEntryPage`: passing
+  `components` to a helper there tripped `react-hooks/preserve-manual-memoization`,
+  so the React Compiler skipped the whole page.
+- 8 tests; the gate was broken once to confirm 3 fail. **Not seen in a browser:**
+  the local backend was down, and the page needs real scores.
+- **Possible follow-up:** the same gap list on the admin's Result Review before
+  Approve.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
