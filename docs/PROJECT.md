@@ -3273,6 +3273,14 @@ The backend's approve doesn't check completeness.
   the local backend was down, and the page needs real scores.
 - **Possible follow-up:** the same gap list on the admin's Result Review before
   Approve.
+- **Reported the next day: "Keep entering scores" was unreadable until hover.**
+  It was a `<Button>` inside `ui/alert-dialog`'s styled `AlertDialogCancel
+  asChild`. Radix's Slot concatenates class lists without tailwind-merge, so
+  the button carried Cancel's outline classes too: white background, primary
+  button's white text. Now uses the bare `AlertDialogPrimitive.Cancel/Action`
+  from `radix-ui`. **Never nest a styled `Button` inside `ui/alert-dialog`'s
+  Action or Cancel**; use the primitive, or pass classes to the wrapper. No
+  other component did (the many `DialogClose asChild` add no classes).
 
 ### Remarks no longer need behaviour traits (2026-11-18, development)
 **Bug:** on `/results/behaviour`, a category with no traits replaced the whole

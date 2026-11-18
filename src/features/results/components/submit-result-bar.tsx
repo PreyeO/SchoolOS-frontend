@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Send, TriangleAlert } from "lucide-react";
 
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
+
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -119,18 +119,22 @@ export function SubmitResultBar({
             To keep working, just save your scores. You don&rsquo;t need to submit until everything is in.
           </p>
 
-          {/* Keep entering is the safe default (Radix focuses Cancel first), so
-              both are plain app buttons: the dialog's stock Action is red,
-              which would read as "delete". */}
+          {/* Keep entering is the safe default (Radix focuses Cancel first).
+              The bare Radix Action/Cancel, not the styled ui/alert-dialog
+              ones: those carry their own button classes (red Action, outline
+              Cancel), and asChild's Slot concatenates class lists without
+              resolving conflicts. "Keep entering" got Cancel's white
+              background plus the primary button's white text, so it was
+              invisible until hover. */}
           <AlertDialogFooter>
-            <AlertDialogAction asChild>
-              <Button variant="outline" onClick={send}>
+            <AlertDialogPrimitive.Action asChild>
+              <Button variant="outline" className="text-ink" onClick={send}>
                 Submit anyway
               </Button>
-            </AlertDialogAction>
-            <AlertDialogCancel asChild>
+            </AlertDialogPrimitive.Action>
+            <AlertDialogPrimitive.Cancel asChild>
               <Button>Keep entering scores</Button>
-            </AlertDialogCancel>
+            </AlertDialogPrimitive.Cancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -71,6 +71,14 @@ describe("SubmitResultBar", () => {
     // The safe choice is the one focused.
     expect(screen.getByRole("button", { name: "Keep entering scores" })).toHaveFocus();
     expect(calls).toEqual([]);
+
+    // Regression: wrapped in ui/alert-dialog's styled Cancel/Action, each
+    // button also got that wrapper's classes. "Keep entering" became white
+    // text on Cancel's white background, unreadable until hover.
+    const keep = screen.getByRole("button", { name: "Keep entering scores" });
+    expect(keep.className).toContain("bg-primary");
+    expect(keep.className).not.toContain("bg-background");
+    expect(screen.getByRole("button", { name: "Submit anyway" }).className).not.toContain("text-destructive");
   });
 
   it("sends nothing when the teacher chooses to keep entering", async () => {
