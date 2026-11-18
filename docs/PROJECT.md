@@ -3250,6 +3250,59 @@ met installability.
   page stayed clickable twice running.
   **Not verified:** a real install on a physical Android phone or iPhone.
 
+### Warn before submitting a part-filled subject (2026-11-18, development)
+Asked: "if a teacher submits after CA 1 and the admin approves, does CA 2 need
+approving again?" Worse: **approval locks the whole subject for the term**
+(one submission per arm × subject × period; `bulk_enter_scores` refuses every
+write once APPROVED). CA 2 can't be entered at all until an admin with
+`unlock_results` unlocks it (back to SUBMITTED, not DRAFT), then approves again.
+The backend's approve doesn't check completeness.
+- `SubmitResultBar` now opens a confirm **only when an assessment has
+  students without a saved score** (`findIncompleteComponents`, counts from
+  the saved grid, clamped to roster size). It lists each gap ("CA 2: 12 of 35
+  entered", "Exam: Not started"), says approval locks the term, and focuses
+  **Keep entering scores**; **Submit anyway** still works. A complete sheet
+  submits with no dialog, which keeps the earlier "no confirm on a reversible
+  action" reasoning where it still holds.
+- Bar copy: "Submit when every assessment is in … Save keeps your work as you
+  go."
+- Gaps are computed inside the bar, not in `ScoreEntryPage`: passing
+  `components` to a helper there tripped `react-hooks/preserve-manual-memoization`,
+  so the React Compiler skipped the whole page.
+- 8 tests; the gate was broken once to confirm 3 fail. **Not seen in a browser:**
+  the local backend was down, and the page needs real scores.
+- **Possible follow-up:** the same gap list on the admin's Result Review before
+  Approve.
+- **Reported the next day: "Keep entering scores" was unreadable until hover.**
+  It was a `<Button>` inside `ui/alert-dialog`'s styled `AlertDialogCancel
+  asChild`. Radix's Slot concatenates class lists without tailwind-merge, so
+  the button carried Cancel's outline classes too: white background, primary
+  button's white text. Now uses the bare `AlertDialogPrimitive.Cancel/Action`
+  from `radix-ui`. **Never nest a styled `Button` inside `ui/alert-dialog`'s
+  Action or Cancel**; use the primitive, or pass classes to the wrapper. No
+  other component did (the many `DialogClose asChild` add no classes).
+
+### Remarks no longer need behaviour traits (2026-11-18, development)
+**Bug:** on `/results/behaviour`, a category with no traits replaced the whole
+student list with "No affective traits are set up", and the **class teacher's
+remark box went with it**. That screen is the only place the remark is written,
+so a school that doesn't rate behaviour couldn't fill that report-card section
+at all. A school rating one category lost the remark boxes on the other tab.
+- `resolveTraitView` (pure) returns the categories that have traits for this
+  class's level, the one to show (the teacher's pick if it has traits, else the
+  first that does), and its traits.
+- The student list always renders: name, result line, remark. Scales appear
+  only when there are traits. The toggle shows only when **both** categories
+  have traits; with one, a "Psychomotor traits" label. With none, the heading
+  becomes "Remarks", a note says the school doesn't rate behaviour (admins get
+  a link to Behaviour Traits), and the Save ratings bar is hidden.
+- The remark stays on this screen, not moved: it comments on results and
+  conduct together, and the block already shows the result line above it.
+- Tests: `trait-view.test.ts`, `behaviour-student-block.test.tsx`, and
+  `behaviour-page.test.tsx` (hooks stubbed). Run against the old page, the
+  no-traits and one-category cases fail. **Not seen in a browser:** the local
+  backend was down.
+
 ## Next up
 
 Nothing is queued. The last full route audit (2026-08-31) found the backend
